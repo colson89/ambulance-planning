@@ -48,32 +48,20 @@ export default function ShiftPlanner() {
   });
 
   const createPreferenceMutation = useMutation({
-    mutationFn: async (data: {
-      date: string;
-      type: "day" | "night" | "unavailable";
-      startTime?: string;
-      endTime?: string;
-      canSplit: boolean;
-      month: number;
-      year: number;
-      notes: string | null;
-    }) => {
-      console.log("Versturen van voorkeur data:", data);
+    mutationFn: async (data: any) => {
+      console.log("Submit voorkeur:", data);
       const res = await apiRequest("POST", "/api/preferences", data);
-      console.log("API Response:", res.status);
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Er is een fout opgetreden");
-      }
-
-      return res.json();
+      console.log("Response status:", res.status);
+      const json = await res.json();
+      console.log("Response data:", json);
+      if (!res.ok) throw new Error(json.message || "Er is een fout opgetreden");
+      return json;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
       toast({
         title: "Succes",
-        description: "Uw voorkeur is succesvol opgeslagen",
+        description: "Voorkeur opgeslagen",
       });
     },
     onError: (error: Error) => {
@@ -85,96 +73,6 @@ export default function ShiftPlanner() {
       });
     },
   });
-
-  const handleSubmitDay = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log("Dag shift submit aangeroepen");
-
-    if (!selectedDate) {
-      toast({
-        title: "Fout",
-        description: "Selecteer eerst een datum",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!isWeekend(selectedDate)) {
-      toast({
-        title: "Niet toegestaan",
-        description: "Dagshiften kunnen alleen in het weekend worden opgegeven.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const preferenceData = {
-      date: selectedDate.toISOString(),
-      type: dayShiftType === "unavailable" ? "unavailable" as const : "day" as const,
-      ...(dayShiftType !== "unavailable" && {
-        startTime: (() => {
-          const date = new Date(selectedDate);
-          date.setHours(7, 0, 0, 0);
-          return date.toISOString();
-        })(),
-        endTime: (() => {
-          const date = new Date(selectedDate);
-          date.setHours(dayShiftType === "full" ? 19 : dayShiftType === "first" ? 13 : 19, 0, 0, 0);
-          return date.toISOString();
-        })()
-      }),
-      canSplit: dayShiftType !== "full" && dayShiftType !== "unavailable",
-      month: selectedMonth.getMonth() + 1,
-      year: selectedMonth.getFullYear(),
-      notes: dayShiftType === "unavailable" ? "Niet beschikbaar" : null
-    };
-
-    console.log("Versturen dag voorkeur:", preferenceData);
-    createPreferenceMutation.mutate(preferenceData);
-  };
-
-  const handleSubmitNight = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log("Nacht shift submit aangeroepen");
-
-    if (!selectedDate) {
-      toast({
-        title: "Fout",
-        description: "Selecteer eerst een datum",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const preferenceData = {
-      date: selectedDate.toISOString(),
-      type: nightShiftType === "unavailable" ? "unavailable" as const : "night" as const,
-      ...(nightShiftType !== "unavailable" && {
-        startTime: (() => {
-          const date = new Date(selectedDate);
-          date.setHours(19, 0, 0, 0);
-          return date.toISOString();
-        })(),
-        endTime: (() => {
-          const date = new Date(selectedDate);
-          if (nightShiftType === "full" || nightShiftType === "second") {
-            date.setDate(date.getDate() + 1);
-            date.setHours(7, 0, 0, 0);
-          } else {
-            date.setHours(21, 0, 0, 0);
-          }
-          return date.toISOString();
-        })()
-      }),
-      canSplit: nightShiftType !== "full" && nightShiftType !== "unavailable",
-      month: selectedMonth.getMonth() + 1,
-      year: selectedMonth.getFullYear(),
-      notes: nightShiftType === "unavailable" ? "Niet beschikbaar" : null
-    };
-
-    console.log("Versturen nacht voorkeur:", preferenceData);
-    createPreferenceMutation.mutate(preferenceData);
-  };
 
   const deletePreferenceMutation = useMutation({
     mutationFn: async (preferenceId: number) => {
@@ -196,6 +94,78 @@ export default function ShiftPlanner() {
       });
     },
   });
+
+  const handleFormSubmit = async (event: React.FormEvent, type: "day" | "night") => {
+    event.preventDefault();
+    console.log(`Form submit voor ${type} shift`);
+
+    if (!selectedDate) {
+      toast({
+        title: "Fout",
+        description: "Selecteer eerst een datum",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check voor dagshift in weekend
+    if (type === "day" && !isWeekend(selectedDate)) {
+      toast({
+        title: "Niet toegestaan",
+        description: "Dagshiften kunnen alleen in het weekend worden opgegeven.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const shiftType = type === "day" ? dayShiftType : nightShiftType;
+
+    // Voor niet beschikbaar
+    if (shiftType === "unavailable") {
+      const data = {
+        date: selectedDate.toISOString(),
+        type: "unavailable" as const,
+        canSplit: false,
+        month: selectedMonth.getMonth() + 1,
+        year: selectedMonth.getFullYear(),
+        notes: "Niet beschikbaar"
+      };
+      console.log("Submit niet beschikbaar:", data);
+      createPreferenceMutation.mutate(data);
+      return;
+    }
+
+    // Voor normale shifts
+    const startTime = new Date(selectedDate);
+    const endTime = new Date(selectedDate);
+
+    if (type === "day") {
+      startTime.setHours(7, 0, 0, 0);
+      endTime.setHours(shiftType === "full" ? 19 : shiftType === "first" ? 13 : 19, 0, 0, 0);
+    } else {
+      startTime.setHours(19, 0, 0, 0);
+      if (shiftType === "full" || shiftType === "second") {
+        endTime.setDate(endTime.getDate() + 1);
+        endTime.setHours(7, 0, 0, 0);
+      } else {
+        endTime.setHours(21, 0, 0, 0);
+      }
+    }
+
+    const data = {
+      date: selectedDate.toISOString(),
+      type,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      canSplit: shiftType !== "full",
+      month: selectedMonth.getMonth() + 1,
+      year: selectedMonth.getFullYear(),
+      notes: null
+    };
+
+    console.log(`Submit ${type} shift:`, data);
+    createPreferenceMutation.mutate(data);
+  };
 
   const getDayPreferences = (date: Date) => {
     return preferences.filter(p =>
@@ -260,12 +230,9 @@ export default function ShiftPlanner() {
             {selectedDate && (
               <>
                 {isWeekend(selectedDate) && (
-                  <div className="space-y-4">
+                  <form onSubmit={(e) => handleFormSubmit(e, "day")} className="space-y-4">
                     <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
-                    <RadioGroup
-                      value={dayShiftType}
-                      onValueChange={(value) => setDayShiftType(value as ShiftType)}
-                    >
+                    <RadioGroup value={dayShiftType} onValueChange={(value) => setDayShiftType(value as ShiftType)}>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="full" id="day-full" />
                         <Label htmlFor="day-full">Volledige shift (7:00-19:00)</Label>
@@ -284,7 +251,7 @@ export default function ShiftPlanner() {
                       </div>
                     </RadioGroup>
                     <Button
-                      onClick={handleSubmitDay}
+                      type="submit"
                       disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
                       className="w-full"
                     >
@@ -297,15 +264,12 @@ export default function ShiftPlanner() {
                         "Voorkeur Opgeven voor Dag Shift"
                       )}
                     </Button>
-                  </div>
+                  </form>
                 )}
 
-                <div className="space-y-4">
+                <form onSubmit={(e) => handleFormSubmit(e, "night")} className="space-y-4">
                   <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
-                  <RadioGroup
-                    value={nightShiftType}
-                    onValueChange={(value) => setNightShiftType(value as ShiftType)}
-                  >
+                  <RadioGroup value={nightShiftType} onValueChange={(value) => setNightShiftType(value as ShiftType)}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="full" id="night-full" />
                       <Label htmlFor="night-full">Volledige shift (19:00-7:00)</Label>
@@ -324,7 +288,7 @@ export default function ShiftPlanner() {
                     </div>
                   </RadioGroup>
                   <Button
-                    onClick={handleSubmitNight}
+                    type="submit"
                     disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
                     className="w-full"
                   >
@@ -337,7 +301,7 @@ export default function ShiftPlanner() {
                       "Voorkeur Opgeven voor Nacht Shift"
                     )}
                   </Button>
-                </div>
+                </form>
               </>
             )}
 
