@@ -15,30 +15,6 @@ import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 
-type ShiftPreference = {
-  id?: number;
-  date: Date;
-  type: "day" | "night";
-  startTime: Date;
-  endTime: Date;
-  canSplit: boolean;
-  userId: number;
-  month: number;
-  year: number;
-};
-
-type PreferenceResponse = {
-  id: number;
-  date: string;
-  type: "day" | "night";
-  startTime: string;
-  endTime: string;
-  canSplit: boolean;
-  userId: number;
-  month: number;
-  year: number;
-};
-
 type ShiftType = "full" | "first" | "second";
 
 export default function ShiftPlanner() {
@@ -51,7 +27,6 @@ export default function ShiftPlanner() {
   const [dayShiftType, setDayShiftType] = useState<ShiftType>("full");
   const [nightShiftType, setNightShiftType] = useState<ShiftType>("full");
 
-  // Aanpassing van de planning logica en deadline check
   const today = new Date();
   const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
   const isPastDeadline = today > currentMonthDeadline;
@@ -64,19 +39,18 @@ export default function ShiftPlanner() {
   }, []);
 
   // Get user's shift preferences for selected month
-  const { data: preferences = [], isLoading: preferencesLoading } = useQuery<PreferenceResponse[]>({
+  const { data: preferences = [], isLoading: preferencesLoading } = useQuery({
     queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/preferences?month=${selectedMonth.getMonth() + 1}&year=${selectedMonth.getFullYear()}`);
+      return res.json();
+    },
     enabled: !!user,
   });
 
   const createPreferenceMutation = useMutation({
-    mutationFn: async (preference: ShiftPreference) => {
-      const res = await apiRequest("POST", "/api/preferences", {
-        ...preference,
-        date: preference.date.toISOString(),
-        startTime: preference.startTime.toISOString(),
-        endTime: preference.endTime.toISOString(),
-      });
+    mutationFn: async (preference: any) => {
+      const res = await apiRequest("POST", "/api/preferences", preference);
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.message || "Er is een fout opgetreden");
@@ -171,13 +145,12 @@ export default function ShiftPlanner() {
       }
     }
 
-    const preference: ShiftPreference = {
-      date: selectedDate,
+    const preference = {
+      date: selectedDate.toISOString(),
       type,
-      startTime,
-      endTime,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
       canSplit: selectedShiftType !== "full",
-      userId: user.id,
       month: selectedMonth.getMonth() + 1,
       year: selectedMonth.getFullYear()
     };

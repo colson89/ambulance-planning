@@ -165,7 +165,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...preferenceData,
         userId: req.user!.id,
         month: preferenceMonth,
-        year: preferenceYear
+        year: preferenceYear,
+        status: "pending"
       });
       res.status(201).json(preference);
     } catch (error) {
