@@ -20,7 +20,7 @@ export default function ShiftPlanner() {
   const [, setLocation] = useLocation();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [selectedType, setSelectedType] = useState<"full" | "first" | "second" | "unavailable">("full");
+  const [shiftType, setShiftType] = useState("full");
 
   const today = new Date();
   const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
@@ -44,12 +44,16 @@ export default function ShiftPlanner() {
 
   const createPreferenceMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("Submitting preference:", data);
+      console.log("Versturen van voorkeur data:", data);
       const res = await apiRequest("POST", "/api/preferences", data);
+      console.log("API Response:", res.status);
+      const json = await res.json();
+      console.log("API Response data:", json);
       if (!res.ok) throw new Error("Kon voorkeur niet opslaan");
-      return res.json();
+      return json;
     },
     onSuccess: () => {
+      console.log("Voorkeur succesvol opgeslagen");
       queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
       toast({
         title: "Succes",
@@ -57,6 +61,7 @@ export default function ShiftPlanner() {
       });
     },
     onError: (error: Error) => {
+      console.error("Error bij opslaan voorkeur:", error);
       toast({
         title: "Fout",
         description: error.message,
@@ -65,9 +70,14 @@ export default function ShiftPlanner() {
     },
   });
 
-  const handleSubmit = async (event: React.FormEvent, type: "day" | "night") => {
+  const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("Type veranderd naar:", event.target.value);
+    setShiftType(event.target.value);
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log("Form submitted", { type, selectedType, selectedDate });
+    console.log("Form submit", { selectedDate, shiftType });
 
     if (!selectedDate) {
       toast({
@@ -78,84 +88,25 @@ export default function ShiftPlanner() {
       return;
     }
 
-    if (type === "day" && !isWeekend(selectedDate)) {
-      toast({
-        title: "Niet toegestaan",
-        description: "Dagshiften kunnen alleen in het weekend worden opgegeven.",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Test data
+    const testData = {
+      date: selectedDate.toISOString(),
+      type: "day",
+      startTime: new Date(selectedDate).setHours(7, 0, 0, 0),
+      endTime: new Date(selectedDate).setHours(19, 0, 0, 0),
+      canSplit: false,
+      month: selectedMonth.getMonth() + 1,
+      year: selectedMonth.getFullYear(),
+      notes: null
+    };
 
+    console.log("Versturen test data:", testData);
     try {
-      if (selectedType === "unavailable") {
-        await createPreferenceMutation.mutateAsync({
-          date: selectedDate.toISOString(),
-          type: "unavailable",
-          canSplit: false,
-          month: selectedMonth.getMonth() + 1,
-          year: selectedMonth.getFullYear(),
-          notes: "Niet beschikbaar"
-        });
-        return;
-      }
-
-      const startTime = new Date(selectedDate);
-      const endTime = new Date(selectedDate);
-
-      if (type === "day") {
-        startTime.setHours(7, 0, 0, 0);
-        endTime.setHours(selectedType === "full" ? 19 : selectedType === "first" ? 13 : 19, 0, 0, 0);
-      } else {
-        startTime.setHours(19, 0, 0, 0);
-        if (selectedType === "full" || selectedType === "second") {
-          endTime.setDate(endTime.getDate() + 1);
-          endTime.setHours(7, 0, 0, 0);
-        } else {
-          endTime.setHours(21, 0, 0, 0);
-        }
-      }
-
-      await createPreferenceMutation.mutateAsync({
-        date: selectedDate.toISOString(),
-        type,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        canSplit: selectedType !== "full",
-        month: selectedMonth.getMonth() + 1,
-        year: selectedMonth.getFullYear(),
-        notes: null
-      });
+      await createPreferenceMutation.mutateAsync(testData);
+      console.log("Test data verstuurd");
     } catch (error) {
-      console.error("Error submitting preference:", error);
+      console.error("Error bij versturen test data:", error);
     }
-  };
-
-  const deletePreferenceMutation = useMutation({
-    mutationFn: async (preferenceId: number) => {
-      const res = await apiRequest("DELETE", `/api/preferences/${preferenceId}`);
-      if (!res.ok) throw new Error("Kon voorkeur niet verwijderen");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
-      toast({
-        title: "Succes",
-        description: "Voorkeur verwijderd",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Fout",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const getDayPreferences = (date: Date) => {
-    return preferences.filter(p =>
-      format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
-    );
   };
 
   return (
@@ -174,10 +125,6 @@ export default function ShiftPlanner() {
       <Alert className="mb-6">
         <AlertDescription>
           U geeft nu voorkeuren op voor {format(selectedMonth, "MMMM yyyy", { locale: nl })}.
-          {isPastDeadline
-            ? `U heeft tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
-            : `U heeft tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
-          }
         </AlertDescription>
       </Alert>
 
@@ -194,190 +141,60 @@ export default function ShiftPlanner() {
               month={selectedMonth}
               onMonthChange={setSelectedMonth}
               disabled={(date) => date.getMonth() !== selectedMonth.getMonth()}
-              modifiers={{
-                preference: (date) => getDayPreferences(date).length > 0
-              }}
-              modifiersClassNames={{
-                preference: "bg-primary/20 rounded-md"
-              }}
               className="rounded-md border"
               locale={nl}
-              weekStartsOn={1}
             />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Shift Voorkeuren</CardTitle>
+            <CardTitle>Test Formulier</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             {selectedDate && (
-              <>
-                {isWeekend(selectedDate) && (
-                  <form onSubmit={(e) => handleSubmit(e, "day")} className="space-y-4">
-                    <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
-                    <div className="space-y-2">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="dayShift"
-                          value="full"
-                          checked={selectedType === "full"}
-                          onChange={(e) => setSelectedType(e.target.value as "full")}
-                          className="rounded-full"
-                        />
-                        <span>Volledige shift (7:00-19:00)</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="dayShift"
-                          value="first"
-                          checked={selectedType === "first"}
-                          onChange={(e) => setSelectedType(e.target.value as "first")}
-                          className="rounded-full"
-                        />
-                        <span>Eerste deel (7:00-13:00)</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="dayShift"
-                          value="second"
-                          checked={selectedType === "second"}
-                          onChange={(e) => setSelectedType(e.target.value as "second")}
-                          className="rounded-full"
-                        />
-                        <span>Tweede deel (13:00-19:00)</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="dayShift"
-                          value="unavailable"
-                          checked={selectedType === "unavailable"}
-                          onChange={(e) => setSelectedType(e.target.value as "unavailable")}
-                          className="rounded-full"
-                        />
-                        <span>Ik kan niet</span>
-                      </label>
-                    </div>
-                    <Button
-                      type="submit"
-                      disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
-                      className="w-full"
-                    >
-                      {createPreferenceMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Voorkeur opslaan...
-                        </>
-                      ) : (
-                        "Voorkeur Opgeven voor Dag Shift"
-                      )}
-                    </Button>
-                  </form>
-                )}
-
-                <form onSubmit={(e) => handleSubmit(e, "night")} className="space-y-4">
-                  <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
-                  <div className="space-y-2">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="nightShift"
-                        value="full"
-                        checked={selectedType === "full"}
-                        onChange={(e) => setSelectedType(e.target.value as "full")}
-                        className="rounded-full"
-                      />
-                      <span>Volledige shift (19:00-7:00)</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="nightShift"
-                        value="first"
-                        checked={selectedType === "first"}
-                        onChange={(e) => setSelectedType(e.target.value as "first")}
-                        className="rounded-full"
-                      />
-                      <span>Eerste deel (19:00-21:00)</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="nightShift"
-                        value="second"
-                        checked={selectedType === "second"}
-                        onChange={(e) => setSelectedType(e.target.value as "second")}
-                        className="rounded-full"
-                      />
-                      <span>Tweede deel (21:00-7:00)</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="nightShift"
-                        value="unavailable"
-                        checked={selectedType === "unavailable"}
-                        onChange={(e) => setSelectedType(e.target.value as "unavailable")}
-                        className="rounded-full"
-                      />
-                      <span>Ik kan niet</span>
-                    </label>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <div>
+                    <input
+                      type="radio"
+                      id="full"
+                      name="shiftType"
+                      value="full"
+                      checked={shiftType === "full"}
+                      onChange={handleTypeChange}
+                    />
+                    <label htmlFor="full" className="ml-2">Volledige shift</label>
                   </div>
-                  <Button
-                    type="submit"
-                    disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
-                    className="w-full"
-                  >
-                    {createPreferenceMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Voorkeur opslaan...
-                      </>
-                    ) : (
-                      "Voorkeur Opgeven voor Nacht Shift"
-                    )}
-                  </Button>
-                </form>
-              </>
-            )}
-
-            {selectedDate && getDayPreferences(selectedDate).length > 0 && (
-              <div className="pt-4 border-t">
-                <h3 className="font-medium mb-2">
-                  Opgegeven voorkeuren voor {format(selectedDate, "d MMMM yyyy", { locale: nl })}:
-                </h3>
-                {getDayPreferences(selectedDate).map((pref) => (
-                  <div key={pref.id} className="flex justify-between items-center py-1">
-                    <span className="text-sm text-muted-foreground">
-                      {pref.type === "day" ? "Dag" : pref.type === "night" ? "Nacht" : "Niet beschikbaar"}
-                      {pref.canSplit && " (kan gesplitst worden)"}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deletePreferenceMutation.mutate(pref.id)}
-                      disabled={isPastDeadline}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div>
+                    <input
+                      type="radio"
+                      id="unavailable"
+                      name="shiftType"
+                      value="unavailable"
+                      checked={shiftType === "unavailable"}
+                      onChange={handleTypeChange}
+                    />
+                    <label htmlFor="unavailable" className="ml-2">Niet beschikbaar</label>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
 
-            <div className="pt-4 mt-4 border-t text-sm text-muted-foreground">
-              <p>Let op:</p>
-              <ul className="list-disc pl-4 space-y-1">
-                <li>Dagshiften (7:00-19:00) zijn alleen beschikbaar in het weekend</li>
-                <li>Nachtshiften (19:00-7:00) zijn elke dag beschikbaar</li>
-                <li>Geef voorkeuren op vóór de 19e van de maand, 23:00</li>
-              </ul>
-            </div>
+                <Button
+                  type="submit"
+                  disabled={createPreferenceMutation.isPending || !selectedDate}
+                  className="w-full"
+                >
+                  {createPreferenceMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Bezig met opslaan...
+                    </>
+                  ) : (
+                    "Test Voorkeur Opslaan"
+                  )}
+                </Button>
+              </form>
+            )}
           </CardContent>
         </Card>
       </div>
