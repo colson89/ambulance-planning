@@ -149,22 +149,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isPastDeadline = now > currentMonthDeadline;
       const planningMonth = addMonths(now, isPastDeadline ? 2 : 1);
 
+      const requestDate = new Date(req.body.date);
+      const requestMonth = requestDate.getMonth() + 1;
+      const requestYear = requestDate.getFullYear();
+
+      // Valideer dat de voorkeur voor de juiste maand is
+      if (requestMonth !== planningMonth.getMonth() + 1 ||
+          requestYear !== planningMonth.getFullYear()) {
+        return res.status(400).json({
+          message: "Voorkeuren kunnen alleen worden opgegeven voor de juiste planningsmaand"
+        });
+      }
+
+      // Parse en valideer de data
       const preferenceData = {
         ...req.body,
         userId: req.user!.id,
         status: "pending"
       };
 
-      console.log('Creating preference:', preferenceData);
+      console.log('Creating preference with data:', preferenceData);
+
       const preference = await storage.createShiftPreference(preferenceData);
       res.status(201).json(preference);
     } catch (error) {
       console.error('Error creating preference:', error);
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Ongeldige voorkeur data", errors: error.errors });
-      } else {
-        res.status(500).json({ message: "Er is een fout opgetreden bij het opslaan van de voorkeur" });
-      }
+      res.status(500).json({
+        message: "Er is een fout opgetreden bij het opslaan van de voorkeur"
+      });
     }
   });
 
