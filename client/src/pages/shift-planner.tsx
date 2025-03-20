@@ -89,11 +89,17 @@ export default function ShiftPlanner() {
     }
 
     // Test data
+    const startTime = new Date(selectedDate);
+    startTime.setHours(7, 0, 0, 0);
+
+    const endTime = new Date(selectedDate);
+    endTime.setHours(19, 0, 0, 0);
+
     const testData = {
       date: selectedDate.toISOString(),
       type: "day",
-      startTime: new Date(selectedDate).setHours(7, 0, 0, 0),
-      endTime: new Date(selectedDate).setHours(19, 0, 0, 0),
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
       canSplit: false,
       month: selectedMonth.getMonth() + 1,
       year: selectedMonth.getFullYear(),
