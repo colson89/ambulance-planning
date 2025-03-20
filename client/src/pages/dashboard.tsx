@@ -16,10 +16,12 @@ export default function Dashboard() {
     queryKey: ["/api/shifts"],
   });
 
-  const nextMonth = addMonths(new Date(), 1);
   const today = new Date();
   const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
   const isPastDeadline = today > currentMonthDeadline;
+
+  // Als we voorbij de deadline zijn van deze maand, toon dan de planning voor de maand na volgende maand
+  const planningMonth = addMonths(today, isPastDeadline ? 2 : 1);
 
   if (isLoading) {
     return (
@@ -72,9 +74,11 @@ export default function Dashboard() {
           <div className="text-center">
             <h2 className="text-lg font-medium mb-2">Shift Planning Status</h2>
             <p className="text-muted-foreground">
+              {format(planningMonth, "MMMM yyyy", { locale: nl })} is nu open voor voorkeuren.
+              <br />
               {isPastDeadline 
-                ? `De deadline voor het opgeven van voorkeuren voor ${format(nextMonth, "MMMM yyyy", { locale: nl })} is verstreken.`
-                : `U kunt nog tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven voor ${format(nextMonth, "MMMM yyyy", { locale: nl })}.`
+                ? `U kunt tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
+                : `U kunt tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
               }
             </p>
             <Button 
@@ -96,7 +100,7 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{user?.isAdmin ? "Administrator" : "Staff"}</div>
+            <div className="text-2xl font-bold">{user?.role === 'admin' ? "Administrator" : "Ambulancier"}</div>
           </CardContent>
         </Card>
 

@@ -47,10 +47,16 @@ export default function ShiftPlanner() {
     night: false
   });
 
-  // Initialiseer selectedMonth met de volgende maand bij het laden
+  // Aanpassing van de planning logica en deadline check
+  const today = new Date();
+  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
+  const isPastDeadline = today > currentMonthDeadline;
+
+  // Initialiseer selectedMonth met de juiste planning maand
   useEffect(() => {
-    const nextMonth = addMonths(new Date(), 1);
-    setSelectedMonth(nextMonth);
+    const planningMonth = addMonths(today, isPastDeadline ? 2 : 1);
+    setSelectedMonth(planningMonth);
+    setSelectedDate(planningMonth);
   }, []);
 
   // Get user's shift preferences for selected month
@@ -88,9 +94,6 @@ export default function ShiftPlanner() {
   });
 
   // Check deadline voor volgende maand
-  const today = new Date();
-  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
-  const isPastDeadline = today > currentMonthDeadline;
 
   const handlePreferenceSubmit = (type: "day" | "night") => {
     if (!selectedDate || !user) return;
