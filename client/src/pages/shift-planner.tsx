@@ -37,7 +37,7 @@ export default function ShiftPlanner() {
     setSelectedDate(planningMonth);
   }, []);
 
-  const { data: preferences = [] } = useQuery({
+  const { data: preferences = [] } = useQuery<ShiftPreference[]>({
     queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/preferences?month=${selectedMonth.getMonth() + 1}&year=${selectedMonth.getFullYear()}`);
@@ -114,9 +114,10 @@ export default function ShiftPlanner() {
       return;
     }
 
-    let startTime, endTime;
     const shiftDate = new Date(selectedDate);
     const selectedShiftType = type === "day" ? dayShiftType : nightShiftType;
+
+    let startTime: Date, endTime: Date;
 
     if (type === "day") {
       if (selectedShiftType === "full") {
@@ -147,10 +148,10 @@ export default function ShiftPlanner() {
     }
 
     const preference = {
-      date: selectedDate.toISOString(),
+      date: selectedDate,
       type,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
+      startTime,
+      endTime,
       canSplit: selectedShiftType !== "full",
       month: selectedMonth.getMonth() + 1,
       year: selectedMonth.getFullYear(),
