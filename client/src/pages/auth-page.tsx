@@ -8,16 +8,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect } from "react";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Redirect if already authenticated
-  if (user) {
-    setLocation("/");
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
 
   const loginForm = useForm({
     defaultValues: { username: "", password: "" }
@@ -33,6 +34,10 @@ export default function AuthPage() {
       preferredHours: 32
     }
   });
+
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">
