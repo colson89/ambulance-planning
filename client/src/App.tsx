@@ -9,6 +9,7 @@ import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import ShiftPlanner from "@/pages/shift-planner";
 import Profile from "@/pages/profile";
+import UserManagement from "@/pages/user-management";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/shifts" component={ShiftPlanner} />
       <ProtectedRoute path="/profile" component={Profile} />
+      <ProtectedRoute path="/users" component={UserManagement} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

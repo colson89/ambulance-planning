@@ -1,12 +1,14 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Shift } from "@shared/schema";
+import { useLocation } from "wouter";
 
 export default function Dashboard() {
   const { user, logoutMutation } = useAuth();
+  const [, setLocation] = useLocation();
 
   const { data: shifts, isLoading } = useQuery<Shift[]>({
     queryKey: ["/api/shifts"],
@@ -30,14 +32,25 @@ export default function Dashboard() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Button 
-          variant="outline" 
-          onClick={() => logoutMutation.mutate()}
-          disabled={logoutMutation.isPending}
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Uitloggen
-        </Button>
+        <div className="flex gap-2">
+          {user?.isAdmin && (
+            <Button 
+              variant="outline"
+              onClick={() => setLocation("/users")}
+            >
+              <UserCog className="h-4 w-4 mr-2" />
+              Gebruikersbeheer
+            </Button>
+          )}
+          <Button 
+            variant="outline" 
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Uitloggen
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
