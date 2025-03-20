@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { format, addMonths } from "date-fns";
+import { format, addMonths, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { ShiftPreference } from "@shared/schema";
 
 type PreferenceType = "full" | "first" | "second" | "unavailable";
+type ShiftType = "day" | "night";
 
 export default function ShiftPlanner() {
   const { user } = useAuth();
@@ -22,7 +23,7 @@ export default function ShiftPlanner() {
   const [, setLocation] = useLocation();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [datePreferences, setDatePreferences] = useState<Map<string, PreferenceType>>(new Map());
+  const [datePreferences, setDatePreferences] = useState<Map<string, { day?: PreferenceType; night?: PreferenceType }>>(new Map());
 
   const today = new Date();
   const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
@@ -71,20 +72,26 @@ export default function ShiftPlanner() {
     },
   });
 
-  const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>, date: Date) => {
+  const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>, date: Date, shiftType: ShiftType) => {
     const dateKey = format(date, "yyyy-MM-dd");
     const newValue = event.target.value as PreferenceType;
-    setDatePreferences(new Map(datePreferences).set(dateKey, newValue));
+    const existingPreferences = datePreferences.get(dateKey) || {};
+
+    setDatePreferences(new Map(datePreferences).set(dateKey, {
+      ...existingPreferences,
+      [shiftType]: newValue
+    }));
   };
 
-  const getPreferenceForDate = (date: Date): PreferenceType => {
+  const getPreferenceForDate = (date: Date, shiftType: ShiftType): PreferenceType => {
     const dateKey = format(date, "yyyy-MM-dd");
-    return datePreferences.get(dateKey) || "full";
+    const prefs = datePreferences.get(dateKey);
+    return prefs?.[shiftType] || "full";
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent, shiftType: ShiftType) => {
     event.preventDefault();
-    console.log("Form submit", { selectedDate, preferenceType: selectedDate ? getPreferenceForDate(selectedDate) : null });
+    console.log("Form submit", { selectedDate, shiftType, preferenceType: selectedDate ? getPreferenceForDate(selectedDate, shiftType) : null });
 
     if (!selectedDate) {
       toast({
@@ -96,12 +103,20 @@ export default function ShiftPlanner() {
     }
 
     try {
-      const preferenceType = getPreferenceForDate(selectedDate);
+      const preferenceType = getPreferenceForDate(selectedDate, shiftType);
       const testData = {
         date: selectedDate,
-        type: preferenceType === "unavailable" ? "unavailable" : "day",
-        startTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 7, 0, 0),
-        endTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedMonth.getMonth(), selectedDate.getDate(), 19, 0, 0),
+        type: preferenceType === "unavailable" ? "unavailable" : shiftType,
+        startTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 
+          shiftType === "day" ? 7 : 19, 
+          0, 
+          0
+        ),
+        endTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + (shiftType === "night" ? 1 : 0), 
+          shiftType === "day" ? 19 : 7, 
+          0, 
+          0
+        ),
         canSplit: false,
         month: selectedMonth.getMonth() + 1,
         year: selectedMonth.getFullYear(),
@@ -186,69 +201,129 @@ export default function ShiftPlanner() {
           </CardHeader>
           <CardContent>
             {selectedDate && (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <div>
-                    <input
-                      type="radio"
-                      id="full"
-                      name="shiftType"
-                      value="full"
-                      checked={getPreferenceForDate(selectedDate) === "full"}
-                      onChange={(e) => handleTypeChange(e, selectedDate)}
-                    />
-                    <label htmlFor="full" className="ml-2">Volledige shift</label>
-                  </div>
-                  <div>
-                    <input
-                      type="radio"
-                      id="first"
-                      name="shiftType"
-                      value="first"
-                      checked={getPreferenceForDate(selectedDate) === "first"}
-                      onChange={(e) => handleTypeChange(e, selectedDate)}
-                    />
-                    <label htmlFor="first" className="ml-2">Eerste deel</label>
-                  </div>
-                  <div>
-                    <input
-                      type="radio"
-                      id="second"
-                      name="shiftType"
-                      value="second"
-                      checked={getPreferenceForDate(selectedDate) === "second"}
-                      onChange={(e) => handleTypeChange(e, selectedDate)}
-                    />
-                    <label htmlFor="second" className="ml-2">Tweede deel</label>
-                  </div>
-                  <div>
-                    <input
-                      type="radio"
-                      id="unavailable"
-                      name="shiftType"
-                      value="unavailable"
-                      checked={getPreferenceForDate(selectedDate) === "unavailable"}
-                      onChange={(e) => handleTypeChange(e, selectedDate)}
-                    />
-                    <label htmlFor="unavailable" className="ml-2">Niet beschikbaar</label>
-                  </div>
-                </div>
+              <div className="space-y-6">
+                {isWeekend(selectedDate) && (
+                  <form onSubmit={(e) => handleSubmit(e, "day")} className="space-y-4">
+                    <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
+                    <div className="space-y-2">
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="dayShift"
+                          value="full"
+                          checked={getPreferenceForDate(selectedDate, "day") === "full"}
+                          onChange={(e) => handleTypeChange(e, selectedDate, "day")}
+                        />
+                        <span>Volledige shift (7:00-19:00)</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="dayShift"
+                          value="first"
+                          checked={getPreferenceForDate(selectedDate, "day") === "first"}
+                          onChange={(e) => handleTypeChange(e, selectedDate, "day")}
+                        />
+                        <span>Eerste deel (7:00-13:00)</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="dayShift"
+                          value="second"
+                          checked={getPreferenceForDate(selectedDate, "day") === "second"}
+                          onChange={(e) => handleTypeChange(e, selectedDate, "day")}
+                        />
+                        <span>Tweede deel (13:00-19:00)</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="dayShift"
+                          value="unavailable"
+                          checked={getPreferenceForDate(selectedDate, "day") === "unavailable"}
+                          onChange={(e) => handleTypeChange(e, selectedDate, "day")}
+                        />
+                        <span>Niet beschikbaar</span>
+                      </label>
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={createPreferenceMutation.isPending}
+                      className="w-full"
+                    >
+                      {createPreferenceMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Bezig met opslaan...
+                        </>
+                      ) : (
+                        "Dag Shift Voorkeur Opslaan"
+                      )}
+                    </Button>
+                  </form>
+                )}
 
-                <Button
-                  type="submit"
-                  disabled={createPreferenceMutation.isPending || !selectedDate}
-                  className="w-full"
-                >
-                  {createPreferenceMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Bezig met opslaan...
-                    </>
-                  ) : (
-                    "Voorkeur Opslaan"
-                  )}
-                </Button>
-              </form>
+                <form onSubmit={(e) => handleSubmit(e, "night")} className="space-y-4">
+                  <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="nightShift"
+                        value="full"
+                        checked={getPreferenceForDate(selectedDate, "night") === "full"}
+                        onChange={(e) => handleTypeChange(e, selectedDate, "night")}
+                      />
+                      <span>Volledige shift (19:00-7:00)</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="nightShift"
+                        value="first"
+                        checked={getPreferenceForDate(selectedDate, "night") === "first"}
+                        onChange={(e) => handleTypeChange(e, selectedDate, "night")}
+                      />
+                      <span>Eerste deel (19:00-1:00)</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="nightShift"
+                        value="second"
+                        checked={getPreferenceForDate(selectedDate, "night") === "second"}
+                        onChange={(e) => handleTypeChange(e, selectedDate, "night")}
+                      />
+                      <span>Tweede deel (1:00-7:00)</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="nightShift"
+                        value="unavailable"
+                        checked={getPreferenceForDate(selectedDate, "night") === "unavailable"}
+                        onChange={(e) => handleTypeChange(e, selectedDate, "night")}
+                      />
+                      <span>Niet beschikbaar</span>
+                    </label>
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={createPreferenceMutation.isPending}
+                    className="w-full"
+                  >
+                    {createPreferenceMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Bezig met opslaan...
+                      </>
+                    ) : (
+                      "Nacht Shift Voorkeur Opslaan"
+                    )}
+                  </Button>
+                </form>
+              </div>
             )}
           </CardContent>
         </Card>
