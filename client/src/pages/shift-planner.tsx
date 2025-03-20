@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { format, addMonths, startOfMonth, endOfMonth, setHours, setMinutes, isWeekend } from "date-fns";
+import { format, addMonths, endOfMonth, setHours, setMinutes, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 
 type ShiftPreference = {
+  id?: number;
   date: Date;
   type: "day" | "night";
   startTime: Date;
@@ -215,8 +216,8 @@ export default function ShiftPlanner() {
         <AlertDescription>
           U geeft nu voorkeuren op voor {format(selectedMonth, "MMMM yyyy", { locale: nl })}. 
           {isPastDeadline 
-            ? `U heeft tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM yyyy HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
-            : `U heeft tot ${format(currentMonthDeadline, "d MMMM yyyy HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
+            ? `U heeft tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
+            : `U heeft tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
           }
         </AlertDescription>
       </Alert>
@@ -255,63 +256,66 @@ export default function ShiftPlanner() {
             <CardTitle>Shift Voorkeuren</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {selectedDate && isWeekend(selectedDate) && (
-              <div className="space-y-4">
-                <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
-                <RadioGroup
-                  value={dayShiftType}
-                  onValueChange={(value) => setDayShiftType(value as ShiftType)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="full" id="day-full" />
-                    <Label htmlFor="day-full">Volledige shift (7:00-19:00)</Label>
+            {selectedDate && (
+              <>
+                {isWeekend(selectedDate) && (
+                  <div className="space-y-4">
+                    <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
+                    <RadioGroup
+                      value={dayShiftType}
+                      onValueChange={(value) => setDayShiftType(value as ShiftType)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="full" id="day-full" />
+                        <Label htmlFor="day-full">Volledige shift (7:00-19:00)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="first" id="day-first" />
+                        <Label htmlFor="day-first">Eerste deel (7:00-13:00)</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="second" id="day-second" />
+                        <Label htmlFor="day-second">Tweede deel (13:00-19:00)</Label>
+                      </div>
+                    </RadioGroup>
+                    <Button
+                      onClick={() => handlePreferenceSubmit("day")}
+                      disabled={!selectedDate || isPastDeadline}
+                      className="w-full"
+                    >
+                      Voorkeur Opgeven voor Dag Shift
+                    </Button>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="first" id="day-first" />
-                    <Label htmlFor="day-first">Eerste deel (7:00-13:00)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="second" id="day-second" />
-                    <Label htmlFor="day-second">Tweede deel (13:00-19:00)</Label>
-                  </div>
-                </RadioGroup>
-                <Button
-                  onClick={() => handlePreferenceSubmit("day")}
-                  disabled={!selectedDate || isPastDeadline}
-                  className="w-full"
-                >
-                  Voorkeur Opgeven voor Dag Shift
-                </Button>
-              </div>
+                )}
+                <div className="space-y-4">
+                  <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
+                  <RadioGroup
+                    value={nightShiftType}
+                    onValueChange={(value) => setNightShiftType(value as ShiftType)}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="full" id="night-full" />
+                      <Label htmlFor="night-full">Volledige shift (19:00-7:00)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="first" id="night-first" />
+                      <Label htmlFor="night-first">Eerste deel (19:00-21:00)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="second" id="night-second" />
+                      <Label htmlFor="night-second">Tweede deel (21:00-7:00)</Label>
+                    </div>
+                  </RadioGroup>
+                  <Button
+                    onClick={() => handlePreferenceSubmit("night")}
+                    disabled={!selectedDate || isPastDeadline}
+                    className="w-full"
+                  >
+                    Voorkeur Opgeven voor Nacht Shift
+                  </Button>
+                </div>
+              </>
             )}
-
-            <div className="space-y-4">
-              <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
-              <RadioGroup
-                value={nightShiftType}
-                onValueChange={(value) => setNightShiftType(value as ShiftType)}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="full" id="night-full" />
-                  <Label htmlFor="night-full">Volledige shift (19:00-7:00)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="first" id="night-first" />
-                  <Label htmlFor="night-first">Eerste deel (19:00-21:00)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="second" id="night-second" />
-                  <Label htmlFor="night-second">Tweede deel (21:00-7:00)</Label>
-                </div>
-              </RadioGroup>
-              <Button
-                onClick={() => handlePreferenceSubmit("night")}
-                disabled={!selectedDate || isPastDeadline}
-                className="w-full"
-              >
-                Voorkeur Opgeven voor Nacht Shift
-              </Button>
-            </div>
 
             {selectedDate && getDayPreferences(selectedDate).length > 0 && (
               <div className="pt-4 border-t">
