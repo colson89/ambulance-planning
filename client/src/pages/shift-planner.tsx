@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format, addMonths, startOfMonth, endOfMonth, setHours, setMinutes } from "date-fns";
+import { format, addMonths, startOfMonth, setHours, setMinutes } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home } from "lucide-react";
 import { useLocation } from "wouter";
@@ -25,6 +25,16 @@ type ShiftPreference = {
   year: number;
 };
 
+type PreferenceResponse = {
+  id: number;
+  date: string;
+  type: "day" | "night";
+  startTime: string;
+  endTime: string;
+  canSplit: boolean;
+  userId: number;
+};
+
 export default function ShiftPlanner() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -32,9 +42,13 @@ export default function ShiftPlanner() {
   const [, setLocation] = useLocation();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedMonth, setSelectedMonth] = useState(addMonths(new Date(), 1));
+  const [splitShift, setSplitShift] = useState({
+    day: false,
+    night: false
+  });
 
   // Get user's shift preferences for selected month
-  const { data: preferences, isLoading: preferencesLoading } = useQuery({
+  const { data: preferences = [], isLoading: preferencesLoading } = useQuery<PreferenceResponse[]>({
     queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
     enabled: !!user,
   });
@@ -77,7 +91,7 @@ export default function ShiftPlanner() {
       endTime = setHours(setMinutes(selectedDate, 0), 19);
     } else {
       startTime = setHours(setMinutes(selectedDate, 0), 19);
-      endTime = setHours(setMinutes(addMonths(selectedDate, 1), 0), 7);
+      endTime = setHours(setMinutes(new Date(selectedDate.getTime() + 24 * 60 * 60 * 1000), 0), 7);
     }
 
     const preference: ShiftPreference = {
@@ -85,13 +99,20 @@ export default function ShiftPlanner() {
       type,
       startTime,
       endTime,
-      canSplit,
+      canSplit: type === "day" ? splitShift.day : splitShift.night,
       userId: user.id,
       month: selectedMonth.getMonth() + 1,
       year: selectedMonth.getFullYear()
     };
 
     createPreferenceMutation.mutate(preference);
+  };
+
+  const getDayPreferences = (date: Date) => {
+    return preferences.filter(p => 
+      format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd") && 
+      p.userId === user?.id
+    );
   };
 
   return (
@@ -144,6 +165,8 @@ export default function ShiftPlanner() {
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="split-day"
+                  checked={splitShift.day}
+                  onCheckedChange={(checked) => setSplitShift(prev => ({ ...prev, day: checked as boolean }))}
                   disabled={!selectedDate || isPastDeadline}
                 />
                 <label htmlFor="split-day" className="text-sm">
@@ -151,7 +174,7 @@ export default function ShiftPlanner() {
                 </label>
               </div>
               <Button
-                onClick={() => handlePreferenceSubmit("day", false)}
+                onClick={() => handlePreferenceSubmit("day", splitShift.day)}
                 disabled={!selectedDate || isPastDeadline || preferencesLoading}
                 className="w-full"
               >
@@ -164,6 +187,8 @@ export default function ShiftPlanner() {
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="split-night"
+                  checked={splitShift.night}
+                  onCheckedChange={(checked) => setSplitShift(prev => ({ ...prev, night: checked as boolean }))}
                   disabled={!selectedDate || isPastDeadline}
                 />
                 <label htmlFor="split-night" className="text-sm">
@@ -171,7 +196,7 @@ export default function ShiftPlanner() {
                 </label>
               </div>
               <Button
-                onClick={() => handlePreferenceSubmit("night", false)}
+                onClick={() => handlePreferenceSubmit("night", splitShift.night)}
                 disabled={!selectedDate || isPastDeadline || preferencesLoading}
                 className="w-full"
               >
@@ -179,14 +204,12 @@ export default function ShiftPlanner() {
               </Button>
             </div>
 
-            {selectedDate && preferences && (
+            {selectedDate && (
               <div className="pt-4 border-t">
                 <h3 className="font-medium mb-2">
                   Opgegeven voorkeuren voor {format(selectedDate, "d MMMM yyyy", { locale: nl })}:
                 </h3>
-                {preferences.filter(p => 
-                  format(new Date(p.date), "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd") && p.userId === user.id
-                ).map((pref, i) => (
+                {getDayPreferences(selectedDate).map((pref, i) => (
                   <div key={i} className="text-sm text-muted-foreground">
                     {pref.type === "day" ? "Dag" : "Nacht"} shift
                     {pref.canSplit && " (kan gesplitst worden)"}
