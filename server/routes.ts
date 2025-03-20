@@ -143,25 +143,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create shift preference
   app.post("/api/preferences", requireAuth, async (req, res) => {
     try {
-      // Check deadline
-      const now = new Date();
-      const currentMonthDeadline = new Date(now.getFullYear(), now.getMonth(), 19, 23, 0);
-      const isPastDeadline = now > currentMonthDeadline;
-      const planningMonth = addMonths(now, isPastDeadline ? 2 : 1);
+      console.log('Received preference data:', req.body);
 
-      const requestDate = new Date(req.body.date);
-      const requestMonth = requestDate.getMonth() + 1;
-      const requestYear = requestDate.getFullYear();
-
-      // Valideer dat de voorkeur voor de juiste maand is
-      if (requestMonth !== planningMonth.getMonth() + 1 ||
-          requestYear !== planningMonth.getFullYear()) {
-        return res.status(400).json({
-          message: "Voorkeuren kunnen alleen worden opgegeven voor de juiste planningsmaand"
-        });
-      }
-
-      // Parse en valideer de data
       const preferenceData = {
         ...req.body,
         userId: req.user!.id,
@@ -171,6 +154,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Creating preference with data:', preferenceData);
 
       const preference = await storage.createShiftPreference(preferenceData);
+      console.log('Created preference:', preference);
+
       res.status(201).json(preference);
     } catch (error) {
       console.error('Error creating preference:', error);

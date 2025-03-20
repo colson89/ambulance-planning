@@ -115,44 +115,47 @@ export default function ShiftPlanner() {
       return;
     }
 
-    const shiftDate = new Date(selectedDate);
-    const selectedShiftType = type === "day" ? dayShiftType : nightShiftType;
-
-    let startTime = new Date(shiftDate);
-    let endTime = new Date(shiftDate);
-
-    if (type === "day") {
-      if (selectedShiftType === "full") {
-        startTime.setHours(7, 0, 0, 0);
-        endTime.setHours(19, 0, 0, 0);
-      } else if (selectedShiftType === "first") {
-        startTime.setHours(7, 0, 0, 0);
-        endTime.setHours(13, 0, 0, 0);
-      } else {
-        startTime.setHours(13, 0, 0, 0);
-        endTime.setHours(19, 0, 0, 0);
-      }
-    } else {
-      if (selectedShiftType === "full") {
-        startTime.setHours(19, 0, 0, 0);
-        const nextDay = new Date(shiftDate);
-        nextDay.setDate(nextDay.getDate() + 1);
-        endTime = nextDay;
-        endTime.setHours(7, 0, 0, 0);
-      } else if (selectedShiftType === "first") {
-        startTime.setHours(19, 0, 0, 0);
-        endTime.setHours(21, 0, 0, 0);
-      } else {
-        startTime.setHours(21, 0, 0, 0);
-        const nextDay = new Date(shiftDate);
-        nextDay.setDate(nextDay.getDate() + 1);
-        endTime = nextDay;
-        endTime.setHours(7, 0, 0, 0);
-      }
-    }
-
     try {
-      const preference = {
+      // Maak een nieuwe datum object voor de shift
+      const shiftDate = new Date(selectedDate);
+      const selectedShiftType = type === "day" ? dayShiftType : nightShiftType;
+
+      // Start- en eindtijd instellen
+      let startTime = new Date(shiftDate);
+      let endTime = new Date(shiftDate);
+
+      if (type === "day") {
+        if (selectedShiftType === "full") {
+          startTime.setHours(7, 0, 0, 0);
+          endTime.setHours(19, 0, 0, 0);
+        } else if (selectedShiftType === "first") {
+          startTime.setHours(7, 0, 0, 0);
+          endTime.setHours(13, 0, 0, 0);
+        } else {
+          startTime.setHours(13, 0, 0, 0);
+          endTime.setHours(19, 0, 0, 0);
+        }
+      } else {
+        if (selectedShiftType === "full") {
+          startTime.setHours(19, 0, 0, 0);
+          const nextDay = new Date(shiftDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          endTime = nextDay;
+          endTime.setHours(7, 0, 0, 0);
+        } else if (selectedShiftType === "first") {
+          startTime.setHours(19, 0, 0, 0);
+          endTime.setHours(21, 0, 0, 0);
+        } else {
+          startTime.setHours(21, 0, 0, 0);
+          const nextDay = new Date(shiftDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          endTime = nextDay;
+          endTime.setHours(7, 0, 0, 0);
+        }
+      }
+
+      // Data voor de API request voorbereiden
+      const preferenceData = {
         date: shiftDate.toISOString(),
         type,
         startTime: startTime.toISOString(),
@@ -163,19 +166,21 @@ export default function ShiftPlanner() {
         notes: null
       };
 
-      console.log('Submitting preference:', preference);
+      console.log('Submitting preference data:', preferenceData);
 
-      await createPreferenceMutation.mutateAsync(preference);
+      // Preference aanmaken via de API
+      await createPreferenceMutation.mutateAsync(preferenceData);
 
       toast({
         title: "Voorkeur opgeslagen",
         description: "Uw shift voorkeur is succesvol opgeslagen.",
       });
-    } catch (error) {
+
+    } catch (error: any) {
       console.error('Error submitting preference:', error);
       toast({
         title: "Fout",
-        description: "Er is een fout opgetreden bij het opslaan van uw voorkeur.",
+        description: error.message || "Er is een fout opgetreden bij het opslaan van uw voorkeur.",
         variant: "destructive",
       });
     }
