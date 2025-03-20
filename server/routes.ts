@@ -149,18 +149,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isPastDeadline = now > currentMonthDeadline;
       const planningMonth = addMonths(now, isPastDeadline ? 2 : 1);
 
-      // Parse the incoming dates
-      const preferenceDate = new Date(req.body.date);
-      const preferenceMonth = preferenceDate.getMonth() + 1;
-      const preferenceYear = preferenceDate.getFullYear();
-
-      if (preferenceMonth !== planningMonth.getMonth() + 1 ||
-          preferenceYear !== planningMonth.getFullYear()) {
-        return res.status(400).json({
-          message: "Voorkeuren kunnen alleen worden opgegeven voor de juiste planningsmaand"
-        });
-      }
-
       const preferenceData = {
         ...req.body,
         userId: req.user!.id,
@@ -173,9 +161,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating preference:', error);
       if (error instanceof z.ZodError) {
-        res.status(400).json(error.errors);
+        res.status(400).json({ message: "Ongeldige voorkeur data", errors: error.errors });
       } else {
-        res.status(500).json({ message: "Failed to create preference" });
+        res.status(500).json({ message: "Er is een fout opgetreden bij het opslaan van de voorkeur" });
       }
     }
   });

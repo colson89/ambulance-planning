@@ -150,7 +150,7 @@ export default function ShiftPlanner() {
 
     try {
       const preference = {
-        date: selectedDate.toISOString(),
+        date: shiftDate.toISOString(),
         type,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
