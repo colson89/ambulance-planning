@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { format, addMonths, startOfMonth, endOfMonth, setHours, setMinutes, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home } from "lucide-react";
+import { Home, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
@@ -98,6 +98,31 @@ export default function ShiftPlanner() {
     },
   });
 
+  const deletePreferenceMutation = useMutation({
+    mutationFn: async (preferenceId: number) => {
+      const res = await apiRequest("DELETE", `/api/preferences/${preferenceId}`);
+      if (!res.ok) {
+        throw new Error("Kon voorkeur niet verwijderen");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()] 
+      });
+      toast({
+        title: "Voorkeur verwijderd",
+        description: "De shift voorkeur is succesvol verwijderd.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handlePreferenceSubmit = (type: "day" | "night") => {
     if (!selectedDate || !user) return;
 
@@ -154,7 +179,6 @@ export default function ShiftPlanner() {
       year: selectedMonth.getFullYear()
     };
 
-    console.log('Submitting preference:', preference);
     createPreferenceMutation.mutate(preference);
   };
 
@@ -281,10 +305,20 @@ export default function ShiftPlanner() {
                 <h3 className="font-medium mb-2">
                   Opgegeven voorkeuren voor {format(selectedDate, "d MMMM yyyy", { locale: nl })}:
                 </h3>
-                {getDayPreferences(selectedDate).map((pref, i) => (
-                  <div key={i} className="text-sm text-muted-foreground">
-                    {pref.type === "day" ? "Dag" : "Nacht"} shift
-                    {pref.canSplit && " (kan gesplitst worden)"}
+                {getDayPreferences(selectedDate).map((pref) => (
+                  <div key={pref.id} className="flex justify-between items-center py-1">
+                    <span className="text-sm text-muted-foreground">
+                      {pref.type === "day" ? "Dag" : "Nacht"} shift
+                      {pref.canSplit && " (kan gesplitst worden)"}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deletePreferenceMutation.mutate(pref.id)}
+                      disabled={isPastDeadline}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
               </div>

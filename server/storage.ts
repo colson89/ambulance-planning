@@ -34,6 +34,7 @@ export interface IStorage {
   getOpenShiftsForPlanning(month: number, year: number): Promise<Shift[]>;
   generateMonthlySchedule(month: number, year: number): Promise<void>;
   sessionStore: session.Store;
+  getShiftPreference(id: number): Promise<ShiftPreference | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -162,6 +163,14 @@ export class DatabaseStorage implements IStorage {
   async generateMonthlySchedule(month: number, year: number): Promise<void> {
     // Deze functie zal later worden geïmplementeerd om de planning te genereren
     // op basis van de voorkeuren en beschikbaarheid van ambulanciers
+  }
+
+  async getShiftPreference(id: number): Promise<ShiftPreference | undefined> {
+    const [preference] = await db
+      .select()
+      .from(shiftPreferences)
+      .where(eq(shiftPreferences.id, id));
+    return preference;
   }
 }
 

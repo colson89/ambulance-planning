@@ -177,6 +177,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete shift preference
+  app.delete("/api/preferences/:id", requireAuth, async (req, res) => {
+    try {
+      // Check if preference exists and belongs to user
+      const preference = await storage.getShiftPreference(parseInt(req.params.id));
+      if (!preference) {
+        return res.status(404).json({ message: "Voorkeur niet gevonden" });
+      }
+
+      if (preference.userId !== req.user!.id) {
+        return res.status(403).json({ message: "U heeft geen toegang tot deze voorkeur" });
+      }
+
+      await storage.deleteShiftPreference(parseInt(req.params.id));
+      res.sendStatus(200);
+    } catch (error) {
+      res.status(500).json({ message: "Kon voorkeur niet verwijderen" });
+    }
+  });
+
+
   // Get all shifts
   app.get("/api/shifts", requireAuth, async (req, res) => {
     const shifts = await storage.getAllShifts();
