@@ -8,10 +8,33 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from 'react';
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
+
+  // Registreer ROVE319 als admin
+  React.useEffect(() => {
+    const createAdmin = async () => {
+      const adminData = {
+        username: "ROVE319",
+        password: "Admin123!", // Temporary password
+        isAdmin: true,
+        maxHours: 168, // Maximum hours in a week
+        preferredHours: 40
+      };
+
+      try {
+        await registerMutation.mutateAsync(adminData);
+      } catch (error) {
+        // User might already exist
+        console.error("Could not create admin:", error);
+      }
+    };
+
+    createAdmin();
+  }, []);
 
   // Redirect if already authenticated
   if (user) {
@@ -61,7 +84,7 @@ export default function AuthPage() {
                         placeholder="Password"
                         {...loginForm.register("password")}
                       />
-                      <Button 
+                      <Button
                         type="submit"
                         className="w-full"
                         disabled={loginMutation.isPending}
@@ -86,7 +109,7 @@ export default function AuthPage() {
                         placeholder="Password"
                         {...registerForm.register("password")}
                       />
-                      <Button 
+                      <Button
                         type="submit"
                         className="w-full"
                         disabled={registerMutation.isPending}
