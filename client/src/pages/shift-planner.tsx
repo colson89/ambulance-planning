@@ -74,6 +74,10 @@ export default function ShiftPlanner() {
         startTime: preference.startTime.toISOString(),
         endTime: preference.endTime.toISOString(),
       });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Er is een fout opgetreden");
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -201,6 +205,8 @@ export default function ShiftPlanner() {
                 return date.getMonth() !== selectedMonth.getMonth();
               }}
               className="rounded-md border"
+              locale={nl}
+              weekStartsOn={1}
             />
           </CardContent>
         </Card>
