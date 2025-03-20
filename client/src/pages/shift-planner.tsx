@@ -9,13 +9,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { format, addMonths, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Trash2, Loader2, X } from "lucide-react";
+import { Home, Trash2, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import type { ShiftPreference } from "@shared/schema";
 
-type ShiftType = "full" | "first" | "second";
+type ShiftType = "full" | "first" | "second" | "unavailable";
 
 export default function ShiftPlanner() {
   const { user } = useAuth();
@@ -58,58 +58,49 @@ export default function ShiftPlanner() {
       year: number;
       notes: string | null;
     }) => {
-      console.log("Submitting preference:", data);
       const res = await apiRequest("POST", "/api/preferences", data);
-      console.log("API Response:", res.status);
-
       const responseData = await res.json();
       if (!res.ok) throw new Error(responseData.message || "Er is een fout opgetreden");
-
-      console.log("Success response:", responseData);
       return responseData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
+      toast({
+        title: "Voorkeur opgeslagen",
+        description: "Uw voorkeur is succesvol opgeslagen.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message || "Er is een fout opgetreden bij het opslaan van uw voorkeur.",
+        variant: "destructive",
+      });
     },
   });
 
-  const handleMarkUnavailable = async () => {
-    if (!selectedDate) {
-      toast({
-        title: "Fout",
-        description: "Selecteer eerst een datum",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const preferenceData = {
-        date: selectedDate.toISOString(),
-        type: "unavailable" as const,
-        canSplit: false,
-        month: selectedMonth.getMonth() + 1,
-        year: selectedMonth.getFullYear(),
-        notes: "Niet beschikbaar"
-      };
-
-      await createPreferenceMutation.mutateAsync(preferenceData);
-
+  const deletePreferenceMutation = useMutation({
+    mutationFn: async (preferenceId: number) => {
+      const res = await apiRequest("DELETE", `/api/preferences/${preferenceId}`);
+      if (!res.ok) throw new Error("Kon voorkeur niet verwijderen");
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
       toast({
-        title: "Niet beschikbaar gemarkeerd",
-        description: "De datum is gemarkeerd als niet beschikbaar.",
+        title: "Voorkeur verwijderd",
+        description: "De voorkeur is succesvol verwijderd.",
       });
-    } catch (error) {
-      console.error("Error marking unavailable:", error);
+    },
+    onError: (error: Error) => {
       toast({
         title: "Fout",
-        description: "Kon de datum niet markeren als niet beschikbaar.",
+        description: error.message,
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
 
-  const handleSubmitShift = async (type: "day" | "night") => {
-    console.log(`Handling ${type} shift submission`);
-
+  const handleSubmitPreference = async (type: "day" | "night") => {
     if (!selectedDate) {
       toast({
         title: "Fout",
@@ -119,6 +110,26 @@ export default function ShiftPlanner() {
       return;
     }
 
+    const shiftType = type === "day" ? dayShiftType : nightShiftType;
+
+    // Als "niet beschikbaar" is geselecteerd
+    if (shiftType === "unavailable") {
+      try {
+        await createPreferenceMutation.mutateAsync({
+          date: selectedDate.toISOString(),
+          type: "unavailable",
+          canSplit: false,
+          month: selectedMonth.getMonth() + 1,
+          year: selectedMonth.getFullYear(),
+          notes: "Niet beschikbaar"
+        });
+      } catch (error) {
+        console.error("Error marking unavailable:", error);
+      }
+      return;
+    }
+
+    // Check weekend voor dagshift
     if (type === "day" && !isWeekend(selectedDate)) {
       toast({
         title: "Niet toegestaan",
@@ -129,17 +140,16 @@ export default function ShiftPlanner() {
     }
 
     const shiftDate = new Date(selectedDate);
-    const selectedShiftType = type === "day" ? dayShiftType : nightShiftType;
-
     let startTime = new Date(shiftDate);
     let endTime = new Date(shiftDate);
 
     if (type === "day") {
       startTime.setHours(7, 0, 0, 0);
-      endTime.setHours(selectedShiftType === "full" ? 19 : selectedShiftType === "first" ? 13 : 19, 0, 0, 0);
+      endTime.setHours(shiftType === "full" ? 19 : shiftType === "first" ? 13 : 19, 0, 0, 0);
     } else {
       startTime.setHours(19, 0, 0, 0);
-      if (selectedShiftType === "full" || selectedShiftType === "second") {
+      if (shiftType === "full" || shiftType === "second") {
+        endTime = new Date(shiftDate);
         endTime.setDate(endTime.getDate() + 1);
         endTime.setHours(7, 0, 0, 0);
       } else {
@@ -153,48 +163,15 @@ export default function ShiftPlanner() {
         type,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
-        canSplit: selectedShiftType !== "full",
+        canSplit: shiftType !== "full",
         month: selectedMonth.getMonth() + 1,
         year: selectedMonth.getFullYear(),
         notes: null
       });
-
-      queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
-      toast({
-        title: "Voorkeur opgeslagen",
-        description: "Uw shift voorkeur is succesvol opgeslagen.",
-      });
     } catch (error) {
       console.error("Error submitting shift:", error);
-      toast({
-        title: "Fout",
-        description: "Er is een fout opgetreden bij het opslaan van uw voorkeur.",
-        variant: "destructive",
-      });
     }
   };
-
-  const deletePreferenceMutation = useMutation({
-    mutationFn: async (preferenceId: number) => {
-      const res = await apiRequest("DELETE", `/api/preferences/${preferenceId}`);
-      if (!res.ok) throw new Error("Kon voorkeur niet verwijderen");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
-      toast({
-        title: "Voorkeur verwijderd",
-        description: "De shift voorkeur is succesvol verwijderd.",
-      });
-    },
-    onError: (error: Error) => {
-      console.error("Error deleting preference:", error);
-      toast({
-        title: "Fout",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
   const getDayPreferences = (date: Date) => {
     return preferences.filter(p =>
@@ -258,26 +235,6 @@ export default function ShiftPlanner() {
           <CardContent className="space-y-4">
             {selectedDate && (
               <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleMarkUnavailable}
-                  disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
-                  className="w-full mb-4"
-                >
-                  {createPreferenceMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Bezig met opslaan...
-                    </>
-                  ) : (
-                    <>
-                      <X className="h-4 w-4 mr-2" />
-                      Markeer als Niet Beschikbaar
-                    </>
-                  )}
-                </Button>
-
                 {isWeekend(selectedDate) && (
                   <div className="space-y-4">
                     <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
@@ -297,10 +254,14 @@ export default function ShiftPlanner() {
                         <RadioGroupItem value="second" id="day-second" />
                         <Label htmlFor="day-second">Tweede deel (13:00-19:00)</Label>
                       </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="unavailable" id="day-unavailable" />
+                        <Label htmlFor="day-unavailable">Ik kan niet</Label>
+                      </div>
                     </RadioGroup>
                     <Button
                       type="button"
-                      onClick={() => handleSubmitShift("day")}
+                      onClick={() => handleSubmitPreference("day")}
                       disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
                       className="w-full"
                     >
@@ -334,10 +295,14 @@ export default function ShiftPlanner() {
                       <RadioGroupItem value="second" id="night-second" />
                       <Label htmlFor="night-second">Tweede deel (21:00-7:00)</Label>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="unavailable" id="night-unavailable" />
+                      <Label htmlFor="night-unavailable">Ik kan niet</Label>
+                    </div>
                   </RadioGroup>
                   <Button
                     type="button"
-                    onClick={() => handleSubmitShift("night")}
+                    onClick={() => handleSubmitPreference("night")}
                     disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
                     className="w-full"
                   >
@@ -383,7 +348,6 @@ export default function ShiftPlanner() {
               <ul className="list-disc pl-4 space-y-1">
                 <li>Dagshiften (7:00-19:00) zijn alleen beschikbaar in het weekend</li>
                 <li>Nachtshiften (19:00-7:00) zijn elke dag beschikbaar</li>
-                <li>U kunt data markeren als niet beschikbaar</li>
                 <li>Geef voorkeuren op vóór de 19e van de maand, 23:00</li>
               </ul>
             </div>
