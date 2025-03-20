@@ -189,6 +189,13 @@ export default function ShiftPlanner() {
     );
   };
 
+  const getDayClassName = (date: Date) => {
+    if (getDayPreferences(date).length > 0) {
+      return "bg-primary/20 rounded-md";
+    }
+    return "";
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -228,6 +235,12 @@ export default function ShiftPlanner() {
                 // Sta alleen datums toe in de geselecteerde maand
                 return date.getMonth() !== selectedMonth.getMonth();
               }}
+              modifiers={{
+                preference: (date) => getDayPreferences(date).length > 0
+              }}
+              modifiersClassNames={{
+                preference: "bg-primary/20 rounded-md"
+              }}
               className="rounded-md border"
               locale={nl}
               weekStartsOn={1}
@@ -262,7 +275,7 @@ export default function ShiftPlanner() {
                 </RadioGroup>
                 <Button
                   onClick={() => handlePreferenceSubmit("day")}
-                  disabled={isPastDeadline}
+                  disabled={!selectedDate || isPastDeadline}
                   className="w-full"
                 >
                   Voorkeur Opgeven voor Dag Shift
@@ -291,7 +304,7 @@ export default function ShiftPlanner() {
               </RadioGroup>
               <Button
                 onClick={() => handlePreferenceSubmit("night")}
-                disabled={isPastDeadline}
+                disabled={!selectedDate || isPastDeadline}
                 className="w-full"
               >
                 Voorkeur Opgeven voor Nacht Shift
