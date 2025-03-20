@@ -15,6 +15,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, UserPlus, KeyRound } from "lucide-react";
 
+const updateUserSchema = z.object({
+  firstName: z.string().min(1, "Voornaam is verplicht"),
+  lastName: z.string().min(1, "Achternaam is verplicht"),
+  role: z.enum(["admin", "ambulancier"]),
+  minHours: z.number().min(0).max(168),
+  maxHours: z.number().min(0).max(168),
+  preferredHours: z.number().min(0).max(168),
+});
+
+type UpdateUserData = z.infer<typeof updateUserSchema>;
+
 export default function UserManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -39,20 +50,13 @@ export default function UserManagement() {
     }
   });
 
-  const updateUserForm = useForm({
-    resolver: zodResolver(z.object({
-      firstName: z.string().min(1),
-      lastName: z.string().min(1),
-      role: z.enum(["admin", "ambulancier"]),
-      minHours: z.number().min(0).max(168),
-      maxHours: z.number().min(0).max(168),
-      preferredHours: z.number().min(0).max(168),
-    }))
+  const updateUserForm = useForm<UpdateUserData>({
+    resolver: zodResolver(updateUserSchema)
   });
 
   const changePasswordForm = useForm({
     resolver: zodResolver(z.object({
-      password: z.string().min(6, "Password must be at least 6 characters")
+      password: z.string().min(6, "Wachtwoord moet minimaal 6 karakters bevatten")
     })),
     defaultValues: {
       password: ""
@@ -81,7 +85,7 @@ export default function UserManagement() {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, data }: { userId: number, data: any }) => {
+    mutationFn: async ({ userId, data }: { userId: number, data: UpdateUserData }) => {
       const res = await apiRequest("PATCH", `/api/users/${userId}`, data);
       return res.json();
     },
@@ -111,6 +115,7 @@ export default function UserManagement() {
         title: "Succes",
         description: "Wachtwoord gewijzigd",
       });
+      changePasswordForm.reset();
     },
     onError: (error: Error) => {
       toast({
@@ -292,9 +297,12 @@ export default function UserManagement() {
                       </DialogHeader>
                       <Form {...updateUserForm}>
                         <form 
-                          onSubmit={updateUserForm.handleSubmit((data) => 
-                            updateUserMutation.mutate({ userId: u.id, data })
-                          )} 
+                          onSubmit={updateUserForm.handleSubmit((data) => {
+                            updateUserMutation.mutate({ 
+                              userId: u.id, 
+                              data
+                            });
+                          })} 
                           className="space-y-4"
                         >
                           <div className="grid grid-cols-2 gap-4">
@@ -321,7 +329,7 @@ export default function UserManagement() {
                             <p className="text-sm text-muted-foreground">Bepaalt de rechten en toegang van de gebruiker</p>
                             <Select 
                               defaultValue={u.role}
-                              onValueChange={(value) => updateUserForm.setValue("role", value)}
+                              onValueChange={(value) => updateUserForm.setValue("role", value as "admin" | "ambulancier")}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecteer rol" />
