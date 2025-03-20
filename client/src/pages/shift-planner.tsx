@@ -34,6 +34,8 @@ type PreferenceResponse = {
   endTime: string;
   canSplit: boolean;
   userId: number;
+  month: number;
+  year: number;
 };
 
 type ShiftType = "full" | "first" | "second";
@@ -214,7 +216,7 @@ export default function ShiftPlanner() {
           U geeft nu voorkeuren op voor {format(selectedMonth, "MMMM yyyy", { locale: nl })}. 
           {isPastDeadline 
             ? `U heeft tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM yyyy HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
-            : `U heeft nog tot ${format(currentMonthDeadline, "d MMMM yyyy HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
+            : `U heeft tot ${format(currentMonthDeadline, "d MMMM yyyy HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
           }
         </AlertDescription>
       </Alert>

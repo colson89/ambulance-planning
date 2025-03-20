@@ -63,13 +63,17 @@ export const insertUserSchema = createInsertSchema(users, {
 
 export const insertShiftSchema = createInsertSchema(shifts);
 
-export const insertShiftPreferenceSchema = createInsertSchema(shiftPreferences).pick({
+export const insertShiftPreferenceSchema = createInsertSchema(shiftPreferences, {
+  type: z.enum(["day", "night"]),
+}).pick({
   userId: true,
   date: true,
   type: true,
   startTime: true,
   endTime: true,
   canSplit: true,
+  month: true,
+  year: true,
   notes: true
 });
 
