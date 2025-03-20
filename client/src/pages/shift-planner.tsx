@@ -6,14 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { format, addMonths, endOfMonth, setHours, setMinutes, isWeekend } from "date-fns";
+import { format, addMonths, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
+import type { ShiftPreference } from "@shared/schema";
 
 type ShiftType = "full" | "first" | "second";
 
@@ -31,14 +31,13 @@ export default function ShiftPlanner() {
   const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
   const isPastDeadline = today > currentMonthDeadline;
 
-  // Initialiseer selectedMonth met de juiste planning maand
   useEffect(() => {
     const planningMonth = addMonths(today, isPastDeadline ? 2 : 1);
     setSelectedMonth(planningMonth);
     setSelectedDate(planningMonth);
   }, []);
 
-  const { data: preferences = [], isLoading } = useQuery({
+  const { data: preferences = [] } = useQuery({
     queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/preferences?month=${selectedMonth.getMonth() + 1}&year=${selectedMonth.getFullYear()}`);
@@ -51,7 +50,7 @@ export default function ShiftPlanner() {
   });
 
   const createPreferenceMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Omit<ShiftPreference, "id" | "userId" | "status">) => {
       const res = await apiRequest("POST", "/api/preferences", data);
       if (!res.ok) {
         const error = await res.json();
@@ -154,7 +153,8 @@ export default function ShiftPlanner() {
       endTime: endTime.toISOString(),
       canSplit: selectedShiftType !== "full",
       month: selectedMonth.getMonth() + 1,
-      year: selectedMonth.getFullYear()
+      year: selectedMonth.getFullYear(),
+      notes: null
     };
 
     createPreferenceMutation.mutate(preference);
@@ -162,8 +162,7 @@ export default function ShiftPlanner() {
 
   const getDayPreferences = (date: Date) => {
     return preferences.filter(p => 
-      format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd") && 
-      p.userId === user?.id
+      format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
     );
   };
 
@@ -210,7 +209,6 @@ export default function ShiftPlanner() {
               month={selectedMonth}
               onMonthChange={setSelectedMonth}
               disabled={(date) => {
-                // Sta alleen datums toe in de geselecteerde maand
                 return date.getMonth() !== selectedMonth.getMonth();
               }}
               modifiers={{
