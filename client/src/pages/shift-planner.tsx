@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format, addMonths, startOfMonth, setHours, setMinutes } from "date-fns";
+import { format, addMonths, startOfMonth, setHours, setMinutes, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home } from "lucide-react";
 import { useLocation } from "wouter";
@@ -85,6 +85,16 @@ export default function ShiftPlanner() {
   const handlePreferenceSubmit = (type: "day" | "night", canSplit: boolean) => {
     if (!selectedDate || !user) return;
 
+    // Controleer of dagshift alleen in het weekend wordt opgegeven
+    if (type === "day" && !isWeekend(selectedDate)) {
+      toast({
+        title: "Niet toegestaan",
+        description: "Dagshiften kunnen alleen in het weekend worden opgegeven.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     let startTime, endTime;
     if (type === "day") {
       startTime = setHours(setMinutes(selectedDate, 0), 7);
@@ -160,27 +170,29 @@ export default function ShiftPlanner() {
             <CardTitle>Shift Voorkeuren</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="split-day"
-                  checked={splitShift.day}
-                  onCheckedChange={(checked) => setSplitShift(prev => ({ ...prev, day: checked as boolean }))}
-                  disabled={!selectedDate || isPastDeadline}
-                />
-                <label htmlFor="split-day" className="text-sm">
-                  Kan gesplitst worden (7:00-13:00 / 13:00-19:00)
-                </label>
+            {selectedDate && isWeekend(selectedDate) && (
+              <div className="space-y-2">
+                <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="split-day"
+                    checked={splitShift.day}
+                    onCheckedChange={(checked) => setSplitShift(prev => ({ ...prev, day: checked as boolean }))}
+                    disabled={!selectedDate || isPastDeadline}
+                  />
+                  <label htmlFor="split-day" className="text-sm">
+                    Kan gesplitst worden (7:00-13:00 / 13:00-19:00)
+                  </label>
+                </div>
+                <Button
+                  onClick={() => handlePreferenceSubmit("day", splitShift.day)}
+                  disabled={!selectedDate || isPastDeadline || preferencesLoading}
+                  className="w-full"
+                >
+                  Voorkeur Opgeven voor Dag Shift
+                </Button>
               </div>
-              <Button
-                onClick={() => handlePreferenceSubmit("day", splitShift.day)}
-                disabled={!selectedDate || isPastDeadline || preferencesLoading}
-                className="w-full"
-              >
-                Voorkeur Opgeven voor Dag Shift
-              </Button>
-            </div>
+            )}
 
             <div className="space-y-2">
               <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
@@ -217,6 +229,15 @@ export default function ShiftPlanner() {
                 ))}
               </div>
             )}
+
+            <div className="pt-4 mt-4 border-t text-sm text-muted-foreground">
+              <p>Let op:</p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li>Dagshiften (7:00-19:00) zijn alleen beschikbaar in het weekend</li>
+                <li>Nachtshiften (19:00-7:00) zijn elke dag beschikbaar</li>
+                <li>Geef voorkeuren op vóór de 19e van de maand, 23:00</li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
       </div>
