@@ -6,9 +6,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { format, addMonths, isWeekend } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Trash2, Loader2 } from "lucide-react";
+import { Home, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { ShiftPreference } from "@shared/schema";
@@ -88,17 +88,11 @@ export default function ShiftPlanner() {
     }
 
     try {
-      // Create a new Date object for the selected date
-      const date = new Date(selectedDate);
-
-      // Create test data
       const testData = {
-        date,
+        date: selectedDate,
         type: shiftType === "unavailable" ? "unavailable" : "day",
-        ...(shiftType !== "unavailable" && {
-          startTime: new Date(new Date(date).setHours(7, 0, 0)),
-          endTime: new Date(new Date(date).setHours(19, 0, 0))
-        }),
+        startTime: shiftType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 7, 0, 0),
+        endTime: shiftType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 19, 0, 0),
         canSplit: false,
         month: selectedMonth.getMonth() + 1,
         year: selectedMonth.getFullYear(),
