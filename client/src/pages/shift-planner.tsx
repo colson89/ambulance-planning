@@ -38,7 +38,7 @@ export default function ShiftPlanner() {
     setSelectedDate(planningMonth);
   }, []);
 
-  const { data: preferences = [], isLoading: preferencesLoading } = useQuery({
+  const { data: preferences = [], isLoading } = useQuery({
     queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/preferences?month=${selectedMonth.getMonth() + 1}&year=${selectedMonth.getFullYear()}`);
