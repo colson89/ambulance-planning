@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, UserPlus, KeyRound } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const updateUserSchema = z.object({
   firstName: z.string().min(1, "Voornaam is verplicht"),
@@ -31,6 +31,8 @@ export default function UserManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
@@ -111,16 +113,17 @@ export default function UserManagement() {
   const changePasswordMutation = useMutation({
     mutationFn: async ({ userId, password }: { userId: number; password: string }) => {
       const res = await apiRequest("PATCH", `/api/users/${userId}/password`, { 
-        password
+        password 
       });
       return res.json();
     },
     onSuccess: () => {
       toast({
-        title: "Succes",
-        description: "Wachtwoord gewijzigd",
+        title: "Wachtwoord gewijzigd",
+        description: "Het wachtwoord is succesvol bijgewerkt",
       });
       changePasswordForm.reset();
+      setChangePasswordDialogOpen(false);
     },
     onError: (error: Error) => {
       toast({
@@ -401,9 +404,17 @@ export default function UserManagement() {
                     </DialogContent>
                   </Dialog>
 
-                  <Dialog>
+                  <Dialog open={changePasswordDialogOpen} onOpenChange={setChangePasswordDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="icon" className="relative group">
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="relative group"
+                        onClick={() => {
+                          setSelectedUserId(u.id);
+                          setChangePasswordDialogOpen(true);
+                        }}
+                      >
                         <span className="sr-only">Wachtwoord wijzigen</span>
                         <KeyRound className="h-4 w-4" />
                         <span className="absolute -top-8 scale-0 transition-all rounded bg-black px-2 py-1 text-xs text-white group-hover:scale-100">
@@ -417,16 +428,25 @@ export default function UserManagement() {
                       </DialogHeader>
                       <Form {...changePasswordForm}>
                         <form 
-                          onSubmit={changePasswordForm.handleSubmit((data) => 
-                            changePasswordMutation.mutate({ userId: u.id, password: data.password })
-                          )} 
+                          onSubmit={changePasswordForm.handleSubmit((data) => {
+                            if (selectedUserId) {
+                              changePasswordMutation.mutate({ 
+                                userId: selectedUserId, 
+                                password: data.password 
+                              });
+                            }
+                          })} 
                           className="space-y-4"
                         >
-                          <Input
-                            type="password"
-                            placeholder="Nieuw wachtwoord"
-                            {...changePasswordForm.register("password")}
-                          />
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Nieuw Wachtwoord</label>
+                            <p className="text-sm text-muted-foreground">Minimaal 6 karakters</p>
+                            <Input
+                              type="password"
+                              placeholder="Nieuw wachtwoord"
+                              {...changePasswordForm.register("password")}
+                            />
+                          </div>
                           <Button 
                             type="submit"
                             className="w-full"
