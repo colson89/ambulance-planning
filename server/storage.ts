@@ -1,83 +1,69 @@
-import { users, type User, type InsertUser } from "@shared/schema";
+import { users, shifts, type User, type InsertUser, type Shift } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  getAllShifts(): Promise<any[]>;
-  createShift(shift: any): Promise<any>;
+  getAllShifts(): Promise<Shift[]>;
+  createShift(shift: any): Promise<Shift>;
   updateUserPreferences(userId: number, preferences: { maxHours: number; preferredHours: number }): Promise<User>;
   sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private shifts: Map<number, any>;
-  currentId: number;
-  currentShiftId: number;
+export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.users = new Map();
-    this.shifts = new Map();
-    this.currentId = 1;
-    this.currentShiftId = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // 24 hours
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = {
-      id,
-      username: insertUser.username,
-      password: insertUser.password,
-      isAdmin: insertUser.isAdmin || false,
-      maxHours: insertUser.maxHours || 40,
-      preferredHours: insertUser.preferredHours || 32
-    };
-    this.users.set(id, user);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
-  async getAllShifts(): Promise<any[]> {
-    return Array.from(this.shifts.values());
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
-  async createShift(shift: any): Promise<any> {
-    const id = this.currentShiftId++;
-    const newShift = { ...shift, id };
-    this.shifts.set(id, newShift);
-    return newShift;
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async getAllShifts(): Promise<Shift[]> {
+    return await db.select().from(shifts);
+  }
+
+  async createShift(shiftData: any): Promise<Shift> {
+    const [shift] = await db.insert(shifts).values(shiftData).returning();
+    return shift;
   }
 
   async updateUserPreferences(userId: number, preferences: { maxHours: number; preferredHours: number }): Promise<User> {
-    const user = await this.getUser(userId);
-    if (!user) throw new Error("User not found");
+    const [user] = await db
+      .update(users)
+      .set({
+        maxHours: preferences.maxHours,
+        preferredHours: preferences.preferredHours
+      })
+      .where(eq(users.id, userId))
+      .returning();
 
-    const updatedUser = {
-      ...user,
-      maxHours: preferences.maxHours,
-      preferredHours: preferences.preferredHours
-    };
-    this.users.set(userId, updatedUser);
-    return updatedUser;
+    if (!user) throw new Error("User not found");
+    return user;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
