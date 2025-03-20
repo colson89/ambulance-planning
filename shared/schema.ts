@@ -21,7 +21,27 @@ export const shifts = pgTable("shifts", {
   date: timestamp("date").notNull(),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
-  type: text("type").notNull() // day, night, etc
+  type: text("type", { enum: ["day", "night"] }).notNull(),
+  status: text("status", { enum: ["planned", "open"] }).notNull().default("open"),
+  isSplitShift: boolean("is_split_shift").notNull().default(false),
+  splitStartTime: timestamp("split_start_time"),
+  splitEndTime: timestamp("split_end_time"),
+  month: integer("month").notNull(),
+  year: integer("year").notNull()
+});
+
+export const shiftPreferences = pgTable("shift_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  date: timestamp("date").notNull(),
+  type: text("type", { enum: ["day", "night"] }).notNull(),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  canSplit: boolean("can_split").notNull().default(false),
+  notes: text("notes")
 });
 
 // Schema voor het aanmaken van een nieuwe gebruiker
@@ -43,6 +63,18 @@ export const insertUserSchema = createInsertSchema(users, {
 
 export const insertShiftSchema = createInsertSchema(shifts);
 
+export const insertShiftPreferenceSchema = createInsertSchema(shiftPreferences).pick({
+  userId: true,
+  date: true,
+  type: true,
+  startTime: true,
+  endTime: true,
+  canSplit: true,
+  notes: true
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Shift = typeof shifts.$inferSelect;
+export type ShiftPreference = typeof shiftPreferences.$inferSelect;
+export type InsertShiftPreference = z.infer<typeof insertShiftPreferenceSchema>;

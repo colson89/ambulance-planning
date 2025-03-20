@@ -1,66 +1,97 @@
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { z } from "zod";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { format, addMonths, startOfMonth, endOfMonth, setHours, setMinutes } from "date-fns";
+import { nl } from "date-fns/locale";
 import { Home } from "lucide-react";
 import { useLocation } from "wouter";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-// Define the InsertShift schema inline since it's specific to this component
-const insertShiftSchema = z.object({
-  userId: z.number(),
-  date: z.date(),
-  startTime: z.date(),
-  endTime: z.date(),
-  type: z.string()
-});
-
-type InsertShift = z.infer<typeof insertShiftSchema>;
+type ShiftPreference = {
+  date: Date;
+  type: "day" | "night";
+  startTime: Date;
+  endTime: Date;
+  canSplit: boolean;
+  userId: number;
+  month: number;
+  year: number;
+};
 
 export default function ShiftPlanner() {
-  const [date, setDate] = useState<Date | undefined>(new Date());
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedMonth, setSelectedMonth] = useState(addMonths(new Date(), 1));
 
-  const createShiftMutation = useMutation({
-    mutationFn: async (shiftData: InsertShift) => {
-      const res = await apiRequest("POST", "/api/shifts", shiftData);
+  // Get user's shift preferences for selected month
+  const { data: preferences, isLoading: preferencesLoading } = useQuery({
+    queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
+    enabled: !!user,
+  });
+
+  const createPreferenceMutation = useMutation({
+    mutationFn: async (preference: ShiftPreference) => {
+      const res = await apiRequest("POST", "/api/preferences", preference);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()] 
+      });
       toast({
-        title: "Success",
-        description: "Shift has been scheduled",
+        title: "Voorkeur opgeslagen",
+        description: "Uw shift voorkeur is succesvol opgeslagen.",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: "Fout",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const handleAddShift = () => {
-    if (!date || !user) return;
+  // Check if we're past the deadline for next month's preferences
+  const today = new Date();
+  const nextMonth = addMonths(startOfMonth(today), 1);
+  const deadline = new Date(today.getFullYear(), today.getMonth() + 1, 19, 23, 0);
+  const isPastDeadline = today > deadline;
 
-    const shift: InsertShift = {
+  const handlePreferenceSubmit = (type: "day" | "night", canSplit: boolean) => {
+    if (!selectedDate || !user) return;
+
+    let startTime, endTime;
+    if (type === "day") {
+      startTime = setHours(setMinutes(selectedDate, 0), 7);
+      endTime = setHours(setMinutes(selectedDate, 0), 19);
+    } else {
+      startTime = setHours(setMinutes(selectedDate, 0), 19);
+      endTime = setHours(setMinutes(addMonths(selectedDate, 1), 0), 7);
+    }
+
+    const preference: ShiftPreference = {
+      date: selectedDate,
+      type,
+      startTime,
+      endTime,
+      canSplit,
       userId: user.id,
-      date: date,
-      startTime: new Date(date.setHours(9, 0, 0)),
-      endTime: new Date(date.setHours(17, 0, 0)),
-      type: "day"
+      month: selectedMonth.getMonth() + 1,
+      year: selectedMonth.getFullYear()
     };
 
-    createShiftMutation.mutate(shift);
+    createPreferenceMutation.mutate(preference);
   };
 
   return (
@@ -76,27 +107,93 @@ export default function ShiftPlanner() {
         </Button>
       </div>
 
+      {isPastDeadline && (
+        <Alert className="mb-6">
+          <AlertDescription>
+            De deadline voor het opgeven van voorkeuren voor volgende maand ({format(nextMonth, "MMMM yyyy", { locale: nl })}) 
+            is verstreken (19e van de maand, 23:00).
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-          <CardContent className="p-6">
+          <CardHeader>
+            <CardTitle>Kalender</CardTitle>
+          </CardHeader>
+          <CardContent>
             <Calendar
               mode="single"
-              selected={date}
-              onSelect={setDate}
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              disabled={isPastDeadline}
+              month={selectedMonth}
+              onMonthChange={setSelectedMonth}
               className="rounded-md border"
             />
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Schedule Shift</h2>
-            <Button 
-              onClick={handleAddShift}
-              disabled={!date || createShiftMutation.isPending}
-            >
-              Add Day Shift
-            </Button>
+          <CardHeader>
+            <CardTitle>Shift Voorkeuren</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="split-day"
+                  disabled={!selectedDate || isPastDeadline}
+                />
+                <label htmlFor="split-day" className="text-sm">
+                  Kan gesplitst worden (7:00-13:00 / 13:00-19:00)
+                </label>
+              </div>
+              <Button
+                onClick={() => handlePreferenceSubmit("day", false)}
+                disabled={!selectedDate || isPastDeadline || preferencesLoading}
+                className="w-full"
+              >
+                Voorkeur Opgeven voor Dag Shift
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="split-night"
+                  disabled={!selectedDate || isPastDeadline}
+                />
+                <label htmlFor="split-night" className="text-sm">
+                  Kan gesplitst worden (19:00-21:00 / 21:00-7:00)
+                </label>
+              </div>
+              <Button
+                onClick={() => handlePreferenceSubmit("night", false)}
+                disabled={!selectedDate || isPastDeadline || preferencesLoading}
+                className="w-full"
+              >
+                Voorkeur Opgeven voor Nacht Shift
+              </Button>
+            </div>
+
+            {selectedDate && preferences && (
+              <div className="pt-4 border-t">
+                <h3 className="font-medium mb-2">
+                  Opgegeven voorkeuren voor {format(selectedDate, "d MMMM yyyy", { locale: nl })}:
+                </h3>
+                {preferences.filter(p => 
+                  format(new Date(p.date), "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd") && p.userId === user.id
+                ).map((pref, i) => (
+                  <div key={i} className="text-sm text-muted-foreground">
+                    {pref.type === "day" ? "Dag" : "Nacht"} shift
+                    {pref.canSplit && " (kan gesplitst worden)"}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-import { insertShiftSchema, insertUserSchema } from "@shared/schema";
+import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema } from "@shared/schema";
 import { z } from "zod";
 import { comparePasswords } from "./auth";
 
@@ -13,6 +13,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const requireAdmin = (req: any, res: any, next: any) => {
     if (!req.isAuthenticated() || !req.user.isAdmin) {
       return res.sendStatus(403);
+    }
+    next();
+  };
+
+  // Authenticatie middleware
+  const requireAuth = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
     }
     next();
   };
@@ -63,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user password (admin or self)
-  app.patch("/api/users/:id/password", async (req, res) => {
+  app.patch("/api/users/:id/password", requireAuth, async (req, res) => {
     try {
       // Check if user is admin or updating their own password
       if (!req.user?.isAdmin && req.user?.id !== parseInt(req.params.id)) {
@@ -112,56 +120,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Protected routes that require authentication
-  app.use("/api/shifts", (req, res, next) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    next();
+  // Get shift preferences for a month
+  app.get("/api/preferences", requireAuth, async (req, res) => {
+    try {
+      const { month, year } = req.query;
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+
+      const preferences = await storage.getUserShiftPreferences(
+        req.user!.id,
+        parseInt(month as string),
+        parseInt(year as string)
+      );
+      res.json(preferences);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get preferences" });
+    }
+  });
+
+  // Create shift preference
+  app.post("/api/preferences", requireAuth, async (req, res) => {
+    try {
+      // Check deadline
+      const now = new Date();
+      const deadline = new Date(now.getFullYear(), now.getMonth(), 19, 23, 0);
+      if (now > deadline) {
+        return res.status(400).json({ 
+          message: "De deadline voor het opgeven van voorkeuren is verstreken (19e van de maand, 23:00)" 
+        });
+      }
+
+      const preferenceData = insertShiftPreferenceSchema.parse(req.body);
+      const preference = await storage.createShiftPreference({
+        ...preferenceData,
+        userId: req.user!.id
+      });
+      res.status(201).json(preference);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json(error.errors);
+      } else {
+        res.status(500).json({ message: "Failed to create preference" });
+      }
+    }
   });
 
   // Get all shifts
-  app.get("/api/shifts", async (req, res) => {
+  app.get("/api/shifts", requireAuth, async (req, res) => {
     const shifts = await storage.getAllShifts();
     res.json(shifts);
   });
 
-  // Create shift
-  app.post("/api/shifts", async (req, res) => {
+  // Get shifts by month
+  app.get("/api/shifts/month/:month/:year", requireAuth, async (req, res) => {
     try {
-      const shiftData = insertShiftSchema.parse(req.body);
-      const shift = await storage.createShift(shiftData);
-      res.status(201).json(shift);
+      const { month, year } = req.params;
+      const shifts = await storage.getShiftsByMonth(
+        parseInt(month),
+        parseInt(year)
+      );
+      res.json(shifts);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json(error.errors);
-      } else {
-        res.status(500).json({ message: "Failed to create shift" });
-      }
+      res.status(500).json({ message: "Failed to get shifts" });
     }
   });
 
-  // Update user preferences
-  app.patch("/api/users/:id/preferences", async (req, res) => {
-    if (!req.user?.isAdmin && req.user?.id !== parseInt(req.params.id)) {
-      return res.sendStatus(403);
-    }
-
+  // Generate monthly schedule (admin only)
+  app.post("/api/shifts/generate/:month/:year", requireAdmin, async (req, res) => {
     try {
-      const preferences = z.object({
-        maxHours: z.number().min(0).max(168),
-        preferredHours: z.number().min(0).max(168)
-      }).parse(req.body);
-
-      const user = await storage.updateUser(
-        parseInt(req.params.id),
-        preferences
+      const { month, year } = req.params;
+      await storage.generateMonthlySchedule(
+        parseInt(month),
+        parseInt(year)
       );
-      res.json(user);
+      res.sendStatus(200);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json(error.errors);
-      } else {
-        res.status(500).json({ message: "Failed to update preferences" });
-      }
+      res.status(500).json({ message: "Failed to generate schedule" });
     }
   });
 
