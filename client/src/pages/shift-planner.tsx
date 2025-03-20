@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2 } from "lucide-react";
+import { Home, Loader2, Moon, Sun } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { ShiftPreference } from "@shared/schema";
@@ -107,14 +107,14 @@ export default function ShiftPlanner() {
       const testData = {
         date: selectedDate,
         type: preferenceType === "unavailable" ? "unavailable" : shiftType,
-        startTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 
-          shiftType === "day" ? 7 : 19, 
-          0, 
+        startTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(),
+          shiftType === "day" ? 7 : 19,
+          0,
           0
         ),
-        endTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + (shiftType === "night" ? 1 : 0), 
-          shiftType === "day" ? 19 : 7, 
-          0, 
+        endTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + (shiftType === "night" ? 1 : 0),
+          shiftType === "day" ? 19 : 7,
+          0,
           0
         ),
         canSplit: false,
@@ -137,10 +137,10 @@ export default function ShiftPlanner() {
     );
   };
 
-  const getPreferenceType = (date: Date) => {
+  const getPreferenceType = (date: Date, type: ShiftType) => {
     const prefs = getDayPreferences(date);
     if (prefs.length === 0) return null;
-    return prefs[0].type;
+    return prefs.find(p => p.type === type)?.type || null;
   };
 
   return (
@@ -163,37 +163,71 @@ export default function ShiftPlanner() {
       </Alert>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Kalender</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              month={selectedMonth}
-              onMonthChange={setSelectedMonth}
-              disabled={(date) => date.getMonth() !== selectedMonth.getMonth()}
-              modifiers={{
-                available: (date) => {
-                  const prefType = getPreferenceType(date);
-                  return prefType !== null && prefType !== "unavailable";
-                },
-                unavailable: (date) => {
-                  const prefType = getPreferenceType(date);
-                  return prefType === "unavailable";
-                }
-              }}
-              modifiersClassNames={{
-                available: "bg-green-100 hover:bg-green-200",
-                unavailable: "bg-red-100 hover:bg-red-200"
-              }}
-              className="rounded-md border"
-              locale={nl}
-            />
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Kalender</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                month={selectedMonth}
+                onMonthChange={setSelectedMonth}
+                disabled={(date) => date.getMonth() !== selectedMonth.getMonth()}
+                modifiers={{
+                  dayShift: (date) => {
+                    const prefType = getPreferenceType(date, "day");
+                    return prefType !== null && prefType !== "unavailable";
+                  },
+                  nightShift: (date) => {
+                    const prefType = getPreferenceType(date, "night");
+                    return prefType !== null && prefType !== "unavailable";
+                  },
+                  unavailable: (date) => {
+                    const dayPref = getPreferenceType(date, "day");
+                    const nightPref = getPreferenceType(date, "night");
+                    return (dayPref === "unavailable" || nightPref === "unavailable");
+                  }
+                }}
+                modifiersClassNames={{
+                  dayShift: "bg-amber-100 hover:bg-amber-200",
+                  nightShift: "bg-indigo-100 hover:bg-indigo-200",
+                  unavailable: "bg-red-100 hover:bg-red-200"
+                }}
+                className="rounded-md border"
+                locale={nl}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="space-y-2">
+                <h3 className="font-medium mb-2">Legenda:</h3>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-amber-100 rounded"></div>
+                  <span className="text-sm flex items-center">
+                    <Sun className="h-4 w-4 mr-1" />
+                    Dag shift beschikbaar
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-indigo-100 rounded"></div>
+                  <span className="text-sm flex items-center">
+                    <Moon className="h-4 w-4 mr-1" />
+                    Nacht shift beschikbaar
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-red-100 rounded"></div>
+                  <span className="text-sm">Niet beschikbaar</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader>
