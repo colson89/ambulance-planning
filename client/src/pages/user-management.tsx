@@ -13,8 +13,9 @@ import { z } from "zod";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, UserPlus, KeyRound } from "lucide-react";
+import { Pencil, Trash2, UserPlus, KeyRound, Home } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 
 const updateUserSchema = z.object({
   firstName: z.string().min(1, "Voornaam is verplicht"),
@@ -33,6 +34,7 @@ export default function UserManagement() {
   const queryClient = useQueryClient();
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [, setLocation] = useLocation();
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
@@ -167,112 +169,120 @@ export default function UserManagement() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gebruikersbeheer</h1>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Nieuwe Gebruiker
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nieuwe Gebruiker Aanmaken</DialogTitle>
-            </DialogHeader>
-            <Form {...createUserForm}>
-              <form onSubmit={createUserForm.handleSubmit((data) => createUserMutation.mutate(data))} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Gebruikersnaam</label>
-                  <p className="text-sm text-muted-foreground">De unieke login naam voor deze gebruiker</p>
-                  <Input
-                    placeholder="bijv. jsmith"
-                    {...createUserForm.register("username")}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Wachtwoord</label>
-                  <p className="text-sm text-muted-foreground">Minimaal 6 karakters</p>
-                  <Input
-                    type="password"
-                    placeholder="Wachtwoord"
-                    {...createUserForm.register("password")}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setLocation("/")}
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Home
+          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Nieuwe Gebruiker
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Nieuwe Gebruiker Aanmaken</DialogTitle>
+              </DialogHeader>
+              <Form {...createUserForm}>
+                <form onSubmit={createUserForm.handleSubmit((data) => createUserMutation.mutate(data))} className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Voornaam</label>
+                    <label className="text-sm font-medium">Gebruikersnaam</label>
+                    <p className="text-sm text-muted-foreground">De unieke login naam voor deze gebruiker</p>
                     <Input
-                      placeholder="Jan"
-                      {...createUserForm.register("firstName")}
+                      placeholder="bijv. jsmith"
+                      {...createUserForm.register("username")}
                     />
                   </div>
+
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Achternaam</label>
+                    <label className="text-sm font-medium">Wachtwoord</label>
+                    <p className="text-sm text-muted-foreground">Minimaal 6 karakters</p>
                     <Input
-                      placeholder="Smit"
-                      {...createUserForm.register("lastName")}
+                      type="password"
+                      placeholder="Wachtwoord"
+                      {...createUserForm.register("password")}
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Rol</label>
-                  <p className="text-sm text-muted-foreground">Bepaalt de rechten en toegang van de gebruiker</p>
-                  <Select onValueChange={(value) => createUserForm.setValue("role", value as "admin" | "ambulancier")}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecteer rol" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ambulancier">Ambulancier</SelectItem>
-                      <SelectItem value="admin">Administrator</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Werkuren Instellingen</label>
-                  <p className="text-sm text-muted-foreground">Bepaal het aantal werkuren per week</p>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="text-xs font-medium">Minimum</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Voornaam</label>
                       <Input
-                        type="number"
-                        placeholder="24"
-                        {...createUserForm.register("minHours", { valueAsNumber: true })}
+                        placeholder="Jan"
+                        {...createUserForm.register("firstName")}
                       />
                     </div>
-                    <div>
-                      <label className="text-xs font-medium">Maximum</label>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Achternaam</label>
                       <Input
-                        type="number"
-                        placeholder="40"
-                        {...createUserForm.register("maxHours", { valueAsNumber: true })}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium">Voorkeur</label>
-                      <Input
-                        type="number"
-                        placeholder="32"
-                        {...createUserForm.register("preferredHours", { valueAsNumber: true })}
+                        placeholder="Smit"
+                        {...createUserForm.register("lastName")}
                       />
                     </div>
                   </div>
-                </div>
 
-                <Button 
-                  type="submit"
-                  className="w-full"
-                  disabled={createUserMutation.isPending}
-                >
-                  Aanmaken
-                </Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Rol</label>
+                    <p className="text-sm text-muted-foreground">Bepaalt de rechten en toegang van de gebruiker</p>
+                    <Select onValueChange={(value) => createUserForm.setValue("role", value as "admin" | "ambulancier")}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecteer rol" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ambulancier">Ambulancier</SelectItem>
+                        <SelectItem value="admin">Administrator</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Werkuren Instellingen</label>
+                    <p className="text-sm text-muted-foreground">Bepaal het aantal werkuren per week</p>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-xs font-medium">Minimum</label>
+                        <Input
+                          type="number"
+                          placeholder="24"
+                          {...createUserForm.register("minHours", { valueAsNumber: true })}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium">Maximum</label>
+                        <Input
+                          type="number"
+                          placeholder="40"
+                          {...createUserForm.register("maxHours", { valueAsNumber: true })}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium">Voorkeur</label>
+                        <Input
+                          type="number"
+                          placeholder="32"
+                          {...createUserForm.register("preferredHours", { valueAsNumber: true })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button 
+                    type="submit"
+                    className="w-full"
+                    disabled={createUserMutation.isPending}
+                  >
+                    Aanmaken
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-4">

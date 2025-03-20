@@ -9,6 +9,8 @@ import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Home } from "lucide-react";
+import { useLocation } from "wouter";
 
 const preferencesSchema = z.object({
   maxHours: z.number().min(0).max(168),
@@ -28,6 +30,7 @@ export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const preferencesForm = useForm({
     resolver: zodResolver(preferencesSchema),
@@ -93,7 +96,16 @@ export default function Profile() {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Profiel</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Profiel</h1>
+        <Button
+          variant="outline"
+          onClick={() => setLocation("/")}
+        >
+          <Home className="h-4 w-4 mr-2" />
+          Home
+        </Button>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

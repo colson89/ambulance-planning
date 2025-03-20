@@ -6,6 +6,7 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
+import { Home } from "lucide-react";
 
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
@@ -29,8 +30,17 @@ export default function AuthPage() {
     <div className="min-h-screen grid md:grid-cols-2">
       <div className="p-8 flex items-center justify-center">
         <Card className="w-full max-w-md">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Ambulance Shift Planner</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/")}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Home
+            </Button>
           </CardHeader>
           <CardContent>
             <Form {...loginForm}>

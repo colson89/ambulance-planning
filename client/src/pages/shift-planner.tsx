@@ -7,6 +7,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { z } from "zod";
+import { Home } from "lucide-react";
+import { useLocation } from "wouter";
 
 // Define the InsertShift schema inline since it's specific to this component
 const insertShiftSchema = z.object({
@@ -24,6 +26,7 @@ export default function ShiftPlanner() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const createShiftMutation = useMutation({
     mutationFn: async (shiftData: InsertShift) => {
@@ -62,7 +65,16 @@ export default function ShiftPlanner() {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Shift Planner</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Shift Planner</h1>
+        <Button
+          variant="outline"
+          onClick={() => setLocation("/")}
+        >
+          <Home className="h-4 w-4 mr-2" />
+          Home
+        </Button>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
