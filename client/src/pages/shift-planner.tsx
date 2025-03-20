@@ -101,7 +101,7 @@ export default function ShiftPlanner() {
         date: selectedDate,
         type: preferenceType === "unavailable" ? "unavailable" : "day",
         startTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 7, 0, 0),
-        endTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 19, 0, 0),
+        endTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedMonth.getMonth(), selectedDate.getDate(), 19, 0, 0),
         canSplit: false,
         month: selectedMonth.getMonth() + 1,
         year: selectedMonth.getFullYear(),
@@ -120,6 +120,12 @@ export default function ShiftPlanner() {
     return preferences.filter(p =>
       format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
     );
+  };
+
+  const getPreferenceType = (date: Date) => {
+    const prefs = getDayPreferences(date);
+    if (prefs.length === 0) return null;
+    return prefs[0].type;
   };
 
   return (
@@ -155,10 +161,18 @@ export default function ShiftPlanner() {
               onMonthChange={setSelectedMonth}
               disabled={(date) => date.getMonth() !== selectedMonth.getMonth()}
               modifiers={{
-                hasPreference: (date) => getDayPreferences(date).length > 0
+                available: (date) => {
+                  const prefType = getPreferenceType(date);
+                  return prefType !== null && prefType !== "unavailable";
+                },
+                unavailable: (date) => {
+                  const prefType = getPreferenceType(date);
+                  return prefType === "unavailable";
+                }
               }}
               modifiersClassNames={{
-                hasPreference: "bg-green-100 hover:bg-green-200"
+                available: "bg-green-100 hover:bg-green-200",
+                unavailable: "bg-red-100 hover:bg-red-200"
               }}
               className="rounded-md border"
               locale={nl}
