@@ -41,9 +41,7 @@ export default function ShiftPlanner() {
     queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/preferences?month=${selectedMonth.getMonth() + 1}&year=${selectedMonth.getFullYear()}`);
-      if (!res.ok) {
-        throw new Error("Kon voorkeuren niet ophalen");
-      }
+      if (!res.ok) throw new Error("Kon voorkeuren niet ophalen");
       return res.json();
     },
     enabled: !!user,
@@ -54,11 +52,9 @@ export default function ShiftPlanner() {
       console.log("Creating preference with data:", data);
       const res = await apiRequest("POST", "/api/preferences", data);
       console.log("Response status:", res.status);
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Er is een fout opgetreden");
-      }
-      return res.json();
+      const responseData = await res.json();
+      if (!res.ok) throw new Error(responseData.message || "Er is een fout opgetreden");
+      return responseData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
@@ -71,37 +67,15 @@ export default function ShiftPlanner() {
       console.error("Mutation error:", error);
       toast({
         title: "Fout",
-        description: error.message || "Er is een fout opgetreden bij het opslaan van uw voorkeur.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deletePreferenceMutation = useMutation({
-    mutationFn: async (preferenceId: number) => {
-      const res = await apiRequest("DELETE", `/api/preferences/${preferenceId}`);
-      if (!res.ok) {
-        throw new Error("Kon voorkeur niet verwijderen");
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
-      toast({
-        title: "Voorkeur verwijderd",
-        description: "De shift voorkeur is succesvol verwijderd.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Fout",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  function onSubmitDayShift() {
-    console.log("Day shift submit clicked");
+  const handleDayShiftClick = () => {
+    console.log("Day shift button clicked");
+
     if (!selectedDate) {
       toast({
         title: "Fout",
@@ -146,10 +120,11 @@ export default function ShiftPlanner() {
 
     console.log("Submitting day preference:", preferenceData);
     createPreferenceMutation.mutate(preferenceData);
-  }
+  };
 
-  function onSubmitNightShift() {
-    console.log("Night shift submit clicked");
+  const handleNightShiftClick = () => {
+    console.log("Night shift button clicked");
+
     if (!selectedDate) {
       toast({
         title: "Fout",
@@ -184,7 +159,28 @@ export default function ShiftPlanner() {
 
     console.log("Submitting night preference:", preferenceData);
     createPreferenceMutation.mutate(preferenceData);
-  }
+  };
+
+  const deletePreferenceMutation = useMutation({
+    mutationFn: async (preferenceId: number) => {
+      const res = await apiRequest("DELETE", `/api/preferences/${preferenceId}`);
+      if (!res.ok) throw new Error("Kon voorkeur niet verwijderen");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
+      toast({
+        title: "Voorkeur verwijderd",
+        description: "De shift voorkeur is succesvol verwijderd.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const getDayPreferences = (date: Date) => {
     return preferences.filter(p =>
@@ -269,7 +265,8 @@ export default function ShiftPlanner() {
                       </div>
                     </RadioGroup>
                     <Button
-                      onClick={onSubmitDayShift}
+                      type="button"
+                      onClick={handleDayShiftClick}
                       disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
                       className="w-full"
                     >
@@ -305,7 +302,8 @@ export default function ShiftPlanner() {
                     </div>
                   </RadioGroup>
                   <Button
-                    onClick={onSubmitNightShift}
+                    type="button"
+                    onClick={handleNightShiftClick}
                     disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
                     className="w-full"
                   >
