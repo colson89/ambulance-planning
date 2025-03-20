@@ -7,12 +7,13 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { format, addMonths, startOfMonth, endOfMonth, setHours, setMinutes, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
 
 type ShiftPreference = {
   date: Date;
@@ -35,6 +36,8 @@ type PreferenceResponse = {
   userId: number;
 };
 
+type ShiftType = "full" | "first" | "second";
+
 export default function ShiftPlanner() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -42,10 +45,8 @@ export default function ShiftPlanner() {
   const [, setLocation] = useLocation();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [splitShift, setSplitShift] = useState({
-    day: false,
-    night: false
-  });
+  const [dayShiftType, setDayShiftType] = useState<ShiftType>("full");
+  const [nightShiftType, setNightShiftType] = useState<ShiftType>("full");
 
   // Aanpassing van de planning logica en deadline check
   const today = new Date();
@@ -108,15 +109,34 @@ export default function ShiftPlanner() {
 
     let startTime, endTime;
     const shiftDate = new Date(selectedDate);
+    const selectedShiftType = type === "day" ? dayShiftType : nightShiftType;
 
     if (type === "day") {
-      startTime = new Date(shiftDate.setHours(7, 0, 0, 0));
-      endTime = new Date(shiftDate.setHours(19, 0, 0, 0));
+      if (selectedShiftType === "full") {
+        startTime = new Date(shiftDate.setHours(7, 0, 0, 0));
+        endTime = new Date(shiftDate.setHours(19, 0, 0, 0));
+      } else if (selectedShiftType === "first") {
+        startTime = new Date(shiftDate.setHours(7, 0, 0, 0));
+        endTime = new Date(shiftDate.setHours(13, 0, 0, 0));
+      } else {
+        startTime = new Date(shiftDate.setHours(13, 0, 0, 0));
+        endTime = new Date(shiftDate.setHours(19, 0, 0, 0));
+      }
     } else {
-      startTime = new Date(shiftDate.setHours(19, 0, 0, 0));
-      const nextDay = new Date(shiftDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      endTime = new Date(nextDay.setHours(7, 0, 0, 0));
+      if (selectedShiftType === "full") {
+        startTime = new Date(shiftDate.setHours(19, 0, 0, 0));
+        const nextDay = new Date(shiftDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        endTime = new Date(nextDay.setHours(7, 0, 0, 0));
+      } else if (selectedShiftType === "first") {
+        startTime = new Date(shiftDate.setHours(19, 0, 0, 0));
+        endTime = new Date(shiftDate.setHours(21, 0, 0, 0));
+      } else {
+        startTime = new Date(shiftDate.setHours(21, 0, 0, 0));
+        const nextDay = new Date(shiftDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        endTime = new Date(nextDay.setHours(7, 0, 0, 0));
+      }
     }
 
     const preference: ShiftPreference = {
@@ -124,7 +144,7 @@ export default function ShiftPlanner() {
       type,
       startTime,
       endTime,
-      canSplit: type === "day" ? splitShift.day : splitShift.night,
+      canSplit: selectedShiftType !== "full",
       userId: user.id,
       month: selectedMonth.getMonth() + 1,
       year: selectedMonth.getFullYear()
@@ -190,19 +210,26 @@ export default function ShiftPlanner() {
           </CardHeader>
           <CardContent className="space-y-4">
             {selectedDate && isWeekend(selectedDate) && (
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="split-day"
-                    checked={splitShift.day}
-                    onCheckedChange={(checked) => setSplitShift(prev => ({ ...prev, day: checked as boolean }))}
-                    disabled={isPastDeadline}
-                  />
-                  <label htmlFor="split-day" className="text-sm">
-                    Kan gesplitst worden (7:00-13:00 / 13:00-19:00)
-                  </label>
-                </div>
+                <RadioGroup
+                  value={dayShiftType}
+                  onValueChange={(value) => setDayShiftType(value as ShiftType)}
+                  disabled={isPastDeadline}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="full" id="day-full" />
+                    <Label htmlFor="day-full">Volledige shift (7:00-19:00)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="first" id="day-first" />
+                    <Label htmlFor="day-first">Eerste deel (7:00-13:00)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="second" id="day-second" />
+                    <Label htmlFor="day-second">Tweede deel (13:00-19:00)</Label>
+                  </div>
+                </RadioGroup>
                 <Button
                   onClick={() => handlePreferenceSubmit("day")}
                   disabled={isPastDeadline}
@@ -213,19 +240,26 @@ export default function ShiftPlanner() {
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-4">
               <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="split-night"
-                  checked={splitShift.night}
-                  onCheckedChange={(checked) => setSplitShift(prev => ({ ...prev, night: checked as boolean }))}
-                  disabled={isPastDeadline}
-                />
-                <label htmlFor="split-night" className="text-sm">
-                  Kan gesplitst worden (19:00-21:00 / 21:00-7:00)
-                </label>
-              </div>
+              <RadioGroup
+                value={nightShiftType}
+                onValueChange={(value) => setNightShiftType(value as ShiftType)}
+                disabled={isPastDeadline}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="full" id="night-full" />
+                  <Label htmlFor="night-full">Volledige shift (19:00-7:00)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="first" id="night-first" />
+                  <Label htmlFor="night-first">Eerste deel (19:00-21:00)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="second" id="night-second" />
+                  <Label htmlFor="night-second">Tweede deel (21:00-7:00)</Label>
+                </div>
+              </RadioGroup>
               <Button
                 onClick={() => handlePreferenceSubmit("night")}
                 disabled={isPastDeadline}
