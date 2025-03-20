@@ -51,32 +51,97 @@ export default function ShiftPlanner() {
 
   const createPreferenceMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log('Sending preference data:', data);
+      console.log("Sending mutation data:", data);
       const res = await apiRequest("POST", "/api/preferences", data);
+      console.log("Response status:", res.status);
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Er is een fout opgetreden");
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Er is een fout opgetreden");
       }
+
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()] 
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()] });
       toast({
-        title: "Success",
-        description: "Voorkeur opgeslagen",
+        title: "Voorkeur opgeslagen",
+        description: "Uw shift voorkeur is succesvol opgeslagen.",
       });
     },
     onError: (error: Error) => {
-      console.error('Error creating preference:', error);
+      console.error("Mutation error:", error);
       toast({
         title: "Fout",
-        description: error.message,
+        description: error.message || "Er is een fout opgetreden bij het opslaan van uw voorkeur.",
         variant: "destructive",
       });
     },
   });
+
+  const handlePreferenceSubmit = async (type: "day" | "night") => {
+    if (!selectedDate) {
+      toast({
+        title: "Fout",
+        description: "Selecteer eerst een datum",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (type === "day" && !isWeekend(selectedDate)) {
+      toast({
+        title: "Niet toegestaan",
+        description: "Dagshiften kunnen alleen in het weekend worden opgegeven.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const shiftDate = new Date(selectedDate);
+    const selectedShiftType = type === "day" ? dayShiftType : nightShiftType;
+
+    let startTime = new Date(shiftDate);
+    let endTime = new Date(shiftDate);
+
+    // Set times based on shift type
+    if (type === "day") {
+      startTime.setHours(7, 0, 0, 0);
+      endTime.setHours(selectedShiftType === "full" ? 19 : selectedShiftType === "first" ? 13 : 19, 0, 0, 0);
+    } else {
+      startTime.setHours(19, 0, 0, 0);
+      if (selectedShiftType === "full" || selectedShiftType === "second") {
+        endTime = new Date(shiftDate);
+        endTime.setDate(endTime.getDate() + 1);
+        endTime.setHours(7, 0, 0, 0);
+      } else {
+        endTime.setHours(21, 0, 0, 0);
+      }
+    }
+
+    const preferenceData = {
+      date: shiftDate.toISOString(),
+      type,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      canSplit: selectedShiftType !== "full",
+      month: selectedMonth.getMonth() + 1,
+      year: selectedMonth.getFullYear(),
+      notes: null
+    };
+
+    try {
+      await createPreferenceMutation.mutateAsync(preferenceData);
+    } catch (error) {
+      console.error("Error in handlePreferenceSubmit:", error);
+    }
+  };
+
+  const getDayPreferences = (date: Date) => {
+    return preferences.filter(p => 
+      format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
+    );
+  };
 
   const deletePreferenceMutation = useMutation({
     mutationFn: async (preferenceId: number) => {
@@ -103,94 +168,6 @@ export default function ShiftPlanner() {
     },
   });
 
-  const handlePreferenceSubmit = async (type: "day" | "night") => {
-    if (!selectedDate || !user) return;
-
-    if (type === "day" && !isWeekend(selectedDate)) {
-      toast({
-        title: "Niet toegestaan",
-        description: "Dagshiften kunnen alleen in het weekend worden opgegeven.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      // Maak een nieuwe datum object voor de shift
-      const shiftDate = new Date(selectedDate);
-      const selectedShiftType = type === "day" ? dayShiftType : nightShiftType;
-
-      // Start- en eindtijd instellen
-      let startTime = new Date(shiftDate);
-      let endTime = new Date(shiftDate);
-
-      if (type === "day") {
-        if (selectedShiftType === "full") {
-          startTime.setHours(7, 0, 0, 0);
-          endTime.setHours(19, 0, 0, 0);
-        } else if (selectedShiftType === "first") {
-          startTime.setHours(7, 0, 0, 0);
-          endTime.setHours(13, 0, 0, 0);
-        } else {
-          startTime.setHours(13, 0, 0, 0);
-          endTime.setHours(19, 0, 0, 0);
-        }
-      } else {
-        if (selectedShiftType === "full") {
-          startTime.setHours(19, 0, 0, 0);
-          const nextDay = new Date(shiftDate);
-          nextDay.setDate(nextDay.getDate() + 1);
-          endTime = nextDay;
-          endTime.setHours(7, 0, 0, 0);
-        } else if (selectedShiftType === "first") {
-          startTime.setHours(19, 0, 0, 0);
-          endTime.setHours(21, 0, 0, 0);
-        } else {
-          startTime.setHours(21, 0, 0, 0);
-          const nextDay = new Date(shiftDate);
-          nextDay.setDate(nextDay.getDate() + 1);
-          endTime = nextDay;
-          endTime.setHours(7, 0, 0, 0);
-        }
-      }
-
-      // Data voor de API request voorbereiden
-      const preferenceData = {
-        date: shiftDate.toISOString(),
-        type,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        canSplit: selectedShiftType !== "full",
-        month: selectedMonth.getMonth() + 1,
-        year: selectedMonth.getFullYear(),
-        notes: null
-      };
-
-      console.log('Submitting preference data:', preferenceData);
-
-      // Preference aanmaken via de API
-      await createPreferenceMutation.mutateAsync(preferenceData);
-
-      toast({
-        title: "Voorkeur opgeslagen",
-        description: "Uw shift voorkeur is succesvol opgeslagen.",
-      });
-
-    } catch (error: any) {
-      console.error('Error submitting preference:', error);
-      toast({
-        title: "Fout",
-        description: error.message || "Er is een fout opgetreden bij het opslaan van uw voorkeur.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getDayPreferences = (date: Date) => {
-    return preferences.filter(p => 
-      format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
-    );
-  };
 
   return (
     <div className="container mx-auto p-6">

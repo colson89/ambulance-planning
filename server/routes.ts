@@ -152,7 +152,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       console.log('Creating preference with data:', preferenceData);
-
       const preference = await storage.createShiftPreference(preferenceData);
       console.log('Created preference:', preference);
 
