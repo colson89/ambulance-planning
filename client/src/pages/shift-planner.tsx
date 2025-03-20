@@ -106,7 +106,6 @@ export default function ShiftPlanner() {
   const handlePreferenceSubmit = (type: "day" | "night") => {
     if (!selectedDate || !user) return;
 
-    // Controleer of dagshift alleen in het weekend wordt opgegeven
     if (type === "day" && !isWeekend(selectedDate)) {
       toast({
         title: "Niet toegestaan",
@@ -257,6 +256,7 @@ export default function ShiftPlanner() {
                     </Button>
                   </div>
                 )}
+
                 <div className="space-y-4">
                   <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
                   <RadioGroup
