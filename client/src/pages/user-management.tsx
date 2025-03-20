@@ -13,7 +13,7 @@ import { z } from "zod";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, UserPlus } from "lucide-react";
+import { Pencil, Trash2, UserPlus, KeyRound } from "lucide-react";
 
 export default function UserManagement() {
   const { user } = useAuth();
@@ -381,10 +381,12 @@ export default function UserManagement() {
 
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H8" />
-                        </svg>
+                      <Button variant="outline" size="icon" className="relative group">
+                        <span className="sr-only">Wachtwoord wijzigen</span>
+                        <KeyRound className="h-4 w-4" />
+                        <span className="absolute -top-8 scale-0 transition-all rounded bg-black px-2 py-1 text-xs text-white group-hover:scale-100">
+                          Wachtwoord wijzigen
+                        </span>
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
