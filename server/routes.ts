@@ -5,6 +5,7 @@ import { setupAuth } from "./auth";
 import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema } from "@shared/schema";
 import { z } from "zod";
 import { comparePasswords } from "./auth";
+import { addMonths } from 'date-fns';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -78,12 +79,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.sendStatus(403);
       }
 
-      const data = (req.user?.isAdmin 
+      const data = (req.user?.isAdmin
         ? z.object({ password: z.string().min(6) })
         : z.object({
-            currentPassword: z.string().min(1),
-            newPassword: z.string().min(6)
-          })
+          currentPassword: z.string().min(1),
+          newPassword: z.string().min(6)
+        })
       ).parse(req.body);
 
       // Als niet admin, verifieer huidig wachtwoord
@@ -144,17 +145,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Check deadline
       const now = new Date();
-      const deadline = new Date(now.getFullYear(), now.getMonth(), 19, 23, 0);
-      if (now > deadline) {
-        return res.status(400).json({ 
-          message: "De deadline voor het opgeven van voorkeuren is verstreken (19e van de maand, 23:00)" 
+      const currentMonthDeadline = new Date(now.getFullYear(), now.getMonth(), 19, 23, 0);
+      const isPastDeadline = now > currentMonthDeadline;
+      const planningMonth = addMonths(now, isPastDeadline ? 2 : 1);
+
+      // Controleer of de voorkeur voor de juiste maand wordt opgegeven
+      const preferenceMonth = new Date(req.body.date).getMonth() + 1;
+      const preferenceYear = new Date(req.body.date).getFullYear();
+
+      if (preferenceMonth !== planningMonth.getMonth() + 1 ||
+        preferenceYear !== planningMonth.getFullYear()) {
+        return res.status(400).json({
+          message: "Voorkeuren kunnen alleen worden opgegeven voor de juiste planningsmaand"
         });
       }
 
       const preferenceData = insertShiftPreferenceSchema.parse(req.body);
       const preference = await storage.createShiftPreference({
         ...preferenceData,
-        userId: req.user!.id
+        userId: req.user!.id,
+        month: preferenceMonth,
+        year: preferenceYear
       });
       res.status(201).json(preference);
     } catch (error) {

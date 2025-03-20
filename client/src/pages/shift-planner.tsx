@@ -150,6 +150,7 @@ export default function ShiftPlanner() {
       year: selectedMonth.getFullYear()
     };
 
+    console.log('Submitting preference:', preference);
     createPreferenceMutation.mutate(preference);
   };
 
