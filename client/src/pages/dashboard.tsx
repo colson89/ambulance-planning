@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Users, Calendar, Clock, LogOut, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Shift } from "@shared/schema";
+import type { Shift, ShiftPreference } from "@shared/schema";
 import { useLocation } from "wouter";
+import { format, addMonths } from "date-fns";
+import { nl } from "date-fns/locale";
 
 export default function Dashboard() {
   const { user, logoutMutation } = useAuth();
@@ -13,6 +15,11 @@ export default function Dashboard() {
   const { data: shifts, isLoading } = useQuery<Shift[]>({
     queryKey: ["/api/shifts"],
   });
+
+  const nextMonth = addMonths(new Date(), 1);
+  const today = new Date();
+  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
+  const isPastDeadline = today > currentMonthDeadline;
 
   if (isLoading) {
     return (
@@ -59,6 +66,28 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <h2 className="text-lg font-medium mb-2">Shift Planning Status</h2>
+            <p className="text-muted-foreground">
+              {isPastDeadline 
+                ? `De deadline voor het opgeven van voorkeuren voor ${format(nextMonth, "MMMM yyyy", { locale: nl })} is verstreken.`
+                : `U kunt nog tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven voor ${format(nextMonth, "MMMM yyyy", { locale: nl })}.`
+              }
+            </p>
+            <Button 
+              className="mt-4"
+              onClick={() => setLocation("/shifts")}
+              variant="outline"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Voorkeuren Opgeven
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

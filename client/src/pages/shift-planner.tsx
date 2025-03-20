@@ -47,6 +47,12 @@ export default function ShiftPlanner() {
     night: false
   });
 
+  // Initialiseer selectedMonth met de volgende maand bij het laden
+  useEffect(() => {
+    const nextMonth = addMonths(new Date(), 1);
+    setSelectedMonth(nextMonth);
+  }, []);
+
   // Get user's shift preferences for selected month
   const { data: preferences = [], isLoading: preferencesLoading } = useQuery<PreferenceResponse[]>({
     queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
@@ -80,12 +86,6 @@ export default function ShiftPlanner() {
       });
     },
   });
-
-  // Initialiseer selectedMonth met de volgende maand bij het laden
-  useEffect(() => {
-    const nextMonth = addMonths(new Date(), 1);
-    setSelectedMonth(nextMonth);
-  }, []);
 
   // Check deadline voor volgende maand
   const today = new Date();
@@ -195,7 +195,7 @@ export default function ShiftPlanner() {
                     id="split-day"
                     checked={splitShift.day}
                     onCheckedChange={(checked) => setSplitShift(prev => ({ ...prev, day: checked as boolean }))}
-                    disabled={!selectedDate || isPastDeadline}
+                    disabled={isPastDeadline}
                   />
                   <label htmlFor="split-day" className="text-sm">
                     Kan gesplitst worden (7:00-13:00 / 13:00-19:00)
@@ -203,7 +203,7 @@ export default function ShiftPlanner() {
                 </div>
                 <Button
                   onClick={() => handlePreferenceSubmit("day")}
-                  disabled={!selectedDate || isPastDeadline || preferencesLoading}
+                  disabled={isPastDeadline}
                   className="w-full"
                 >
                   Voorkeur Opgeven voor Dag Shift
@@ -218,7 +218,7 @@ export default function ShiftPlanner() {
                   id="split-night"
                   checked={splitShift.night}
                   onCheckedChange={(checked) => setSplitShift(prev => ({ ...prev, night: checked as boolean }))}
-                  disabled={!selectedDate || isPastDeadline}
+                  disabled={isPastDeadline}
                 />
                 <label htmlFor="split-night" className="text-sm">
                   Kan gesplitst worden (19:00-21:00 / 21:00-7:00)
@@ -226,7 +226,7 @@ export default function ShiftPlanner() {
               </div>
               <Button
                 onClick={() => handlePreferenceSubmit("night")}
-                disabled={!selectedDate || isPastDeadline || preferencesLoading}
+                disabled={isPastDeadline}
                 className="w-full"
               >
                 Voorkeur Opgeven voor Nacht Shift
