@@ -17,8 +17,8 @@ type PreferenceType = "full" | "first" | "second" | "unavailable";
 type ShiftType = "day" | "night";
 
 // CSS voor gesplitste kalendercel
-const splitDayStyle = "!bg-gradient-to-b from-amber-100 to-amber-100";
-const splitNightStyle = "!bg-gradient-to-b from-indigo-100 to-indigo-100";
+const splitDayStyle = "!bg-gradient-to-b from-amber-100 to-transparent";
+const splitNightStyle = "!bg-gradient-to-b from-transparent to-indigo-100";
 const splitBothStyle = "!bg-gradient-to-b from-amber-100 to-indigo-100";
 const unavailableStyle = "!bg-red-100";
 
@@ -186,17 +186,17 @@ export default function ShiftPlanner() {
                   dayOnly: (date) => {
                     const dayPref = getPreferenceType(date, "day");
                     const nightPref = getPreferenceType(date, "night");
-                    return dayPref !== null && dayPref !== "unavailable" && (!nightPref || nightPref === "unavailable");
+                    return dayPref === "day" && (!nightPref || nightPref === "unavailable");
                   },
                   nightOnly: (date) => {
                     const dayPref = getPreferenceType(date, "day");
                     const nightPref = getPreferenceType(date, "night");
-                    return nightPref !== null && nightPref !== "unavailable" && (!dayPref || dayPref === "unavailable");
+                    return nightPref === "night" && (!dayPref || dayPref === "unavailable");
                   },
                   bothShifts: (date) => {
                     const dayPref = getPreferenceType(date, "day");
                     const nightPref = getPreferenceType(date, "night");
-                    return dayPref !== null && dayPref !== "unavailable" && nightPref !== null && nightPref !== "unavailable";
+                    return dayPref === "day" && nightPref === "night";
                   },
                   unavailable: (date) => {
                     const dayPref = getPreferenceType(date, "day");
