@@ -22,8 +22,6 @@ export default function ShiftPlanner() {
   const [, setLocation] = useLocation();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-
-  // Map om voorkeuren per datum op te slaan
   const [datePreferences, setDatePreferences] = useState<Map<string, PreferenceType>>(new Map());
 
   const today = new Date();
@@ -118,6 +116,12 @@ export default function ShiftPlanner() {
     }
   };
 
+  const getDayPreferences = (date: Date) => {
+    return preferences.filter(p =>
+      format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
+    );
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -150,6 +154,12 @@ export default function ShiftPlanner() {
               month={selectedMonth}
               onMonthChange={setSelectedMonth}
               disabled={(date) => date.getMonth() !== selectedMonth.getMonth()}
+              modifiers={{
+                hasPreference: (date) => getDayPreferences(date).length > 0
+              }}
+              modifiersClassNames={{
+                hasPreference: "bg-green-100 hover:bg-green-200"
+              }}
               className="rounded-md border"
               locale={nl}
             />
