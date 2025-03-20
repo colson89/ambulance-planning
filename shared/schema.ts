@@ -34,9 +34,9 @@ export const shiftPreferences = pgTable("shift_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   date: timestamp("date").notNull(),
-  type: text("type", { enum: ["day", "night"] }).notNull(),
-  startTime: timestamp("start_time").notNull(),
-  endTime: timestamp("end_time").notNull(),
+  type: text("type", { enum: ["day", "night", "unavailable"] }).notNull(),
+  startTime: timestamp("start_time"),
+  endTime: timestamp("end_time"),
   status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
   month: integer("month").notNull(),
   year: integer("year").notNull(),
@@ -44,7 +44,6 @@ export const shiftPreferences = pgTable("shift_preferences", {
   notes: text("notes")
 });
 
-// Schema voor het aanmaken van een nieuwe gebruiker
 export const insertUserSchema = createInsertSchema(users, {
   firstName: z.string().min(1, "Voornaam is verplicht"),
   lastName: z.string().min(1, "Achternaam is verplicht"),
@@ -64,7 +63,7 @@ export const insertUserSchema = createInsertSchema(users, {
 export const insertShiftSchema = createInsertSchema(shifts);
 
 export const insertShiftPreferenceSchema = createInsertSchema(shiftPreferences, {
-  type: z.enum(["day", "night"]),
+  type: z.enum(["day", "night", "unavailable"]),
 }).pick({
   userId: true,
   date: true,
