@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { format, addMonths, startOfMonth, setHours, setMinutes, isWeekend } from "date-fns";
+import { format, addMonths, startOfMonth, endOfMonth, setHours, setMinutes, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home } from "lucide-react";
 import { useLocation } from "wouter";
@@ -41,7 +41,7 @@ export default function ShiftPlanner() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [selectedMonth, setSelectedMonth] = useState(addMonths(new Date(), 1));
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [splitShift, setSplitShift] = useState({
     day: false,
     night: false
@@ -92,8 +92,6 @@ export default function ShiftPlanner() {
       });
     },
   });
-
-  // Check deadline voor volgende maand
 
   const handlePreferenceSubmit = (type: "day" | "night") => {
     if (!selectedDate || !user) return;
@@ -159,7 +157,7 @@ export default function ShiftPlanner() {
         <AlertDescription>
           U geeft nu voorkeuren op voor {format(selectedMonth, "MMMM yyyy", { locale: nl })}. 
           {isPastDeadline 
-            ? "De deadline voor het opgeven van voorkeuren is verstreken (19e van deze maand, 23:00)."
+            ? `U heeft tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM yyyy HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
             : `U heeft nog tot ${format(currentMonthDeadline, "d MMMM yyyy HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
           }
         </AlertDescription>
@@ -175,12 +173,13 @@ export default function ShiftPlanner() {
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
-              disabled={isPastDeadline}
               month={selectedMonth}
               onMonthChange={setSelectedMonth}
+              disabled={(date) => {
+                // Sta alleen datums toe in de geselecteerde maand
+                return date.getMonth() !== selectedMonth.getMonth();
+              }}
               className="rounded-md border"
-              fromMonth={selectedMonth}
-              toMonth={selectedMonth}
             />
           </CardContent>
         </Card>
