@@ -80,6 +80,10 @@ export default function ShiftPlanner() {
   });
 
   const handlePreferenceSubmit = async (type: "day" | "night") => {
+    console.log('handlePreferenceSubmit called with type:', type);
+    console.log('selectedDate:', selectedDate);
+    console.log('user:', user);
+
     if (!selectedDate) {
       toast({
         title: "Fout",
@@ -98,47 +102,63 @@ export default function ShiftPlanner() {
       return;
     }
 
-    const shiftDate = new Date(selectedDate);
-    const selectedShiftType = type === "day" ? dayShiftType : nightShiftType;
-
-    let startTime = new Date(shiftDate);
-    let endTime = new Date(shiftDate);
-
-    // Set times based on shift type
-    if (type === "day") {
-      startTime.setHours(7, 0, 0, 0);
-      endTime.setHours(selectedShiftType === "full" ? 19 : selectedShiftType === "first" ? 13 : 19, 0, 0, 0);
-    } else {
-      startTime.setHours(19, 0, 0, 0);
-      if (selectedShiftType === "full" || selectedShiftType === "second") {
-        endTime = new Date(shiftDate);
-        endTime.setDate(endTime.getDate() + 1);
-        endTime.setHours(7, 0, 0, 0);
-      } else {
-        endTime.setHours(21, 0, 0, 0);
-      }
-    }
-
-    const preferenceData = {
-      date: shiftDate.toISOString(),
-      type,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      canSplit: selectedShiftType !== "full",
-      month: selectedMonth.getMonth() + 1,
-      year: selectedMonth.getFullYear(),
-      notes: null
-    };
-
     try {
+      const shiftDate = new Date(selectedDate);
+      const selectedShiftType = type === "day" ? dayShiftType : nightShiftType;
+
+      console.log('Processing shift for date:', shiftDate);
+      console.log('Selected shift type:', selectedShiftType);
+
+      let startTime = new Date(shiftDate);
+      let endTime = new Date(shiftDate);
+
+      if (type === "day") {
+        startTime.setHours(7, 0, 0, 0);
+        endTime.setHours(selectedShiftType === "full" ? 19 : selectedShiftType === "first" ? 13 : 19, 0, 0, 0);
+      } else {
+        startTime.setHours(19, 0, 0, 0);
+        if (selectedShiftType === "full" || selectedShiftType === "second") {
+          endTime = new Date(shiftDate);
+          endTime.setDate(endTime.getDate() + 1);
+          endTime.setHours(7, 0, 0, 0);
+        } else {
+          endTime.setHours(21, 0, 0, 0);
+        }
+      }
+
+      const preferenceData = {
+        date: shiftDate.toISOString(),
+        type,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        canSplit: selectedShiftType !== "full",
+        month: selectedMonth.getMonth() + 1,
+        year: selectedMonth.getFullYear(),
+        notes: null
+      };
+
+      console.log('Submitting preference data:', preferenceData);
+
       await createPreferenceMutation.mutateAsync(preferenceData);
+
+      console.log('Preference submitted successfully');
+
+      toast({
+        title: "Voorkeur opgeslagen",
+        description: "Uw shift voorkeur is succesvol opgeslagen.",
+      });
     } catch (error) {
-      console.error("Error in handlePreferenceSubmit:", error);
+      console.error('Error submitting preference:', error);
+      toast({
+        title: "Fout",
+        description: "Er is een fout opgetreden bij het opslaan van uw voorkeur.",
+        variant: "destructive",
+      });
     }
   };
 
   const getDayPreferences = (date: Date) => {
-    return preferences.filter(p => 
+    return preferences.filter(p =>
       format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
     );
   };
@@ -151,8 +171,8 @@ export default function ShiftPlanner() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()] 
+      queryClient.invalidateQueries({
+        queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()]
       });
       toast({
         title: "Voorkeur verwijderd",
@@ -184,8 +204,8 @@ export default function ShiftPlanner() {
 
       <Alert className="mb-6">
         <AlertDescription>
-          U geeft nu voorkeuren op voor {format(selectedMonth, "MMMM yyyy", { locale: nl })}. 
-          {isPastDeadline 
+          U geeft nu voorkeuren op voor {format(selectedMonth, "MMMM yyyy", { locale: nl })}.
+          {isPastDeadline
             ? `U heeft tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
             : `U heeft tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
           }
@@ -249,10 +269,14 @@ export default function ShiftPlanner() {
                     </RadioGroup>
                     <Button
                       onClick={() => handlePreferenceSubmit("day")}
-                      disabled={!selectedDate || isPastDeadline}
+                      disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
                       className="w-full"
                     >
-                      Voorkeur Opgeven voor Dag Shift
+                      {createPreferenceMutation.isPending ? (
+                        "Voorkeur opslaan..."
+                      ) : (
+                        "Voorkeur Opgeven voor Dag Shift"
+                      )}
                     </Button>
                   </div>
                 )}
@@ -278,10 +302,14 @@ export default function ShiftPlanner() {
                   </RadioGroup>
                   <Button
                     onClick={() => handlePreferenceSubmit("night")}
-                    disabled={!selectedDate || isPastDeadline}
+                    disabled={createPreferenceMutation.isPending || !selectedDate || isPastDeadline}
                     className="w-full"
                   >
-                    Voorkeur Opgeven voor Nacht Shift
+                    {createPreferenceMutation.isPending ? (
+                      "Voorkeur opslaan..."
+                    ) : (
+                      "Voorkeur Opgeven voor Nacht Shift"
+                    )}
                   </Button>
                 </div>
               </>
