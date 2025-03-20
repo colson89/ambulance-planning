@@ -67,7 +67,7 @@ export default function ShiftPlanner() {
       console.error("Error bij opslaan voorkeur:", error);
       toast({
         title: "Fout",
-        description: error.message,
+        description: error.message || "Er is een fout opgetreden bij het opslaan van uw voorkeur",
         variant: "destructive",
       });
     },

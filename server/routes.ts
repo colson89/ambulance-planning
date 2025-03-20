@@ -155,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "pending"
       };
 
-      console.log('Creating preference with data:', preferenceData);
+      console.log('Processing preference with data:', preferenceData);
 
       // Check if there's already a preference for this date
       const existingPreferences = await storage.getUserShiftPreferences(
@@ -164,22 +164,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferenceData.year
       );
 
-      const hasExistingPreference = existingPreferences.some(pref => 
+      const existingPreference = existingPreferences.find(pref => 
         format(new Date(pref.date), "yyyy-MM-dd") === format(new Date(preferenceData.date), "yyyy-MM-dd")
       );
 
-      if (hasExistingPreference) {
-        return res.status(400).json({ 
-          message: "Er bestaat al een voorkeur voor deze datum" 
-        });
+      let preference;
+      if (existingPreference) {
+        // Update existing preference
+        preference = await storage.updateShiftPreference(existingPreference.id, preferenceData);
+        console.log('Updated existing preference:', preference);
+      } else {
+        // Create new preference
+        preference = await storage.createShiftPreference(preferenceData);
+        console.log('Created new preference:', preference);
       }
-
-      const preference = await storage.createShiftPreference(preferenceData);
-      console.log('Created preference:', preference);
 
       res.status(201).json(preference);
     } catch (error) {
-      console.error('Error creating preference:', error);
+      console.error('Error processing preference:', error);
       res.status(500).json({
         message: "Er is een fout opgetreden bij het opslaan van de voorkeur"
       });
