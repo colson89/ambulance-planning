@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -80,6 +80,12 @@ export default function ShiftPlanner() {
       });
     },
   });
+
+  // Initialiseer selectedMonth met de volgende maand bij het laden
+  useEffect(() => {
+    const nextMonth = addMonths(new Date(), 1);
+    setSelectedMonth(nextMonth);
+  }, []);
 
   // Check deadline voor volgende maand
   const today = new Date();
@@ -170,6 +176,8 @@ export default function ShiftPlanner() {
               month={selectedMonth}
               onMonthChange={setSelectedMonth}
               className="rounded-md border"
+              fromMonth={selectedMonth}
+              toMonth={selectedMonth}
             />
           </CardContent>
         </Card>
