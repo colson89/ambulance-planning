@@ -88,16 +88,21 @@ export default function ShiftPlanner() {
     }
 
     try {
+      // Create a new Date object for the selected date
       const date = new Date(selectedDate);
+
+      // Create test data
       const testData = {
-        date: date,
-        type: "day",
-        startTime: new Date(date.setHours(7, 0, 0)),
-        endTime: new Date(date.setHours(19, 0, 0)),
+        date,
+        type: shiftType === "unavailable" ? "unavailable" : "day",
+        ...(shiftType !== "unavailable" && {
+          startTime: new Date(new Date(date).setHours(7, 0, 0)),
+          endTime: new Date(new Date(date).setHours(19, 0, 0))
+        }),
         canSplit: false,
         month: selectedMonth.getMonth() + 1,
         year: selectedMonth.getFullYear(),
-        notes: null
+        notes: shiftType === "unavailable" ? "Niet beschikbaar" : null
       };
 
       console.log("Versturen test data:", testData);

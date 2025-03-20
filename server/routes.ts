@@ -140,14 +140,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create shift preference
+  // Route handler for creating preferences
   app.post("/api/preferences", requireAuth, async (req, res) => {
     try {
       console.log('Received preference data:', req.body);
 
+      // Convert date strings to Date objects
       const preferenceData = {
         ...req.body,
         userId: req.user!.id,
+        date: new Date(req.body.date),
+        startTime: req.body.startTime ? new Date(req.body.startTime) : null,
+        endTime: req.body.endTime ? new Date(req.body.endTime) : null,
         status: "pending"
       };
 
