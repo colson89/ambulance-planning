@@ -103,7 +103,7 @@ export default function ShiftPlanner() {
     },
   });
 
-  const handlePreferenceSubmit = (type: "day" | "night") => {
+  const handlePreferenceSubmit = async (type: "day" | "night") => {
     if (!selectedDate || !user) return;
 
     if (type === "day" && !isWeekend(selectedDate)) {
@@ -148,19 +148,28 @@ export default function ShiftPlanner() {
       }
     }
 
-    const preference = {
-      date: selectedDate.toISOString(),
-      type,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      canSplit: selectedShiftType !== "full",
-      month: selectedMonth.getMonth() + 1,
-      year: selectedMonth.getFullYear(),
-      notes: null
-    };
+    try {
+      const preference = {
+        date: selectedDate.toISOString(),
+        type,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        canSplit: selectedShiftType !== "full",
+        month: selectedMonth.getMonth() + 1,
+        year: selectedMonth.getFullYear(),
+        notes: null
+      };
 
-    console.log('Creating preference:', preference);
-    createPreferenceMutation.mutate(preference);
+      console.log('Creating preference:', preference);
+      await createPreferenceMutation.mutateAsync(preference);
+    } catch (error) {
+      console.error('Error submitting preference:', error);
+      toast({
+        title: "Fout bij het indienen van voorkeur",
+        description: "Er is een fout opgetreden bij het opslaan van uw voorkeur. Probeer het later opnieuw.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getDayPreferences = (date: Date) => {

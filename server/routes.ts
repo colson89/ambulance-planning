@@ -149,27 +149,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isPastDeadline = now > currentMonthDeadline;
       const planningMonth = addMonths(now, isPastDeadline ? 2 : 1);
 
-      // Controleer of de voorkeur voor de juiste maand wordt opgegeven
-      const preferenceMonth = new Date(req.body.date).getMonth() + 1;
-      const preferenceYear = new Date(req.body.date).getFullYear();
+      // Parse the incoming dates
+      const preferenceDate = new Date(req.body.date);
+      const preferenceMonth = preferenceDate.getMonth() + 1;
+      const preferenceYear = preferenceDate.getFullYear();
 
       if (preferenceMonth !== planningMonth.getMonth() + 1 ||
-        preferenceYear !== planningMonth.getFullYear()) {
+          preferenceYear !== planningMonth.getFullYear()) {
         return res.status(400).json({
           message: "Voorkeuren kunnen alleen worden opgegeven voor de juiste planningsmaand"
         });
       }
 
-      const preferenceData = insertShiftPreferenceSchema.parse(req.body);
-      const preference = await storage.createShiftPreference({
-        ...preferenceData,
+      const preferenceData = {
+        ...req.body,
         userId: req.user!.id,
-        month: preferenceMonth,
-        year: preferenceYear,
         status: "pending"
-      });
+      };
+
+      console.log('Creating preference:', preferenceData);
+      const preference = await storage.createShiftPreference(preferenceData);
       res.status(201).json(preference);
     } catch (error) {
+      console.error('Error creating preference:', error);
       if (error instanceof z.ZodError) {
         res.status(400).json(error.errors);
       } else {
