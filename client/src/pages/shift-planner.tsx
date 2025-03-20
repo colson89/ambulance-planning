@@ -16,6 +16,12 @@ import type { ShiftPreference } from "@shared/schema";
 type PreferenceType = "full" | "first" | "second" | "unavailable";
 type ShiftType = "day" | "night";
 
+// CSS voor gesplitste kalendercel
+const splitDayStyle = "!bg-gradient-to-b from-amber-100 to-amber-100";
+const splitNightStyle = "!bg-gradient-to-b from-indigo-100 to-indigo-100";
+const splitBothStyle = "!bg-gradient-to-b from-amber-100 to-indigo-100";
+const unavailableStyle = "!bg-red-100";
+
 export default function ShiftPlanner() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -177,24 +183,34 @@ export default function ShiftPlanner() {
                 onMonthChange={setSelectedMonth}
                 disabled={(date) => date.getMonth() !== selectedMonth.getMonth()}
                 modifiers={{
-                  dayShift: (date) => {
-                    const prefType = getPreferenceType(date, "day");
-                    return prefType !== null && prefType !== "unavailable";
+                  dayOnly: (date) => {
+                    const dayPref = getPreferenceType(date, "day");
+                    const nightPref = getPreferenceType(date, "night");
+                    return dayPref !== null && dayPref !== "unavailable" && (!nightPref || nightPref === "unavailable");
                   },
-                  nightShift: (date) => {
-                    const prefType = getPreferenceType(date, "night");
-                    return prefType !== null && prefType !== "unavailable";
+                  nightOnly: (date) => {
+                    const dayPref = getPreferenceType(date, "day");
+                    const nightPref = getPreferenceType(date, "night");
+                    return nightPref !== null && nightPref !== "unavailable" && (!dayPref || dayPref === "unavailable");
+                  },
+                  bothShifts: (date) => {
+                    const dayPref = getPreferenceType(date, "day");
+                    const nightPref = getPreferenceType(date, "night");
+                    return dayPref !== null && dayPref !== "unavailable" && nightPref !== null && nightPref !== "unavailable";
                   },
                   unavailable: (date) => {
                     const dayPref = getPreferenceType(date, "day");
                     const nightPref = getPreferenceType(date, "night");
-                    return (dayPref === "unavailable" || nightPref === "unavailable");
+                    return (dayPref === "unavailable" && nightPref === "unavailable") || 
+                           (dayPref === "unavailable" && !nightPref) || 
+                           (!dayPref && nightPref === "unavailable");
                   }
                 }}
                 modifiersClassNames={{
-                  dayShift: "bg-amber-100 hover:bg-amber-200",
-                  nightShift: "bg-indigo-100 hover:bg-indigo-200",
-                  unavailable: "bg-red-100 hover:bg-red-200"
+                  dayOnly: splitDayStyle,
+                  nightOnly: splitNightStyle,
+                  bothShifts: splitBothStyle,
+                  unavailable: unavailableStyle
                 }}
                 className="rounded-md border"
                 locale={nl}
@@ -210,14 +226,25 @@ export default function ShiftPlanner() {
                   <div className="w-4 h-4 bg-amber-100 rounded"></div>
                   <span className="text-sm flex items-center">
                     <Sun className="h-4 w-4 mr-1" />
-                    Dag shift beschikbaar
+                    Alleen dag shift
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-indigo-100 rounded"></div>
                   <span className="text-sm flex items-center">
                     <Moon className="h-4 w-4 mr-1" />
-                    Nacht shift beschikbaar
+                    Alleen nacht shift
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-8 rounded overflow-hidden">
+                    <div className="h-1/2 bg-amber-100"></div>
+                    <div className="h-1/2 bg-indigo-100"></div>
+                  </div>
+                  <span className="text-sm flex items-center">
+                    <Sun className="h-4 w-4 mr-1" />
+                    <Moon className="h-4 w-4 mr-1" />
+                    Beide shifts beschikbaar
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
