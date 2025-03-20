@@ -13,6 +13,8 @@ import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { ShiftPreference } from "@shared/schema";
 
+type PreferenceType = "full" | "first" | "second" | "unavailable";
+
 export default function ShiftPlanner() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -20,7 +22,9 @@ export default function ShiftPlanner() {
   const [, setLocation] = useLocation();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date());
-  const [shiftType, setShiftType] = useState("full");
+
+  // Map om voorkeuren per datum op te slaan
+  const [datePreferences, setDatePreferences] = useState<Map<string, PreferenceType>>(new Map());
 
   const today = new Date();
   const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
@@ -69,14 +73,20 @@ export default function ShiftPlanner() {
     },
   });
 
-  const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Type veranderd naar:", event.target.value);
-    setShiftType(event.target.value);
+  const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>, date: Date) => {
+    const dateKey = format(date, "yyyy-MM-dd");
+    const newValue = event.target.value as PreferenceType;
+    setDatePreferences(new Map(datePreferences).set(dateKey, newValue));
+  };
+
+  const getPreferenceForDate = (date: Date): PreferenceType => {
+    const dateKey = format(date, "yyyy-MM-dd");
+    return datePreferences.get(dateKey) || "full";
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log("Form submit", { selectedDate, shiftType });
+    console.log("Form submit", { selectedDate, preferenceType: selectedDate ? getPreferenceForDate(selectedDate) : null });
 
     if (!selectedDate) {
       toast({
@@ -88,15 +98,16 @@ export default function ShiftPlanner() {
     }
 
     try {
+      const preferenceType = getPreferenceForDate(selectedDate);
       const testData = {
         date: selectedDate,
-        type: shiftType === "unavailable" ? "unavailable" : "day",
-        startTime: shiftType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 7, 0, 0),
-        endTime: shiftType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 19, 0, 0),
+        type: preferenceType === "unavailable" ? "unavailable" : "day",
+        startTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 7, 0, 0),
+        endTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 19, 0, 0),
         canSplit: false,
         month: selectedMonth.getMonth() + 1,
         year: selectedMonth.getFullYear(),
-        notes: shiftType === "unavailable" ? "Niet beschikbaar" : null
+        notes: preferenceType === "unavailable" ? "Niet beschikbaar" : null
       };
 
       console.log("Versturen test data:", testData);
@@ -147,7 +158,7 @@ export default function ShiftPlanner() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Test Formulier</CardTitle>
+            <CardTitle>Voorkeuren</CardTitle>
           </CardHeader>
           <CardContent>
             {selectedDate && (
@@ -159,10 +170,32 @@ export default function ShiftPlanner() {
                       id="full"
                       name="shiftType"
                       value="full"
-                      checked={shiftType === "full"}
-                      onChange={handleTypeChange}
+                      checked={getPreferenceForDate(selectedDate) === "full"}
+                      onChange={(e) => handleTypeChange(e, selectedDate)}
                     />
                     <label htmlFor="full" className="ml-2">Volledige shift</label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="first"
+                      name="shiftType"
+                      value="first"
+                      checked={getPreferenceForDate(selectedDate) === "first"}
+                      onChange={(e) => handleTypeChange(e, selectedDate)}
+                    />
+                    <label htmlFor="first" className="ml-2">Eerste deel</label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="second"
+                      name="shiftType"
+                      value="second"
+                      checked={getPreferenceForDate(selectedDate) === "second"}
+                      onChange={(e) => handleTypeChange(e, selectedDate)}
+                    />
+                    <label htmlFor="second" className="ml-2">Tweede deel</label>
                   </div>
                   <div>
                     <input
@@ -170,8 +203,8 @@ export default function ShiftPlanner() {
                       id="unavailable"
                       name="shiftType"
                       value="unavailable"
-                      checked={shiftType === "unavailable"}
-                      onChange={handleTypeChange}
+                      checked={getPreferenceForDate(selectedDate) === "unavailable"}
+                      onChange={(e) => handleTypeChange(e, selectedDate)}
                     />
                     <label htmlFor="unavailable" className="ml-2">Niet beschikbaar</label>
                   </div>
@@ -188,7 +221,7 @@ export default function ShiftPlanner() {
                       Bezig met opslaan...
                     </>
                   ) : (
-                    "Test Voorkeur Opslaan"
+                    "Voorkeur Opslaan"
                   )}
                 </Button>
               </form>

@@ -6,6 +6,7 @@ import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema } from
 import { z } from "zod";
 import { comparePasswords } from "./auth";
 import { addMonths } from 'date-fns';
+import {format} from 'date-fns';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -145,7 +146,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Received preference data:', req.body);
 
-      // Convert date strings to Date objects
       const preferenceData = {
         ...req.body,
         userId: req.user!.id,
@@ -156,6 +156,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       console.log('Creating preference with data:', preferenceData);
+
+      // Check if there's already a preference for this date
+      const existingPreferences = await storage.getUserShiftPreferences(
+        req.user!.id,
+        preferenceData.month,
+        preferenceData.year
+      );
+
+      const hasExistingPreference = existingPreferences.some(pref => 
+        format(new Date(pref.date), "yyyy-MM-dd") === format(new Date(preferenceData.date), "yyyy-MM-dd")
+      );
+
+      if (hasExistingPreference) {
+        return res.status(400).json({ 
+          message: "Er bestaat al een voorkeur voor deze datum" 
+        });
+      }
+
       const preference = await storage.createShiftPreference(preferenceData);
       console.log('Created preference:', preference);
 
