@@ -81,11 +81,10 @@ export default function ShiftPlanner() {
     },
   });
 
-  // Check if we're past the deadline for next month's preferences
+  // Check deadline voor volgende maand
   const today = new Date();
-  const nextMonth = addMonths(startOfMonth(today), 1);
-  const deadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
-  const isPastDeadline = today > deadline;
+  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
+  const isPastDeadline = today > currentMonthDeadline;
 
   const handlePreferenceSubmit = (type: "day" | "night") => {
     if (!selectedDate || !user) return;
@@ -147,14 +146,15 @@ export default function ShiftPlanner() {
         </Button>
       </div>
 
-      {isPastDeadline && (
-        <Alert className="mb-6">
-          <AlertDescription>
-            De deadline voor het opgeven van voorkeuren voor volgende maand ({format(nextMonth, "MMMM yyyy", { locale: nl })}) 
-            is verstreken (19e van de maand, 23:00).
-          </AlertDescription>
-        </Alert>
-      )}
+      <Alert className="mb-6">
+        <AlertDescription>
+          U geeft nu voorkeuren op voor {format(selectedMonth, "MMMM yyyy", { locale: nl })}. 
+          {isPastDeadline 
+            ? "De deadline voor het opgeven van voorkeuren is verstreken (19e van deze maand, 23:00)."
+            : `U heeft nog tot ${format(currentMonthDeadline, "d MMMM yyyy HH:mm", { locale: nl })} om uw voorkeuren op te geven.`
+          }
+        </AlertDescription>
+      </Alert>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
