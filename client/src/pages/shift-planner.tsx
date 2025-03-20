@@ -55,7 +55,12 @@ export default function ShiftPlanner() {
 
   const createPreferenceMutation = useMutation({
     mutationFn: async (preference: ShiftPreference) => {
-      const res = await apiRequest("POST", "/api/preferences", preference);
+      const res = await apiRequest("POST", "/api/preferences", {
+        ...preference,
+        date: preference.date.toISOString(),
+        startTime: preference.startTime.toISOString(),
+        endTime: preference.endTime.toISOString(),
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -79,10 +84,10 @@ export default function ShiftPlanner() {
   // Check if we're past the deadline for next month's preferences
   const today = new Date();
   const nextMonth = addMonths(startOfMonth(today), 1);
-  const deadline = new Date(today.getFullYear(), today.getMonth() + 1, 19, 23, 0);
+  const deadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
   const isPastDeadline = today > deadline;
 
-  const handlePreferenceSubmit = (type: "day" | "night", canSplit: boolean) => {
+  const handlePreferenceSubmit = (type: "day" | "night") => {
     if (!selectedDate || !user) return;
 
     // Controleer of dagshift alleen in het weekend wordt opgegeven
@@ -96,12 +101,16 @@ export default function ShiftPlanner() {
     }
 
     let startTime, endTime;
+    const shiftDate = new Date(selectedDate);
+
     if (type === "day") {
-      startTime = setHours(setMinutes(selectedDate, 0), 7);
-      endTime = setHours(setMinutes(selectedDate, 0), 19);
+      startTime = new Date(shiftDate.setHours(7, 0, 0, 0));
+      endTime = new Date(shiftDate.setHours(19, 0, 0, 0));
     } else {
-      startTime = setHours(setMinutes(selectedDate, 0), 19);
-      endTime = setHours(setMinutes(new Date(selectedDate.getTime() + 24 * 60 * 60 * 1000), 0), 7);
+      startTime = new Date(shiftDate.setHours(19, 0, 0, 0));
+      const nextDay = new Date(shiftDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      endTime = new Date(nextDay.setHours(7, 0, 0, 0));
     }
 
     const preference: ShiftPreference = {
@@ -185,7 +194,7 @@ export default function ShiftPlanner() {
                   </label>
                 </div>
                 <Button
-                  onClick={() => handlePreferenceSubmit("day", splitShift.day)}
+                  onClick={() => handlePreferenceSubmit("day")}
                   disabled={!selectedDate || isPastDeadline || preferencesLoading}
                   className="w-full"
                 >
@@ -208,7 +217,7 @@ export default function ShiftPlanner() {
                 </label>
               </div>
               <Button
-                onClick={() => handlePreferenceSubmit("night", splitShift.night)}
+                onClick={() => handlePreferenceSubmit("night")}
                 disabled={!selectedDate || isPastDeadline || preferencesLoading}
                 className="w-full"
               >
