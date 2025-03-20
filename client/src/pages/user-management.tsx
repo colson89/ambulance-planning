@@ -168,49 +168,87 @@ export default function UserManagement() {
             </DialogHeader>
             <Form {...createUserForm}>
               <form onSubmit={createUserForm.handleSubmit((data) => createUserMutation.mutate(data))} className="space-y-4">
-                <Input
-                  placeholder="Gebruikersnaam"
-                  {...createUserForm.register("username")}
-                />
-                <Input
-                  type="password"
-                  placeholder="Wachtwoord"
-                  {...createUserForm.register("password")}
-                />
-                <Input
-                  placeholder="Voornaam"
-                  {...createUserForm.register("firstName")}
-                />
-                <Input
-                  placeholder="Achternaam"
-                  {...createUserForm.register("lastName")}
-                />
-                <Select onValueChange={(value) => createUserForm.setValue("role", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecteer rol" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ambulancier">Ambulancier</SelectItem>
-                    <SelectItem value="admin">Administrator</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Gebruikersnaam</label>
+                  <p className="text-sm text-muted-foreground">De unieke login naam voor deze gebruiker</p>
                   <Input
-                    type="number"
-                    placeholder="Min. uren"
-                    {...createUserForm.register("minHours", { valueAsNumber: true })}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Max. uren"
-                    {...createUserForm.register("maxHours", { valueAsNumber: true })}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Voorkeur uren"
-                    {...createUserForm.register("preferredHours", { valueAsNumber: true })}
+                    placeholder="bijv. jsmith"
+                    {...createUserForm.register("username")}
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Wachtwoord</label>
+                  <p className="text-sm text-muted-foreground">Minimaal 6 karakters</p>
+                  <Input
+                    type="password"
+                    placeholder="Wachtwoord"
+                    {...createUserForm.register("password")}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Voornaam</label>
+                    <Input
+                      placeholder="Jan"
+                      {...createUserForm.register("firstName")}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Achternaam</label>
+                    <Input
+                      placeholder="Smit"
+                      {...createUserForm.register("lastName")}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Rol</label>
+                  <p className="text-sm text-muted-foreground">Bepaalt de rechten en toegang van de gebruiker</p>
+                  <Select onValueChange={(value) => createUserForm.setValue("role", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecteer rol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ambulancier">Ambulancier</SelectItem>
+                      <SelectItem value="admin">Administrator</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Werkuren Instellingen</label>
+                  <p className="text-sm text-muted-foreground">Bepaal het aantal werkuren per week</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-xs font-medium">Minimum</label>
+                      <Input
+                        type="number"
+                        placeholder="24"
+                        {...createUserForm.register("minHours", { valueAsNumber: true })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium">Maximum</label>
+                      <Input
+                        type="number"
+                        placeholder="40"
+                        {...createUserForm.register("maxHours", { valueAsNumber: true })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium">Voorkeur</label>
+                      <Input
+                        type="number"
+                        placeholder="32"
+                        {...createUserForm.register("preferredHours", { valueAsNumber: true })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <Button 
                   type="submit"
                   className="w-full"
@@ -259,48 +297,76 @@ export default function UserManagement() {
                           )} 
                           className="space-y-4"
                         >
-                          <Input
-                            placeholder="Voornaam"
-                            defaultValue={u.firstName}
-                            {...updateUserForm.register("firstName")}
-                          />
-                          <Input
-                            placeholder="Achternaam"
-                            defaultValue={u.lastName}
-                            {...updateUserForm.register("lastName")}
-                          />
-                          <Select 
-                            defaultValue={u.role}
-                            onValueChange={(value) => updateUserForm.setValue("role", value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecteer rol" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="ambulancier">Ambulancier</SelectItem>
-                              <SelectItem value="admin">Administrator</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <div className="grid grid-cols-3 gap-4">
-                            <Input
-                              type="number"
-                              placeholder="Min. uren"
-                              defaultValue={u.minHours}
-                              {...updateUserForm.register("minHours", { valueAsNumber: true })}
-                            />
-                            <Input
-                              type="number"
-                              placeholder="Max. uren"
-                              defaultValue={u.maxHours}
-                              {...updateUserForm.register("maxHours", { valueAsNumber: true })}
-                            />
-                            <Input
-                              type="number"
-                              placeholder="Voorkeur uren"
-                              defaultValue={u.preferredHours}
-                              {...updateUserForm.register("preferredHours", { valueAsNumber: true })}
-                            />
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Voornaam</label>
+                              <Input
+                                placeholder="Jan"
+                                defaultValue={u.firstName}
+                                {...updateUserForm.register("firstName")}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium">Achternaam</label>
+                              <Input
+                                placeholder="Smit"
+                                defaultValue={u.lastName}
+                                {...updateUserForm.register("lastName")}
+                              />
+                            </div>
                           </div>
+
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Rol</label>
+                            <p className="text-sm text-muted-foreground">Bepaalt de rechten en toegang van de gebruiker</p>
+                            <Select 
+                              defaultValue={u.role}
+                              onValueChange={(value) => updateUserForm.setValue("role", value)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecteer rol" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ambulancier">Ambulancier</SelectItem>
+                                <SelectItem value="admin">Administrator</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Werkuren Instellingen</label>
+                            <p className="text-sm text-muted-foreground">Bepaal het aantal werkuren per week</p>
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <label className="text-xs font-medium">Minimum</label>
+                                <Input
+                                  type="number"
+                                  placeholder="24"
+                                  defaultValue={u.minHours}
+                                  {...updateUserForm.register("minHours", { valueAsNumber: true })}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium">Maximum</label>
+                                <Input
+                                  type="number"
+                                  placeholder="40"
+                                  defaultValue={u.maxHours}
+                                  {...updateUserForm.register("maxHours", { valueAsNumber: true })}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium">Voorkeur</label>
+                                <Input
+                                  type="number"
+                                  placeholder="32"
+                                  defaultValue={u.preferredHours}
+                                  {...updateUserForm.register("preferredHours", { valueAsNumber: true })}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
                           <Button 
                             type="submit"
                             className="w-full"
