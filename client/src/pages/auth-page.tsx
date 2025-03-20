@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect } from "react";
 
 export default function AuthPage() {
@@ -29,7 +30,11 @@ export default function AuthPage() {
     defaultValues: {
       username: "",
       password: "",
+      firstName: "",
+      lastName: "",
+      role: "ambulancier",
       isAdmin: false,
+      minHours: 24,
       maxHours: 40,
       preferredHours: 32
     }
@@ -58,12 +63,12 @@ export default function AuthPage() {
                   <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}>
                     <div className="space-y-4">
                       <Input
-                        placeholder="Username"
+                        placeholder="Gebruikersnaam"
                         {...loginForm.register("username")}
                       />
                       <Input
                         type="password"
-                        placeholder="Password"
+                        placeholder="Wachtwoord"
                         {...loginForm.register("password")}
                       />
                       <Button 
@@ -83,20 +88,40 @@ export default function AuthPage() {
                   <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))}>
                     <div className="space-y-4">
                       <Input
-                        placeholder="Username"
+                        placeholder="Gebruikersnaam"
                         {...registerForm.register("username")}
                       />
                       <Input
                         type="password"
-                        placeholder="Password"
+                        placeholder="Wachtwoord"
                         {...registerForm.register("password")}
                       />
+                      <Input
+                        placeholder="Voornaam"
+                        {...registerForm.register("firstName")}
+                      />
+                      <Input
+                        placeholder="Achternaam"
+                        {...registerForm.register("lastName")}
+                      />
+                      <Select 
+                        onValueChange={(value) => registerForm.setValue("role", value as "admin" | "ambulancier")}
+                        defaultValue="ambulancier"
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecteer rol" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ambulancier">Ambulancier</SelectItem>
+                          <SelectItem value="admin">Administrator</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button
                         type="submit"
                         className="w-full"
                         disabled={registerMutation.isPending}
                       >
-                        Register
+                        Registreren
                       </Button>
                     </div>
                   </form>

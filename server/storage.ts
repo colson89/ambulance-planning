@@ -21,11 +21,11 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(userId: number, updateData: Partial<User>): Promise<User>;
   updateUserPassword(userId: number, newPassword: string): Promise<User>;
   deleteUser(userId: number): Promise<void>;
   getAllShifts(): Promise<Shift[]>;
   createShift(shift: any): Promise<Shift>;
-  updateUserPreferences(userId: number, preferences: { maxHours: number; preferredHours: number }): Promise<User>;
   sessionStore: session.Store;
 }
 
@@ -61,6 +61,17 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateUser(userId: number, updateData: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
+
+    if (!user) throw new Error("User not found");
+    return user;
+  }
+
   async updateUserPassword(userId: number, newPassword: string): Promise<User> {
     const [user] = await db
       .update(users)
@@ -83,20 +94,6 @@ export class DatabaseStorage implements IStorage {
   async createShift(shiftData: any): Promise<Shift> {
     const [shift] = await db.insert(shifts).values(shiftData).returning();
     return shift;
-  }
-
-  async updateUserPreferences(userId: number, preferences: { maxHours: number; preferredHours: number }): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set({
-        maxHours: preferences.maxHours,
-        preferredHours: preferences.preferredHours
-      })
-      .where(eq(users.id, userId))
-      .returning();
-
-    if (!user) throw new Error("User not found");
-    return user;
   }
 }
 

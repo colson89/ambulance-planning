@@ -6,7 +6,11 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  role: text("role", { enum: ["admin", "ambulancier"] }).notNull().default("ambulancier"),
   isAdmin: boolean("is_admin").notNull().default(false),
+  minHours: integer("min_hours").notNull().default(24),
   maxHours: integer("max_hours").notNull().default(40),
   preferredHours: integer("preferred_hours").notNull().default(32)
 });
@@ -20,10 +24,19 @@ export const shifts = pgTable("shifts", {
   type: text("type").notNull() // day, night, etc
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
+// Schema voor het aanmaken van een nieuwe gebruiker
+export const insertUserSchema = createInsertSchema(users, {
+  firstName: z.string().min(1, "Voornaam is verplicht"),
+  lastName: z.string().min(1, "Achternaam is verplicht"),
+  role: z.enum(["admin", "ambulancier"]),
+}).pick({
   username: true,
   password: true,
+  firstName: true,
+  lastName: true,
+  role: true,
   isAdmin: true,
+  minHours: true,
   maxHours: true,
   preferredHours: true
 });

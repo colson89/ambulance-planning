@@ -37,6 +37,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user (admin only)
+  app.patch("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const updateSchema = z.object({
+        firstName: z.string().min(1).optional(),
+        lastName: z.string().min(1).optional(),
+        role: z.enum(["admin", "ambulancier"]).optional(),
+        minHours: z.number().min(0).max(168).optional(),
+        maxHours: z.number().min(0).max(168).optional(),
+        preferredHours: z.number().min(0).max(168).optional(),
+      });
+
+      const updateData = updateSchema.parse(req.body);
+      const user = await storage.updateUser(parseInt(req.params.id), updateData);
+      res.json(user);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json(error.errors);
+      } else {
+        res.status(500).json({ message: "Failed to update user" });
+      }
+    }
+  });
+
   // Update user password (admin only)
   app.patch("/api/users/:id/password", requireAdmin, async (req, res) => {
     try {

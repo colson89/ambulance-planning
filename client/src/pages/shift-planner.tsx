@@ -6,7 +6,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import type { InsertShift } from "@shared/schema";
+import { z } from "zod";
+
+// Define the InsertShift schema inline since it's specific to this component
+const insertShiftSchema = z.object({
+  userId: z.number(),
+  date: z.date(),
+  startTime: z.date(),
+  endTime: z.date(),
+  type: z.string()
+});
+
+type InsertShift = z.infer<typeof insertShiftSchema>;
 
 export default function ShiftPlanner() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -36,10 +47,10 @@ export default function ShiftPlanner() {
   });
 
   const handleAddShift = () => {
-    if (!date) return;
+    if (!date || !user) return;
 
-    const shift = {
-      userId: user!.id,
+    const shift: InsertShift = {
+      userId: user.id,
       date: date,
       startTime: new Date(date.setHours(9, 0, 0)),
       endTime: new Date(date.setHours(17, 0, 0)),
