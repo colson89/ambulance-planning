@@ -85,8 +85,8 @@ export default function ShiftPlanner() {
         queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()] 
       });
       toast({
-        title: "Voorkeur opgeslagen",
-        description: "Uw shift voorkeur is succesvol opgeslagen.",
+        title: "Success",
+        description: "Voorkeur opgeslagen",
       });
     },
     onError: (error: Error) => {
@@ -246,7 +246,6 @@ export default function ShiftPlanner() {
                 <RadioGroup
                   value={dayShiftType}
                   onValueChange={(value) => setDayShiftType(value as ShiftType)}
-                  disabled={isPastDeadline}
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="full" id="day-full" />
@@ -276,7 +275,6 @@ export default function ShiftPlanner() {
               <RadioGroup
                 value={nightShiftType}
                 onValueChange={(value) => setNightShiftType(value as ShiftType)}
-                disabled={isPastDeadline}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="full" id="night-full" />
@@ -300,7 +298,7 @@ export default function ShiftPlanner() {
               </Button>
             </div>
 
-            {selectedDate && (
+            {selectedDate && getDayPreferences(selectedDate).length > 0 && (
               <div className="pt-4 border-t">
                 <h3 className="font-medium mb-2">
                   Opgegeven voorkeuren voor {format(selectedDate, "d MMMM yyyy", { locale: nl })}:
