@@ -70,23 +70,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.sendStatus(403);
       }
 
-      let schema;
-      if (req.user?.isAdmin) {
-        // Admin can set password directly
-        schema = z.object({
-          password: z.string().min(6)
-        });
-      } else {
-        // User must provide current password
-        schema = z.object({
-          currentPassword: z.string().min(1),
-          newPassword: z.string().min(6)
-        });
-      }
+      const data = (req.user?.isAdmin 
+        ? z.object({ password: z.string().min(6) })
+        : z.object({
+            currentPassword: z.string().min(1),
+            newPassword: z.string().min(6)
+          })
+      ).parse(req.body);
 
-      const data = schema.parse(req.body);
-
-      // If not admin, verify current password
+      // Als niet admin, verifieer huidig wachtwoord
       if (!req.user?.isAdmin) {
         const user = await storage.getUser(parseInt(req.params.id));
         if (!user || !(await comparePasswords(data.currentPassword, user.password))) {
@@ -96,8 +88,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.updateUserPassword(
         parseInt(req.params.id),
-        req.user?.isAdmin ? data.password : data.newPassword
+        // Als admin, gebruik direct het nieuwe wachtwoord, anders gebruik newPassword
+        'password' in data ? data.password : data.newPassword
       );
+
       res.json(user);
     } catch (error) {
       if (error instanceof z.ZodError) {

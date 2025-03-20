@@ -110,7 +110,9 @@ export default function UserManagement() {
 
   const changePasswordMutation = useMutation({
     mutationFn: async ({ userId, password }: { userId: number; password: string }) => {
-      const res = await apiRequest("PATCH", `/api/users/${userId}/password`, { password });
+      const res = await apiRequest("PATCH", `/api/users/${userId}/password`, { 
+        password
+      });
       return res.json();
     },
     onSuccess: () => {
