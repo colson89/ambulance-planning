@@ -50,7 +50,8 @@ export default function ShiftPlanner() {
   });
 
   const createPreferenceMutation = useMutation({
-    mutationFn: async (data: Omit<ShiftPreference, "id" | "userId" | "status">) => {
+    mutationFn: async (data: any) => {
+      console.log('Sending preference data:', data);
       const res = await apiRequest("POST", "/api/preferences", data);
       if (!res.ok) {
         const error = await res.json();
@@ -68,6 +69,7 @@ export default function ShiftPlanner() {
       });
     },
     onError: (error: Error) => {
+      console.error('Error creating preference:', error);
       toast({
         title: "Fout",
         description: error.message,
@@ -148,16 +150,17 @@ export default function ShiftPlanner() {
     }
 
     const preference = {
-      date: selectedDate,
+      date: selectedDate.toISOString(),
       type,
-      startTime,
-      endTime,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
       canSplit: selectedShiftType !== "full",
       month: selectedMonth.getMonth() + 1,
       year: selectedMonth.getFullYear(),
       notes: null
     };
 
+    console.log('Creating preference:', preference);
     createPreferenceMutation.mutate(preference);
   };
 
@@ -165,13 +168,6 @@ export default function ShiftPlanner() {
     return preferences.filter(p => 
       format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
     );
-  };
-
-  const getDayClassName = (date: Date) => {
-    if (getDayPreferences(date).length > 0) {
-      return "bg-primary/20 rounded-md";
-    }
-    return "";
   };
 
   return (
