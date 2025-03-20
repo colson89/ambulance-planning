@@ -4,15 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertUserSchema } from "@shared/schema";
 import { useLocation } from "wouter";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEffect } from "react";
 
 export default function AuthPage() {
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -23,21 +19,6 @@ export default function AuthPage() {
 
   const loginForm = useForm({
     defaultValues: { username: "", password: "" }
-  });
-
-  const registerForm = useForm({
-    resolver: zodResolver(insertUserSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-      firstName: "",
-      lastName: "",
-      role: "ambulancier",
-      isAdmin: false,
-      minHours: 24,
-      maxHours: 40,
-      preferredHours: 32
-    }
   });
 
   if (user) {
@@ -52,82 +33,28 @@ export default function AuthPage() {
             <CardTitle>Ambulance Shift Planner</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="login">
-                <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}>
-                    <div className="space-y-4">
-                      <Input
-                        placeholder="Gebruikersnaam"
-                        {...loginForm.register("username")}
-                      />
-                      <Input
-                        type="password"
-                        placeholder="Wachtwoord"
-                        {...loginForm.register("password")}
-                      />
-                      <Button 
-                        type="submit"
-                        className="w-full"
-                        disabled={loginMutation.isPending}
-                      >
-                        Login
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </TabsContent>
-
-              <TabsContent value="register">
-                <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))}>
-                    <div className="space-y-4">
-                      <Input
-                        placeholder="Gebruikersnaam"
-                        {...registerForm.register("username")}
-                      />
-                      <Input
-                        type="password"
-                        placeholder="Wachtwoord"
-                        {...registerForm.register("password")}
-                      />
-                      <Input
-                        placeholder="Voornaam"
-                        {...registerForm.register("firstName")}
-                      />
-                      <Input
-                        placeholder="Achternaam"
-                        {...registerForm.register("lastName")}
-                      />
-                      <Select 
-                        onValueChange={(value) => registerForm.setValue("role", value as "admin" | "ambulancier")}
-                        defaultValue="ambulancier"
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecteer rol" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ambulancier">Ambulancier</SelectItem>
-                          <SelectItem value="admin">Administrator</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={registerMutation.isPending}
-                      >
-                        Registreren
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </TabsContent>
-            </Tabs>
+            <Form {...loginForm}>
+              <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Gebruikersnaam"
+                    {...loginForm.register("username")}
+                  />
+                  <Input
+                    type="password"
+                    placeholder="Wachtwoord"
+                    {...loginForm.register("password")}
+                  />
+                  <Button 
+                    type="submit"
+                    className="w-full"
+                    disabled={loginMutation.isPending}
+                  >
+                    Inloggen
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>

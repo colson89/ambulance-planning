@@ -15,16 +15,34 @@ const preferencesSchema = z.object({
   preferredHours: z.number().min(0).max(168)
 });
 
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Huidig wachtwoord is verplicht"),
+  newPassword: z.string().min(6, "Nieuw wachtwoord moet minimaal 6 karakters bevatten"),
+  confirmPassword: z.string().min(1, "Bevestig het nieuwe wachtwoord")
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Wachtwoorden komen niet overeen",
+  path: ["confirmPassword"],
+});
+
 export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const form = useForm({
+  const preferencesForm = useForm({
     resolver: zodResolver(preferencesSchema),
     defaultValues: {
       maxHours: user?.maxHours || 40,
       preferredHours: user?.preferredHours || 32
+    }
+  });
+
+  const passwordForm = useForm({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: ""
     }
   });
 
@@ -37,12 +55,36 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       toast({
         title: "Success",
-        description: "Preferences updated successfully",
+        description: "Voorkeuren bijgewerkt",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof passwordSchema>) => {
+      const res = await apiRequest("PATCH", `/api/users/${user!.id}/password`, {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Wachtwoord bijgewerkt",
+      });
+      passwordForm.reset();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
         description: error.message,
         variant: "destructive",
       });
@@ -51,41 +93,85 @@ export default function Profile() {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Profile</h1>
+      <h1 className="text-3xl font-bold mb-6">Profiel</h1>
 
-      <Card className="max-w-md">
-        <CardHeader>
-          <CardTitle>Work Preferences</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit((data) => updatePreferencesMutation.mutate(data))} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Maximum Hours per Week</label>
-                <Input
-                  type="number"
-                  {...form.register("maxHours", { valueAsNumber: true })}
-                />
-              </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Werk Voorkeuren</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...preferencesForm}>
+              <form onSubmit={preferencesForm.handleSubmit((data) => updatePreferencesMutation.mutate(data))} className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Maximum Uren per Week</label>
+                  <Input
+                    type="number"
+                    {...preferencesForm.register("maxHours", { valueAsNumber: true })}
+                  />
+                </div>
 
-              <div>
-                <label className="text-sm font-medium">Preferred Hours per Week</label>
-                <Input
-                  type="number"
-                  {...form.register("preferredHours", { valueAsNumber: true })}
-                />
-              </div>
+                <div>
+                  <label className="text-sm font-medium">Voorkeur Uren per Week</label>
+                  <Input
+                    type="number"
+                    {...preferencesForm.register("preferredHours", { valueAsNumber: true })}
+                  />
+                </div>
 
-              <Button 
-                type="submit"
-                disabled={updatePreferencesMutation.isPending}
-              >
-                Save Preferences
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+                <Button 
+                  type="submit"
+                  disabled={updatePreferencesMutation.isPending}
+                >
+                  Voorkeuren Opslaan
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Wachtwoord Wijzigen</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...passwordForm}>
+              <form onSubmit={passwordForm.handleSubmit((data) => updatePasswordMutation.mutate(data))} className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Huidig Wachtwoord</label>
+                  <Input
+                    type="password"
+                    {...passwordForm.register("currentPassword")}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Nieuw Wachtwoord</label>
+                  <Input
+                    type="password"
+                    {...passwordForm.register("newPassword")}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Bevestig Nieuw Wachtwoord</label>
+                  <Input
+                    type="password"
+                    {...passwordForm.register("confirmPassword")}
+                  />
+                </div>
+
+                <Button 
+                  type="submit"
+                  disabled={updatePasswordMutation.isPending}
+                >
+                  Wachtwoord Wijzigen
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

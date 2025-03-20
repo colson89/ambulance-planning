@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { insertShiftSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
+import { comparePasswords } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -61,16 +62,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user password (admin only)
-  app.patch("/api/users/:id/password", requireAdmin, async (req, res) => {
+  // Update user password (admin or self)
+  app.patch("/api/users/:id/password", async (req, res) => {
     try {
-      const { password } = z.object({
-        password: z.string().min(6)
-      }).parse(req.body);
+      // Check if user is admin or updating their own password
+      if (!req.user?.isAdmin && req.user?.id !== parseInt(req.params.id)) {
+        return res.sendStatus(403);
+      }
+
+      let schema;
+      if (req.user?.isAdmin) {
+        // Admin can set password directly
+        schema = z.object({
+          password: z.string().min(6)
+        });
+      } else {
+        // User must provide current password
+        schema = z.object({
+          currentPassword: z.string().min(1),
+          newPassword: z.string().min(6)
+        });
+      }
+
+      const data = schema.parse(req.body);
+
+      // If not admin, verify current password
+      if (!req.user?.isAdmin) {
+        const user = await storage.getUser(parseInt(req.params.id));
+        if (!user || !(await comparePasswords(data.currentPassword, user.password))) {
+          return res.status(400).json({ message: "Huidig wachtwoord is incorrect" });
+        }
+      }
 
       const user = await storage.updateUserPassword(
         parseInt(req.params.id),
-        password
+        req.user?.isAdmin ? data.password : data.newPassword
       );
       res.json(user);
     } catch (error) {
@@ -131,7 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         preferredHours: z.number().min(0).max(168)
       }).parse(req.body);
 
-      const user = await storage.updateUserPreferences(
+      const user = await storage.updateUser(
         parseInt(req.params.id),
         preferences
       );
