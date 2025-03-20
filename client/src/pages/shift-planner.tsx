@@ -49,7 +49,6 @@ export default function ShiftPlanner() {
       console.log("API Response:", res.status);
       const json = await res.json();
       console.log("API Response data:", json);
-      if (!res.ok) throw new Error("Kon voorkeur niet opslaan");
       return json;
     },
     onSuccess: () => {
@@ -88,26 +87,20 @@ export default function ShiftPlanner() {
       return;
     }
 
-    // Test data
-    const startTime = new Date(selectedDate);
-    startTime.setHours(7, 0, 0, 0);
-
-    const endTime = new Date(selectedDate);
-    endTime.setHours(19, 0, 0, 0);
-
-    const testData = {
-      date: selectedDate.toISOString(),
-      type: "day",
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      canSplit: false,
-      month: selectedMonth.getMonth() + 1,
-      year: selectedMonth.getFullYear(),
-      notes: null
-    };
-
-    console.log("Versturen test data:", testData);
     try {
+      const date = new Date(selectedDate);
+      const testData = {
+        date: date,
+        type: "day",
+        startTime: new Date(date.setHours(7, 0, 0)),
+        endTime: new Date(date.setHours(19, 0, 0)),
+        canSplit: false,
+        month: selectedMonth.getMonth() + 1,
+        year: selectedMonth.getFullYear(),
+        notes: null
+      };
+
+      console.log("Versturen test data:", testData);
       await createPreferenceMutation.mutateAsync(testData);
       console.log("Test data verstuurd");
     } catch (error) {
