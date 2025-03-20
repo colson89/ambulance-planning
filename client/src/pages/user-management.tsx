@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, UserPlus, KeyRound } from "lucide-react";
+import { useEffect } from "react";
 
 const updateUserSchema = z.object({
   firstName: z.string().min(1, "Voornaam is verplicht"),
@@ -74,6 +75,7 @@ export default function UserManagement() {
         title: "Succes",
         description: "Gebruiker aangemaakt",
       });
+      createUserForm.reset();
     },
     onError: (error: Error) => {
       toast({
@@ -95,6 +97,7 @@ export default function UserManagement() {
         title: "Succes",
         description: "Gebruiker bijgewerkt",
       });
+      updateUserForm.reset();
     },
     onError: (error: Error) => {
       toast({
@@ -212,7 +215,7 @@ export default function UserManagement() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Rol</label>
                   <p className="text-sm text-muted-foreground">Bepaalt de rechten en toegang van de gebruiker</p>
-                  <Select onValueChange={(value) => createUserForm.setValue("role", value)}>
+                  <Select onValueChange={(value) => createUserForm.setValue("role", value as "admin" | "ambulancier")}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecteer rol" />
                     </SelectTrigger>
@@ -285,7 +288,18 @@ export default function UserManagement() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Dialog>
+                  <Dialog onOpenChange={(open) => {
+                    if (open) {
+                      updateUserForm.reset({
+                        firstName: u.firstName,
+                        lastName: u.lastName,
+                        role: u.role as "admin" | "ambulancier",
+                        minHours: u.minHours,
+                        maxHours: u.maxHours,
+                        preferredHours: u.preferredHours
+                      });
+                    }
+                  }}>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="icon">
                         <Pencil className="h-4 w-4" />
@@ -300,7 +314,10 @@ export default function UserManagement() {
                           onSubmit={updateUserForm.handleSubmit((data) => {
                             updateUserMutation.mutate({ 
                               userId: u.id, 
-                              data
+                              data: {
+                                ...data,
+                                role: data.role as "admin" | "ambulancier"
+                              }
                             });
                           })} 
                           className="space-y-4"
@@ -310,7 +327,6 @@ export default function UserManagement() {
                               <label className="text-sm font-medium">Voornaam</label>
                               <Input
                                 placeholder="Jan"
-                                defaultValue={u.firstName}
                                 {...updateUserForm.register("firstName")}
                               />
                             </div>
@@ -318,7 +334,6 @@ export default function UserManagement() {
                               <label className="text-sm font-medium">Achternaam</label>
                               <Input
                                 placeholder="Smit"
-                                defaultValue={u.lastName}
                                 {...updateUserForm.register("lastName")}
                               />
                             </div>
@@ -328,7 +343,7 @@ export default function UserManagement() {
                             <label className="text-sm font-medium">Rol</label>
                             <p className="text-sm text-muted-foreground">Bepaalt de rechten en toegang van de gebruiker</p>
                             <Select 
-                              defaultValue={u.role}
+                              value={updateUserForm.watch("role")}
                               onValueChange={(value) => updateUserForm.setValue("role", value as "admin" | "ambulancier")}
                             >
                               <SelectTrigger>
@@ -350,7 +365,6 @@ export default function UserManagement() {
                                 <Input
                                   type="number"
                                   placeholder="24"
-                                  defaultValue={u.minHours}
                                   {...updateUserForm.register("minHours", { valueAsNumber: true })}
                                 />
                               </div>
@@ -359,7 +373,6 @@ export default function UserManagement() {
                                 <Input
                                   type="number"
                                   placeholder="40"
-                                  defaultValue={u.maxHours}
                                   {...updateUserForm.register("maxHours", { valueAsNumber: true })}
                                 />
                               </div>
@@ -368,7 +381,6 @@ export default function UserManagement() {
                                 <Input
                                   type="number"
                                   placeholder="32"
-                                  defaultValue={u.preferredHours}
                                   {...updateUserForm.register("preferredHours", { valueAsNumber: true })}
                                 />
                               </div>
