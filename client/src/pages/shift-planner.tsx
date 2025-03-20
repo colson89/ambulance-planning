@@ -38,19 +38,21 @@ export default function ShiftPlanner() {
     setSelectedDate(planningMonth);
   }, []);
 
-  // Get user's shift preferences for selected month
   const { data: preferences = [], isLoading: preferencesLoading } = useQuery({
     queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/preferences?month=${selectedMonth.getMonth() + 1}&year=${selectedMonth.getFullYear()}`);
+      if (!res.ok) {
+        throw new Error("Kon voorkeuren niet ophalen");
+      }
       return res.json();
     },
     enabled: !!user,
   });
 
   const createPreferenceMutation = useMutation({
-    mutationFn: async (preference: any) => {
-      const res = await apiRequest("POST", "/api/preferences", preference);
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/preferences", data);
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.message || "Er is een fout opgetreden");
