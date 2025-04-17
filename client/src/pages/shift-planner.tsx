@@ -195,20 +195,17 @@ export default function ShiftPlanner() {
                 onMonthChange={setSelectedMonth}
                 disabled={(date) => date.getMonth() !== selectedMonth.getMonth()}
                 modifiers={{
+                  // Eenvoudige aanpak: groen voor elke dag waar voorkeuren zijn ingesteld
                   available: (date) => {
-                    if (!isWeekend(date)) {
-                      const prefType = getPreferenceType(date);
-                      return prefType === "available";
-                    }
-                    return false;
+                    // Voorkeuren ophalen voor deze datum
+                    const prefs = getDayPreferences(date);
+                    // Dag is beschikbaar als er minstens één voorkeur is die niet 'unavailable' is
+                    return prefs.some(p => p.type !== "unavailable");
                   },
+                  // Rood alleen voor expliciet onbeschikbare dagen
                   unavailable: (date) => {
-                    if (!isWeekend(date)) {
-                      const prefType = getPreferenceType(date);
-                      return prefType === "unavailable";
-                    }
-                    const weekendPrefs = getWeekendPreferences(date);
-                    return weekendPrefs.bothUnavailable;
+                    const prefs = getDayPreferences(date);
+                    return prefs.some(p => p.type === "unavailable");
                   }
                 }}
                 modifiersClassNames={{
@@ -228,7 +225,7 @@ export default function ShiftPlanner() {
                 <h3 className="font-medium mb-2">Legenda:</h3>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-green-100 rounded"></div>
-                  <span className="text-sm">Beschikbaar (doordeweeks)</span>
+                  <span className="text-sm">Voorkeur opgegeven</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-red-100 rounded"></div>
@@ -237,26 +234,6 @@ export default function ShiftPlanner() {
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-white border rounded"></div>
                   <span className="text-sm">Geen voorkeur opgegeven</span>
-                </div>
-                <div className="mt-4 font-medium">Weekend shifts:</div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded flex justify-end items-end">
-                    <Badge variant="outline" className="h-2 w-2 p-0 border-yellow-400 bg-yellow-200" />
-                  </div>
-                  <span className="text-sm">Dag shift (7:00-19:00)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded flex justify-end items-end">
-                    <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
-                  </div>
-                  <span className="text-sm">Nacht shift (19:00-7:00)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded flex justify-end items-end">
-                    <Badge variant="outline" className="h-2 w-2 p-0 mr-0.5 border-yellow-400 bg-yellow-200" />
-                    <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
-                  </div>
-                  <span className="text-sm">Beide shifts</span>
                 </div>
               </div>
             </CardContent>
