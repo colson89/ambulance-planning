@@ -217,53 +217,27 @@ export default function ShiftPlanner() {
                 }}
                 className="rounded-md border"
                 locale={nl}
-                components={{
-                  Day: (props: any) => {
-                    const date = props.date;
-                    const day = props.date.getDate();
+                renderDay={(day) => {
+                  // Deze functie bepaalt alleen de weergave, niet de interactie
+                  if (isWeekend(day)) {
+                    const weekendPrefs = getWeekendPreferences(day);
                     
-                    // We need to preserve all the original props and event handlers
-                    // for selection to work, especially onClick
-                    const { className, ...otherProps } = props;
-                    
-                    if (isWeekend(date)) {
-                      const weekendPrefs = getWeekendPreferences(date);
-                      
-                      if (weekendPrefs.bothUnavailable) {
-                        // Rood voor niet beschikbaar
-                        return (
-                          <div 
-                            className={className + " !bg-red-100 hover:!bg-red-200"} 
-                            {...otherProps}
-                          >
-                            {day}
-                          </div>
-                        );
-                      } else {
-                        // Voor alle andere gevallen, houd de originele onClick intact
-                        return (
-                          <div 
-                            className={className} 
-                            {...otherProps}
-                          >
-                            <div className="flex items-center justify-center relative h-full">
-                              {day}
-                              <div className="absolute bottom-0 right-0 flex">
-                                {weekendPrefs.hasDay && (
-                                  <Badge variant="outline" className="h-2 w-2 p-0 border-yellow-400 bg-yellow-200" />
-                                )}
-                                {weekendPrefs.hasNight && (
-                                  <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }
-                    }
-                    
-                    return <div className={className} {...otherProps}>{day}</div>;
+                    return (
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        {day.getDate()}
+                        <div className="absolute bottom-0 right-0 flex">
+                          {weekendPrefs.hasDay && !weekendPrefs.bothUnavailable && (
+                            <Badge variant="outline" className="h-2 w-2 p-0 border-yellow-400 bg-yellow-200" />
+                          )}
+                          {weekendPrefs.hasNight && !weekendPrefs.bothUnavailable && (
+                            <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
+                          )}
+                        </div>
+                      </div>
+                    );
                   }
+                  
+                  return day.getDate();
                 }}
               />
             </CardContent>
