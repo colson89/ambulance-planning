@@ -118,6 +118,50 @@ export default function ScheduleGenerator() {
   const countUserShifts = (userId: number) => {
     return shifts.filter(s => s.userId === userId).length;
   };
+  
+  // Mutatie om een shift te updaten
+  const updateShiftMutation = useMutation({
+    mutationFn: async ({ shiftId, userId }: { shiftId: number; userId: number }) => {
+      const res = await apiRequest("PATCH", `/api/shifts/${shiftId}`, {
+        userId: userId,
+        status: userId === 0 ? "open" : "planned"
+      });
+      if (!res.ok) throw new Error("Kon shift niet updaten");
+      return res.json();
+    },
+    onSuccess: () => {
+      setEditingShift(null);
+      toast({
+        title: "Succes",
+        description: "Shift succesvol bijgewerkt",
+      });
+      // Vernieuw de shifts na een update
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts", selectedMonth, selectedYear] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message || "Er is een fout opgetreden bij het updaten van de shift",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Open edit dialog
+  const handleEditShift = (shift: Shift) => {
+    setEditingShift(shift);
+    setSelectedUserId(shift.userId);
+  };
+  
+  // Handle save
+  const handleSaveShift = () => {
+    if (editingShift) {
+      updateShiftMutation.mutate({
+        shiftId: editingShift.id,
+        userId: selectedUserId
+      });
+    }
+  };
 
   // Maanden voor de select box
   const months = [
@@ -339,13 +383,22 @@ export default function ScheduleGenerator() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center">
-                            {shift.status === "planned" ? (
-                              <Check className="h-4 w-4 text-green-500 mr-1" />
-                            ) : shift.status === "open" ? (
-                              <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
-                            ) : null}
-                            {shift.status === "open" ? "Open" : shift.status}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              {shift.status === "planned" ? (
+                                <Check className="h-4 w-4 text-green-500 mr-1" />
+                              ) : shift.status === "open" ? (
+                                <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
+                              ) : null}
+                              {shift.status === "open" ? "Open" : shift.status}
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEditShift(shift)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -363,6 +416,80 @@ export default function ScheduleGenerator() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Edit Shift Dialog */}
+      <Dialog open={!!editingShift} onOpenChange={(open) => !open && setEditingShift(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Shift Bewerken</DialogTitle>
+            <DialogDescription>
+              Pas de toewijzing voor deze shift aan.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingShift && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="date">Datum</Label>
+                <div className="p-2 border rounded-md bg-gray-50">
+                  {format(new Date(editingShift.date), "dd MMMM yyyy", { locale: nl })}
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="shift-type">Type Shift</Label>
+                <div className="p-2 border rounded-md bg-gray-50">
+                  {editingShift.type === "day" ? "Dag" : "Nacht"}
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="ambulancier">Ambulancier</Label>
+                <Select
+                  value={selectedUserId.toString()}
+                  onValueChange={(value) => setSelectedUserId(parseInt(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecteer ambulancier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">-- Niet toegewezen --</SelectItem>
+                    {users
+                      .filter(u => u.role === "ambulancier")
+                      .map((user) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.username}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingShift(null)}>
+              Annuleren
+            </Button>
+            <Button 
+              onClick={handleSaveShift}
+              disabled={updateShiftMutation.isPending}
+            >
+              {updateShiftMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Bezig met opslaan...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Opslaan
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
