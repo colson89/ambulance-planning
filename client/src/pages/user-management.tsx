@@ -433,8 +433,8 @@ export default function UserManagement() {
                               </TabsContent>
                               
                               <TabsContent value="details">
-                                <div className="space-y-2">
-                                  <div className="grid grid-cols-4 gap-2 font-medium border-b pb-2">
+                                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                                  <div className="grid grid-cols-4 gap-2 font-medium border-b pb-2 sticky top-0 bg-white">
                                     <div>Datum</div>
                                     <div>Shift Type</div>
                                     <div>Voorkeur</div>
@@ -444,12 +444,13 @@ export default function UserManagement() {
                                   {userPreferences?.map((pref: ShiftPreference) => (
                                     <div key={pref.id} className="grid grid-cols-4 gap-2 py-2 border-b border-gray-100">
                                       <div>{format(new Date(pref.date), 'dd MMMM', { locale: nl })}</div>
-                                      <div>{pref.shiftType === 'day' ? 'Dag' : 'Nacht'}</div>
+                                      <div>{pref.type === 'day' ? 'Dag' : pref.type === 'night' ? 'Nacht' : 'Onbeschikbaar'}</div>
                                       <div>
-                                        {pref.preferenceType === 'full' && 'Volledige shift'}
-                                        {pref.preferenceType === 'first' && 'Eerste helft'}
-                                        {pref.preferenceType === 'second' && 'Tweede helft'}
-                                        {pref.preferenceType === 'unavailable' && 'Niet beschikbaar'}
+                                        {pref.type === 'unavailable' ? (
+                                          <span className="text-red-500">Niet beschikbaar</span>
+                                        ) : (
+                                          <span>Beschikbaar</span>
+                                        )}
                                       </div>
                                       <div>{pref.notes || '-'}</div>
                                     </div>
