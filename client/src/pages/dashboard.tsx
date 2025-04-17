@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Shift, ShiftPreference } from "@shared/schema";
 import { useLocation } from "wouter";
@@ -42,14 +42,23 @@ export default function Dashboard() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
-          {user?.isAdmin && (
-            <Button 
-              variant="outline"
-              onClick={() => setLocation("/users")}
-            >
-              <UserCog className="h-4 w-4 mr-2" />
-              Gebruikersbeheer
-            </Button>
+          {user?.role === "admin" && (
+            <>
+              <Button 
+                variant="outline"
+                onClick={() => setLocation("/users")}
+              >
+                <UserCog className="h-4 w-4 mr-2" />
+                Gebruikersbeheer
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setLocation("/schedule")}
+              >
+                <CalendarDays className="h-4 w-4 mr-2" />
+                Planning
+              </Button>
+            </>
           )}
           <Button 
             variant="outline"
