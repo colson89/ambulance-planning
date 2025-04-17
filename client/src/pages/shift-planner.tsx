@@ -14,9 +14,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import type { ShiftPreference } from "@shared/schema";
 
-// Kalender stijlen voor weekend shifts
-import "./shift-planner.css";
-
 type PreferenceType = "full" | "first" | "second" | "unavailable";
 type ShiftType = "day" | "night";
 
@@ -189,22 +186,7 @@ export default function ShiftPlanner() {
               <CardTitle>Kalender</CardTitle>
             </CardHeader>
             <CardContent>
-              <style>
-                {`
-                  .day-shift {
-                    background: linear-gradient(135deg, #ffff99 50%, transparent 50%) !important;
-                  }
-                  .night-shift {
-                    background: linear-gradient(135deg, transparent 50%, #9999ff 50%) !important;
-                  }
-                  .both-shifts {
-                    background: linear-gradient(135deg, #ffff99 50%, #9999ff 50%) !important;
-                  }
-                  .day-shift:hover, .night-shift:hover, .both-shifts:hover {
-                    background: linear-gradient(135deg, #ffffcc 50%, #ccccff 50%) !important;
-                  }
-                `}
-              </style>
+
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -227,32 +209,68 @@ export default function ShiftPlanner() {
                     }
                     const weekendPrefs = getWeekendPreferences(date);
                     return weekendPrefs.bothUnavailable;
-                  },
-                  dayShift: (date) => {
-                    if (!isWeekend(date)) return false;
-                    const weekendPrefs = getWeekendPreferences(date);
-                    return weekendPrefs.hasDay && !weekendPrefs.bothUnavailable;
-                  },
-                  nightShift: (date) => {
-                    if (!isWeekend(date)) return false;
-                    const weekendPrefs = getWeekendPreferences(date);
-                    return weekendPrefs.hasNight && !weekendPrefs.bothUnavailable;
-                  },
-                  bothShifts: (date) => {
-                    if (!isWeekend(date)) return false;
-                    const weekendPrefs = getWeekendPreferences(date);
-                    return weekendPrefs.hasDay && weekendPrefs.hasNight && !weekendPrefs.bothUnavailable;
                   }
                 }}
                 modifiersClassNames={{
                   available: "!bg-green-100 hover:!bg-green-200",
-                  unavailable: "!bg-red-100 hover:!bg-red-200",
-                  dayShift: "day-shift",
-                  nightShift: "night-shift",
-                  bothShifts: "both-shifts"
+                  unavailable: "!bg-red-100 hover:!bg-red-200"
                 }}
                 className="rounded-md border"
                 locale={nl}
+                components={{
+                  Day: (props: any) => {
+                    const date = props.date;
+                    let content = <div>{props.date.getDate()}</div>;
+                    
+                    if (isWeekend(date)) {
+                      const weekendPrefs = getWeekendPreferences(date);
+                      
+                      if (weekendPrefs.bothUnavailable) {
+                        // Rood voor niet beschikbaar
+                        return <div className={props.className + " !bg-red-100 hover:!bg-red-200"}>{content}</div>;
+                      } else if (weekendPrefs.hasDay && weekendPrefs.hasNight) {
+                        // Beide shifts
+                        return (
+                          <div className={props.className}>
+                            <div className="flex items-center justify-center relative">
+                              {content}
+                              <div className="absolute bottom-0 right-0 flex">
+                                <Badge variant="outline" className="h-2 w-2 p-0 border-yellow-400 bg-yellow-200" />
+                                <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (weekendPrefs.hasDay) {
+                        // Alleen dag shift
+                        return (
+                          <div className={props.className}>
+                            <div className="flex items-center justify-center relative">
+                              {content}
+                              <div className="absolute bottom-0 right-0">
+                                <Badge variant="outline" className="h-2 w-2 p-0 border-yellow-400 bg-yellow-200" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else if (weekendPrefs.hasNight) {
+                        // Alleen nacht shift
+                        return (
+                          <div className={props.className}>
+                            <div className="flex items-center justify-center relative">
+                              {content}
+                              <div className="absolute bottom-0 right-0">
+                                <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                    }
+                    
+                    return <div className={props.className}>{content}</div>;
+                  }
+                }}
               />
             </CardContent>
           </Card>
@@ -275,15 +293,22 @@ export default function ShiftPlanner() {
                 </div>
                 <div className="mt-4 font-medium">Weekend shifts:</div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded" style={{ background: 'linear-gradient(135deg, #ffff99 50%, transparent 50%)' }}></div>
+                  <div className="w-4 h-4 rounded flex justify-end items-end">
+                    <Badge variant="outline" className="h-2 w-2 p-0 border-yellow-400 bg-yellow-200" />
+                  </div>
                   <span className="text-sm">Dag shift (7:00-19:00)</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded" style={{ background: 'linear-gradient(135deg, transparent 50%, #9999ff 50%)' }}></div>
+                  <div className="w-4 h-4 rounded flex justify-end items-end">
+                    <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
+                  </div>
                   <span className="text-sm">Nacht shift (19:00-7:00)</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded" style={{ background: 'linear-gradient(135deg, #ffff99 50%, #9999ff 50%)' }}></div>
+                  <div className="w-4 h-4 rounded flex justify-end items-end">
+                    <Badge variant="outline" className="h-2 w-2 p-0 mr-0.5 border-yellow-400 bg-yellow-200" />
+                    <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
+                  </div>
                   <span className="text-sm">Beide shifts</span>
                 </div>
               </div>
