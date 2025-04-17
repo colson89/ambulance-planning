@@ -1,0 +1,12 @@
+.day-shift {
+  background: linear-gradient(135deg, #ffff99 50%, transparent 50%) !important;
+}
+.night-shift {
+  background: linear-gradient(135deg, transparent 50%, #9999ff 50%) !important;
+}
+.both-shifts {
+  background: linear-gradient(135deg, #ffff99 50%, #9999ff 50%) !important;
+}
+.day-shift:hover, .night-shift:hover, .both-shifts:hover {
+  background: linear-gradient(135deg, #ffffcc 50%, #ccccff 50%) !important;
+}

@@ -11,7 +11,11 @@ import { nl } from "date-fns/locale";
 import { Home, Loader2, Moon, Sun } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import type { ShiftPreference } from "@shared/schema";
+
+// Kalender stijlen voor weekend shifts
+import "./shift-planner.css";
 
 type PreferenceType = "full" | "first" | "second" | "unavailable";
 type ShiftType = "day" | "night";
@@ -143,6 +147,21 @@ export default function ShiftPlanner() {
     if (prefs.some(p => p.type === "unavailable")) return "unavailable";
     return "available";
   };
+  
+  const getWeekendPreferences = (date: Date) => {
+    if (!isWeekend(date)) return { hasDay: false, hasNight: false, bothUnavailable: false };
+    
+    const prefs = getDayPreferences(date);
+    const dayPref = prefs.find(p => p.type === "day");
+    const nightPref = prefs.find(p => p.type === "night");
+    const unavailable = prefs.some(p => p.type === "unavailable");
+    
+    return {
+      hasDay: !!dayPref,
+      hasNight: !!nightPref,
+      bothUnavailable: unavailable
+    };
+  };
 
   return (
     <div className="container mx-auto p-6">
@@ -170,6 +189,22 @@ export default function ShiftPlanner() {
               <CardTitle>Kalender</CardTitle>
             </CardHeader>
             <CardContent>
+              <style>
+                {`
+                  .day-shift {
+                    background: linear-gradient(135deg, #ffff99 50%, transparent 50%) !important;
+                  }
+                  .night-shift {
+                    background: linear-gradient(135deg, transparent 50%, #9999ff 50%) !important;
+                  }
+                  .both-shifts {
+                    background: linear-gradient(135deg, #ffff99 50%, #9999ff 50%) !important;
+                  }
+                  .day-shift:hover, .night-shift:hover, .both-shifts:hover {
+                    background: linear-gradient(135deg, #ffffcc 50%, #ccccff 50%) !important;
+                  }
+                `}
+              </style>
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -179,17 +214,42 @@ export default function ShiftPlanner() {
                 disabled={(date) => date.getMonth() !== selectedMonth.getMonth()}
                 modifiers={{
                   available: (date) => {
-                    const prefType = getPreferenceType(date);
-                    return prefType === "available";
+                    if (!isWeekend(date)) {
+                      const prefType = getPreferenceType(date);
+                      return prefType === "available";
+                    }
+                    return false;
                   },
                   unavailable: (date) => {
-                    const prefType = getPreferenceType(date);
-                    return prefType === "unavailable";
+                    if (!isWeekend(date)) {
+                      const prefType = getPreferenceType(date);
+                      return prefType === "unavailable";
+                    }
+                    const weekendPrefs = getWeekendPreferences(date);
+                    return weekendPrefs.bothUnavailable;
+                  },
+                  dayShift: (date) => {
+                    if (!isWeekend(date)) return false;
+                    const weekendPrefs = getWeekendPreferences(date);
+                    return weekendPrefs.hasDay && !weekendPrefs.bothUnavailable;
+                  },
+                  nightShift: (date) => {
+                    if (!isWeekend(date)) return false;
+                    const weekendPrefs = getWeekendPreferences(date);
+                    return weekendPrefs.hasNight && !weekendPrefs.bothUnavailable;
+                  },
+                  bothShifts: (date) => {
+                    if (!isWeekend(date)) return false;
+                    const weekendPrefs = getWeekendPreferences(date);
+                    return weekendPrefs.hasDay && weekendPrefs.hasNight && !weekendPrefs.bothUnavailable;
                   }
                 }}
                 modifiersClassNames={{
                   available: "!bg-green-100 hover:!bg-green-200",
-                  unavailable: "!bg-red-100 hover:!bg-red-200"
+                  unavailable: "!bg-red-100 hover:!bg-red-200",
+                  dayShift: "day-shift",
+                  nightShift: "night-shift",
+                  bothShifts: "both-shifts"
                 }}
                 className="rounded-md border"
                 locale={nl}
@@ -203,7 +263,7 @@ export default function ShiftPlanner() {
                 <h3 className="font-medium mb-2">Legenda:</h3>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-green-100 rounded"></div>
-                  <span className="text-sm">Beschikbaar</span>
+                  <span className="text-sm">Beschikbaar (doordeweeks)</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-red-100 rounded"></div>
@@ -212,6 +272,19 @@ export default function ShiftPlanner() {
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-white border rounded"></div>
                   <span className="text-sm">Geen voorkeur opgegeven</span>
+                </div>
+                <div className="mt-4 font-medium">Weekend shifts:</div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 rounded" style={{ background: 'linear-gradient(135deg, #ffff99 50%, transparent 50%)' }}></div>
+                  <span className="text-sm">Dag shift (7:00-19:00)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 rounded" style={{ background: 'linear-gradient(135deg, transparent 50%, #9999ff 50%)' }}></div>
+                  <span className="text-sm">Nacht shift (19:00-7:00)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 rounded" style={{ background: 'linear-gradient(135deg, #ffff99 50%, #9999ff 50%)' }}></div>
+                  <span className="text-sm">Beide shifts</span>
                 </div>
               </div>
             </CardContent>
