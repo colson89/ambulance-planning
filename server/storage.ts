@@ -161,15 +161,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async generateMonthlySchedule(month: number, year: number): Promise<Shift[]> {
-    // Haal alle gebruikers en hun voorkeuren op
+    // Haal alle gebruikers op
     const users = await this.getAllUsers();
     const generatedShifts: Shift[] = [];
-    
-    // Maak een willekeurige planning gebaseerd op gebruikersvoorkeuren
-    // Dit is een vereenvoudigde aanpak - In een echte app zou dit complexere logica hebben
-    
-    // Maak eerst een kalender voor de maand
-    const daysInMonth = new Date(year, month, 0).getDate();
     
     // Verwijder bestaande shifts voor deze maand
     const existingShifts = await this.getShiftsByMonth(month, year);
@@ -177,21 +171,76 @@ export class DatabaseStorage implements IStorage {
       await db.delete(shifts).where(eq(shifts.id, shift.id));
     }
     
+    // Maak eerst een kalender voor de maand
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    // Verzamel alle gebruikersvoorkeuren voor deze maand
+    const allUserPreferences = new Map<number, ShiftPreference[]>();
+    
+    for (const user of users) {
+      const userPrefs = await this.getUserShiftPreferences(user.id, month, year);
+      allUserPreferences.set(user.id, userPrefs);
+    }
+    
+    console.log(`Generating schedule for ${month}/${year} with ${users.length} users`);
+    
     // Voor elke dag in de maand
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(year, month - 1, day);
+      const dateStr = currentDate.toISOString().split('T')[0]; // yyyy-mm-dd
       const isWeekendDay = currentDate.getDay() === 0 || currentDate.getDay() === 6;
       
-      // 1. Weekdagen hebben alleen nachtshifts nodig
+      // 1. Verzamel beschikbare gebruikers voor deze dag op basis van voorkeuren
+      const availableUsers = {
+        day: [] as { userId: number, preferenceType: string }[],
+        night: [] as { userId: number, preferenceType: string }[]
+      };
+      
+      for (const [userId, preferences] of allUserPreferences.entries()) {
+        // Zoek voorkeuren voor deze datum
+        const dayPreferences = preferences.filter(pref => {
+          const prefDate = new Date(pref.date);
+          return prefDate.getDate() === day && 
+                prefDate.getMonth() === month - 1 && 
+                prefDate.getFullYear() === year;
+        });
+        
+        for (const pref of dayPreferences) {
+          // Alleen gebruikers toevoegen die beschikbaar zijn (niet 'unavailable')
+          if (pref.preferenceType !== 'unavailable') {
+            if (pref.shiftType === 'day') {
+              availableUsers.day.push({
+                userId: userId,
+                preferenceType: pref.preferenceType
+              });
+            } else if (pref.shiftType === 'night') {
+              availableUsers.night.push({
+                userId: userId,
+                preferenceType: pref.preferenceType
+              });
+            }
+          }
+        }
+      }
+      
+      console.log(`Day ${day}: ${availableUsers.day.length} available for day, ${availableUsers.night.length} available for night`);
+      
+      // 2. Weekdagen hebben alleen nachtshifts nodig
       if (!isWeekendDay) {
-        // Kies willekeurig een gebruiker met 25% kans
-        const eligibleUsers = users.filter(() => Math.random() < 0.25);
-        if (eligibleUsers.length > 0) {
-          const selectedUser = eligibleUsers[Math.floor(Math.random() * eligibleUsers.length)];
+        // Als er beschikbare gebruikers zijn, kies er één volgens voorkeur
+        if (availableUsers.night.length > 0) {
+          // Sorteer op preferenceType - prioriteit aan full shifts
+          const sortedUsers = [...availableUsers.night].sort((a, b) => {
+            if (a.preferenceType === 'full') return -1;
+            if (b.preferenceType === 'full') return 1;
+            return 0;
+          });
+          
+          const selectedUser = sortedUsers[0];
           
           // Nachtshift
           const nightShift = {
-            userId: selectedUser.id,
+            userId: selectedUser.userId,
             date: currentDate,
             type: "night" as const,
             startTime: new Date(year, month - 1, day, 19, 0, 0),
@@ -204,18 +253,40 @@ export class DatabaseStorage implements IStorage {
           
           const savedShift = await this.createShift(nightShift);
           generatedShifts.push(savedShift);
+        } else {
+          // Geen beschikbare gebruikers voor deze dag, hou de shift open
+          const openShift = {
+            userId: 0, // 0 betekent geen toegewezen gebruiker
+            date: currentDate,
+            type: "night" as const,
+            startTime: new Date(year, month - 1, day, 19, 0, 0),
+            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+            status: "open" as const,
+            month,
+            year,
+            isSplitShift: false
+          };
+          
+          const savedOpenShift = await this.createShift(openShift);
+          generatedShifts.push(savedOpenShift);
         }
       } 
-      // 2. Weekend heeft dag- en nachtshifts nodig
+      // 3. Weekend heeft dag- en nachtshifts nodig
       else {
-        // Kies willekeurig gebruikers voor de dagshift
-        const dayShiftUsers = users.filter(() => Math.random() < 0.25);
-        if (dayShiftUsers.length > 0) {
-          const selectedUser = dayShiftUsers[Math.floor(Math.random() * dayShiftUsers.length)];
+        // Dagshift in weekend
+        if (availableUsers.day.length > 0) {
+          // Sorteer op preferenceType - prioriteit aan full shifts
+          const sortedDayUsers = [...availableUsers.day].sort((a, b) => {
+            if (a.preferenceType === 'full') return -1;
+            if (b.preferenceType === 'full') return 1;
+            return 0;
+          });
+          
+          const selectedDayUser = sortedDayUsers[0];
           
           // Dagshift
           const dayShift = {
-            userId: selectedUser.id,
+            userId: selectedDayUser.userId,
             date: currentDate,
             type: "day" as const,
             startTime: new Date(year, month - 1, day, 7, 0, 0),
@@ -228,20 +299,46 @@ export class DatabaseStorage implements IStorage {
           
           const savedDayShift = await this.createShift(dayShift);
           generatedShifts.push(savedDayShift);
+        } else {
+          // Geen beschikbare gebruikers voor dagshift in weekend
+          const openDayShift = {
+            userId: 0,
+            date: currentDate,
+            type: "day" as const,
+            startTime: new Date(year, month - 1, day, 7, 0, 0),
+            endTime: new Date(year, month - 1, day, 19, 0, 0),
+            status: "open" as const,
+            month,
+            year,
+            isSplitShift: false
+          };
+          
+          const savedOpenDayShift = await this.createShift(openDayShift);
+          generatedShifts.push(savedOpenDayShift);
         }
         
-        // Kies willekeurig gebruikers voor de nachtshift
-        const nightShiftUsers = users.filter(u => 
-          !dayShiftUsers.some(du => du.id === u.id) && // Vermijd dezelfde gebruiker voor dag- en nachtshift
-          Math.random() < 0.25
+        // Nachtshift in weekend
+        // Filter uit de beschikbare nachtshiftgebruikers degenen die al ingepland zijn voor de dagshift
+        const nightShiftUsers = availableUsers.night.filter(nightUser => 
+          !generatedShifts.some(shift => 
+            shift.userId === nightUser.userId && 
+            new Date(shift.date).getDate() === day
+          )
         );
         
         if (nightShiftUsers.length > 0) {
-          const selectedUser = nightShiftUsers[Math.floor(Math.random() * nightShiftUsers.length)];
+          // Sorteer op preferenceType - prioriteit aan full shifts
+          const sortedNightUsers = [...nightShiftUsers].sort((a, b) => {
+            if (a.preferenceType === 'full') return -1;
+            if (b.preferenceType === 'full') return 1;
+            return 0;
+          });
+          
+          const selectedNightUser = sortedNightUsers[0];
           
           // Nachtshift
           const nightShift = {
-            userId: selectedUser.id,
+            userId: selectedNightUser.userId,
             date: currentDate,
             type: "night" as const,
             startTime: new Date(year, month - 1, day, 19, 0, 0),
@@ -254,10 +351,27 @@ export class DatabaseStorage implements IStorage {
           
           const savedNightShift = await this.createShift(nightShift);
           generatedShifts.push(savedNightShift);
+        } else {
+          // Geen beschikbare gebruikers voor nachtshift in weekend
+          const openNightShift = {
+            userId: 0,
+            date: currentDate,
+            type: "night" as const,
+            startTime: new Date(year, month - 1, day, 19, 0, 0),
+            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+            status: "open" as const,
+            month,
+            year,
+            isSplitShift: false
+          };
+          
+          const savedOpenNightShift = await this.createShift(openNightShift);
+          generatedShifts.push(savedOpenNightShift);
         }
       }
     }
     
+    console.log(`Schedule generation complete: ${generatedShifts.length} shifts created`);
     return generatedShifts;
   }
 
