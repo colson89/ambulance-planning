@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -182,6 +182,52 @@ export default function ScheduleGenerator() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              
+              {/* Testdata genereren */}
+              <div className="mt-4 p-4 border border-gray-200 rounded-md bg-gray-50">
+                <h3 className="font-semibold mb-2 flex items-center">
+                  <Users className="h-4 w-4 mr-2" />
+                  Test Voorkeuren Genereren
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Genereer willekeurige voorkeuren voor alle gebruikers voor de geselecteerde maand om de planning tool te testen.
+                </p>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={async () => {
+                    try {
+                      const res = await apiRequest("POST", "/api/preferences/generate-test-data", {
+                        month: selectedMonth,
+                        year: selectedYear
+                      });
+                      
+                      if (!res.ok) {
+                        throw new Error("Kon test data niet genereren");
+                      }
+                      
+                      const data = await res.json();
+                      toast({
+                        title: "Test Data Gegenereerd",
+                        description: data.message,
+                      });
+                      
+                      // Ververs de gegevens
+                      refetchPreferences();
+                    } catch (error) {
+                      toast({
+                        title: "Fout",
+                        description: error instanceof Error ? error.message : "Onbekende fout bij genereren testdata",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Genereer Test Voorkeuren
+                </Button>
               </div>
 
               <div className="flex justify-between items-center mt-6">

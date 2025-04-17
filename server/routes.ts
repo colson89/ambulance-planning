@@ -157,6 +157,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Generate random preferences for testing (admin only)
+  app.post("/api/preferences/generate-test-data", requireAdmin, async (req, res) => {
+    try {
+      const { month, year, userId } = req.body;
+      
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+      
+      let users;
+      if (userId) {
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        users = [user];
+      } else {
+        users = await storage.getAllUsers();
+        // Filter out admin users
+        users = users.filter(u => u.role !== 'admin');
+      }
+      
+      const daysInMonth = new Date(year, month, 0).getDate();
+      let createdPreferences = 0;
+      
+      for (const user of users) {
+        // Voor elke dag in de maand
+        for (let day = 1; day <= daysInMonth; day++) {
+          const currentDate = new Date(year, month - 1, day);
+          const dayOfWeek = currentDate.getDay(); // 0 is zondag, 6 is zaterdag
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+          
+          // For testing: even userId = more night shifts, odd = more day shifts
+          const isEvenUserId = user.id % 2 === 0;
+          
+          // 70% kans op beschikbaarheid
+          const isAvailable = Math.random() < 0.7;
+          
+          if (isAvailable) {
+            // Even user IDs prefer night shifts
+            const preferNight = isEvenUserId ? Math.random() < 0.7 : Math.random() < 0.3;
+            const shiftType = preferNight ? "night" : "day";
+            
+            // Preference types: 70% full shifts, 15% first half, 15% second half
+            let preferenceType;
+            const rand = Math.random();
+            if (rand < 0.7) {
+              preferenceType = "full";
+            } else if (rand < 0.85) {
+              preferenceType = "first";
+            } else {
+              preferenceType = "second";
+            }
+            
+            // Weekend days have 40% chance to be unavailable
+            if (isWeekend && Math.random() < 0.4) {
+              await storage.createShiftPreference({
+                userId: user.id,
+                date: currentDate,
+                type: "unavailable", // Onbeschikbaar
+                month,
+                year,
+                notes: "Automatisch gegenereerd voor test (niet beschikbaar)"
+              });
+            } else {
+              await storage.createShiftPreference({
+                userId: user.id,
+                date: currentDate,
+                type: shiftType,
+                month,
+                year,
+                notes: "Automatisch gegenereerd voor test"
+              });
+            }
+            createdPreferences++;
+          } else {
+            // If not available, mark as unavailable
+            const shiftType = Math.random() < 0.5 ? "day" : "night";
+            await storage.createShiftPreference({
+              userId: user.id,
+              date: currentDate,
+              type: shiftType,
+              status: "pending",
+              month,
+              year,
+              notes: "Automatisch gegenereerd voor test (niet beschikbaar)"
+            });
+            createdPreferences++;
+          }
+        }
+      }
+      
+      res.status(200).json({ 
+        message: `Successfully generated ${createdPreferences} test preferences for ${users.length} users`
+      });
+    } catch (error) {
+      console.error("Error generating test preferences:", error);
+      res.status(500).json({ 
+        message: "Failed to generate test preferences",
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+  
   // Get all preferences for admin view
   app.get("/api/preferences/all", requireAdmin, async (req, res) => {
     try {
