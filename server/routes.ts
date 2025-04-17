@@ -217,6 +217,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 userId: user.id,
                 date: currentDate,
                 type: "unavailable", // Onbeschikbaar
+                startTime: null,
+                endTime: null,
                 month,
                 year,
                 notes: "Automatisch gegenereerd voor test (niet beschikbaar)"
@@ -226,6 +228,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 userId: user.id,
                 date: currentDate,
                 type: shiftType,
+                startTime: null,
+                endTime: null,
                 month,
                 year,
                 notes: "Automatisch gegenereerd voor test"
@@ -238,8 +242,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.createShiftPreference({
               userId: user.id,
               date: currentDate,
-              type: shiftType,
-              status: "pending",
+              type: "unavailable",
+              startTime: null,
+              endTime: null,
               month,
               year,
               notes: "Automatisch gegenereerd voor test (niet beschikbaar)"
