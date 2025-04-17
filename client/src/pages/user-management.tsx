@@ -411,7 +411,7 @@ export default function UserManagement() {
                                     );
                                     
                                     const hasAnyPreference = datePrefs && datePrefs.length > 0;
-                                    const isUnavailable = datePrefs?.some((p: ShiftPreference) => p.preferenceType === "unavailable");
+                                    const isUnavailable = datePrefs?.some((p: ShiftPreference) => p.type === "unavailable");
                                     
                                     return (
                                       <div 

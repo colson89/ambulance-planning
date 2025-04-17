@@ -192,8 +192,8 @@ export class DatabaseStorage implements IStorage {
       
       // 1. Verzamel beschikbare gebruikers voor deze dag op basis van voorkeuren
       const availableUsers = {
-        day: [] as { userId: number, preferenceType: string }[],
-        night: [] as { userId: number, preferenceType: string }[]
+        day: [] as { userId: number }[],
+        night: [] as { userId: number }[]
       };
       
       for (const [userId, preferences] of allUserPreferences.entries()) {
@@ -207,16 +207,14 @@ export class DatabaseStorage implements IStorage {
         
         for (const pref of dayPreferences) {
           // Alleen gebruikers toevoegen die beschikbaar zijn (niet 'unavailable')
-          if (pref.preferenceType !== 'unavailable') {
-            if (pref.shiftType === 'day') {
+          if (pref.type !== 'unavailable') {
+            if (pref.type === 'day') {
               availableUsers.day.push({
-                userId: userId,
-                preferenceType: pref.preferenceType
+                userId: userId
               });
-            } else if (pref.shiftType === 'night') {
+            } else if (pref.type === 'night') {
               availableUsers.night.push({
-                userId: userId,
-                preferenceType: pref.preferenceType
+                userId: userId
               });
             }
           }
@@ -229,12 +227,8 @@ export class DatabaseStorage implements IStorage {
       if (!isWeekendDay) {
         // Als er beschikbare gebruikers zijn, kies er één volgens voorkeur
         if (availableUsers.night.length > 0) {
-          // Sorteer op preferenceType - prioriteit aan full shifts
-          const sortedUsers = [...availableUsers.night].sort((a, b) => {
-            if (a.preferenceType === 'full') return -1;
-            if (b.preferenceType === 'full') return 1;
-            return 0;
-          });
+          // Geen sortering op voorkeur meer nodig
+          const sortedUsers = [...availableUsers.night];
           
           const selectedUser = sortedUsers[0];
           
@@ -275,12 +269,8 @@ export class DatabaseStorage implements IStorage {
       else {
         // Dagshift in weekend
         if (availableUsers.day.length > 0) {
-          // Sorteer op preferenceType - prioriteit aan full shifts
-          const sortedDayUsers = [...availableUsers.day].sort((a, b) => {
-            if (a.preferenceType === 'full') return -1;
-            if (b.preferenceType === 'full') return 1;
-            return 0;
-          });
+          // Geen sortering op voorkeur meer nodig
+          const sortedDayUsers = [...availableUsers.day];
           
           const selectedDayUser = sortedDayUsers[0];
           
@@ -327,12 +317,8 @@ export class DatabaseStorage implements IStorage {
         );
         
         if (nightShiftUsers.length > 0) {
-          // Sorteer op preferenceType - prioriteit aan full shifts
-          const sortedNightUsers = [...nightShiftUsers].sort((a, b) => {
-            if (a.preferenceType === 'full') return -1;
-            if (b.preferenceType === 'full') return 1;
-            return 0;
-          });
+          // Geen sortering op voorkeur meer nodig
+          const sortedNightUsers = [...nightShiftUsers];
           
           const selectedNightUser = sortedNightUsers[0];
           
