@@ -220,47 +220,41 @@ export default function ShiftPlanner() {
                 components={{
                   Day: (props: any) => {
                     const date = props.date;
-                    let content = <div>{props.date.getDate()}</div>;
+                    const day = props.date.getDate();
+                    
+                    // We need to preserve all the original props and event handlers
+                    // for selection to work, especially onClick
+                    const { className, ...otherProps } = props;
                     
                     if (isWeekend(date)) {
                       const weekendPrefs = getWeekendPreferences(date);
                       
                       if (weekendPrefs.bothUnavailable) {
                         // Rood voor niet beschikbaar
-                        return <div className={props.className + " !bg-red-100 hover:!bg-red-200"}>{content}</div>;
-                      } else if (weekendPrefs.hasDay && weekendPrefs.hasNight) {
-                        // Beide shifts
                         return (
-                          <div className={props.className}>
-                            <div className="flex items-center justify-center relative">
-                              {content}
+                          <div 
+                            className={className + " !bg-red-100 hover:!bg-red-200"} 
+                            {...otherProps}
+                          >
+                            {day}
+                          </div>
+                        );
+                      } else {
+                        // Voor alle andere gevallen, houd de originele onClick intact
+                        return (
+                          <div 
+                            className={className} 
+                            {...otherProps}
+                          >
+                            <div className="flex items-center justify-center relative h-full">
+                              {day}
                               <div className="absolute bottom-0 right-0 flex">
-                                <Badge variant="outline" className="h-2 w-2 p-0 border-yellow-400 bg-yellow-200" />
-                                <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      } else if (weekendPrefs.hasDay) {
-                        // Alleen dag shift
-                        return (
-                          <div className={props.className}>
-                            <div className="flex items-center justify-center relative">
-                              {content}
-                              <div className="absolute bottom-0 right-0">
-                                <Badge variant="outline" className="h-2 w-2 p-0 border-yellow-400 bg-yellow-200" />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      } else if (weekendPrefs.hasNight) {
-                        // Alleen nacht shift
-                        return (
-                          <div className={props.className}>
-                            <div className="flex items-center justify-center relative">
-                              {content}
-                              <div className="absolute bottom-0 right-0">
-                                <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
+                                {weekendPrefs.hasDay && (
+                                  <Badge variant="outline" className="h-2 w-2 p-0 border-yellow-400 bg-yellow-200" />
+                                )}
+                                {weekendPrefs.hasNight && (
+                                  <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
+                                )}
                               </div>
                             </div>
                           </div>
@@ -268,7 +262,7 @@ export default function ShiftPlanner() {
                       }
                     }
                     
-                    return <div className={props.className}>{content}</div>;
+                    return <div className={className} {...otherProps}>{day}</div>;
                   }
                 }}
               />
