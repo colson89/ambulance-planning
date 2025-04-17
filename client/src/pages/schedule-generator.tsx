@@ -289,56 +289,58 @@ export default function ScheduleGenerator() {
         </CardHeader>
         <CardContent>
           {shifts.length > 0 ? (
-            <Table>
-              <TableCaption>Planning voor {format(new Date(selectedYear, selectedMonth - 1), "MMMM yyyy", { locale: nl })}</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Datum</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Tijd</TableHead>
-                  <TableHead>Medewerker</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {shifts.map((shift) => {
-                  const shiftUser = users.find(u => u.id === shift.userId);
-                  return (
-                    <TableRow 
-                      key={shift.id}
-                      className={shift.status === "open" ? "bg-red-50" : ""}
-                    >
-                      <TableCell>{format(new Date(shift.date), "dd MMMM", { locale: nl })}</TableCell>
-                      <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
-                      <TableCell>
-                        {shift.startTime && shift.endTime ? (
-                          `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
-                        ) : (
-                          "-"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {shift.status === "open" ? (
-                          <span className="text-red-500 font-medium">Niet ingevuld</span>
-                        ) : (
-                          shiftUser?.username || "Onbekend"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          {shift.status === "planned" ? (
-                            <Check className="h-4 w-4 text-green-500 mr-1" />
-                          ) : shift.status === "open" ? (
-                            <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
-                          ) : null}
-                          {shift.status === "open" ? "Open" : shift.status}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div className="max-h-[500px] overflow-y-auto pr-2">
+              <Table>
+                <TableCaption>Planning voor {format(new Date(selectedYear, selectedMonth - 1), "MMMM yyyy", { locale: nl })}</TableCaption>
+                <TableHeader className="sticky top-0 bg-white z-10">
+                  <TableRow>
+                    <TableHead>Datum</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Tijd</TableHead>
+                    <TableHead>Medewerker</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {shifts.map((shift) => {
+                    const shiftUser = users.find(u => u.id === shift.userId);
+                    return (
+                      <TableRow 
+                        key={shift.id}
+                        className={shift.status === "open" ? "bg-red-50" : ""}
+                      >
+                        <TableCell>{format(new Date(shift.date), "dd MMMM", { locale: nl })}</TableCell>
+                        <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
+                        <TableCell>
+                          {shift.startTime && shift.endTime ? (
+                            `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {shift.status === "open" ? (
+                            <span className="text-red-500 font-medium">Niet ingevuld</span>
+                          ) : (
+                            shiftUser?.username || "Onbekend"
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            {shift.status === "planned" ? (
+                              <Check className="h-4 w-4 text-green-500 mr-1" />
+                            ) : shift.status === "open" ? (
+                              <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
+                            ) : null}
+                            {shift.status === "open" ? "Open" : shift.status}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <Alert>
               <AlertDescription>
