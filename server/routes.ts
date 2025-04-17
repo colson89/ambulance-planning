@@ -140,6 +140,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get preferences" });
     }
   });
+  
+  // Get preferences for a specific user (for admin view)
+  app.get("/api/preferences/:userId/:month/:year", requireAdmin, async (req, res) => {
+    try {
+      const { userId, month, year } = req.params;
+      const preferences = await storage.getUserShiftPreferences(
+        parseInt(userId),
+        parseInt(month),
+        parseInt(year)
+      );
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error fetching user preferences:", error);
+      res.status(500).json({ message: "Failed to get user preferences" });
+    }
+  });
+  
+  // Get all preferences for admin view
+  app.get("/api/preferences/all", requireAdmin, async (req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      
+      // Get the current month and year
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      
+      // Start getting preferences for all users
+      const allPreferencesPromises = allUsers.map(async (user) => {
+        const userPreferences = await storage.getUserShiftPreferences(
+          user.id,
+          currentMonth,
+          currentYear
+        );
+        
+        return {
+          userId: user.id,
+          userName: `${user.firstName} ${user.lastName}`,
+          preferences: userPreferences
+        };
+      });
+      
+      const allPreferences = await Promise.all(allPreferencesPromises);
+      res.json(allPreferences);
+    } catch (error) {
+      console.error("Error fetching preferences:", error);
+      res.status(500).json({ message: "Failed to get preferences" });
+    }
+  });
 
   // Route handler for creating preferences
   app.post("/api/preferences", requireAuth, async (req, res) => {

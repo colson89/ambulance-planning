@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { insertUserSchema, type User } from "@shared/schema";
+import { insertUserSchema, type User, type ShiftPreference } from "@shared/schema";
 import { z } from "zod";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -323,6 +323,147 @@ export default function UserManagement() {
                 </div>
 
                 <div className="flex gap-2">
+                  {/* Knop voor beschikbaarheden bekijken */}
+                  <Dialog onOpenChange={(open) => {
+                    if (open) {
+                      setViewPreferencesForUserId(u.id);
+                    } else {
+                      setViewPreferencesForUserId(null);
+                    }
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="icon" title="Beschikbaarheden bekijken">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl">
+                      <DialogHeader>
+                        <DialogTitle>Beschikbaarheden van {u.firstName} {u.lastName}</DialogTitle>
+                      </DialogHeader>
+                      
+                      <div className="my-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-medium">Maand/Jaar selecteren</h3>
+                          <div className="flex gap-2">
+                            <Select 
+                              value={selectedMonth.toString()} 
+                              onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue placeholder="Maand" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1">Januari</SelectItem>
+                                <SelectItem value="2">Februari</SelectItem>
+                                <SelectItem value="3">Maart</SelectItem>
+                                <SelectItem value="4">April</SelectItem>
+                                <SelectItem value="5">Mei</SelectItem>
+                                <SelectItem value="6">Juni</SelectItem>
+                                <SelectItem value="7">Juli</SelectItem>
+                                <SelectItem value="8">Augustus</SelectItem>
+                                <SelectItem value="9">September</SelectItem>
+                                <SelectItem value="10">Oktober</SelectItem>
+                                <SelectItem value="11">November</SelectItem>
+                                <SelectItem value="12">December</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            
+                            <Select 
+                              value={selectedYear.toString()} 
+                              onValueChange={(value) => setSelectedYear(parseInt(value))}
+                            >
+                              <SelectTrigger className="w-24">
+                                <SelectValue placeholder="Jaar" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {[2024, 2025, 2026].map((year) => (
+                                  <SelectItem key={year} value={year.toString()}>
+                                    {year}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        {isLoadingPreferences ? (
+                          <div className="p-8 text-center">
+                            <p>Beschikbaarheden laden...</p>
+                          </div>
+                        ) : userPreferences?.length === 0 ? (
+                          <div className="p-8 text-center">
+                            <p>Geen beschikbaarheden gevonden voor deze maand.</p>
+                          </div>
+                        ) : (
+                          <div className="border rounded-md p-6">
+                            <Tabs defaultValue="overzicht">
+                              <TabsList className="mb-4">
+                                <TabsTrigger value="overzicht">Overzicht</TabsTrigger>
+                                <TabsTrigger value="details">Details</TabsTrigger>
+                              </TabsList>
+                              
+                              <TabsContent value="overzicht">
+                                <div className="grid grid-cols-7 gap-2">
+                                  {Array.from({ length: new Date(selectedYear, selectedMonth, 0).getDate() }).map((_, day) => {
+                                    const date = new Date(selectedYear, selectedMonth - 1, day + 1);
+                                    const datePrefs = userPreferences?.filter((p: ShiftPreference) => 
+                                      new Date(p.date).getDate() === day + 1
+                                    );
+                                    
+                                    const hasAnyPreference = datePrefs && datePrefs.length > 0;
+                                    const isUnavailable = datePrefs?.some((p: ShiftPreference) => p.preferenceType === "unavailable");
+                                    
+                                    return (
+                                      <div 
+                                        key={day}
+                                        className={`p-2 rounded-md border text-center ${
+                                          isUnavailable ? 'bg-red-100 border-red-400' : 
+                                          hasAnyPreference ? 'bg-green-100 border-green-400' : 
+                                          'bg-gray-50'
+                                        }`}
+                                      >
+                                        <div className="font-medium">{day + 1}</div>
+                                        <div className="text-xs text-gray-500">
+                                          {format(date, 'E', { locale: nl })}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </TabsContent>
+                              
+                              <TabsContent value="details">
+                                <div className="space-y-2">
+                                  <div className="grid grid-cols-4 gap-2 font-medium border-b pb-2">
+                                    <div>Datum</div>
+                                    <div>Shift Type</div>
+                                    <div>Voorkeur</div>
+                                    <div>Notitie</div>
+                                  </div>
+                                  
+                                  {userPreferences?.map((pref: ShiftPreference) => (
+                                    <div key={pref.id} className="grid grid-cols-4 gap-2 py-2 border-b border-gray-100">
+                                      <div>{format(new Date(pref.date), 'dd MMMM', { locale: nl })}</div>
+                                      <div>{pref.shiftType === 'day' ? 'Dag' : 'Nacht'}</div>
+                                      <div>
+                                        {pref.preferenceType === 'full' && 'Volledige shift'}
+                                        {pref.preferenceType === 'first' && 'Eerste helft'}
+                                        {pref.preferenceType === 'second' && 'Tweede helft'}
+                                        {pref.preferenceType === 'unavailable' && 'Niet beschikbaar'}
+                                      </div>
+                                      <div>{pref.notes || '-'}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </TabsContent>
+                            </Tabs>
+                          </div>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  {/* Knop voor bewerken gebruiker */}
                   <Dialog onOpenChange={(open) => {
                     if (open) {
                       updateUserForm.reset({
