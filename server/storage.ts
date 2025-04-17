@@ -32,7 +32,7 @@ export interface IStorage {
   updateShiftPreference(id: number, updateData: Partial<ShiftPreference>): Promise<ShiftPreference>;
   deleteShiftPreference(id: number): Promise<void>;
   getOpenShiftsForPlanning(month: number, year: number): Promise<Shift[]>;
-  generateMonthlySchedule(month: number, year: number): Promise<void>;
+  generateMonthlySchedule(month: number, year: number): Promise<Shift[]>;
   sessionStore: session.Store;
   getShiftPreference(id: number): Promise<ShiftPreference | undefined>;
 }
@@ -160,9 +160,105 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
-  async generateMonthlySchedule(month: number, year: number): Promise<void> {
-    // Deze functie zal later worden geïmplementeerd om de planning te genereren
-    // op basis van de voorkeuren en beschikbaarheid van ambulanciers
+  async generateMonthlySchedule(month: number, year: number): Promise<Shift[]> {
+    // Haal alle gebruikers en hun voorkeuren op
+    const users = await this.getAllUsers();
+    const generatedShifts: Shift[] = [];
+    
+    // Maak een willekeurige planning gebaseerd op gebruikersvoorkeuren
+    // Dit is een vereenvoudigde aanpak - In een echte app zou dit complexere logica hebben
+    
+    // Maak eerst een kalender voor de maand
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    // Verwijder bestaande shifts voor deze maand
+    const existingShifts = await this.getShiftsByMonth(month, year);
+    for (const shift of existingShifts) {
+      await db.delete(shifts).where(eq(shifts.id, shift.id));
+    }
+    
+    // Voor elke dag in de maand
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = new Date(year, month - 1, day);
+      const isWeekendDay = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+      
+      // 1. Weekdagen hebben alleen nachtshifts nodig
+      if (!isWeekendDay) {
+        // Kies willekeurig een gebruiker met 25% kans
+        const eligibleUsers = users.filter(() => Math.random() < 0.25);
+        if (eligibleUsers.length > 0) {
+          const selectedUser = eligibleUsers[Math.floor(Math.random() * eligibleUsers.length)];
+          
+          // Nachtshift
+          const nightShift = {
+            userId: selectedUser.id,
+            date: currentDate,
+            type: "night" as const,
+            startTime: new Date(year, month - 1, day, 19, 0, 0),
+            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+            status: "planned" as const,
+            month,
+            year,
+            isSplitShift: false
+          };
+          
+          const savedShift = await this.createShift(nightShift);
+          generatedShifts.push(savedShift);
+        }
+      } 
+      // 2. Weekend heeft dag- en nachtshifts nodig
+      else {
+        // Kies willekeurig gebruikers voor de dagshift
+        const dayShiftUsers = users.filter(() => Math.random() < 0.25);
+        if (dayShiftUsers.length > 0) {
+          const selectedUser = dayShiftUsers[Math.floor(Math.random() * dayShiftUsers.length)];
+          
+          // Dagshift
+          const dayShift = {
+            userId: selectedUser.id,
+            date: currentDate,
+            type: "day" as const,
+            startTime: new Date(year, month - 1, day, 7, 0, 0),
+            endTime: new Date(year, month - 1, day, 19, 0, 0),
+            status: "planned" as const,
+            month,
+            year,
+            isSplitShift: false
+          };
+          
+          const savedDayShift = await this.createShift(dayShift);
+          generatedShifts.push(savedDayShift);
+        }
+        
+        // Kies willekeurig gebruikers voor de nachtshift
+        const nightShiftUsers = users.filter(u => 
+          !dayShiftUsers.some(du => du.id === u.id) && // Vermijd dezelfde gebruiker voor dag- en nachtshift
+          Math.random() < 0.25
+        );
+        
+        if (nightShiftUsers.length > 0) {
+          const selectedUser = nightShiftUsers[Math.floor(Math.random() * nightShiftUsers.length)];
+          
+          // Nachtshift
+          const nightShift = {
+            userId: selectedUser.id,
+            date: currentDate,
+            type: "night" as const,
+            startTime: new Date(year, month - 1, day, 19, 0, 0),
+            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+            status: "planned" as const,
+            month,
+            year,
+            isSplitShift: false
+          };
+          
+          const savedNightShift = await this.createShift(nightShift);
+          generatedShifts.push(savedNightShift);
+        }
+      }
+    }
+    
+    return generatedShifts;
   }
 
   async getShiftPreference(id: number): Promise<ShiftPreference | undefined> {

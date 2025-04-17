@@ -233,13 +233,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/shifts/generate/:month/:year", requireAdmin, async (req, res) => {
     try {
       const { month, year } = req.params;
-      await storage.generateMonthlySchedule(
+      const generatedShifts = await storage.generateMonthlySchedule(
         parseInt(month),
         parseInt(year)
       );
-      res.sendStatus(200);
+      res.status(200).json(generatedShifts);
     } catch (error) {
+      console.error("Error generating schedule:", error);
       res.status(500).json({ message: "Failed to generate schedule" });
+    }
+  });
+  
+  // New API endpoint for schedule generation
+  app.post("/api/schedule/generate", requireAdmin, async (req, res) => {
+    try {
+      const { month, year } = req.body;
+      console.log(`Generating schedule for ${month}/${year}`);
+      
+      const generatedShifts = await storage.generateMonthlySchedule(month, year);
+      res.status(200).json(generatedShifts);
+    } catch (error) {
+      console.error("Error generating schedule:", error);
+      res.status(500).json({ message: "Failed to generate schedule", error: error.message });
     }
   });
 
