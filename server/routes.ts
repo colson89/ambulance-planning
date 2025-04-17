@@ -415,6 +415,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to generate schedule", error: error.message });
     }
   });
+  
+  // Get a specific shift by id
+  app.get("/api/shifts/:id", requireAuth, async (req, res) => {
+    try {
+      const shift = await storage.getShift(parseInt(req.params.id));
+      if (!shift) {
+        return res.status(404).json({ message: "Shift not found" });
+      }
+      res.status(200).json(shift);
+    } catch (error) {
+      console.error("Error getting shift:", error);
+      res.status(500).json({ message: "Failed to get shift" });
+    }
+  });
+  
+  // Update a shift (for manual planning adjustments)
+  app.patch("/api/shifts/:id", requireAdmin, async (req, res) => {
+    try {
+      const shiftId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      // Validate the shift exists
+      const existingShift = await storage.getShift(shiftId);
+      if (!existingShift) {
+        return res.status(404).json({ message: "Shift not found" });
+      }
+      
+      // Update the shift
+      const updatedShift = await storage.updateShift(shiftId, updateData);
+      res.status(200).json(updatedShift);
+    } catch (error) {
+      console.error("Error updating shift:", error);
+      res.status(500).json({ message: "Failed to update shift" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

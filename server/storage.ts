@@ -475,6 +475,25 @@ export class DatabaseStorage implements IStorage {
       .where(eq(shiftPreferences.id, id));
     return preference;
   }
+  
+  async getShift(id: number): Promise<Shift | undefined> {
+    const [shift] = await db
+      .select()
+      .from(shifts)
+      .where(eq(shifts.id, id));
+    return shift;
+  }
+  
+  async updateShift(id: number, updateData: Partial<Shift>): Promise<Shift> {
+    const [shift] = await db
+      .update(shifts)
+      .set(updateData)
+      .where(eq(shifts.id, id))
+      .returning();
+      
+    if (!shift) throw new Error("Shift not found");
+    return shift;
+  }
 }
 
 export const storage = new DatabaseStorage();

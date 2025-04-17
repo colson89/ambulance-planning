@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -26,15 +26,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import type { User, ShiftPreference, Shift } from "@shared/schema";
 
 export default function ScheduleGenerator() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [generatedSchedule, setGeneratedSchedule] = useState<Shift[]>([]);
+  const [editingShift, setEditingShift] = useState<Shift | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<number>(0);
 
   // Haal alle gebruikers op
   const { data: users = [] } = useQuery<User[]>({
