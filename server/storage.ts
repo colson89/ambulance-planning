@@ -176,7 +176,89 @@ export class DatabaseStorage implements IStorage {
     const daysInMonth = new Date(year, month, 0).getDate();
     const generatedShifts: Shift[] = [];
     
+    // Bijhouden hoeveel uren elke ambulancier al is ingepland
+    const userAssignedHours = new Map<number, number>();
+    
+    // Initialiseer hours tracking voor elke ambulancier
+    ambulanciers.forEach(user => {
+      userAssignedHours.set(user.id, 0);
+    });
+    
     console.log(`Generating schedule for ${month}/${year} with ${ambulanciers.length} ambulanciers`);
+    
+    // Helper functie om te controleren of een ambulancier nog uren kan werken
+    const canAssignHours = (userId: number, hoursToAdd: number): boolean => {
+      const user = ambulanciers.find(u => u.id === userId);
+      if (!user) return false;
+      
+      const currentHours = userAssignedHours.get(userId) || 0;
+      
+      // Controleer of deze toewijzing binnen de maximum uren valt
+      return currentHours + hoursToAdd <= user.maxHours;
+    };
+    
+    // Helper functie om bij te houden hoeveel uren een ambulancier werkt
+    const addAssignedHours = (userId: number, hoursToAdd: number): void => {
+      if (userId === 0) return; // 0 = niet toegewezen
+      const currentHours = userAssignedHours.get(userId) || 0;
+      userAssignedHours.set(userId, currentHours + hoursToAdd);
+    };
+    
+    // Bereken gewicht voor toewijzing op basis van voorkeur en huidige uren
+    const getUserWeight = (userId: number, preferredHours: number = 0): number => {
+      const user = ambulanciers.find(u => u.id === userId);
+      if (!user) return 0;
+      
+      const currentHours = userAssignedHours.get(userId) || 0;
+      
+      // Als gebruiker onder minHours zit, hogere prioriteit geven
+      if (currentHours < user.minHours) {
+        return 2.0;
+      }
+      
+      // Als gebruiker dicht bij preferred hours is, gemiddelde prioriteit
+      if (currentHours < user.preferredHours) {
+        return 1.0;
+      }
+      
+      // Als gebruiker boven preferred maar onder max uren is, lagere prioriteit
+      if (currentHours < user.maxHours) {
+        return 0.5;
+      }
+      
+      // Gebruiker is al aan max uren, laagste prioriteit
+      return 0.1;
+    };
+    
+    // Functie om ambulanciers te sorteren op basis van werklast en voorkeuren
+    const getSortedUsersForAssignment = (availableUserIds: number[]): number[] => {
+      // Eerst filteren op gebruikers die nog uren kunnen werken
+      const filteredUsers = availableUserIds.filter(userId => {
+        const user = ambulanciers.find(u => u.id === userId);
+        if (!user) return false;
+        
+        const currentHours = userAssignedHours.get(userId) || 0;
+        return currentHours < user.maxHours;
+      });
+      
+      // Sorteren op basis van hoeveel uren de gebruiker al gewerkt heeft
+      return filteredUsers.sort((a, b) => {
+        const userA = ambulanciers.find(u => u.id === a);
+        const userB = ambulanciers.find(u => u.id === b);
+        
+        if (!userA || !userB) return 0;
+        
+        const hoursA = userAssignedHours.get(a) || 0;
+        const hoursB = userAssignedHours.get(b) || 0;
+        
+        // Als een gebruiker minder dan min uren heeft, hogere prioriteit
+        if (hoursA < userA.minHours && hoursB >= userB.minHours) return -1;
+        if (hoursB < userB.minHours && hoursA >= userA.minHours) return 1;
+        
+        // Anders sorteren op huidige toegewezen uren (minder uren = eerder ingepland)
+        return hoursA - hoursB;
+      });
+    };
     
     // Voor elke dag in de maand (1-31)
     for (let day = 1; day <= daysInMonth; day++) {
@@ -218,30 +300,61 @@ export class DatabaseStorage implements IStorage {
         // Maximaal 2 ambulanciers toewijzen voor de nachtshift
         const assignedIds: number[] = [];
         
+        // De nachtshift is 12 uur
+        const shiftHours = 12;
+        
+        // Sorteer beschikbare ambulanciers op basis van werklast
+        const sortedNightUsers = getSortedUsersForAssignment(availableForNight);
+        
         // Eerste ambulancier
-        if (availableForNight.length > 0) {
-          // Random selectie voor eerste ambulancier
-          const randomIndex = Math.floor(Math.random() * availableForNight.length);
-          const selectedId = availableForNight[randomIndex];
-          assignedIds.push(selectedId);
+        let selectedId = 0;
+        if (sortedNightUsers.length > 0) {
+          // Kies de eerste geschikte ambulancier
+          for (const userId of sortedNightUsers) {
+            if (canAssignHours(userId, shiftHours)) {
+              selectedId = userId;
+              break;
+            }
+          }
           
-          // Shift aanmaken
-          const nightShift1 = {
-            userId: selectedId,
-            date: currentDate,
-            type: "night" as const,
-            startTime: new Date(year, month - 1, day, 19, 0, 0),
-            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-            status: "planned" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
-          
-          const savedShift1 = await this.createShift(nightShift1);
-          generatedShifts.push(savedShift1);
+          if (selectedId > 0) {
+            assignedIds.push(selectedId);
+            addAssignedHours(selectedId, shiftHours);
+            
+            // Shift aanmaken
+            const nightShift1 = {
+              userId: selectedId,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 19, 0, 0),
+              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              status: "planned" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedShift1 = await this.createShift(nightShift1);
+            generatedShifts.push(savedShift1);
+          } else {
+            // Geen geschikte ambulancier gevonden
+            const openShift1 = {
+              userId: 0,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 19, 0, 0),
+              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              status: "open" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedOpenShift1 = await this.createShift(openShift1);
+            generatedShifts.push(savedOpenShift1);
+          }
         } else {
-          // Geen beschikbare gebruiker, open shift
+          // Geen beschikbare gebruikers
           const openShift1 = {
             userId: 0,
             date: currentDate,
@@ -259,29 +372,55 @@ export class DatabaseStorage implements IStorage {
         }
         
         // Tweede ambulancier (niet dezelfde als de eerste)
-        const remainingNightUsers = availableForNight.filter(id => !assignedIds.includes(id));
+        const remainingNightUsers = sortedNightUsers.filter(id => !assignedIds.includes(id));
+        
+        selectedId = 0;
         if (remainingNightUsers.length > 0) {
-          // Random selectie voor tweede ambulancier
-          const randomIndex = Math.floor(Math.random() * remainingNightUsers.length);
-          const selectedId = remainingNightUsers[randomIndex];
+          // Kies de eerste geschikte ambulancier
+          for (const userId of remainingNightUsers) {
+            if (canAssignHours(userId, shiftHours)) {
+              selectedId = userId;
+              break;
+            }
+          }
           
-          // Shift aanmaken
-          const nightShift2 = {
-            userId: selectedId,
-            date: currentDate,
-            type: "night" as const,
-            startTime: new Date(year, month - 1, day, 19, 0, 0),
-            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-            status: "planned" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
-          
-          const savedShift2 = await this.createShift(nightShift2);
-          generatedShifts.push(savedShift2);
+          if (selectedId > 0) {
+            addAssignedHours(selectedId, shiftHours);
+            
+            // Shift aanmaken
+            const nightShift2 = {
+              userId: selectedId,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 19, 0, 0),
+              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              status: "planned" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedShift2 = await this.createShift(nightShift2);
+            generatedShifts.push(savedShift2);
+          } else {
+            // Geen geschikte ambulancier gevonden
+            const openShift2 = {
+              userId: 0,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 19, 0, 0),
+              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              status: "open" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedOpenShift2 = await this.createShift(openShift2);
+            generatedShifts.push(savedOpenShift2);
+          }
         } else {
-          // Geen tweede beschikbare gebruiker, nog een open shift
+          // Geen geschikte gebruikers meer beschikbaar
           const openShift2 = {
             userId: 0,
             date: currentDate,
@@ -302,28 +441,59 @@ export class DatabaseStorage implements IStorage {
       else {
         // DAGSHIFT - Maximaal 2 ambulanciers toewijzen
         const assignedDayIds: number[] = [];
+        const dayShiftHours = 12; // 12 uur per dagshift
+        
+        // Sorteer op basis van werklast
+        const sortedDayUsers = getSortedUsersForAssignment(availableForDay);
         
         // Eerste ambulancier dag
-        if (availableForDay.length > 0) {
-          const randomIndex = Math.floor(Math.random() * availableForDay.length);
-          const selectedId = availableForDay[randomIndex];
-          assignedDayIds.push(selectedId);
+        let selectedId = 0;
+        if (sortedDayUsers.length > 0) {
+          // Kies de eerste geschikte ambulancier
+          for (const userId of sortedDayUsers) {
+            if (canAssignHours(userId, dayShiftHours)) {
+              selectedId = userId;
+              break;
+            }
+          }
           
-          const dayShift1 = {
-            userId: selectedId,
-            date: currentDate,
-            type: "day" as const,
-            startTime: new Date(year, month - 1, day, 7, 0, 0),
-            endTime: new Date(year, month - 1, day, 19, 0, 0),
-            status: "planned" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
-          
-          const savedDayShift1 = await this.createShift(dayShift1);
-          generatedShifts.push(savedDayShift1);
+          if (selectedId > 0) {
+            assignedDayIds.push(selectedId);
+            addAssignedHours(selectedId, dayShiftHours);
+            
+            const dayShift1 = {
+              userId: selectedId,
+              date: currentDate,
+              type: "day" as const,
+              startTime: new Date(year, month - 1, day, 7, 0, 0),
+              endTime: new Date(year, month - 1, day, 19, 0, 0),
+              status: "planned" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedDayShift1 = await this.createShift(dayShift1);
+            generatedShifts.push(savedDayShift1);
+          } else {
+            // Geen geschikte ambulancier gevonden
+            const openDayShift1 = {
+              userId: 0,
+              date: currentDate,
+              type: "day" as const,
+              startTime: new Date(year, month - 1, day, 7, 0, 0),
+              endTime: new Date(year, month - 1, day, 19, 0, 0),
+              status: "open" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedOpenDayShift1 = await this.createShift(openDayShift1);
+            generatedShifts.push(savedOpenDayShift1);
+          }
         } else {
+          // Geen beschikbare gebruikers
           const openDayShift1 = {
             userId: 0,
             date: currentDate,
@@ -341,26 +511,54 @@ export class DatabaseStorage implements IStorage {
         }
         
         // Tweede ambulancier dag
-        const remainingDayUsers = availableForDay.filter(id => !assignedDayIds.includes(id));
+        const remainingDayUsers = sortedDayUsers.filter(id => !assignedDayIds.includes(id));
+        
+        selectedId = 0;
         if (remainingDayUsers.length > 0) {
-          const randomIndex = Math.floor(Math.random() * remainingDayUsers.length);
-          const selectedId = remainingDayUsers[randomIndex];
+          // Kies de eerste geschikte ambulancier
+          for (const userId of remainingDayUsers) {
+            if (canAssignHours(userId, dayShiftHours)) {
+              selectedId = userId;
+              break;
+            }
+          }
           
-          const dayShift2 = {
-            userId: selectedId,
-            date: currentDate,
-            type: "day" as const,
-            startTime: new Date(year, month - 1, day, 7, 0, 0),
-            endTime: new Date(year, month - 1, day, 19, 0, 0),
-            status: "planned" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
-          
-          const savedDayShift2 = await this.createShift(dayShift2);
-          generatedShifts.push(savedDayShift2);
+          if (selectedId > 0) {
+            addAssignedHours(selectedId, dayShiftHours);
+            
+            const dayShift2 = {
+              userId: selectedId,
+              date: currentDate,
+              type: "day" as const,
+              startTime: new Date(year, month - 1, day, 7, 0, 0),
+              endTime: new Date(year, month - 1, day, 19, 0, 0),
+              status: "planned" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedDayShift2 = await this.createShift(dayShift2);
+            generatedShifts.push(savedDayShift2);
+          } else {
+            // Geen geschikte ambulancier gevonden
+            const openDayShift2 = {
+              userId: 0,
+              date: currentDate,
+              type: "day" as const,
+              startTime: new Date(year, month - 1, day, 7, 0, 0),
+              endTime: new Date(year, month - 1, day, 19, 0, 0),
+              status: "open" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedOpenDayShift2 = await this.createShift(openDayShift2);
+            generatedShifts.push(savedOpenDayShift2);
+          }
         } else {
+          // Geen geschikte gebruikers meer beschikbaar
           const openDayShift2 = {
             userId: 0,
             date: currentDate,
@@ -379,33 +577,64 @@ export class DatabaseStorage implements IStorage {
         
         // NACHTSHIFT - Maximaal 2 ambulanciers toewijzen, niet dezelfde als dagshift
         const assignedNightIds: number[] = [];
+        const nightShiftHours = 12; // 12 uur per nachtshift
         
         // Filter gebruikers voor nachtshift - niet dezelfde als dagshift
         const availableForNightFiltered = availableForNight.filter(
           id => !assignedDayIds.includes(id)
         );
         
+        // Sorteer op basis van werklast
+        const sortedNightUsers = getSortedUsersForAssignment(availableForNightFiltered);
+        
         // Eerste ambulancier nacht
-        if (availableForNightFiltered.length > 0) {
-          const randomIndex = Math.floor(Math.random() * availableForNightFiltered.length);
-          const selectedId = availableForNightFiltered[randomIndex];
-          assignedNightIds.push(selectedId);
+        selectedId = 0;
+        if (sortedNightUsers.length > 0) {
+          // Kies de eerste geschikte ambulancier
+          for (const userId of sortedNightUsers) {
+            if (canAssignHours(userId, nightShiftHours)) {
+              selectedId = userId;
+              break;
+            }
+          }
           
-          const nightShift1 = {
-            userId: selectedId,
-            date: currentDate,
-            type: "night" as const,
-            startTime: new Date(year, month - 1, day, 19, 0, 0),
-            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-            status: "planned" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
-          
-          const savedNightShift1 = await this.createShift(nightShift1);
-          generatedShifts.push(savedNightShift1);
+          if (selectedId > 0) {
+            assignedNightIds.push(selectedId);
+            addAssignedHours(selectedId, nightShiftHours);
+            
+            const nightShift1 = {
+              userId: selectedId,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 19, 0, 0),
+              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              status: "planned" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedNightShift1 = await this.createShift(nightShift1);
+            generatedShifts.push(savedNightShift1);
+          } else {
+            // Geen geschikte ambulancier gevonden
+            const openNightShift1 = {
+              userId: 0,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 19, 0, 0),
+              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              status: "open" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedOpenNightShift1 = await this.createShift(openNightShift1);
+            generatedShifts.push(savedOpenNightShift1);
+          }
         } else {
+          // Geen beschikbare gebruikers
           const openNightShift1 = {
             userId: 0,
             date: currentDate,
@@ -423,29 +652,56 @@ export class DatabaseStorage implements IStorage {
         }
         
         // Tweede ambulancier nacht
-        const remainingNightUsers = availableForNightFiltered.filter(
+        const remainingNightUsers = sortedNightUsers.filter(
           id => !assignedNightIds.includes(id)
         );
         
+        selectedId = 0;
         if (remainingNightUsers.length > 0) {
-          const randomIndex = Math.floor(Math.random() * remainingNightUsers.length);
-          const selectedId = remainingNightUsers[randomIndex];
+          // Kies de eerste geschikte ambulancier
+          for (const userId of remainingNightUsers) {
+            if (canAssignHours(userId, nightShiftHours)) {
+              selectedId = userId;
+              break;
+            }
+          }
           
-          const nightShift2 = {
-            userId: selectedId,
-            date: currentDate,
-            type: "night" as const,
-            startTime: new Date(year, month - 1, day, 19, 0, 0),
-            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-            status: "planned" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
-          
-          const savedNightShift2 = await this.createShift(nightShift2);
-          generatedShifts.push(savedNightShift2);
+          if (selectedId > 0) {
+            addAssignedHours(selectedId, nightShiftHours);
+            
+            const nightShift2 = {
+              userId: selectedId,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 19, 0, 0),
+              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              status: "planned" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedNightShift2 = await this.createShift(nightShift2);
+            generatedShifts.push(savedNightShift2);
+          } else {
+            // Geen geschikte ambulancier gevonden
+            const openNightShift2 = {
+              userId: 0,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 19, 0, 0),
+              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              status: "open" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedOpenNightShift2 = await this.createShift(openNightShift2);
+            generatedShifts.push(savedOpenNightShift2);
+          }
         } else {
+          // Geen geschikte gebruikers meer beschikbaar
           const openNightShift2 = {
             userId: 0,
             date: currentDate,
@@ -461,6 +717,15 @@ export class DatabaseStorage implements IStorage {
           const savedOpenNightShift2 = await this.createShift(openNightShift2);
           generatedShifts.push(savedOpenNightShift2);
         }
+      }
+    }
+    
+    // Log de uiteindelijke uren per gebruiker
+    console.log("Assigned hours per user:");
+    for (const [userId, hours] of userAssignedHours.entries()) {
+      const user = ambulanciers.find(u => u.id === userId);
+      if (user && hours > 0) {
+        console.log(`${user.username}: ${hours} hours (min: ${user.minHours}, preferred: ${user.preferredHours}, max: ${user.maxHours})`);
       }
     }
     
