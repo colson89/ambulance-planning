@@ -16,6 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pencil, Trash2, UserPlus, KeyRound, Home } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { Calendar } from "@/components/ui/calendar";
+import { Eye } from "lucide-react";
+import { format } from "date-fns";
+import { nl } from "date-fns/locale";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const updateUserSchema = z.object({
   firstName: z.string().min(1, "Voornaam is verplicht"),
@@ -34,7 +39,22 @@ export default function UserManagement() {
   const queryClient = useQueryClient();
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [viewPreferencesForUserId, setViewPreferencesForUserId] = useState<number | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [, setLocation] = useLocation();
+  
+  // Query om alle beschikbaarheden te krijgen voor een bepaalde gebruiker
+  const { data: userPreferences, isLoading: isLoadingPreferences } = useQuery({
+    queryKey: ["/api/preferences", viewPreferencesForUserId, selectedMonth, selectedYear],
+    queryFn: async () => {
+      if (!viewPreferencesForUserId) return null;
+      const res = await fetch(`/api/preferences/${viewPreferencesForUserId}/${selectedMonth}/${selectedYear}`);
+      if (!res.ok) throw new Error("Kon voorkeuren niet laden");
+      return res.json();
+    },
+    enabled: viewPreferencesForUserId !== null,
+  });
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
