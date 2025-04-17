@@ -258,7 +258,10 @@ export default function ScheduleGenerator() {
                 {shifts.map((shift) => {
                   const shiftUser = users.find(u => u.id === shift.userId);
                   return (
-                    <TableRow key={shift.id}>
+                    <TableRow 
+                      key={shift.id}
+                      className={shift.status === "open" ? "bg-red-50" : ""}
+                    >
                       <TableCell>{format(new Date(shift.date), "dd MMMM", { locale: nl })}</TableCell>
                       <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
                       <TableCell>
@@ -268,15 +271,21 @@ export default function ScheduleGenerator() {
                           "-"
                         )}
                       </TableCell>
-                      <TableCell>{shiftUser?.username || "Onbekend"}</TableCell>
+                      <TableCell>
+                        {shift.status === "open" ? (
+                          <span className="text-red-500 font-medium">Niet ingevuld</span>
+                        ) : (
+                          shiftUser?.username || "Onbekend"
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center">
                           {shift.status === "planned" ? (
                             <Check className="h-4 w-4 text-green-500 mr-1" />
                           ) : shift.status === "open" ? (
-                            <AlertCircle className="h-4 w-4 text-yellow-500 mr-1" />
+                            <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
                           ) : null}
-                          {shift.status}
+                          {shift.status === "open" ? "Open" : shift.status}
                         </div>
                       </TableCell>
                     </TableRow>
