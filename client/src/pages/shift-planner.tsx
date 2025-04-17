@@ -217,28 +217,7 @@ export default function ShiftPlanner() {
                 }}
                 className="rounded-md border"
                 locale={nl}
-                renderDay={(day) => {
-                  // Deze functie bepaalt alleen de weergave, niet de interactie
-                  if (isWeekend(day)) {
-                    const weekendPrefs = getWeekendPreferences(day);
-                    
-                    return (
-                      <div className="relative w-full h-full flex items-center justify-center">
-                        {day.getDate()}
-                        <div className="absolute bottom-0 right-0 flex">
-                          {weekendPrefs.hasDay && !weekendPrefs.bothUnavailable && (
-                            <Badge variant="outline" className="h-2 w-2 p-0 border-yellow-400 bg-yellow-200" />
-                          )}
-                          {weekendPrefs.hasNight && !weekendPrefs.bothUnavailable && (
-                            <Badge variant="outline" className="h-2 w-2 p-0 border-blue-400 bg-blue-200" />
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }
-                  
-                  return day.getDate();
-                }}
+
               />
             </CardContent>
           </Card>
