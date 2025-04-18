@@ -168,9 +168,9 @@ export class DatabaseStorage implements IStorage {
         eq(shifts.year, year)
       ));
 
-    // Haal ambulanciers op (filter admin eruit)
+    // Haal alle gebruikers op die uren willen werken
     const allUsers = await this.getAllUsers();
-    const ambulanciers = allUsers.filter(user => user.role === 'ambulancier');
+    const activeUsers = allUsers.filter(user => user.hours > 0);
     
     // Maak eerst een kalender voor de maand
     const daysInMonth = new Date(year, month, 0).getDate();
@@ -179,16 +179,16 @@ export class DatabaseStorage implements IStorage {
     // Bijhouden hoeveel uren elke ambulancier al is ingepland
     const userAssignedHours = new Map<number, number>();
     
-    // Initialiseer hours tracking voor elke ambulancier
-    ambulanciers.forEach(user => {
+    // Initialiseer hours tracking voor elke actieve gebruiker
+    activeUsers.forEach(user => {
       userAssignedHours.set(user.id, 0);
     });
     
-    console.log(`Generating schedule for ${month}/${year} with ${ambulanciers.length} ambulanciers`);
+    console.log(`Generating schedule for ${month}/${year} with ${activeUsers.length} actieve gebruikers`);
     
-    // Helper functie om te controleren of een ambulancier nog uren kan werken
+    // Helper functie om te controleren of een gebruiker nog uren kan werken
     const canAssignHours = (userId: number, hoursToAdd: number): boolean => {
-      const user = ambulanciers.find(u => u.id === userId);
+      const user = activeUsers.find(u => u.id === userId);
       if (!user) return false;
       
       const currentHours = userAssignedHours.get(userId) || 0;
