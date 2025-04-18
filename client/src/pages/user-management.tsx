@@ -65,11 +65,9 @@ export default function UserManagement() {
       password: "",
       firstName: "",
       lastName: "",
-      role: "ambulancier",
+      role: "ambulancier" as "admin" | "ambulancier",
       isAdmin: false,
-      minHours: 24,
-      maxHours: 40,
-      preferredHours: 32
+      hours: 24
     }
   });
 
@@ -259,34 +257,13 @@ export default function UserManagement() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Werkuren Instellingen</label>
-                    <p className="text-sm text-muted-foreground">Bepaal het aantal werkuren per week</p>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <label className="text-xs font-medium">Minimum</label>
-                        <Input
-                          type="number"
-                          placeholder="24"
-                          {...createUserForm.register("minHours", { valueAsNumber: true })}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium">Maximum</label>
-                        <Input
-                          type="number"
-                          placeholder="40"
-                          {...createUserForm.register("maxHours", { valueAsNumber: true })}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium">Voorkeur</label>
-                        <Input
-                          type="number"
-                          placeholder="32"
-                          {...createUserForm.register("preferredHours", { valueAsNumber: true })}
-                        />
-                      </div>
-                    </div>
+                    <label className="text-sm font-medium">Werkuren</label>
+                    <p className="text-sm text-muted-foreground">Bepaal het aantal werkuren per maand</p>
+                    <Input
+                      type="number"
+                      placeholder="24"
+                      {...createUserForm.register("hours", { valueAsNumber: true })}
+                    />
                   </div>
 
                   <Button 
@@ -316,7 +293,7 @@ export default function UserManagement() {
                     {u.username} - {u.role}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Uren: {u.minHours}-{u.maxHours} (voorkeur: {u.preferredHours})
+                    Uren: {u.hours}
                   </p>
                 </div>
 
@@ -469,9 +446,7 @@ export default function UserManagement() {
                         firstName: u.firstName,
                         lastName: u.lastName,
                         role: u.role as "admin" | "ambulancier",
-                        minHours: u.minHours,
-                        maxHours: u.maxHours,
-                        preferredHours: u.preferredHours
+                        hours: u.hours
                       });
                     }
                   }}>
@@ -532,34 +507,13 @@ export default function UserManagement() {
                           </div>
 
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Werkuren Instellingen</label>
-                            <p className="text-sm text-muted-foreground">Bepaal het aantal werkuren per week</p>
-                            <div className="grid grid-cols-3 gap-4">
-                              <div>
-                                <label className="text-xs font-medium">Minimum</label>
-                                <Input
-                                  type="number"
-                                  placeholder="24"
-                                  {...updateUserForm.register("minHours", { valueAsNumber: true })}
-                                />
-                              </div>
-                              <div>
-                                <label className="text-xs font-medium">Maximum</label>
-                                <Input
-                                  type="number"
-                                  placeholder="40"
-                                  {...updateUserForm.register("maxHours", { valueAsNumber: true })}
-                                />
-                              </div>
-                              <div>
-                                <label className="text-xs font-medium">Voorkeur</label>
-                                <Input
-                                  type="number"
-                                  placeholder="32"
-                                  {...updateUserForm.register("preferredHours", { valueAsNumber: true })}
-                                />
-                              </div>
-                            </div>
+                            <label className="text-sm font-medium">Werkuren</label>
+                            <p className="text-sm text-muted-foreground">Bepaal het aantal werkuren per maand</p>
+                            <Input
+                              type="number"
+                              placeholder="24"
+                              {...updateUserForm.register("hours", { valueAsNumber: true })}
+                            />
                           </div>
 
                           <Button 
