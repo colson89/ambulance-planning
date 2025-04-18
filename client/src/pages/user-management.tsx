@@ -26,9 +26,7 @@ const updateUserSchema = z.object({
   firstName: z.string().min(1, "Voornaam is verplicht"),
   lastName: z.string().min(1, "Achternaam is verplicht"),
   role: z.enum(["admin", "ambulancier"]),
-  minHours: z.number().min(0).max(168),
-  maxHours: z.number().min(0).max(168),
-  preferredHours: z.number().min(0).max(168),
+  hours: z.number().min(0).max(168),
 });
 
 type UpdateUserData = z.infer<typeof updateUserSchema>;

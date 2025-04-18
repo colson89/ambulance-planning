@@ -10,9 +10,7 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   role: text("role", { enum: ["admin", "ambulancier"] }).notNull().default("ambulancier"),
   isAdmin: boolean("is_admin").notNull().default(false),
-  minHours: integer("min_hours").notNull().default(24),
-  maxHours: integer("max_hours").notNull().default(40),
-  preferredHours: integer("preferred_hours").notNull().default(32)
+  hours: integer("hours").notNull().default(24)
 });
 
 export const shifts = pgTable("shifts", {
@@ -55,9 +53,7 @@ export const insertUserSchema = createInsertSchema(users, {
   lastName: true,
   role: true,
   isAdmin: true,
-  minHours: true,
-  maxHours: true,
-  preferredHours: true
+  hours: true
 });
 
 export const insertShiftSchema = createInsertSchema(shifts);
