@@ -326,7 +326,7 @@ export default function ScheduleGenerator() {
                   <TableHead>Medewerker</TableHead>
                   <TableHead className="text-center">Gevraagde Uren</TableHead>
                   <TableHead className="text-center">Geplande Uren</TableHead>
-                  <TableHead className="text-center">Max Uren</TableHead>
+                  <TableHead className="text-center">Opgegeven Uren</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -335,7 +335,7 @@ export default function ScheduleGenerator() {
                     <TableCell className="font-medium">{user.username}</TableCell>
                     <TableCell className="text-center">{countUserPreferencesHours(user.id)}</TableCell>
                     <TableCell className="text-center">{countUserShiftsHours(user.id)}</TableCell>
-                    <TableCell className="text-center">{user.maxHours}</TableCell>
+                    <TableCell className="text-center">{user.hours}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

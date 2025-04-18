@@ -82,9 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: z.string().min(1).optional(),
         lastName: z.string().min(1).optional(),
         role: z.enum(["admin", "ambulancier"]).optional(),
-        minHours: z.number().min(0).max(168).optional(),
-        maxHours: z.number().min(0).max(168).optional(),
-        preferredHours: z.number().min(0).max(168).optional(),
+        hours: z.number().min(0).max(168).optional(),
       });
 
       const updateData = updateSchema.parse(req.body);
@@ -450,7 +448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userShifts = generatedShifts.filter(s => s.userId === user.id);
         const hours = userShifts.length * 12; // Elke shift is 12 uur
         userShiftHours.set(user.id, hours);
-        console.log(`- ${user.username}: ${hours} uren gepland, min: ${user.minHours}, max: ${user.maxHours}`);
+        console.log(`- ${user.username}: ${hours} uren gepland, opgegeven: ${user.hours}`);
       });
       
       res.status(200).json(generatedShifts);
