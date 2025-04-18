@@ -204,29 +204,30 @@ export class DatabaseStorage implements IStorage {
       userAssignedHours.set(userId, currentHours + hoursToAdd);
     };
     
-    // Bereken gewicht voor toewijzing op basis van voorkeur en huidige uren
+    // Bereken gewicht voor toewijzing op basis van huidige uren
     const getUserWeight = (userId: number, preferredHours: number = 0): number => {
       const user = ambulanciers.find(u => u.id === userId);
       if (!user) return 0;
       
       const currentHours = userAssignedHours.get(userId) || 0;
+      const targetHours = user.hours;
       
-      // Als gebruiker onder minHours zit, hogere prioriteit geven
-      if (currentHours < user.minHours) {
+      // Als gebruiker minder dan 50% van zijn opgegeven uren heeft, hogere prioriteit geven
+      if (currentHours < targetHours * 0.5) {
         return 2.0;
       }
       
-      // Als gebruiker dicht bij preferred hours is, gemiddelde prioriteit
-      if (currentHours < user.preferredHours) {
+      // Als gebruiker tussen 50% en 75% van zijn opgegeven uren heeft, gemiddelde prioriteit
+      if (currentHours < targetHours * 0.75) {
         return 1.0;
       }
       
-      // Als gebruiker boven preferred maar onder max uren is, lagere prioriteit
-      if (currentHours < user.maxHours) {
+      // Als gebruiker meer dan 75% maar minder dan zijn opgegeven uren heeft, lagere prioriteit
+      if (currentHours < targetHours) {
         return 0.5;
       }
       
-      // Gebruiker is al aan max uren, laagste prioriteit
+      // Gebruiker is al aan opgegeven uren, laagste prioriteit
       return 0.1;
     };
     
@@ -238,7 +239,7 @@ export class DatabaseStorage implements IStorage {
         if (!user) return false;
         
         const currentHours = userAssignedHours.get(userId) || 0;
-        return currentHours < user.maxHours;
+        return currentHours < user.hours;
       });
       
       // Sorteren op basis van hoeveel uren de gebruiker al gewerkt heeft
@@ -251,9 +252,12 @@ export class DatabaseStorage implements IStorage {
         const hoursA = userAssignedHours.get(a) || 0;
         const hoursB = userAssignedHours.get(b) || 0;
         
-        // Als een gebruiker minder dan min uren heeft, hogere prioriteit
-        if (hoursA < userA.minHours && hoursB >= userB.minHours) return -1;
-        if (hoursB < userB.minHours && hoursA >= userA.minHours) return 1;
+        // Als een gebruiker minder dan 50% van zijn uren heeft, hogere prioriteit
+        const thresholdA = userA.hours * 0.5;
+        const thresholdB = userB.hours * 0.5;
+        
+        if (hoursA < thresholdA && hoursB >= thresholdB) return -1;
+        if (hoursB < thresholdB && hoursA >= thresholdA) return 1;
         
         // Anders sorteren op huidige toegewezen uren (minder uren = eerder ingepland)
         return hoursA - hoursB;
@@ -722,10 +726,12 @@ export class DatabaseStorage implements IStorage {
     
     // Log de uiteindelijke uren per gebruiker
     console.log("Assigned hours per user:");
-    for (const [userId, hours] of userAssignedHours.entries()) {
+    // Convert entries to array to avoid iterator issues
+    const entries = Array.from(userAssignedHours.entries());
+    for (const [userId, hours] of entries) {
       const user = ambulanciers.find(u => u.id === userId);
       if (user && hours > 0) {
-        console.log(`${user.username}: ${hours} hours (min: ${user.minHours}, preferred: ${user.preferredHours}, max: ${user.maxHours})`);
+        console.log(`${user.username}: ${hours} hours (opgegeven: ${user.hours})`);
       }
     }
     
