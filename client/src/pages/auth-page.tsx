@@ -5,12 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
-import { Home } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Home, Key } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [devLoginLoading, setDevLoginLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -21,6 +26,29 @@ export default function AuthPage() {
   const loginForm = useForm({
     defaultValues: { username: "", password: "" }
   });
+  
+  const devLoginForm = useForm({
+    defaultValues: { username: "" }
+  });
+  
+  const handleDevLogin = async (data: { username: string }) => {
+    try {
+      setDevLoginLoading(true);
+      const res = await apiRequest("POST", "/api/dev-login", data);
+      const user = await res.json();
+      
+      // Manueel de pagina verversen om de login status te updaten
+      window.location.href = "/";
+    } catch (error) {
+      toast({
+        title: "Login mislukt",
+        description: "Kon niet inloggen met de opgegeven gebruikersnaam",
+        variant: "destructive",
+      });
+    } finally {
+      setDevLoginLoading(false);
+    }
+  };
 
   if (user) {
     return null;
@@ -43,28 +71,63 @@ export default function AuthPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}>
-                <div className="space-y-4">
-                  <Input
-                    placeholder="Gebruikersnaam"
-                    {...loginForm.register("username")}
-                  />
-                  <Input
-                    type="password"
-                    placeholder="Wachtwoord"
-                    {...loginForm.register("password")}
-                  />
-                  <Button 
-                    type="submit"
-                    className="w-full"
-                    disabled={loginMutation.isPending}
-                  >
-                    Inloggen
-                  </Button>
+            <Tabs defaultValue="normal">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="normal">Normale Login</TabsTrigger>
+                <TabsTrigger value="dev">Dev Login</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="normal">
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}>
+                    <div className="space-y-4">
+                      <Input
+                        placeholder="Gebruikersnaam"
+                        {...loginForm.register("username")}
+                      />
+                      <Input
+                        type="password"
+                        placeholder="Wachtwoord"
+                        {...loginForm.register("password")}
+                      />
+                      <Button 
+                        type="submit"
+                        className="w-full"
+                        disabled={loginMutation.isPending}
+                      >
+                        Inloggen
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </TabsContent>
+              
+              <TabsContent value="dev">
+                <div className="bg-yellow-100 dark:bg-yellow-950 p-3 rounded-md mb-4 text-sm">
+                  <p className="font-medium">⚠️ Alleen voor ontwikkeling</p>
+                  <p className="text-xs text-muted-foreground">Login zonder wachtwoord (gebruik ROVE319 voor admin)</p>
                 </div>
-              </form>
-            </Form>
+                <Form {...devLoginForm}>
+                  <form onSubmit={devLoginForm.handleSubmit(handleDevLogin)}>
+                    <div className="space-y-4">
+                      <Input
+                        placeholder="Gebruikersnaam"
+                        {...devLoginForm.register("username")}
+                      />
+                      <Button 
+                        type="submit"
+                        className="w-full"
+                        disabled={devLoginLoading}
+                        variant="outline"
+                      >
+                        <Key className="h-4 w-4 mr-2" />
+                        Direct Inloggen
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

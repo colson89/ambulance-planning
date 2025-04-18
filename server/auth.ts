@@ -68,31 +68,43 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      const user = await storage.getUserByUsername(username);
-      if (!user) {
-        console.log(`Login failed: User ${username} not found`);
-        return done(null, false);
-      }
-      
-      // Eenvoudige wachtwoordverificatie - directe vergelijking voor admin123
-      if (user.password === password) {
-        console.log("Direct password match");
-        return done(null, user);
-      }
-      
-      // Probeer scrypt vergelijking alleen als het wachtwoord een hash lijkt
-      if (user.password.includes(".")) {
-        try {
-          if (await comparePasswords(password, user.password)) {
-            return done(null, user);
-          }
-        } catch (err) {
-          console.error("Error comparing passwords:", err);
+      try {
+        console.log(`Login attempt for username: ${username}`);
+        const user = await storage.getUserByUsername(username);
+        
+        if (!user) {
+          console.log(`Login failed: User ${username} not found`);
+          return done(null, false);
         }
+        
+        // Directe vergelijking (plain text wachtwoord)
+        if (user.password === password) {
+          console.log(`Direct password match for ${username}`);
+          return done(null, user);
+        }
+        
+        // Log wachtwoord details voor debugging
+        console.log(`Password for ${username}: ${user.password}`);
+        console.log(`Supplied password length: ${password.length}`);
+        
+        // Probeer scrypt vergelijking alleen als het wachtwoord een hash lijkt
+        if (user.password && user.password.includes(".")) {
+          try {
+            if (await comparePasswords(password, user.password)) {
+              console.log(`Hashed password match for ${username}`);
+              return done(null, user);
+            }
+          } catch (err) {
+            console.error("Error comparing passwords:", err);
+          }
+        }
+        
+        console.log(`Login failed: Incorrect password for ${username}`);
+        return done(null, false);
+      } catch (error) {
+        console.error("Login error:", error);
+        return done(error);
       }
-      
-      console.log(`Login failed: Incorrect password for ${username}`);
-      return done(null, false);
     }),
   );
 
