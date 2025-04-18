@@ -137,10 +137,29 @@ export default function ScheduleGenerator() {
   };
 
   // Helper functie om gegenereerde shifts in uren per gebruiker te berekenen
+  // Houdt alleen rekening met shifts in de geselecteerde maand/jaar
   const countUserShiftsHours = (userId: number) => {
-    const userShifts = shifts.filter(s => s.userId === userId);
-    // Elke shift is 12 uur (standaard shift duur)
-    return userShifts.length * 12;
+    // Filter shifts op gebruiker én geselecteerde maand/jaar
+    const userShifts = shifts.filter(s => {
+      if (s.userId !== userId) return false;
+      
+      // Controleer of de shift in de geselecteerde maand/jaar valt
+      const shiftDate = new Date(s.date);
+      return shiftDate.getMonth() === selectedMonth && 
+             shiftDate.getFullYear() === selectedYear;
+    });
+    
+    // Tel de uren voor elke shift (rekening houdend met halve shifts)
+    let totalHours = 0;
+    userShifts.forEach(shift => {
+      if (shift.isSplitShift) {
+        totalHours += 6; // Halve shift is 6 uur
+      } else {
+        totalHours += 12; // Volledige shift is 12 uur
+      }
+    });
+    
+    return totalHours;
   };
   
   // Mutatie om een shift te updaten
@@ -320,7 +339,7 @@ export default function ScheduleGenerator() {
           </CardHeader>
           <CardContent>
             <Table>
-              <TableCaption>Overzicht van gewenste en geplande uren per medewerker</TableCaption>
+              <TableCaption>Overzicht van gewenste en geplande uren per medewerker voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Medewerker</TableHead>
