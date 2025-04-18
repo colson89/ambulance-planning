@@ -205,6 +205,24 @@ export default function ScheduleGenerator() {
       });
     }
   };
+  
+  // Handle remove from shift (voor zieke medewerkers)
+  const handleRemoveFromShift = () => {
+    if (editingShift && editingShift.userId > 0) {
+      // Reset userId naar 0 en status naar "open"
+      updateShiftMutation.mutate({
+        shiftId: editingShift.id,
+        userId: 0
+      });
+      
+      // Toon een gespecialiseerde melding voor het verwijderen van een medewerker
+      toast({
+        title: "Medewerker verwijderd",
+        description: "De medewerker is uit de shift verwijderd. De shift staat nu op 'Open'.",
+        variant: "default",
+      });
+    }
+  };
 
   // Maanden voor de select box
   const months = [
@@ -517,26 +535,46 @@ export default function ScheduleGenerator() {
             </div>
           )}
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingShift(null)}>
-              Annuleren
-            </Button>
-            <Button 
-              onClick={handleSaveShift}
-              disabled={updateShiftMutation.isPending}
-            >
-              {updateShiftMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Bezig met opslaan...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Opslaan
-                </>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <div className="flex gap-2 w-full justify-between">
+              <Button variant="outline" onClick={() => setEditingShift(null)}>
+                Annuleren
+              </Button>
+              
+              {editingShift && editingShift.userId > 0 && (
+                <Button 
+                  variant="destructive"
+                  onClick={handleRemoveFromShift}
+                  disabled={updateShiftMutation.isPending}
+                >
+                  {updateShiftMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Verwijderen (Ziek)
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
+              
+              <Button 
+                onClick={handleSaveShift}
+                disabled={updateShiftMutation.isPending}
+              >
+                {updateShiftMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Bezig met opslaan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Opslaan
+                  </>
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
