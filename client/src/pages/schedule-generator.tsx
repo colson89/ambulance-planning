@@ -129,11 +129,11 @@ export default function ScheduleGenerator() {
     },
   });
 
-  // Helper functie om gevraagde uren per gebruiker te retourneren
-  const countUserPreferencesHours = (userId: number) => {
-    // Haal de uren op van de gebruiker in plaats van aantal voorkeuren te tellen
-    const foundUser = users.find(u => u.id === userId);
-    return foundUser ? foundUser.hours : 0;
+  // Helper functie om beschikbare uren uit voorkeuren voor deze maand te tellen
+  const countAvailableHoursFromPreferences = (userId: number) => {
+    // Elke voorkeur vertegenwoordigt ongeveer 12 uur (een volledige shift)
+    const prefsCount = preferences.filter(p => p.userId === userId).length;
+    return prefsCount * 12;
   };
 
   // Helper functie om gegenereerde shifts in uren per gebruiker te berekenen
@@ -320,22 +320,22 @@ export default function ScheduleGenerator() {
           </CardHeader>
           <CardContent>
             <Table>
-              <TableCaption>Overzicht van ingestelde en toegewezen uren per medewerker</TableCaption>
+              <TableCaption>Overzicht van gewenste, geplande en beschikbare uren per medewerker</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Medewerker</TableHead>
-                  <TableHead className="text-center">Maximale Uren</TableHead>
+                  <TableHead className="text-center">Gewenste Uren</TableHead>
                   <TableHead className="text-center">Geplande Uren</TableHead>
-                  <TableHead className="text-center">Ingestelde Uren</TableHead>
+                  <TableHead className="text-center">Beschikbare Uren</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.username}</TableCell>
-                    <TableCell className="text-center">{countUserPreferencesHours(user.id)}</TableCell>
-                    <TableCell className="text-center">{countUserShiftsHours(user.id)}</TableCell>
                     <TableCell className="text-center">{user.hours}</TableCell>
+                    <TableCell className="text-center">{countUserShiftsHours(user.id)}</TableCell>
+                    <TableCell className="text-center">{countAvailableHoursFromPreferences(user.id)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
