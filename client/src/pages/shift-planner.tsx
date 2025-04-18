@@ -105,23 +105,63 @@ export default function ShiftPlanner() {
 
     try {
       const preferenceType = getPreferenceForDate(selectedDate, shiftType);
+      let startTimeHour = 7;  // Default voor dagshift
+      let endTimeHour = 19; // Default voor dagshift
+      let endDateOffset = 0; // Default voor dagshift
+      
+      if (shiftType === "night") {
+        startTimeHour = 19;
+        endTimeHour = 7;
+        endDateOffset = 1; // Nachtshift eindigt de volgende dag
+      }
+      
+      // Bepaal of dit een halve shift is en pas tijden aan indien nodig
+      const canSplit = preferenceType === "first" || preferenceType === "second";
+      let notesText = preferenceType === "unavailable" ? "Niet beschikbaar" : null;
+      
+      // Als het een halve shift is, voeg de preferenceType toe aan notes
+      // en pas de start/eindtijden aan
+      if (canSplit && preferenceType !== "unavailable") {
+        notesText = preferenceType; // "first" of "second"
+        
+        if (shiftType === "day") {
+          if (preferenceType === "first") {
+            // Eerste helft dagshift (7:00-13:00)
+            startTimeHour = 7;
+            endTimeHour = 13;
+          } else if (preferenceType === "second") {
+            // Tweede helft dagshift (13:00-19:00)
+            startTimeHour = 13;
+            endTimeHour = 19;
+          }
+        } else if (shiftType === "night") {
+          if (preferenceType === "first") {
+            // Eerste helft nachtshift (19:00-1:00)
+            startTimeHour = 19;
+            endTimeHour = 1;
+            endDateOffset = 0; // Eindigt nog op dezelfde dag
+          } else if (preferenceType === "second") {
+            // Tweede helft nachtshift (1:00-7:00)
+            startTimeHour = 1;
+            endTimeHour = 7;
+            endDateOffset = 1; // Eindigt de volgende dag
+          }
+        }
+      }
+      
       const testData = {
         date: selectedDate,
         type: preferenceType === "unavailable" ? "unavailable" : shiftType,
         startTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(),
-          shiftType === "day" ? 7 : 19,
-          0,
-          0
+          startTimeHour, 0, 0
         ),
-        endTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + (shiftType === "night" ? 1 : 0),
-          shiftType === "day" ? 19 : 7,
-          0,
-          0
+        endTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + endDateOffset,
+          endTimeHour, 0, 0
         ),
-        canSplit: false,
+        canSplit: canSplit,
         month: selectedMonth.getMonth() + 1,
         year: selectedMonth.getFullYear(),
-        notes: preferenceType === "unavailable" ? "Niet beschikbaar" : null
+        notes: notesText
       };
 
       console.log("Versturen test data:", testData);
