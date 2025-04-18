@@ -48,6 +48,7 @@ export default function ScheduleGenerator() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [generatedSchedule, setGeneratedSchedule] = useState<Shift[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
+  const [isGeneratingTestPreferences, setIsGeneratingTestPreferences] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number>(0);
   
   // Navigatie functies voor maand/jaar
@@ -348,8 +349,10 @@ export default function ScheduleGenerator() {
                   variant="outline"
                   size="sm"
                   className="w-full"
+                  disabled={isGeneratingTestPreferences}
                   onClick={async () => {
                     try {
+                      setIsGeneratingTestPreferences(true);
                       const res = await apiRequest("POST", "/api/preferences/generate-test-data", {
                         month: selectedMonth + 1,
                         year: selectedYear
@@ -373,10 +376,19 @@ export default function ScheduleGenerator() {
                         description: error instanceof Error ? error.message : "Onbekende fout bij genereren testdata",
                         variant: "destructive",
                       });
+                    } finally {
+                      setIsGeneratingTestPreferences(false);
                     }
                   }}
                 >
-                  Genereer Test Voorkeuren
+                  {isGeneratingTestPreferences ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Bezig met genereren...
+                    </>
+                  ) : (
+                    "Genereer Test Voorkeuren"
+                  )}
                 </Button>
               </div>
 
