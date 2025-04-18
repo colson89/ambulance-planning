@@ -260,7 +260,7 @@ export default function ScheduleGenerator() {
                   onClick={async () => {
                     try {
                       const res = await apiRequest("POST", "/api/preferences/generate-test-data", {
-                        month: selectedMonth,
+                        month: selectedMonth + 1,
                         year: selectedYear
                       });
                       
@@ -362,7 +362,10 @@ export default function ScheduleGenerator() {
           </div>
         </CardHeader>
         <CardContent>
-          {shifts.length > 0 ? (
+          {shifts.filter(shift => {
+              const shiftDate = new Date(shift.date);
+              return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
+            }).length > 0 ? (
             <div className="max-h-[500px] overflow-y-auto pr-2">
               <Table>
                 <TableCaption>Planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}</TableCaption>
@@ -377,6 +380,10 @@ export default function ScheduleGenerator() {
                 </TableHeader>
                 <TableBody>
                   {shifts
+                    .filter(shift => {
+                      const shiftDate = new Date(shift.date);
+                      return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
+                    })
                     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                     .map((shift) => {
                       const shiftUser = users.find(u => u.id === shift.userId);
