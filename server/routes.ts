@@ -1,10 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword } from "./auth";
 import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema } from "@shared/schema";
 import { z } from "zod";
-import { comparePasswords } from "./auth";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
 
@@ -490,6 +489,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating shift:", error);
       res.status(500).json({ message: "Failed to update shift" });
+    }
+  });
+
+  // Hulproute om meerdere ambulanciers in één keer toe te voegen
+  app.post("/api/bulk-add-ambulanciers", requireAdmin, async (req, res) => {
+    try {
+      const ambulanciers = [
+        { username: "pverhulst", password: "Ambulance123", name: "Peter Verhulst", hours: 24, role: "ambulancier" },
+        { username: "jvermeulen", password: "Ambulance123", name: "Jonas Vermeulen", hours: 24, role: "ambulancier" },
+        { username: "mmaes", password: "Ambulance123", name: "Mieke Maes", hours: 24, role: "ambulancier" },
+        { username: "tvandenberg", password: "Ambulance123", name: "Tom Van den Berg", hours: 12, role: "ambulancier" },
+        { username: "svandamme", password: "Ambulance123", name: "Sofia Van Damme", hours: 36, role: "ambulancier" },
+        { username: "kvandenheuvel", password: "Ambulance123", name: "Koen Van den Heuvel", hours: 24, role: "ambulancier" },
+        { username: "rvancampenhout", password: "Ambulance123", name: "Rik Van Campenhout", hours: 24, role: "ambulancier" },
+        { username: "jdekoning", password: "Ambulance123", name: "Jasper De Koning", hours: 12, role: "ambulancier" },
+        { username: "ewillems", password: "Ambulance123", name: "Emma Willems", hours: 24, role: "ambulancier" },
+        { username: "bvdaele", password: "Ambulance123", name: "Bram Van Daele", hours: 36, role: "ambulancier" },
+        { username: "smartens", password: "Ambulance123", name: "Sophie Martens", hours: 24, role: "ambulancier" },
+        { username: "adebruyn", password: "Ambulance123", name: "An De Bruyn", hours: 24, role: "ambulancier" },
+        { username: "msegers", password: "Ambulance123", name: "Marc Segers", hours: 12, role: "ambulancier" },
+        { username: "ndevos", password: "Ambulance123", name: "Niels De Vos", hours: 36, role: "ambulancier" }
+      ];
+
+      const createdUsers = [];
+      for (const user of ambulanciers) {
+        // Controleer of de gebruiker al bestaat
+        const existingUser = await storage.getUserByUsername(user.username);
+        if (!existingUser) {
+          const hashedPassword = await comparePasswords.hashPassword(user.password);
+          const newUser = await storage.createUser({
+            ...user,
+            password: hashedPassword
+          });
+          
+          createdUsers.push({
+            id: newUser.id,
+            username: newUser.username,
+            name: newUser.name,
+            hours: newUser.hours,
+            role: newUser.role
+          });
+        }
+      }
+
+      res.status(201).json({
+        message: `${createdUsers.length} ambulanciers toegevoegd`,
+        users: createdUsers
+      });
+    } catch (error) {
+      console.error("Error creating ambulanciers:", error);
+      res.status(500).json({ message: "Failed to create ambulanciers" });
     }
   });
 
