@@ -33,15 +33,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/login", credentials);
+        if (res.status === 401) {
+          throw new Error("Onjuiste gebruikersnaam of wachtwoord");
+        }
+        if (!res.ok) {
+          throw new Error(`Login mislukt (${res.status})`);
+        }
+        return await res.json();
+      } catch (error: any) {
+        // Gedetailleerde error afhandelen
+        const errorMessage = error.message || "Onbekende fout tijdens inloggen";
+        throw new Error(errorMessage);
+      }
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      toast({
+        title: "Ingelogd",
+        description: `Welkom ${user.firstName || user.username}!`,
+        variant: "default",
+      });
     },
     onError: (error: Error) => {
       toast({
-        title: "Login failed",
+        title: "Inloggen mislukt",
         description: error.message,
         variant: "destructive",
       });
