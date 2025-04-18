@@ -74,19 +74,25 @@ export function setupAuth(app: Express) {
         return done(null, false);
       }
       
-      // Speciale behandeling voor ROVE319 admin account
-      if (username === 'ROVE319' && password === 'admin123') {
-        console.log("Admin login bypass activated");
+      // Eenvoudige wachtwoordverificatie - directe vergelijking voor admin123
+      if (user.password === password) {
+        console.log("Direct password match");
         return done(null, user);
       }
       
-      // Voor andere gebruikers, controleer wachtwoord normaal
-      if (!(await comparePasswords(password, user.password))) {
-        console.log(`Login failed: Incorrect password for ${username}`);
-        return done(null, false);
-      } 
+      // Probeer scrypt vergelijking alleen als het wachtwoord een hash lijkt
+      if (user.password.includes(".")) {
+        try {
+          if (await comparePasswords(password, user.password)) {
+            return done(null, user);
+          }
+        } catch (err) {
+          console.error("Error comparing passwords:", err);
+        }
+      }
       
-      return done(null, user);
+      console.log(`Login failed: Incorrect password for ${username}`);
+      return done(null, false);
     }),
   );
 
