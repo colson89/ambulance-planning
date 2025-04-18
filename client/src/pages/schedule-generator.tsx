@@ -388,10 +388,12 @@ export default function ScheduleGenerator() {
                     .map((shift) => {
                       const shiftUser = users.find(u => u.id === shift.userId);
                       const isCurrentUserShift = shift.userId === user?.id;
+                      const isUserDeleted = shift.userId > 0 && !shiftUser;
+                      
                       return (
                         <TableRow 
                           key={shift.id}
-                          className={`${shift.status === "open" ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""}`}
+                          className={`${shift.status === "open" || isUserDeleted ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""}`}
                         >
                           <TableCell>{format(new Date(shift.date), "dd MMMM (EEEE)", { locale: nl })}</TableCell>
                           <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
@@ -403,8 +405,10 @@ export default function ScheduleGenerator() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {shift.status === "open" ? (
-                              <span className="text-red-500 font-medium">Niet ingevuld</span>
+                            {shift.status === "open" || isUserDeleted ? (
+                              <span className="text-red-500 font-medium">
+                                {shift.status === "open" ? "Niet ingevuld" : "Medewerker verwijderd"}
+                              </span>
                             ) : (
                               <span className={isCurrentUserShift ? "font-bold text-green-600" : ""}>
                                 {shiftUser?.username || "Onbekend"}
@@ -414,12 +418,12 @@ export default function ScheduleGenerator() {
                           <TableCell>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center">
-                                {shift.status === "planned" ? (
+                                {shift.status === "planned" && !isUserDeleted ? (
                                   <Check className="h-4 w-4 text-green-500 mr-1" />
-                                ) : shift.status === "open" ? (
+                                ) : (shift.status === "open" || isUserDeleted) ? (
                                   <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
                                 ) : null}
-                                {shift.status === "open" ? "Open" : "Ingepland"}
+                                {shift.status === "open" ? "Open" : isUserDeleted ? "Herinplannen nodig" : "Ingepland"}
                               </div>
                               <Button 
                                 variant="outline" 
