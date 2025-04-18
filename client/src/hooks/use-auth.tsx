@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const res = await apiRequest("POST", "/api/login", credentials);
         if (res.status === 401) {
-          throw new Error("Onjuiste gebruikersnaam of wachtwoord");
+          throw new Error("Wachtwoord onjuist! Controleer je wachtwoord en probeer opnieuw.");
         }
         if (!res.ok) {
           throw new Error(`Login mislukt (${res.status})`);

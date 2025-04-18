@@ -49,8 +49,12 @@ export default function AuthPage() {
                 <div className="space-y-4">
                   {loginMutation.isError && (
                     <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded-md mb-2">
-                      <p className="text-sm font-medium">Login mislukt</p>
-                      <p className="text-xs">{loginMutation.error?.message || "Controleer je gebruikersnaam en wachtwoord"}</p>
+                      <p className="text-sm font-medium">⚠️ Login mislukt</p>
+                      <p className="text-xs font-medium">{loginMutation.error?.message || "Controleer je gebruikersnaam en wachtwoord"}</p>
+                      <p className="text-xs mt-1">
+                        <span className="inline-block bg-destructive/10 px-2 py-1 rounded mr-1">Tip:</span> 
+                        Zorg dat je gebruikersnaam in hoofdletters staat en let op hoofdletters en speciale tekens in je wachtwoord.
+                      </p>
                     </div>
                   )}
                   <div className="space-y-2">
