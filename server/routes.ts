@@ -492,62 +492,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Hulproute om meerdere ambulanciers in één keer toe te voegen
-  app.post("/api/bulk-add-ambulanciers", requireAdmin, async (req, res) => {
-    try {
-      // Lijst van ambulanciers met correcte type definitie voor role
-      const ambulanciers = [
-        { username: "pverhulst", password: "Ambulance123", firstName: "Peter", lastName: "Verhulst", hours: 24, role: "ambulancier" as const },
-        { username: "jvermeulen", password: "Ambulance123", firstName: "Jonas", lastName: "Vermeulen", hours: 24, role: "ambulancier" as const },
-        { username: "mmaes", password: "Ambulance123", firstName: "Mieke", lastName: "Maes", hours: 24, role: "ambulancier" as const },
-        { username: "tvandenberg", password: "Ambulance123", firstName: "Tom", lastName: "Van den Berg", hours: 12, role: "ambulancier" as const },
-        { username: "svandamme", password: "Ambulance123", firstName: "Sofia", lastName: "Van Damme", hours: 36, role: "ambulancier" as const },
-        { username: "kvandenheuvel", password: "Ambulance123", firstName: "Koen", lastName: "Van den Heuvel", hours: 24, role: "ambulancier" as const },
-        { username: "rvancampenhout", password: "Ambulance123", firstName: "Rik", lastName: "Van Campenhout", hours: 24, role: "ambulancier" as const },
-        { username: "jdekoning", password: "Ambulance123", firstName: "Jasper", lastName: "De Koning", hours: 12, role: "ambulancier" as const },
-        { username: "ewillems", password: "Ambulance123", firstName: "Emma", lastName: "Willems", hours: 24, role: "ambulancier" as const },
-        { username: "bvdaele", password: "Ambulance123", firstName: "Bram", lastName: "Van Daele", hours: 36, role: "ambulancier" as const },
-        { username: "smartens", password: "Ambulance123", firstName: "Sophie", lastName: "Martens", hours: 24, role: "ambulancier" as const },
-        { username: "adebruyn", password: "Ambulance123", firstName: "An", lastName: "De Bruyn", hours: 24, role: "ambulancier" as const },
-        { username: "msegers", password: "Ambulance123", firstName: "Marc", lastName: "Segers", hours: 12, role: "ambulancier" as const },
-        { username: "ndevos", password: "Ambulance123", firstName: "Niels", lastName: "De Vos", hours: 36, role: "ambulancier" as const }
-      ];
-
-      const createdUsers = [];
-      for (const user of ambulanciers) {
-        // Controleer of de gebruiker al bestaat
-        const existingUser = await storage.getUserByUsername(user.username);
-        if (!existingUser) {
-          const hashedPassword = await hashPassword(user.password);
-          const newUser = await storage.createUser({
-            username: user.username,
-            password: hashedPassword,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            hours: user.hours,
-            role: user.role
-          });
-          
-          createdUsers.push({
-            id: newUser.id,
-            username: newUser.username,
-            firstName: newUser.firstName,
-            lastName: newUser.lastName,
-            hours: newUser.hours,
-            role: newUser.role
-          });
-        }
-      }
-
-      res.status(201).json({
-        message: `${createdUsers.length} ambulanciers toegevoegd`,
-        users: createdUsers
-      });
-    } catch (error) {
-      console.error("Error creating ambulanciers:", error);
-      res.status(500).json({ message: "Failed to create ambulanciers" });
-    }
-  });
+  // Note: De bulk-import endpoint voor ambulanciers is verwijderd omdat deze niet meer nodig is
+  // De ambulanciers zijn al direct toegevoegd via SQL
 
   const httpServer = createServer(app);
   return httpServer;

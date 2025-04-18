@@ -150,35 +150,7 @@ export default function Dashboard() {
                 Voorkeuren Opgeven
               </Button>
               
-              {user?.role === "admin" && (
-                <Button 
-                  onClick={async () => {
-                    try {
-                      const res = await apiRequest("POST", "/api/bulk-add-ambulanciers");
-                      const data = await res.json();
-                      
-                      toast({
-                        title: "Ambulanciers toegevoegd",
-                        description: data.message,
-                        variant: "default",
-                      });
-                      
-                      // Vernieuw de gebruikerslijst
-                      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-                    } catch (error) {
-                      toast({
-                        title: "Fout",
-                        description: error instanceof Error ? error.message : "Er is een fout opgetreden bij het toevoegen van ambulanciers",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                  variant="outline"
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Voeg 14 Ambulanciers Toe
-                </Button>
-              )}
+              {/* Admin knoppen kunnen hier worden toegevoegd */}
             </div>
           </div>
         </CardContent>
