@@ -1,8 +1,10 @@
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import type { Shift, ShiftPreference, User } from "@shared/schema";
 import { useLocation } from "wouter";
 import { format, addMonths, parse, setMonth, setYear, getMonth, getYear, isEqual, parseISO } from "date-fns";
@@ -20,6 +22,8 @@ import {
 
 export default function Dashboard() {
   const { user, logoutMutation } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   
   // Staat voor maand/jaar selectie
@@ -137,14 +141,45 @@ export default function Dashboard() {
                 : `U kunt tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
               }
             </p>
-            <Button 
-              className="mt-4"
-              onClick={() => setLocation("/shifts")}
-              variant="outline"
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              Voorkeuren Opgeven
-            </Button>
+            <div className="flex flex-wrap justify-center gap-2 mt-4">
+              <Button 
+                onClick={() => setLocation("/shifts")}
+                variant="outline"
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Voorkeuren Opgeven
+              </Button>
+              
+              {user?.role === "admin" && (
+                <Button 
+                  onClick={async () => {
+                    try {
+                      const res = await apiRequest("POST", "/api/bulk-add-ambulanciers");
+                      const data = await res.json();
+                      
+                      toast({
+                        title: "Ambulanciers toegevoegd",
+                        description: data.message,
+                        variant: "default",
+                      });
+                      
+                      // Vernieuw de gebruikerslijst
+                      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+                    } catch (error) {
+                      toast({
+                        title: "Fout",
+                        description: error instanceof Error ? error.message : "Er is een fout opgetreden bij het toevoegen van ambulanciers",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  variant="outline"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Voeg 14 Ambulanciers Toe
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

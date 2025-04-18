@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, hashPassword } from "./auth";
+import { setupAuth, hashPassword, comparePasswords } from "./auth";
 import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema } from "@shared/schema";
 import { z } from "zod";
 import { addMonths } from 'date-fns';
@@ -495,21 +495,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Hulproute om meerdere ambulanciers in één keer toe te voegen
   app.post("/api/bulk-add-ambulanciers", requireAdmin, async (req, res) => {
     try {
+      // Lijst van ambulanciers met correcte type definitie voor role
       const ambulanciers = [
-        { username: "pverhulst", password: "Ambulance123", name: "Peter Verhulst", hours: 24, role: "ambulancier" },
-        { username: "jvermeulen", password: "Ambulance123", name: "Jonas Vermeulen", hours: 24, role: "ambulancier" },
-        { username: "mmaes", password: "Ambulance123", name: "Mieke Maes", hours: 24, role: "ambulancier" },
-        { username: "tvandenberg", password: "Ambulance123", name: "Tom Van den Berg", hours: 12, role: "ambulancier" },
-        { username: "svandamme", password: "Ambulance123", name: "Sofia Van Damme", hours: 36, role: "ambulancier" },
-        { username: "kvandenheuvel", password: "Ambulance123", name: "Koen Van den Heuvel", hours: 24, role: "ambulancier" },
-        { username: "rvancampenhout", password: "Ambulance123", name: "Rik Van Campenhout", hours: 24, role: "ambulancier" },
-        { username: "jdekoning", password: "Ambulance123", name: "Jasper De Koning", hours: 12, role: "ambulancier" },
-        { username: "ewillems", password: "Ambulance123", name: "Emma Willems", hours: 24, role: "ambulancier" },
-        { username: "bvdaele", password: "Ambulance123", name: "Bram Van Daele", hours: 36, role: "ambulancier" },
-        { username: "smartens", password: "Ambulance123", name: "Sophie Martens", hours: 24, role: "ambulancier" },
-        { username: "adebruyn", password: "Ambulance123", name: "An De Bruyn", hours: 24, role: "ambulancier" },
-        { username: "msegers", password: "Ambulance123", name: "Marc Segers", hours: 12, role: "ambulancier" },
-        { username: "ndevos", password: "Ambulance123", name: "Niels De Vos", hours: 36, role: "ambulancier" }
+        { username: "pverhulst", password: "Ambulance123", firstName: "Peter", lastName: "Verhulst", hours: 24, role: "ambulancier" as const },
+        { username: "jvermeulen", password: "Ambulance123", firstName: "Jonas", lastName: "Vermeulen", hours: 24, role: "ambulancier" as const },
+        { username: "mmaes", password: "Ambulance123", firstName: "Mieke", lastName: "Maes", hours: 24, role: "ambulancier" as const },
+        { username: "tvandenberg", password: "Ambulance123", firstName: "Tom", lastName: "Van den Berg", hours: 12, role: "ambulancier" as const },
+        { username: "svandamme", password: "Ambulance123", firstName: "Sofia", lastName: "Van Damme", hours: 36, role: "ambulancier" as const },
+        { username: "kvandenheuvel", password: "Ambulance123", firstName: "Koen", lastName: "Van den Heuvel", hours: 24, role: "ambulancier" as const },
+        { username: "rvancampenhout", password: "Ambulance123", firstName: "Rik", lastName: "Van Campenhout", hours: 24, role: "ambulancier" as const },
+        { username: "jdekoning", password: "Ambulance123", firstName: "Jasper", lastName: "De Koning", hours: 12, role: "ambulancier" as const },
+        { username: "ewillems", password: "Ambulance123", firstName: "Emma", lastName: "Willems", hours: 24, role: "ambulancier" as const },
+        { username: "bvdaele", password: "Ambulance123", firstName: "Bram", lastName: "Van Daele", hours: 36, role: "ambulancier" as const },
+        { username: "smartens", password: "Ambulance123", firstName: "Sophie", lastName: "Martens", hours: 24, role: "ambulancier" as const },
+        { username: "adebruyn", password: "Ambulance123", firstName: "An", lastName: "De Bruyn", hours: 24, role: "ambulancier" as const },
+        { username: "msegers", password: "Ambulance123", firstName: "Marc", lastName: "Segers", hours: 12, role: "ambulancier" as const },
+        { username: "ndevos", password: "Ambulance123", firstName: "Niels", lastName: "De Vos", hours: 36, role: "ambulancier" as const }
       ];
 
       const createdUsers = [];
@@ -517,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Controleer of de gebruiker al bestaat
         const existingUser = await storage.getUserByUsername(user.username);
         if (!existingUser) {
-          const hashedPassword = await comparePasswords.hashPassword(user.password);
+          const hashedPassword = await hashPassword(user.password);
           const newUser = await storage.createUser({
             ...user,
             password: hashedPassword
@@ -526,7 +527,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           createdUsers.push({
             id: newUser.id,
             username: newUser.username,
-            name: newUser.name,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
             hours: newUser.hours,
             role: newUser.role
           });
