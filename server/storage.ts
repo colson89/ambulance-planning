@@ -176,7 +176,7 @@ export class DatabaseStorage implements IStorage {
     const daysInMonth = new Date(year, month, 0).getDate();
     const generatedShifts: Shift[] = [];
     
-    // Bijhouden hoeveel uren elke ambulancier al is ingepland
+    // Bijhouden hoeveel uren elke medewerker al is ingepland
     const userAssignedHours = new Map<number, number>();
     
     // Initialiseer hours tracking voor elke actieve gebruiker
@@ -197,7 +197,7 @@ export class DatabaseStorage implements IStorage {
       return currentHours + hoursToAdd <= user.hours;
     };
     
-    // Helper functie om bij te houden hoeveel uren een ambulancier werkt
+    // Helper functie om bij te houden hoeveel uren een gebruiker werkt
     const addAssignedHours = (userId: number, hoursToAdd: number): void => {
       if (userId === 0) return; // 0 = niet toegewezen
       const currentHours = userAssignedHours.get(userId) || 0;
@@ -206,7 +206,7 @@ export class DatabaseStorage implements IStorage {
     
     // Bereken gewicht voor toewijzing op basis van huidige uren
     const getUserWeight = (userId: number, preferredHours: number = 0): number => {
-      const user = ambulanciers.find(u => u.id === userId);
+      const user = activeUsers.find(u => u.id === userId);
       if (!user) return 0;
       
       const currentHours = userAssignedHours.get(userId) || 0;
@@ -231,11 +231,11 @@ export class DatabaseStorage implements IStorage {
       return 0.1;
     };
     
-    // Functie om ambulanciers te sorteren op basis van werklast en voorkeuren
+    // Functie om actieve gebruikers te sorteren op basis van werklast en voorkeuren
     const getSortedUsersForAssignment = (availableUserIds: number[]): number[] => {
       // Eerst filteren op gebruikers die nog uren kunnen werken
       const filteredUsers = availableUserIds.filter(userId => {
-        const user = ambulanciers.find(u => u.id === userId);
+        const user = activeUsers.find(u => u.id === userId);
         if (!user) return false;
         
         const currentHours = userAssignedHours.get(userId) || 0;
@@ -244,8 +244,8 @@ export class DatabaseStorage implements IStorage {
       
       // Sorteren op basis van hoeveel uren de gebruiker al gewerkt heeft
       return filteredUsers.sort((a, b) => {
-        const userA = ambulanciers.find(u => u.id === a);
-        const userB = ambulanciers.find(u => u.id === b);
+        const userA = activeUsers.find(u => u.id === a);
+        const userB = activeUsers.find(u => u.id === b);
         
         if (!userA || !userB) return 0;
         
@@ -269,12 +269,12 @@ export class DatabaseStorage implements IStorage {
       const currentDate = new Date(year, month - 1, day);
       const isWeekendDay = currentDate.getDay() === 0 || currentDate.getDay() === 6;
       
-      // Verzamel beschikbare ambulanciers voor deze specifieke dag
+      // Verzamel beschikbare gebruikers voor deze specifieke dag
       const availableForDay: number[] = [];
       const availableForNight: number[] = [];
       
-      // Check beschikbaarheid voor elke ambulancier
-      for (const user of ambulanciers) {
+      // Check beschikbaarheid voor elke actieve gebruiker
+      for (const user of activeUsers) {
         const preferences = await this.getUserShiftPreferences(user.id, month, year);
         
         // Voorkeuren filteren voor deze specifieke dag
@@ -299,18 +299,18 @@ export class DatabaseStorage implements IStorage {
       
       console.log(`Day ${day}: ${availableForDay.length} available for day, ${availableForNight.length} available for night`);
       
-      // Weekdagen: alleen nachtshifts plannen (2 ambulanciers per shift)
+      // Weekdagen: alleen nachtshifts plannen (2 personen per shift)
       if (!isWeekendDay) {
-        // Maximaal 2 ambulanciers toewijzen voor de nachtshift
+        // Maximaal 2 personen toewijzen voor de nachtshift
         const assignedIds: number[] = [];
         
         // De nachtshift is 12 uur
         const shiftHours = 12;
         
-        // Sorteer beschikbare ambulanciers op basis van werklast
+        // Sorteer beschikbare gebruikers op basis van werklast
         const sortedNightUsers = getSortedUsersForAssignment(availableForNight);
         
-        // Eerste ambulancier
+        // Eerste persoon
         let selectedId = 0;
         if (sortedNightUsers.length > 0) {
           // Kies de eerste geschikte ambulancier
@@ -729,7 +729,7 @@ export class DatabaseStorage implements IStorage {
     // Convert entries to array to avoid iterator issues
     const entries = Array.from(userAssignedHours.entries());
     for (const [userId, hours] of entries) {
-      const user = ambulanciers.find(u => u.id === userId);
+      const user = activeUsers.find(u => u.id === userId);
       if (user && hours > 0) {
         console.log(`${user.username}: ${hours} hours (opgegeven: ${user.hours})`);
       }
