@@ -193,8 +193,8 @@ export class DatabaseStorage implements IStorage {
       
       const currentHours = userAssignedHours.get(userId) || 0;
       
-      // Controleer of deze toewijzing binnen de maximum uren valt
-      return currentHours + hoursToAdd <= user.maxHours;
+      // Controleer of deze toewijzing binnen de opgegeven uren valt
+      return currentHours + hoursToAdd <= user.hours;
     };
     
     // Helper functie om bij te houden hoeveel uren een ambulancier werkt
