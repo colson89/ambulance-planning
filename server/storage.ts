@@ -313,7 +313,7 @@ export class DatabaseStorage implements IStorage {
         // Eerste persoon
         let selectedId = 0;
         if (sortedNightUsers.length > 0) {
-          // Kies de eerste geschikte ambulancier
+          // Kies de eerste geschikte medewerker
           for (const userId of sortedNightUsers) {
             if (canAssignHours(userId, shiftHours)) {
               selectedId = userId;
@@ -341,7 +341,7 @@ export class DatabaseStorage implements IStorage {
             const savedShift1 = await this.createShift(nightShift1);
             generatedShifts.push(savedShift1);
           } else {
-            // Geen geschikte ambulancier gevonden
+            // Geen geschikte medewerker gevonden
             const openShift1 = {
               userId: 0,
               date: currentDate,
@@ -375,12 +375,12 @@ export class DatabaseStorage implements IStorage {
           generatedShifts.push(savedOpenShift1);
         }
         
-        // Tweede ambulancier (niet dezelfde als de eerste)
+        // Tweede medewerker (niet dezelfde als de eerste)
         const remainingNightUsers = sortedNightUsers.filter(id => !assignedIds.includes(id));
         
         selectedId = 0;
         if (remainingNightUsers.length > 0) {
-          // Kies de eerste geschikte ambulancier
+          // Kies de eerste geschikte medewerker
           for (const userId of remainingNightUsers) {
             if (canAssignHours(userId, shiftHours)) {
               selectedId = userId;
@@ -407,7 +407,7 @@ export class DatabaseStorage implements IStorage {
             const savedShift2 = await this.createShift(nightShift2);
             generatedShifts.push(savedShift2);
           } else {
-            // Geen geschikte ambulancier gevonden
+            // Geen geschikte medewerker gevonden
             const openShift2 = {
               userId: 0,
               date: currentDate,
@@ -443,17 +443,17 @@ export class DatabaseStorage implements IStorage {
       } 
       // Weekend: zowel dag- als nachtshifts plannen
       else {
-        // DAGSHIFT - Maximaal 2 ambulanciers toewijzen
+        // DAGSHIFT - Maximaal 2 medewerkers toewijzen
         const assignedDayIds: number[] = [];
         const dayShiftHours = 12; // 12 uur per dagshift
         
         // Sorteer op basis van werklast
         const sortedDayUsers = getSortedUsersForAssignment(availableForDay);
         
-        // Eerste ambulancier dag
+        // Eerste medewerker dag
         let selectedId = 0;
         if (sortedDayUsers.length > 0) {
-          // Kies de eerste geschikte ambulancier
+          // Kies de eerste geschikte medewerker
           for (const userId of sortedDayUsers) {
             if (canAssignHours(userId, dayShiftHours)) {
               selectedId = userId;
@@ -480,7 +480,7 @@ export class DatabaseStorage implements IStorage {
             const savedDayShift1 = await this.createShift(dayShift1);
             generatedShifts.push(savedDayShift1);
           } else {
-            // Geen geschikte ambulancier gevonden
+            // Geen geschikte medewerker gevonden
             const openDayShift1 = {
               userId: 0,
               date: currentDate,
@@ -514,12 +514,12 @@ export class DatabaseStorage implements IStorage {
           generatedShifts.push(savedOpenDayShift1);
         }
         
-        // Tweede ambulancier dag
+        // Tweede medewerker dag
         const remainingDayUsers = sortedDayUsers.filter(id => !assignedDayIds.includes(id));
         
         selectedId = 0;
         if (remainingDayUsers.length > 0) {
-          // Kies de eerste geschikte ambulancier
+          // Kies de eerste geschikte medewerker
           for (const userId of remainingDayUsers) {
             if (canAssignHours(userId, dayShiftHours)) {
               selectedId = userId;
@@ -545,7 +545,7 @@ export class DatabaseStorage implements IStorage {
             const savedDayShift2 = await this.createShift(dayShift2);
             generatedShifts.push(savedDayShift2);
           } else {
-            // Geen geschikte ambulancier gevonden
+            // Geen geschikte medewerker gevonden
             const openDayShift2 = {
               userId: 0,
               date: currentDate,
@@ -579,7 +579,7 @@ export class DatabaseStorage implements IStorage {
           generatedShifts.push(savedOpenDayShift2);
         }
         
-        // NACHTSHIFT - Maximaal 2 ambulanciers toewijzen, niet dezelfde als dagshift
+        // NACHTSHIFT - Maximaal 2 medewerkers toewijzen, niet dezelfde als dagshift
         const assignedNightIds: number[] = [];
         const nightShiftHours = 12; // 12 uur per nachtshift
         
@@ -591,10 +591,10 @@ export class DatabaseStorage implements IStorage {
         // Sorteer op basis van werklast
         const sortedNightUsers = getSortedUsersForAssignment(availableForNightFiltered);
         
-        // Eerste ambulancier nacht
+        // Eerste medewerker nacht
         selectedId = 0;
         if (sortedNightUsers.length > 0) {
-          // Kies de eerste geschikte ambulancier
+          // Kies de eerste geschikte medewerker
           for (const userId of sortedNightUsers) {
             if (canAssignHours(userId, nightShiftHours)) {
               selectedId = userId;
@@ -621,7 +621,7 @@ export class DatabaseStorage implements IStorage {
             const savedNightShift1 = await this.createShift(nightShift1);
             generatedShifts.push(savedNightShift1);
           } else {
-            // Geen geschikte ambulancier gevonden
+            // Geen geschikte medewerker gevonden
             const openNightShift1 = {
               userId: 0,
               date: currentDate,
@@ -655,14 +655,14 @@ export class DatabaseStorage implements IStorage {
           generatedShifts.push(savedOpenNightShift1);
         }
         
-        // Tweede ambulancier nacht
+        // Tweede medewerker nacht
         const remainingNightUsers = sortedNightUsers.filter(
           id => !assignedNightIds.includes(id)
         );
         
         selectedId = 0;
         if (remainingNightUsers.length > 0) {
-          // Kies de eerste geschikte ambulancier
+          // Kies de eerste geschikte medewerker
           for (const userId of remainingNightUsers) {
             if (canAssignHours(userId, nightShiftHours)) {
               selectedId = userId;
@@ -688,7 +688,7 @@ export class DatabaseStorage implements IStorage {
             const savedNightShift2 = await this.createShift(nightShift2);
             generatedShifts.push(savedNightShift2);
           } else {
-            // Geen geschikte ambulancier gevonden
+            // Geen geschikte medewerker gevonden
             const openNightShift2 = {
               userId: 0,
               date: currentDate,
