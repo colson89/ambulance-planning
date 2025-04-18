@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { format, addMonths } from "date-fns";
+import { format, addMonths, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocation } from "wouter";
@@ -150,6 +150,60 @@ export default function ScheduleGenerator() {
     });
     
     // Tel de uren voor elke shift (rekening houdend met halve shifts)
+    let totalHours = 0;
+    userShifts.forEach(shift => {
+      if (shift.isSplitShift) {
+        totalHours += 6; // Halve shift is 6 uur
+      } else {
+        totalHours += 12; // Volledige shift is 12 uur
+      }
+    });
+    
+    return totalHours;
+  };
+  
+  // Helper functie om weekday shifts te tellen (maandag tot vrijdag)
+  const countUserWeekdayShiftHours = (userId: number) => {
+    // Filter shifts op gebruiker én geselecteerde maand/jaar én weekdagen
+    const userShifts = shifts.filter(s => {
+      if (s.userId !== userId) return false;
+      
+      // Controleer of de shift in de geselecteerde maand/jaar valt
+      const shiftDate = new Date(s.date);
+      // Controleer of het een weekdag is (niet weekend)
+      return shiftDate.getMonth() === selectedMonth && 
+             shiftDate.getFullYear() === selectedYear &&
+             !isWeekend(shiftDate);
+    });
+    
+    // Tel de uren voor elke shift
+    let totalHours = 0;
+    userShifts.forEach(shift => {
+      if (shift.isSplitShift) {
+        totalHours += 6; // Halve shift is 6 uur
+      } else {
+        totalHours += 12; // Volledige shift is 12 uur
+      }
+    });
+    
+    return totalHours;
+  };
+  
+  // Helper functie om weekend shifts te tellen (zaterdag en zondag)
+  const countUserWeekendShiftHours = (userId: number) => {
+    // Filter shifts op gebruiker én geselecteerde maand/jaar én weekenddagen
+    const userShifts = shifts.filter(s => {
+      if (s.userId !== userId) return false;
+      
+      // Controleer of de shift in de geselecteerde maand/jaar valt
+      const shiftDate = new Date(s.date);
+      // Controleer of het weekend is
+      return shiftDate.getMonth() === selectedMonth && 
+             shiftDate.getFullYear() === selectedYear &&
+             isWeekend(shiftDate);
+    });
+    
+    // Tel de uren voor elke shift
     let totalHours = 0;
     userShifts.forEach(shift => {
       if (shift.isSplitShift) {
@@ -362,7 +416,9 @@ export default function ScheduleGenerator() {
                 <TableRow>
                   <TableHead>Medewerker</TableHead>
                   <TableHead className="text-center">Gewenste Uren</TableHead>
-                  <TableHead className="text-center">Geplande Uren</TableHead>
+                  <TableHead className="text-center">Totaal Geplande Uren</TableHead>
+                  <TableHead className="text-center">Weekdagen Uren</TableHead>
+                  <TableHead className="text-center">Weekend Uren</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -371,6 +427,8 @@ export default function ScheduleGenerator() {
                     <TableCell className="font-medium">{user.username}</TableCell>
                     <TableCell className="text-center">{user.hours}</TableCell>
                     <TableCell className="text-center">{countUserShiftsHours(user.id)}</TableCell>
+                    <TableCell className="text-center">{countUserWeekdayShiftHours(user.id)}</TableCell>
+                    <TableCell className="text-center">{countUserWeekendShiftHours(user.id)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
