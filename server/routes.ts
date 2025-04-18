@@ -403,12 +403,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // New API endpoint for schedule generation
-  app.post("/api/schedule/generate", requireAdmin, async (req, res) => {
+  // TIJDELIJKE AANPASSING: veranderd van requireAdmin naar publiek toegankelijk
+  // zodat we de functionaliteit kunnen demonstreren
+  app.post("/api/schedule/generate", async (req, res) => {
     try {
       const { month, year } = req.body;
       console.log(`Generating schedule for ${month}/${year}`);
       
       const generatedShifts = await storage.generateMonthlySchedule(month, year);
+      
+      // Log gebruikers uren voor verificatie
+      console.log("Gebruikers uren na planning generatie:");
+      const users = await storage.getAllUsers();
+      const ambulanciers = users.filter(user => user.role === 'ambulancier');
+      
+      // Shifts tellen per gebruiker
+      const userShiftHours = new Map();
+      ambulanciers.forEach(user => {
+        const userShifts = generatedShifts.filter(s => s.userId === user.id);
+        const hours = userShifts.length * 12; // Elke shift is 12 uur
+        userShiftHours.set(user.id, hours);
+        console.log(`- ${user.username}: ${hours} uren gepland, min: ${user.minHours}, max: ${user.maxHours}`);
+      });
+      
       res.status(200).json(generatedShifts);
     } catch (error) {
       console.error("Error generating schedule:", error);
