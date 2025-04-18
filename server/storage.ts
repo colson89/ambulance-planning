@@ -271,7 +271,11 @@ export class DatabaseStorage implements IStorage {
       
       // Verzamel beschikbare gebruikers voor deze specifieke dag
       const availableForDay: number[] = [];
+      const availableForDayFirstHalf: number[] = [];
+      const availableForDaySecondHalf: number[] = [];
       const availableForNight: number[] = [];
+      const availableForNightFirstHalf: number[] = [];
+      const availableForNightSecondHalf: number[] = [];
       
       // Check beschikbaarheid voor elke actieve gebruiker
       for (const user of activeUsers) {
@@ -288,10 +292,28 @@ export class DatabaseStorage implements IStorage {
         // Als er een voorkeur is, controleer het type
         for (const pref of prefsForThisDay) {
           if (pref.type !== 'unavailable') {
+            // Haal preferenceType op uit het notes veld indien beschikbaar (first, second, full)
+            // Format: "first", "second", "full" of niet aanwezig (dan "full" aannemen)
+            const preferenceType = pref.notes?.includes("first") ? "first" : 
+                                  pref.notes?.includes("second") ? "second" : 
+                                  "full";
+            
             if (pref.type === 'day') {
-              availableForDay.push(user.id);
+              if (preferenceType === "full") {
+                availableForDay.push(user.id);
+              } else if (preferenceType === "first") {
+                availableForDayFirstHalf.push(user.id);
+              } else if (preferenceType === "second") {
+                availableForDaySecondHalf.push(user.id);
+              }
             } else if (pref.type === 'night') {
-              availableForNight.push(user.id);
+              if (preferenceType === "full") {
+                availableForNight.push(user.id);
+              } else if (preferenceType === "first") {
+                availableForNightFirstHalf.push(user.id);
+              } else if (preferenceType === "second") {
+                availableForNightSecondHalf.push(user.id);
+              }
             }
           }
         }
