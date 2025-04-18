@@ -129,11 +129,11 @@ export default function ScheduleGenerator() {
     },
   });
 
-  // Helper functie om voorkeuren in uren per gebruiker te berekenen
+  // Helper functie om gevraagde uren per gebruiker te retourneren
   const countUserPreferencesHours = (userId: number) => {
-    // Elke voorkeur vertegenwoordigt ongeveer 12 uur (een volledige shift)
-    const prefsCount = preferences.filter(p => p.userId === userId).length;
-    return prefsCount * 12;
+    // Haal de uren op van de gebruiker in plaats van aantal voorkeuren te tellen
+    const foundUser = users.find(u => u.id === userId);
+    return foundUser ? foundUser.hours : 0;
   };
 
   // Helper functie om gegenereerde shifts in uren per gebruiker te berekenen
@@ -320,13 +320,13 @@ export default function ScheduleGenerator() {
           </CardHeader>
           <CardContent>
             <Table>
-              <TableCaption>Overzicht beschikbaarheid per medewerker (in uren)</TableCaption>
+              <TableCaption>Overzicht van ingestelde en toegewezen uren per medewerker</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Medewerker</TableHead>
-                  <TableHead className="text-center">Gevraagde Uren</TableHead>
+                  <TableHead className="text-center">Maximale Uren</TableHead>
                   <TableHead className="text-center">Geplande Uren</TableHead>
-                  <TableHead className="text-center">Opgegeven Uren</TableHead>
+                  <TableHead className="text-center">Ingestelde Uren</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
