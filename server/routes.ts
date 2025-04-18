@@ -520,8 +520,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!existingUser) {
           const hashedPassword = await hashPassword(user.password);
           const newUser = await storage.createUser({
-            ...user,
-            password: hashedPassword
+            username: user.username,
+            password: hashedPassword,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            hours: user.hours,
+            role: user.role
           });
           
           createdUsers.push({
