@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -291,7 +291,7 @@ export default function ScheduleGenerator() {
 
               <div className="flex justify-between items-center mt-6">
                 <span className="text-sm text-gray-500">
-                  Planning voor {format(new Date(selectedYear, selectedMonth - 1), "MMMM yyyy", { locale: nl })}
+                  Planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
                 </span>
                 <Button
                   onClick={() => generateScheduleMutation.mutate()}
