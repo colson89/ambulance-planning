@@ -320,13 +320,12 @@ export default function ScheduleGenerator() {
           </CardHeader>
           <CardContent>
             <Table>
-              <TableCaption>Overzicht van gewenste, geplande en beschikbare uren per medewerker</TableCaption>
+              <TableCaption>Overzicht van gewenste en geplande uren per medewerker</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Medewerker</TableHead>
                   <TableHead className="text-center">Gewenste Uren</TableHead>
                   <TableHead className="text-center">Geplande Uren</TableHead>
-                  <TableHead className="text-center">Beschikbare Uren</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -335,7 +334,6 @@ export default function ScheduleGenerator() {
                     <TableCell className="font-medium">{user.username}</TableCell>
                     <TableCell className="text-center">{user.hours}</TableCell>
                     <TableCell className="text-center">{countUserShiftsHours(user.id)}</TableCell>
-                    <TableCell className="text-center">{countAvailableHoursFromPreferences(user.id)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

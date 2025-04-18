@@ -117,11 +117,12 @@ export default function ShiftPlanner() {
       
       // Bepaal of dit een halve shift is en pas tijden aan indien nodig
       const canSplit = preferenceType === "first" || preferenceType === "second";
-      let notesText = preferenceType === "unavailable" ? "Niet beschikbaar" : null;
+      let notesText: string | null = null;
       
-      // Als het een halve shift is, voeg de preferenceType toe aan notes
-      // en pas de start/eindtijden aan
-      if (canSplit && preferenceType !== "unavailable") {
+      // Bepaal de juiste notesText op basis van preferenceType
+      if (preferenceType === "unavailable") {
+        notesText = "Niet beschikbaar";
+      } else if (canSplit) {
         notesText = preferenceType; // "first" of "second"
         
         if (shiftType === "day") {
