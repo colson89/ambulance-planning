@@ -43,11 +43,31 @@ export default function ScheduleGenerator() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+  // 0-based month (0 = januari, 11 = december) voor consistent gebruik met Date object
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [generatedSchedule, setGeneratedSchedule] = useState<Shift[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number>(0);
+  
+  // Navigatie functies voor maand/jaar
+  const prevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(prev => prev - 1);
+    } else {
+      setSelectedMonth(prev => prev - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(prev => prev + 1);
+    } else {
+      setSelectedMonth(prev => prev + 1);
+    }
+  };
 
   // Haal alle gebruikers op
   const { data: users = [] } = useQuery<User[]>({
@@ -62,9 +82,9 @@ export default function ScheduleGenerator() {
 
   // Haal alle voorkeuren op voor de geselecteerde maand
   const { data: preferences = [], refetch: refetchPreferences } = useQuery<ShiftPreference[]>({
-    queryKey: ["/api/preferences/all", selectedMonth, selectedYear],
+    queryKey: ["/api/preferences/all", selectedMonth + 1, selectedYear],
     queryFn: async () => {
-      const res = await apiRequest("GET", `/api/preferences/all?month=${selectedMonth}&year=${selectedYear}`);
+      const res = await apiRequest("GET", `/api/preferences/all?month=${selectedMonth + 1}&year=${selectedYear}`);
       if (!res.ok) throw new Error("Kon voorkeuren niet ophalen");
       return res.json();
     },
@@ -73,9 +93,9 @@ export default function ScheduleGenerator() {
 
   // Haal alle shifts op voor de geselecteerde maand
   const { data: shifts = [], refetch: refetchShifts } = useQuery<Shift[]>({
-    queryKey: ["/api/shifts", selectedMonth, selectedYear],
+    queryKey: ["/api/shifts", selectedMonth + 1, selectedYear],
     queryFn: async () => {
-      const res = await apiRequest("GET", `/api/shifts?month=${selectedMonth}&year=${selectedYear}`);
+      const res = await apiRequest("GET", `/api/shifts?month=${selectedMonth + 1}&year=${selectedYear}`);
       if (!res.ok) throw new Error("Kon shifts niet ophalen");
       return res.json();
     },
@@ -86,7 +106,7 @@ export default function ScheduleGenerator() {
   const generateScheduleMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/schedule/generate", {
-        month: selectedMonth,
+        month: selectedMonth + 1,
         year: selectedYear,
       });
       if (!res.ok) throw new Error("Kon planning niet genereren");
@@ -96,7 +116,7 @@ export default function ScheduleGenerator() {
       setGeneratedSchedule(data);
       toast({
         title: "Succes",
-        description: "Planning gegenereerd voor " + format(new Date(selectedYear, selectedMonth - 1), "MMMM yyyy", { locale: nl }),
+        description: "Planning gegenereerd voor " + format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl }),
       });
       refetchShifts();
     },
@@ -140,7 +160,7 @@ export default function ScheduleGenerator() {
         description: "Shift succesvol bijgewerkt",
       });
       // Vernieuw de shifts na een update
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts", selectedMonth, selectedYear] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts", selectedMonth + 1, selectedYear] });
     },
     onError: (error: Error) => {
       toast({
@@ -206,42 +226,20 @@ export default function ScheduleGenerator() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex space-x-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">Maand</label>
-                  <Select
-                    value={selectedMonth.toString()}
-                    onValueChange={(value) => setSelectedMonth(parseInt(value))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Maand" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {months.map((month) => (
-                        <SelectItem key={month.value} value={month.value.toString()}>
-                          {month.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1">Jaar</label>
-                  <Select
-                    value={selectedYear.toString()}
-                    onValueChange={(value) => setSelectedYear(parseInt(value))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Jaar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {years.map((year) => (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">
+                  Planning periode
+                </h3>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={prevMonth}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-medium min-w-28 text-center">
+                    {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={nextMonth}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
               
@@ -348,13 +346,26 @@ export default function ScheduleGenerator() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Gegenereerde Planning</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Gegenereerde Planning</CardTitle>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={prevMonth}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium">
+                {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+              </span>
+              <Button variant="outline" size="sm" onClick={nextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {shifts.length > 0 ? (
             <div className="max-h-[500px] overflow-y-auto pr-2">
               <Table>
-                <TableCaption>Planning voor {format(new Date(selectedYear, selectedMonth - 1), "MMMM yyyy", { locale: nl })}</TableCaption>
+                <TableCaption>Planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}</TableCaption>
                 <TableHeader className="sticky top-0 bg-white z-10">
                   <TableRow>
                     <TableHead>Datum</TableHead>
@@ -365,58 +376,63 @@ export default function ScheduleGenerator() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {shifts.map((shift) => {
-                    const shiftUser = users.find(u => u.id === shift.userId);
-                    return (
-                      <TableRow 
-                        key={shift.id}
-                        className={shift.status === "open" ? "bg-red-50" : ""}
-                      >
-                        <TableCell>{format(new Date(shift.date), "dd MMMM", { locale: nl })}</TableCell>
-                        <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
-                        <TableCell>
-                          {shift.startTime && shift.endTime ? (
-                            `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {shift.status === "open" ? (
-                            <span className="text-red-500 font-medium">Niet ingevuld</span>
-                          ) : (
-                            shiftUser?.username || "Onbekend"
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              {shift.status === "planned" ? (
-                                <Check className="h-4 w-4 text-green-500 mr-1" />
-                              ) : shift.status === "open" ? (
-                                <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
-                              ) : null}
-                              {shift.status === "open" ? "Open" : shift.status}
+                  {shifts
+                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .map((shift) => {
+                      const shiftUser = users.find(u => u.id === shift.userId);
+                      const isCurrentUserShift = shift.userId === user?.id;
+                      return (
+                        <TableRow 
+                          key={shift.id}
+                          className={`${shift.status === "open" ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""}`}
+                        >
+                          <TableCell>{format(new Date(shift.date), "dd MMMM (EEEE)", { locale: nl })}</TableCell>
+                          <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
+                          <TableCell>
+                            {shift.startTime && shift.endTime ? (
+                              `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {shift.status === "open" ? (
+                              <span className="text-red-500 font-medium">Niet ingevuld</span>
+                            ) : (
+                              <span className={isCurrentUserShift ? "font-bold text-green-600" : ""}>
+                                {shiftUser?.username || "Onbekend"}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                {shift.status === "planned" ? (
+                                  <Check className="h-4 w-4 text-green-500 mr-1" />
+                                ) : shift.status === "open" ? (
+                                  <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
+                                ) : null}
+                                {shift.status === "open" ? "Open" : "Ingepland"}
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleEditShift(shift)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
                             </div>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleEditShift(shift)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                 </TableBody>
               </Table>
             </div>
           ) : (
             <Alert>
               <AlertDescription>
-                Er zijn nog geen shifts gegenereerd voor deze maand.
+                Er zijn nog geen shifts gegenereerd voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}.
               </AlertDescription>
             </Alert>
           )}
