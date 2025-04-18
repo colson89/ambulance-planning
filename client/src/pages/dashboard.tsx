@@ -111,13 +111,7 @@ export default function Dashboard() {
               </Button>
             </>
           )}
-          <Button 
-            variant="outline"
-            onClick={() => setLocation("/shifts")}
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Shift Planner
-          </Button>
+          {/* Shift Planner knop verwijderd, alleen "Voorkeuren Opgeven" behouden */}
           <Button 
             variant="outline" 
             onClick={() => logoutMutation.mutate()}
