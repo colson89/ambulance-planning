@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -80,3 +80,11 @@ export type User = typeof users.$inferSelect;
 export type Shift = typeof shifts.$inferSelect;
 export type ShiftPreference = typeof shiftPreferences.$inferSelect;
 export type InsertShiftPreference = z.infer<typeof insertShiftPreferenceSchema>;
+
+// Instellingen voor systeeminformatie
+export const systemSettings = pgTable("system_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  updatedAt: timestamp("updated_at").defaultNow()
+});

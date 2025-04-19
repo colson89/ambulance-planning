@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference } from "@shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte } from "drizzle-orm";
 import session from "express-session";
@@ -38,6 +38,10 @@ export interface IStorage {
   getShift(id: number): Promise<Shift | undefined>;
   updateShift(id: number, updateData: Partial<Shift>): Promise<Shift>;
   deleteShift(id: number): Promise<void>;
+  
+  // Systeeminstellingen
+  getSystemSetting(key: string): Promise<string | null>;
+  setSystemSetting(key: string, value: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1122,6 +1126,30 @@ export class DatabaseStorage implements IStorage {
   
   async deleteShift(id: number): Promise<void> {
     await db.delete(shifts).where(eq(shifts.id, id));
+  }
+  
+  async getSystemSetting(key: string): Promise<string | null> {
+    const [setting] = await db.select().from(systemSettings).where(eq(systemSettings.key, key));
+    return setting?.value || null;
+  }
+  
+  async setSystemSetting(key: string, value: string): Promise<void> {
+    // Controleer of de instelling al bestaat
+    const existing = await this.getSystemSetting(key);
+    
+    if (existing !== null) {
+      // Update bestaande instelling
+      await db.update(systemSettings)
+        .set({ value, updatedAt: new Date() })
+        .where(eq(systemSettings.key, key));
+    } else {
+      // Maak nieuwe instelling aan
+      await db.insert(systemSettings).values({
+        key,
+        value,
+        updatedAt: new Date()
+      });
+    }
   }
 }
 
