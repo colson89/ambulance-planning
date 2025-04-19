@@ -278,8 +278,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Sla de huidige tijd op als tijdstempel voor de laatste generatie
+      const now = new Date();
+      const timestamp = now.toISOString();
+      await storage.setSystemSetting('last_preferences_generated', timestamp);
+      
       res.status(200).json({ 
-        message: `Successfully generated ${createdPreferences} test preferences for ${users.length} users`
+        message: `Successfully generated ${createdPreferences} test preferences for ${users.length} users`,
+        timestamp: timestamp,
+        formattedTimestamp: now.toLocaleString('nl-NL')
       });
     } catch (error) {
       console.error("Error generating test preferences:", error);
