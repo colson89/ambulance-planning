@@ -383,9 +383,10 @@ export default function UserManagement() {
                                   const dayOfWeek = date.getDay();
                                   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = zondag, 6 = zaterdag
                                   
-                                  // Bepaal beschikbaarheid
-                                  const isAvailable = datePrefs && datePrefs.some(p => p.type === 'day' || p.type === 'night');
+                                  // Bepaal beschikbaarheid - eerst checken of de gebruiker expliciet "niet beschikbaar" heeft aangegeven
                                   const isUnavailable = datePrefs && datePrefs.some(p => p.type === 'unavailable');
+                                  // Alleen als niet expliciet onbeschikbaar, dan kijken of gebruiker beschikbaar is
+                                  const isAvailable = !isUnavailable && datePrefs && datePrefs.some(p => p.type === 'day' || p.type === 'night');
                                   
                                   // Bepaal shift details voor tooltip/modal
                                   const shiftDetails = datePrefs && datePrefs
