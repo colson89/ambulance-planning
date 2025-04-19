@@ -216,27 +216,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // For testing: even userId = more night shifts, odd = more day shifts
           const isEvenUserId = user.id % 2 === 0;
           
-          // 70% kans op beschikbaarheid
-          const isAvailable = Math.random() < 0.7;
+          // Slechts 25% kans op beschikbaarheid (veel realistischer)
+          const isAvailable = Math.random() < 0.25;
           
           if (isAvailable) {
             // Even user IDs prefer night shifts
             const preferNight = isEvenUserId ? Math.random() < 0.7 : Math.random() < 0.3;
             const shiftType = preferNight ? "night" : "day";
             
-            // Preference types: 70% full shifts, 15% first half, 15% second half
+            // Preference types: 75% full shifts, 12.5% first half, 12.5% second half
+            // Dit maakt dat ongeveer 25% van de beschikbaarheid uit halve shifts bestaat
             let preferenceType;
             const rand = Math.random();
-            if (rand < 0.7) {
+            if (rand < 0.75) {
               preferenceType = "full";
-            } else if (rand < 0.85) {
+            } else if (rand < 0.875) {
               preferenceType = "first";
             } else {
               preferenceType = "second";
             }
             
-            // Weekend days have 40% chance to be unavailable
-            if (isWeekend && Math.random() < 0.4) {
+            // Weekend dagen: hogere kans (60%) om als onbeschikbaar te zijn gemarkeerd
+            if (isWeekend && Math.random() < 0.6) {
               await storage.createShiftPreference({
                 userId: user.id,
                 date: currentDate,
@@ -251,18 +252,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               await storage.createShiftPreference({
                 userId: user.id,
                 date: currentDate,
-                type: shiftType,
+                type: shiftType, // Day of night
                 startTime: null,
                 endTime: null,
                 month,
                 year,
-                notes: "Automatisch gegenereerd voor test"
+                notes: `Automatisch gegenereerd voor test (${preferenceType} ${shiftType} shift)`
               });
             }
             createdPreferences++;
           } else {
             // If not available, mark as unavailable
-            const shiftType = Math.random() < 0.5 ? "day" : "night";
             await storage.createShiftPreference({
               userId: user.id,
               date: currentDate,
