@@ -651,6 +651,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Note: De bulk-import endpoint voor ambulanciers is verwijderd omdat deze niet meer nodig is
   // De ambulanciers zijn al direct toegevoegd via SQL
 
+  // Haal de laatste tijdstempel op voor het genereren van testvoorkeuren
+  app.get("/api/system/settings/last-preferences-generated", requireAuth, async (req, res) => {
+    try {
+      const timestamp = await storage.getSystemSetting('last_preferences_generated');
+      
+      if (timestamp) {
+        const date = new Date(timestamp);
+        res.json({
+          timestamp,
+          formattedTimestamp: date.toLocaleString('nl-NL')
+        });
+      } else {
+        res.json({
+          timestamp: null,
+          formattedTimestamp: "Nog niet gegenereerd"
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching last preferences generation timestamp:", error);
+      res.status(500).json({ message: "Kon tijdstempel niet ophalen" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
