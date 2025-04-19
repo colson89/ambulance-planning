@@ -204,17 +204,25 @@ export default function ScheduleGenerator() {
              shiftDate.getFullYear() === selectedYear;
     });
     
-    // Tel de uren voor elke shift (rekening houdend met halve shifts)
+    // Tel de uren voor elke shift gebaseerd op daadwerkelijke tijden
     let totalHours = 0;
     userShifts.forEach(shift => {
-      if (shift.isSplitShift) {
-        totalHours += 6; // Halve shift is 6 uur
-      } else {
-        totalHours += 12; // Volledige shift is 12 uur
+      if (shift.isSplitShift && shift.splitStartTime && shift.splitEndTime) {
+        // Bereken uren voor gesplitste shift
+        const startTime = new Date(shift.splitStartTime);
+        const endTime = new Date(shift.splitEndTime);
+        const hours = Math.abs(endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+        totalHours += hours;
+      } else if (shift.startTime && shift.endTime) {
+        // Bereken uren voor volledige shift
+        const startTime = new Date(shift.startTime);
+        const endTime = new Date(shift.endTime);
+        const hours = Math.abs(endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+        totalHours += hours;
       }
     });
     
-    return totalHours;
+    return Math.round(totalHours);
   };
   
   // Helper functie om weekday shifts te tellen (maandag tot vrijdag)
@@ -231,17 +239,25 @@ export default function ScheduleGenerator() {
              !isWeekend(shiftDate);
     });
     
-    // Tel de uren voor elke shift
+    // Tel de uren voor elke shift gebaseerd op daadwerkelijke tijden
     let totalHours = 0;
     userShifts.forEach(shift => {
-      if (shift.isSplitShift) {
-        totalHours += 6; // Halve shift is 6 uur
-      } else {
-        totalHours += 12; // Volledige shift is 12 uur
+      if (shift.isSplitShift && shift.splitStartTime && shift.splitEndTime) {
+        // Bereken uren voor gesplitste shift
+        const startTime = new Date(shift.splitStartTime);
+        const endTime = new Date(shift.splitEndTime);
+        const hours = Math.abs(endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+        totalHours += hours;
+      } else if (shift.startTime && shift.endTime) {
+        // Bereken uren voor volledige shift
+        const startTime = new Date(shift.startTime);
+        const endTime = new Date(shift.endTime);
+        const hours = Math.abs(endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+        totalHours += hours;
       }
     });
     
-    return totalHours;
+    return Math.round(totalHours);
   };
   
   // Helper functie om weekend shifts te tellen (zaterdag en zondag)
@@ -258,17 +274,25 @@ export default function ScheduleGenerator() {
              isWeekend(shiftDate);
     });
     
-    // Tel de uren voor elke shift
+    // Tel de uren voor elke shift gebaseerd op daadwerkelijke tijden
     let totalHours = 0;
     userShifts.forEach(shift => {
-      if (shift.isSplitShift) {
-        totalHours += 6; // Halve shift is 6 uur
-      } else {
-        totalHours += 12; // Volledige shift is 12 uur
+      if (shift.isSplitShift && shift.splitStartTime && shift.splitEndTime) {
+        // Bereken uren voor gesplitste shift
+        const startTime = new Date(shift.splitStartTime);
+        const endTime = new Date(shift.splitEndTime);
+        const hours = Math.abs(endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+        totalHours += hours;
+      } else if (shift.startTime && shift.endTime) {
+        // Bereken uren voor volledige shift
+        const startTime = new Date(shift.startTime);
+        const endTime = new Date(shift.endTime);
+        const hours = Math.abs(endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+        totalHours += hours;
       }
     });
     
-    return totalHours;
+    return Math.round(totalHours);
   };
   
   // Mutatie om een shift te updaten
