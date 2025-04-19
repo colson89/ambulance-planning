@@ -705,7 +705,11 @@ export class DatabaseStorage implements IStorage {
           let hasAssignedHalfShift2 = false;
           
           // Eerste helft van de dag (7:00 - 13:00)
-          const sortedDayFirstHalfUsers = getSortedUsersForAssignment(availableForDayFirstHalf);
+          // Filter: alleen gebruikers die niet al zijn toegewezen aan een shift op deze dag
+          const sortedDayFirstHalfUsers = getSortedUsersForAssignment(
+            availableForDayFirstHalf.filter(id => !assignedDayIds.includes(id))
+          );
+          
           if (sortedDayFirstHalfUsers.length > 0) {
             const halfShiftHours = 6; // 6 uur voor de eerste helft
             
@@ -727,6 +731,8 @@ export class DatabaseStorage implements IStorage {
                   splitEndTime: new Date(year, month - 1, day, 13, 0, 0)
                 };
                 
+                // Voeg toe aan de lijst van toegewezen gebruikers voor deze dag
+                assignedDayIds.push(userId);
                 addAssignedHours(userId, halfShiftHours);
                 const savedHalfShift1 = await this.createShift(dayHalfShift1);
                 generatedShifts.push(savedHalfShift1);
@@ -737,7 +743,11 @@ export class DatabaseStorage implements IStorage {
           }
           
           // Tweede helft van de dag (13:00 - 19:00)
-          const sortedDaySecondHalfUsers = getSortedUsersForAssignment(availableForDaySecondHalf);
+          // Filter: alleen gebruikers die niet al zijn toegewezen aan een shift op deze dag
+          const sortedDaySecondHalfUsers = getSortedUsersForAssignment(
+            availableForDaySecondHalf.filter(id => !assignedDayIds.includes(id))
+          );
+          
           if (sortedDaySecondHalfUsers.length > 0) {
             const halfShiftHours = 6; // 6 uur voor de tweede helft
             
@@ -759,6 +769,8 @@ export class DatabaseStorage implements IStorage {
                   splitEndTime: new Date(year, month - 1, day, 19, 0, 0)
                 };
                 
+                // Voeg toe aan de lijst van toegewezen gebruikers voor deze dag
+                assignedDayIds.push(userId);
                 addAssignedHours(userId, halfShiftHours);
                 const savedHalfShift2 = await this.createShift(dayHalfShift2);
                 generatedShifts.push(savedHalfShift2);
@@ -948,7 +960,11 @@ export class DatabaseStorage implements IStorage {
           );
           
           // Eerste helft van de nacht (19:00 - 1:00)
-          const sortedNightFirstHalfUsers = getSortedUsersForAssignment(availableForNightFirstHalfFiltered);
+          // Filter: gebruikers die niet al zijn toegewezen aan een dagshift of nachtshift op deze dag
+          const sortedNightFirstHalfUsers = getSortedUsersForAssignment(
+            availableForNightFirstHalfFiltered.filter(id => !assignedNightIds.includes(id))
+          );
+          
           if (sortedNightFirstHalfUsers.length > 0) {
             const halfShiftHours = 6; // 6 uur voor de eerste helft
             
@@ -970,6 +986,8 @@ export class DatabaseStorage implements IStorage {
                   splitEndTime: new Date(year, month - 1, day, 1, 0, 0)
                 };
                 
+                // Voeg toe aan de lijst van toegewezen gebruikers voor deze nacht
+                assignedNightIds.push(userId);
                 addAssignedHours(userId, halfShiftHours);
                 const savedHalfShift1 = await this.createShift(nightHalfShift1);
                 generatedShifts.push(savedHalfShift1);
@@ -980,7 +998,11 @@ export class DatabaseStorage implements IStorage {
           }
           
           // Tweede helft van de nacht (1:00 - 7:00)
-          const sortedNightSecondHalfUsers = getSortedUsersForAssignment(availableForNightSecondHalfFiltered);
+          // Filter: gebruikers die niet al zijn toegewezen aan een dagshift of nachtshift op deze dag
+          const sortedNightSecondHalfUsers = getSortedUsersForAssignment(
+            availableForNightSecondHalfFiltered.filter(id => !assignedNightIds.includes(id))
+          );
+          
           if (sortedNightSecondHalfUsers.length > 0) {
             const halfShiftHours = 6; // 6 uur voor de tweede helft
             
@@ -1002,6 +1024,8 @@ export class DatabaseStorage implements IStorage {
                   splitEndTime: new Date(year, month - 1, day + 1, 7, 0, 0)
                 };
                 
+                // Voeg toe aan de lijst van toegewezen gebruikers voor deze nacht
+                assignedNightIds.push(userId);
                 addAssignedHours(userId, halfShiftHours);
                 const savedHalfShift2 = await this.createShift(nightHalfShift2);
                 generatedShifts.push(savedHalfShift2);
