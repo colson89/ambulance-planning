@@ -508,51 +508,26 @@ export default function ScheduleGenerator() {
 
 
 
-              <div className="flex flex-col gap-4 mt-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">
-                    Planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => fixShiftTimesMutation.mutate()}
-                      disabled={fixShiftTimesMutation.isPending}
-                      className="bg-yellow-50 border-yellow-200 text-yellow-800 hover:bg-yellow-100"
-                    >
-                      {fixShiftTimesMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Corrigeren...
-                        </>
-                      ) : (
-                        <>
-                          <AlertTriangle className="h-4 w-4 mr-2" />
-                          Correctie 7u-19u
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      onClick={() => generateScheduleMutation.mutate()}
-                      disabled={generateScheduleMutation.isPending}
-                    >
-                      {generateScheduleMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Bezig met genereren...
-                        </>
-                      ) : (
-                        <>
-                          <CalendarDays className="h-4 w-4 mr-2" />
-                          Genereer Planning
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                <div className="text-xs text-yellow-600 bg-yellow-50 p-2 rounded">
-                  Als de uren in de planning onjuist worden weergegeven (9u-21u in plaats van 7u-19u), gebruik de "Correctie 7u-19u" knop hierboven om dit te herstellen.
-                </div>
+              <div className="flex justify-between items-center mt-6">
+                <span className="text-sm text-gray-500">
+                  Planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+                </span>
+                <Button
+                  onClick={() => generateScheduleMutation.mutate()}
+                  disabled={generateScheduleMutation.isPending}
+                >
+                  {generateScheduleMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Bezig met genereren...
+                    </>
+                  ) : (
+                    <>
+                      <CalendarDays className="h-4 w-4 mr-2" />
+                      Genereer Planning
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           </CardContent>
