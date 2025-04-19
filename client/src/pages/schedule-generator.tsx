@@ -50,6 +50,19 @@ export default function ScheduleGenerator() {
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [isGeneratingTestPreferences, setIsGeneratingTestPreferences] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  
+  // Query om de laatste tijdstempel voor gegenereerde testvoorkeuren op te halen
+  const { data: lastGeneratedTimestamp, isLoading: isLoadingTimestamp } = useQuery({
+    queryKey: ["/api/system/settings/last-preferences-generated"],
+    queryFn: async () => {
+      const res = await fetch('/api/system/settings/last-preferences-generated');
+      if (!res.ok) {
+        console.error("Error fetching last generated timestamp");
+        return null;
+      }
+      return res.json();
+    }
+  });
   // Mutatie om alle shift tijden te corrigeren
   const fixShiftTimesMutation = useMutation({
     mutationFn: async () => {
@@ -423,6 +436,13 @@ export default function ScheduleGenerator() {
                   Genereer willekeurige voorkeuren voor alle gebruikers voor de geselecteerde maand om de planning tool te testen.
                 </p>
                 
+                {lastGeneratedTimestamp && (
+                  <div className="flex items-center text-xs text-gray-500 mt-1 mb-2">
+                    <Clock className="h-3 w-3 mr-1" />
+                    <span>Laatst gegenereerd: {lastGeneratedTimestamp.formattedTimestamp}</span>
+                  </div>
+                )}
+                
                 <Button
                   variant="outline"
                   size="sm"
@@ -448,6 +468,9 @@ export default function ScheduleGenerator() {
                       
                       // Ververs de gegevens
                       refetchPreferences();
+                      
+                      // Vernieuw ook de tijdstempel
+                      queryClient.invalidateQueries({ queryKey: ["/api/system/settings/last-preferences-generated"] });
                     } catch (error) {
                       toast({
                         title: "Fout",
