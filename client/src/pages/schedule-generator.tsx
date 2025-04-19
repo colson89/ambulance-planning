@@ -49,6 +49,7 @@ export default function ScheduleGenerator() {
   const [generatedSchedule, setGeneratedSchedule] = useState<Shift[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [isGeneratingTestPreferences, setIsGeneratingTestPreferences] = useState(false);
+  const [lastGeneratedDate, setLastGeneratedDate] = useState<Date | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number>(0);
   
   // Navigatie functies voor maand/jaar
@@ -115,6 +116,7 @@ export default function ScheduleGenerator() {
     },
     onSuccess: (data) => {
       setGeneratedSchedule(data);
+      setLastGeneratedDate(new Date());
       toast({
         title: "Succes",
         description: "Planning gegenereerd voor " + format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl }),
@@ -452,7 +454,14 @@ export default function ScheduleGenerator() {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Gegenereerde Planning</CardTitle>
+            <div>
+              <CardTitle>Gegenereerde Planning</CardTitle>
+              {lastGeneratedDate && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Gegenereerd op: {format(lastGeneratedDate, "dd-MM-yyyy HH:mm:ss")}
+                </p>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={prevMonth}>
                 <ChevronLeft className="h-4 w-4" />
