@@ -457,6 +457,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Route om alle shift tijden te corrigeren naar de nieuwe tijden
+  app.post("/api/shifts/fix-times", requireAuth, async (req, res) => {
+    try {
+      console.log("Corrigeren van shift tijden naar de correcte waarden...");
+      
+      // Haal alle shifts op
+      const allShifts = await storage.getAllShifts();
+      let updatedCount = 0;
+      
+      for (const shift of allShifts) {
+        let startHour, endHour, needsUpdate = false;
+        
+        // Bepaal de juiste tijden op basis van type shift
+        if (shift.type === "day") {
+          // Dagshift: 07:00 - 19:00
+          startHour = 7;
+          endHour = 19;
+          
+          // Controleer of de huidige tijden niet al correct zijn
+          const currentStartHour = new Date(shift.startTime).getHours();
+          const currentEndHour = new Date(shift.endTime).getHours();
+          
+          if (currentStartHour !== startHour || currentEndHour !== endHour) {
+            needsUpdate = true;
+          }
+        } else if (shift.type === "night") {
+          // Nachtshift: 19:00 - 07:00 (volgende dag)
+          startHour = 19;
+          endHour = 7;
+          
+          // Controleer of de huidige tijden niet al correct zijn
+          const currentStartHour = new Date(shift.startTime).getHours();
+          const currentEndHour = new Date(shift.endTime).getHours();
+          
+          if (currentStartHour !== startHour || currentEndHour !== endHour) {
+            needsUpdate = true;
+          }
+        }
+        
+        if (needsUpdate) {
+          // Bereken de juiste datums voor de start- en eindtijd
+          const shiftDate = new Date(shift.date);
+          const startTime = new Date(shiftDate);
+          startTime.setHours(startHour, 0, 0, 0);
+          
+          const endTime = new Date(shiftDate);
+          if (shift.type === "night") {
+            // Voor nachtshift: eindtijd is de volgende dag
+            endTime.setDate(endTime.getDate() + 1);
+          }
+          endTime.setHours(endHour, 0, 0, 0);
+          
+          // Update de shift
+          await storage.updateShift(shift.id, {
+            startTime,
+            endTime
+          });
+          
+          // Update ook split tijden indien van toepassing
+          if (shift.isSplitShift) {
+            if (shift.type === "day") {
+              if (new Date(shift.splitEndTime).getHours() === 13) {
+                // Eerste helft van dag: 07:00 - 13:00
+                const splitStartTime = new Date(shiftDate);
+                splitStartTime.setHours(7, 0, 0, 0);
+                
+                const splitEndTime = new Date(shiftDate);
+                splitEndTime.setHours(13, 0, 0, 0);
+                
+                await storage.updateShift(shift.id, {
+                  splitStartTime,
+                  splitEndTime
+                });
+              } else {
+                // Tweede helft van dag: 13:00 - 19:00
+                const splitStartTime = new Date(shiftDate);
+                splitStartTime.setHours(13, 0, 0, 0);
+                
+                const splitEndTime = new Date(shiftDate);
+                splitEndTime.setHours(19, 0, 0, 0);
+                
+                await storage.updateShift(shift.id, {
+                  splitStartTime,
+                  splitEndTime
+                });
+              }
+            } else if (shift.type === "night") {
+              // Verwerk splitshifts voor nacht indien nodig
+              // Huidige implementatie heeft geen gesplitste nachtshifts
+            }
+          }
+          
+          updatedCount++;
+        }
+      }
+      
+      console.log(`${updatedCount} shifts bijgewerkt met de correcte tijden.`);
+      res.status(200).json({ message: `${updatedCount} shifts bijgewerkt met de correcte tijden.` });
+      
+    } catch (error) {
+      console.error("Fout bij corrigeren van shift tijden:", error);
+      res.status(500).json({ message: "Fout bij corrigeren van shift tijden", error: error.message });
+    }
+  });
+  
   // Get a specific shift by id
   app.get("/api/shifts/:id", requireAuth, async (req, res) => {
     try {

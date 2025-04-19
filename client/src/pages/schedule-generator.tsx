@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -127,6 +127,30 @@ export default function ScheduleGenerator() {
       toast({
         title: "Fout",
         description: error.message || "Er is een fout opgetreden bij het genereren van de planning",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Mutatie om alle shift tijden te corrigeren
+  const fixShiftTimesMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/shifts/fix-times");
+      if (!res.ok) throw new Error("Kon shift tijden niet corrigeren");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Succes",
+        description: data.message || "Shift tijden succesvol gecorrigeerd",
+      });
+      // Vernieuw de shifts na een update
+      refetchShifts();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message || "Er is een fout opgetreden bij het corrigeren van shift tijden",
         variant: "destructive",
       });
     },
@@ -390,6 +414,36 @@ export default function ScheduleGenerator() {
                     </>
                   ) : (
                     "Genereer Test Voorkeuren"
+                  )}
+                </Button>
+              </div>
+              
+              <div className="mt-4 p-4 border border-amber-100 rounded-md bg-amber-50">
+                <h3 className="font-semibold mb-2 flex items-center text-amber-800">
+                  <Clock className="h-4 w-4 mr-2" />
+                  Shift Tijden Corrigeren
+                </h3>
+                <p className="text-sm text-amber-800 mb-4">
+                  Corrigeer alle bestaande shifts naar de juiste tijden (dagen: 07:00-19:00, nachten: 19:00-07:00)
+                </p>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200"
+                  disabled={fixShiftTimesMutation.isPending}
+                  onClick={() => fixShiftTimesMutation.mutate()}
+                >
+                  {fixShiftTimesMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Bezig met corrigeren...
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-4 w-4 mr-2" />
+                      Shift Tijden Corrigeren
+                    </>
                   )}
                 </Button>
               </div>
