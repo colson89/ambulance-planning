@@ -574,13 +574,40 @@ export default function UserManagement() {
                                             <span className="text-red-500 font-medium">Niet beschikbaar</span>
                                           ) : (
                                             <span>
-                                              {pref.preference === 'full' ? (
-                                                <span className="font-medium">Volledige shift</span>
-                                              ) : pref.preference === 'first' ? (
-                                                <span>Eerste helft</span>
-                                              ) : pref.preference === 'second' ? (
-                                                <span>Tweede helft</span>
-                                              ) : (
+                                              {pref.startTime && pref.endTime && (
+                                                <>
+                                                  {/* Dag shifts */}
+                                                  {pref.type === 'day' && (
+                                                    <>
+                                                      {new Date(pref.startTime).getHours() === 7 && new Date(pref.endTime).getHours() === 19 ? (
+                                                        <span className="font-medium">Volledige shift</span>
+                                                      ) : new Date(pref.startTime).getHours() === 7 && new Date(pref.endTime).getHours() === 13 ? (
+                                                        <span>Eerste helft</span>
+                                                      ) : new Date(pref.startTime).getHours() === 13 && new Date(pref.endTime).getHours() === 19 ? (
+                                                        <span>Tweede helft</span>
+                                                      ) : (
+                                                        <span>Aangepaste uren</span>
+                                                      )}
+                                                    </>
+                                                  )}
+                                                  
+                                                  {/* Nacht shifts */}
+                                                  {pref.type === 'night' && (
+                                                    <>
+                                                      {new Date(pref.startTime).getHours() === 19 && new Date(pref.endTime).getHours() === 7 ? (
+                                                        <span className="font-medium">Volledige shift</span>
+                                                      ) : new Date(pref.startTime).getHours() === 19 && new Date(pref.endTime).getHours() === 23 ? (
+                                                        <span>Eerste helft</span>
+                                                      ) : new Date(pref.startTime).getHours() === 23 && new Date(pref.endTime).getHours() === 7 ? (
+                                                        <span>Tweede helft</span>
+                                                      ) : (
+                                                        <span>Aangepaste uren</span>
+                                                      )}
+                                                    </>
+                                                  )}
+                                                </>
+                                              )}
+                                              {(!pref.startTime || !pref.endTime) && (
                                                 <span>-</span>
                                               )}
                                             </span>
