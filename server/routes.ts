@@ -203,6 +203,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         users = users.filter(u => u.role !== 'admin');
       }
       
+      // Eerst alle bestaande voorkeuren voor deze maand/jaar verwijderen
+      console.log(`Verwijderen van bestaande voorkeuren voor maand ${month}/${year}...`);
+      for (const user of users) {
+        // Haal bestaande voorkeuren op
+        const existingPreferences = await storage.getUserShiftPreferences(user.id, month, year);
+        
+        // Verwijder elke bestaande voorkeur
+        for (const preference of existingPreferences) {
+          await storage.deleteShiftPreference(preference.id);
+        }
+        
+        console.log(`- ${existingPreferences.length} voorkeuren verwijderd voor gebruiker ${user.username}`);
+      }
+      
       const daysInMonth = new Date(year, month, 0).getDate();
       let createdPreferences = 0;
       
