@@ -49,6 +49,7 @@ export default function ScheduleGenerator() {
   const [generatedSchedule, setGeneratedSchedule] = useState<Shift[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [isGeneratingTestPreferences, setIsGeneratingTestPreferences] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   // Mutatie om alle shift tijden te corrigeren
   const fixShiftTimesMutation = useMutation({
     mutationFn: async () => {
@@ -525,7 +526,7 @@ export default function ScheduleGenerator() {
               <TableBody>
                 {users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.username}</TableCell>
+                    <TableCell className="font-medium">{`${user.firstName} ${user.lastName}`}</TableCell>
                     <TableCell className="text-center">{user.hours}</TableCell>
                     <TableCell className="text-center">{countUserShiftsHours(user.id)}</TableCell>
                     <TableCell className="text-center">{countUserWeekdayShiftHours(user.id)}</TableCell>
@@ -540,25 +541,43 @@ export default function ScheduleGenerator() {
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Gegenereerde Planning</CardTitle>
-              {lastGeneratedDate && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Gegenereerd op: {format(lastGeneratedDate, "dd-MM-yyyy HH:mm:ss")}
-                </p>
-              )}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Gegenereerde Planning</CardTitle>
+                {lastGeneratedDate && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Gegenereerd op: {format(lastGeneratedDate, "dd-MM-yyyy HH:mm:ss")}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={prevMonth}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-medium">
+                  {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+                </span>
+                <Button variant="outline" size="sm" onClick={nextMonth}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={prevMonth}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium">
-                {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
-              </span>
-              <Button variant="outline" size="sm" onClick={nextMonth}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+            
+            <div className="relative">
+              <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                  <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                </svg>
+              </div>
+              <input 
+                type="search" 
+                id="search-ambulancier" 
+                className="block w-full p-3 ps-10 text-sm border rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500" 
+                placeholder="Zoek op naam van medewerker..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
         </CardHeader>
@@ -611,8 +630,16 @@ export default function ScheduleGenerator() {
                                 {shift.status === "open" ? "Niet ingevuld" : "Medewerker verwijderd"}
                               </span>
                             ) : (
-                              <span className={isCurrentUserShift ? "font-bold text-green-600" : ""}>
-                                {shiftUser?.username || "Onbekend"}
+                              <span 
+                                className={`${isCurrentUserShift ? "font-bold text-green-600" : ""} 
+                                  ${searchTerm && shiftUser && 
+                                    (shiftUser.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                     shiftUser.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                     shiftUser.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                     `${shiftUser.firstName} ${shiftUser.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()))
+                                     ? "bg-green-200 px-1 py-0.5 rounded font-medium" : ""}`}
+                              >
+                                {shiftUser ? `${shiftUser.firstName} ${shiftUser.lastName}` : "Onbekend"}
                               </span>
                             )}
                           </TableCell>
@@ -692,7 +719,7 @@ export default function ScheduleGenerator() {
                       .filter(u => u.role === "ambulancier")
                       .map((user) => (
                         <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.username}
+                          {`${user.firstName} ${user.lastName}`}
                         </SelectItem>
                       ))}
                   </SelectContent>
