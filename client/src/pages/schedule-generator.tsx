@@ -132,25 +132,29 @@ export default function ScheduleGenerator() {
     },
   });
   
-  // Mutatie om alle shift tijden te corrigeren
-  const fixShiftTimesMutation = useMutation({
+  // Mutatie om alle shifts voor een maand te verwijderen
+  const deleteMonthShiftsMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/shifts/fix-times");
-      if (!res.ok) throw new Error("Kon shift tijden niet corrigeren");
+      const res = await apiRequest("DELETE", "/api/shifts/month", {
+        month: selectedMonth + 1,
+        year: selectedYear
+      });
+      if (!res.ok) throw new Error("Kon shifts niet verwijderen");
       return res.json();
     },
     onSuccess: (data) => {
       toast({
         title: "Succes",
-        description: data.message || "Shift tijden succesvol gecorrigeerd",
+        description: data.message || `Shifts succesvol verwijderd voor ${format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}`,
       });
       // Vernieuw de shifts na een update
       refetchShifts();
+      setLastGeneratedDate(null);
     },
     onError: (error: Error) => {
       toast({
         title: "Fout",
-        description: error.message || "Er is een fout opgetreden bij het corrigeren van shift tijden",
+        description: error.message || "Er is een fout opgetreden bij het verwijderen van shifts",
         variant: "destructive",
       });
     },

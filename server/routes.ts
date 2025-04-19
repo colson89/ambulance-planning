@@ -391,10 +391,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  // Get all shifts
+  // Get all shifts - optionally filter by month/year
   app.get("/api/shifts", requireAuth, async (req, res) => {
-    const shifts = await storage.getAllShifts();
-    res.json(shifts);
+    try {
+      let shifts;
+      
+      if (req.query.month && req.query.year) {
+        const month = parseInt(req.query.month as string);
+        const year = parseInt(req.query.year as string);
+        shifts = await storage.getShiftsByMonth(month, year);
+      } else {
+        shifts = await storage.getAllShifts();
+      }
+      
+      res.status(200).json(shifts);
+    } catch (error) {
+      console.error("Error getting shifts:", error);
+      res.status(500).json({ message: "Failed to get shifts" });
+    }
+  });
+  
+  // Delete all shifts for a specific month/year
+  app.delete("/api/shifts/month", requireAdmin, async (req, res) => {
+    try {
+      const { month, year } = req.body;
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+      
+      console.log(`Deleting all shifts for ${month}/${year}`);
+      
+      // Haal eerst alle shifts op voor deze maand/jaar
+      const shifts = await storage.getShiftsByMonth(parseInt(month), parseInt(year));
+      const deletedCount = shifts.length;
+      
+      // Verwijder alle shifts voor deze maand/jaar
+      for (const shift of shifts) {
+        await storage.deleteShift(shift.id);
+      }
+      
+      console.log(`${deletedCount} shifts verwijderd voor ${month}/${year}`);
+      res.status(200).json({ 
+        message: `${deletedCount} shifts verwijderd voor ${month}/${year}`,
+        count: deletedCount
+      });
+    } catch (error) {
+      console.error("Error deleting shifts:", error);
+      res.status(500).json({ message: "Failed to delete shifts" });
+    }
   });
 
   // Get shifts by month

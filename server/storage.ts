@@ -35,6 +35,9 @@ export interface IStorage {
   generateMonthlySchedule(month: number, year: number): Promise<Shift[]>;
   sessionStore: session.Store;
   getShiftPreference(id: number): Promise<ShiftPreference | undefined>;
+  getShift(id: number): Promise<Shift | undefined>;
+  updateShift(id: number, updateData: Partial<Shift>): Promise<Shift>;
+  deleteShift(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1070,6 +1073,10 @@ export class DatabaseStorage implements IStorage {
       
     if (!shift) throw new Error("Shift not found");
     return shift;
+  }
+  
+  async deleteShift(id: number): Promise<void> {
+    await db.delete(shifts).where(eq(shifts.id, id));
   }
 }
 
