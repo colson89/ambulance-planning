@@ -371,258 +371,193 @@ export default function UserManagement() {
                           </div>
                         ) : (
                           <div className="border rounded-md p-6">
-                            <Tabs defaultValue="overzicht">
-                              <TabsList className="mb-4">
-                                <TabsTrigger value="overzicht">Overzicht</TabsTrigger>
-                                <TabsTrigger value="details">Details</TabsTrigger>
-                              </TabsList>
-                              
-                              <TabsContent value="overzicht">
-                                <div className="grid grid-cols-7 gap-2">
-                                  {Array.from({ length: new Date(selectedYear, selectedMonth, 0).getDate() }).map((_, day) => {
-                                    const date = new Date(selectedYear, selectedMonth - 1, day + 1);
-                                    const datePrefs = userPreferences?.filter((p: ShiftPreference) => 
-                                      new Date(p.date).getDate() === day + 1
-                                    );
-                                    
-                                    // Haal specifieke voorkeuren voor dag/nacht op
-                                    const dayPrefs = datePrefs?.filter((p: ShiftPreference) => p.type === "day");
-                                    const nightPrefs = datePrefs?.filter((p: ShiftPreference) => p.type === "night");
-                                    const unavailablePrefs = datePrefs?.filter((p: ShiftPreference) => p.type === "unavailable");
-                                    
-                                    // Bepaal of het een weekenddag is
-                                    const dayOfWeek = date.getDay();
-                                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = zondag, 6 = zaterdag
-                                    
-                                    // Bepaal de beschikbaarheidsstatus
-                                    const isDayShiftAvailable = dayPrefs && dayPrefs.length > 0;
-                                    const isNightShiftAvailable = nightPrefs && nightPrefs.length > 0;
-                                    const isUnavailable = unavailablePrefs && unavailablePrefs.length > 0;
-                                    
-                                    // Bepaal de dag functie (eerste of tweede deel van de dag) op basis van start en eindtijd
-                                    const hasDayShiftFirstHalf = dayPrefs?.some((p: ShiftPreference) => 
-                                      p.startTime && p.endTime && 
-                                      (new Date(p.startTime)).getHours() === 7 && 
-                                      (new Date(p.endTime)).getHours() === 13
-                                    );
-                                    const hasDayShiftSecondHalf = dayPrefs?.some((p: ShiftPreference) => 
-                                      p.startTime && p.endTime && 
-                                      (new Date(p.startTime)).getHours() === 13 && 
-                                      (new Date(p.endTime)).getHours() === 19
-                                    );
-                                    const hasDayShiftFull = dayPrefs?.some((p: ShiftPreference) => 
-                                      p.startTime && p.endTime && 
-                                      (new Date(p.startTime)).getHours() === 7 && 
-                                      (new Date(p.endTime)).getHours() === 19
-                                    );
-                                    
-                                    // Bepaal de nacht functie op basis van start en eindtijd
-                                    const hasNightShiftFirstHalf = nightPrefs?.some((p: ShiftPreference) => 
-                                      p.startTime && p.endTime && 
-                                      (new Date(p.startTime)).getHours() === 19 && 
-                                      (new Date(p.endTime)).getHours() === 23
-                                    );
-                                    const hasNightShiftSecondHalf = nightPrefs?.some((p: ShiftPreference) => 
-                                      p.startTime && p.endTime && 
-                                      (new Date(p.startTime)).getHours() === 23 && 
-                                      (new Date(p.endTime)).getHours() === 7
-                                    );
-                                    const hasNightShiftFull = nightPrefs?.some((p: ShiftPreference) => 
-                                      p.startTime && p.endTime && 
-                                      (new Date(p.startTime)).getHours() === 19 && 
-                                      (new Date(p.endTime)).getHours() === 7
-                                    );
-                                    
-                                    return (
-                                      <div 
-                                        key={day}
-                                        className={`p-2 rounded-md border ${
-                                          isUnavailable ? 'border-red-400' : 'border-gray-200'
-                                        }`}
-                                      >
-                                        <div className="flex justify-between items-center mb-1">
-                                          <div className="font-medium">{day + 1}</div>
-                                          <div className="text-xs text-gray-500">
-                                            {format(date, 'E', { locale: nl })}
-                                          </div>
-                                        </div>
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-7 gap-2">
+                                {Array.from({ length: new Date(selectedYear, selectedMonth, 0).getDate() }).map((_, day) => {
+                                  const date = new Date(selectedYear, selectedMonth - 1, day + 1);
+                                  const datePrefs = userPreferences?.filter((p: ShiftPreference) => 
+                                    new Date(p.date).getDate() === day + 1
+                                  );
+                                  
+                                  // Bepaal of het een weekenddag is
+                                  const dayOfWeek = date.getDay();
+                                  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = zondag, 6 = zaterdag
+                                  
+                                  // Bepaal beschikbaarheid
+                                  const isAvailable = datePrefs && datePrefs.some(p => p.type === 'day' || p.type === 'night');
+                                  const isUnavailable = datePrefs && datePrefs.some(p => p.type === 'unavailable');
+                                  
+                                  // Bepaal shift details voor tooltip/modal
+                                  const shiftDetails = datePrefs && datePrefs
+                                    .filter(p => p.type !== 'unavailable')
+                                    .map(p => {
+                                      let shiftType = p.type === 'day' ? 'Dag' : 'Nacht';
+                                      let shiftTime = '';
+                                      
+                                      if (p.startTime && p.endTime) {
+                                        const startHour = new Date(p.startTime).getHours();
+                                        const endHour = new Date(p.endTime).getHours();
                                         
-                                        {/* Toon dag en nacht beschikbaarheid met verschillende kleuren */}
-                                        <div className="grid grid-cols-1 gap-1">
-                                          {/* Toon dag beschikbaarheid alleen in het weekend */}
-                                          {isWeekend && (
-                                            <div className={`text-xs p-1 rounded flex items-center justify-center ${
-                                              isUnavailable ? 'bg-red-100 text-red-700' : 
-                                              isDayShiftAvailable ? 'bg-green-100 text-green-700' : 
-                                              'bg-gray-100 text-gray-500'
-                                            }`}>
-                                              <div className="flex flex-col items-center">
-                                                <span>Dag</span>
-                                                {isDayShiftAvailable && (
-                                                  <span className="text-[10px]">
-                                                    {hasDayShiftFull ? "Volledig" : 
-                                                     hasDayShiftFirstHalf && hasDayShiftSecondHalf ? "Volledig" :
-                                                     hasDayShiftFirstHalf ? "7-13u" : 
-                                                     hasDayShiftSecondHalf ? "13-19u" : ""}
-                                                  </span>
-                                                )}
-                                              </div>
-                                            </div>
-                                          )}
-                                          
-                                          {/* Toon altijd nacht beschikbaarheid */}
-                                          <div className={`text-xs p-1 rounded flex items-center justify-center ${
-                                            isUnavailable ? 'bg-red-100 text-red-700' : 
-                                            isNightShiftAvailable ? 'bg-blue-100 text-blue-700' : 
-                                            'bg-gray-100 text-gray-500'
-                                          }`}>
-                                            <div className="flex flex-col items-center">
-                                              <span>Nacht</span>
-                                              {isNightShiftAvailable && (
-                                                <span className="text-[10px]">
-                                                  {hasNightShiftFull ? "Volledig" : 
-                                                   hasNightShiftFirstHalf && hasNightShiftSecondHalf ? "Volledig" :
-                                                   hasNightShiftFirstHalf ? "19-23u" : 
-                                                   hasNightShiftSecondHalf ? "23-7u" : ""}
-                                                </span>
-                                              )}
+                                        if (p.type === 'day') {
+                                          if (startHour === 7 && endHour === 19) shiftTime = '(7-19u, volledig)';
+                                          else if (startHour === 7 && endHour === 13) shiftTime = '(7-13u, eerste helft)';
+                                          else if (startHour === 13 && endHour === 19) shiftTime = '(13-19u, tweede helft)';
+                                          else shiftTime = `(${startHour}-${endHour}u)`;
+                                        } else {
+                                          if (startHour === 19 && endHour === 7) shiftTime = '(19-7u, volledig)';
+                                          else if (startHour === 19 && endHour === 23) shiftTime = '(19-23u, eerste helft)';
+                                          else if (startHour === 23 && endHour === 7) shiftTime = '(23-7u, tweede helft)';
+                                          else shiftTime = `(${startHour}-${endHour}u)`;
+                                        }
+                                      }
+                                      
+                                      return `${shiftType} ${shiftTime}`;
+                                    });
+                                  
+                                  // Vereenvoudigde weergave
+                                  return (
+                                    <Dialog key={day}>
+                                      <DialogTrigger asChild>
+                                        <div 
+                                          key={day}
+                                          className={`p-2 rounded-md border cursor-pointer hover:border-gray-400 ${
+                                            isUnavailable ? 'bg-red-100 border-red-400' : 
+                                            isAvailable ? 'bg-green-100 border-green-400' : 
+                                            'bg-gray-50 border-gray-200'
+                                          }`}
+                                        >
+                                          <div className="flex justify-between items-center">
+                                            <div className="font-medium">{day + 1}</div>
+                                            <div className="text-xs text-gray-600">
+                                              {format(date, 'E', { locale: nl })}
                                             </div>
                                           </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </TabsContent>
-                              
-                              <TabsContent value="details">
-                                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                                  <div className="grid grid-cols-5 gap-2 font-medium border-b pb-2 sticky top-0 bg-white">
-                                    <div>Datum</div>
-                                    <div>Type</div>
-                                    <div>Voorkeur</div>
-                                    <div>Tijdslot</div>
-                                    <div>Notitie</div>
-                                  </div>
-                                  
-                                  {userPreferences?.map((pref: ShiftPreference) => {
-                                    const date = new Date(pref.date);
-                                    const dayOfWeek = date.getDay();
-                                    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-                                    
-                                    // Bepaal tijdslot op basis van starttijd en eindtijd
-                                    let timeSlot = '-';
-                                    if (pref.startTime && pref.endTime) {
-                                      const startHour = new Date(pref.startTime).getHours();
-                                      const endHour = new Date(pref.endTime).getHours();
-                                      
-                                      timeSlot = `${startHour}:00 - ${endHour}:00`;
-                                      
-                                      // Specifieke tijdslots
-                                      if (startHour === 7 && endHour === 19) {
-                                        timeSlot = '7:00 - 19:00 (volledig)';
-                                      } else if (startHour === 7 && endHour === 13) {
-                                        timeSlot = '7:00 - 13:00 (eerste helft)';
-                                      } else if (startHour === 13 && endHour === 19) {
-                                        timeSlot = '13:00 - 19:00 (tweede helft)';
-                                      } else if (startHour === 19 && endHour === 7) {
-                                        timeSlot = '19:00 - 7:00 (volledig)';
-                                      } else if (startHour === 19 && endHour === 23) {
-                                        timeSlot = '19:00 - 23:00 (eerste helft)';
-                                      } else if (startHour === 23 && endHour === 7) {
-                                        timeSlot = '23:00 - 7:00 (tweede helft)';
-                                      }
-                                    }
-                                  
-                                    return (
-                                      <div 
-                                        key={pref.id} 
-                                        className={`grid grid-cols-5 gap-2 py-2 border-b border-gray-100 ${
-                                          pref.type === 'unavailable' ? 'bg-red-50' : 
-                                          pref.type === 'day' ? 'bg-green-50' : 
-                                          pref.type === 'night' ? 'bg-blue-50' : ''
-                                        }`}
-                                      >
-                                        <div className="flex items-center">
-                                          <span>{format(date, 'dd MMMM', { locale: nl })}</span>
                                           {isWeekend && (
-                                            <span className="ml-1 text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded-full">
+                                            <div className="mt-1 text-xs text-center text-gray-500">
                                               weekend
-                                            </span>
+                                            </div>
                                           )}
                                         </div>
-                                        <div>
-                                          {pref.type === 'day' ? (
-                                            <span className="flex items-center">
-                                              <span className="h-2 w-2 bg-green-500 rounded-full mr-1.5"></span>
-                                              Dag
-                                            </span>
-                                          ) : pref.type === 'night' ? (
-                                            <span className="flex items-center">
-                                              <span className="h-2 w-2 bg-blue-500 rounded-full mr-1.5"></span>
-                                              Nacht
-                                            </span>
+                                      </DialogTrigger>
+                                      
+                                      {/* Details dialog wanneer op een dag wordt geklikt */}
+                                      <DialogContent className="sm:max-w-md">
+                                        <DialogHeader>
+                                          <DialogTitle>
+                                            Beschikbaarheid voor {format(date, 'dd MMMM yyyy', { locale: nl })}
+                                            {isWeekend && (
+                                              <span className="ml-2 inline-block text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">
+                                                weekend
+                                              </span>
+                                            )}
+                                          </DialogTitle>
+                                        </DialogHeader>
+                                        
+                                        <div className="py-4">
+                                          {isUnavailable ? (
+                                            <div className="flex items-center text-red-600 font-medium mb-2">
+                                              <span className="h-3 w-3 bg-red-500 rounded-full mr-2"></span>
+                                              Niet beschikbaar op deze dag
+                                            </div>
+                                          ) : !datePrefs || datePrefs.length === 0 ? (
+                                            <div className="text-gray-500">
+                                              Geen voorkeuren ingesteld voor deze dag
+                                            </div>
                                           ) : (
-                                            <span className="flex items-center">
-                                              <span className="h-2 w-2 bg-red-500 rounded-full mr-1.5"></span>
-                                              Onbeschikbaar
-                                            </span>
-                                          )}
-                                        </div>
-                                        <div>
-                                          {pref.type === 'unavailable' ? (
-                                            <span className="text-red-500 font-medium">Niet beschikbaar</span>
-                                          ) : (
-                                            <span>
-                                              {pref.startTime && pref.endTime && (
-                                                <>
-                                                  {/* Dag shifts */}
-                                                  {pref.type === 'day' && (
-                                                    <>
-                                                      {new Date(pref.startTime).getHours() === 7 && new Date(pref.endTime).getHours() === 19 ? (
-                                                        <span className="font-medium">Volledige shift</span>
-                                                      ) : new Date(pref.startTime).getHours() === 7 && new Date(pref.endTime).getHours() === 13 ? (
-                                                        <span>Eerste helft</span>
-                                                      ) : new Date(pref.startTime).getHours() === 13 && new Date(pref.endTime).getHours() === 19 ? (
-                                                        <span>Tweede helft</span>
-                                                      ) : (
-                                                        <span>Aangepaste uren</span>
-                                                      )}
-                                                    </>
-                                                  )}
+                                            <div className="space-y-3">
+                                              {datePrefs.map((pref: ShiftPreference, index) => {
+                                                if (pref.type === 'unavailable') return null;
+                                                
+                                                let timeSlot = '-';
+                                                let shiftPart = '';
+                                                
+                                                if (pref.startTime && pref.endTime) {
+                                                  const startHour = new Date(pref.startTime).getHours();
+                                                  const endHour = new Date(pref.endTime).getHours();
                                                   
-                                                  {/* Nacht shifts */}
-                                                  {pref.type === 'night' && (
-                                                    <>
-                                                      {new Date(pref.startTime).getHours() === 19 && new Date(pref.endTime).getHours() === 7 ? (
-                                                        <span className="font-medium">Volledige shift</span>
-                                                      ) : new Date(pref.startTime).getHours() === 19 && new Date(pref.endTime).getHours() === 23 ? (
-                                                        <span>Eerste helft</span>
-                                                      ) : new Date(pref.startTime).getHours() === 23 && new Date(pref.endTime).getHours() === 7 ? (
-                                                        <span>Tweede helft</span>
-                                                      ) : (
-                                                        <span>Aangepaste uren</span>
+                                                  timeSlot = `${startHour}:00 - ${endHour}:00`;
+                                                  
+                                                  if (pref.type === 'day') {
+                                                    if (startHour === 7 && endHour === 19) {
+                                                      timeSlot = '7:00 - 19:00';
+                                                      shiftPart = '(volledige shift)';
+                                                    } else if (startHour === 7 && endHour === 13) {
+                                                      timeSlot = '7:00 - 13:00';
+                                                      shiftPart = '(eerste helft)';
+                                                    } else if (startHour === 13 && endHour === 19) {
+                                                      timeSlot = '13:00 - 19:00';
+                                                      shiftPart = '(tweede helft)';
+                                                    }
+                                                  } else if (pref.type === 'night') {
+                                                    if (startHour === 19 && endHour === 7) {
+                                                      timeSlot = '19:00 - 7:00';
+                                                      shiftPart = '(volledige shift)';
+                                                    } else if (startHour === 19 && endHour === 23) {
+                                                      timeSlot = '19:00 - 23:00';
+                                                      shiftPart = '(eerste helft)';
+                                                    } else if (startHour === 23 && endHour === 7) {
+                                                      timeSlot = '23:00 - 7:00';
+                                                      shiftPart = '(tweede helft)';
+                                                    }
+                                                  }
+                                                }
+                                                
+                                                return (
+                                                  <div
+                                                    key={index}
+                                                    className={`p-3 rounded-md ${
+                                                      pref.type === 'day' ? 'bg-green-50 border border-green-200' :
+                                                      'bg-blue-50 border border-blue-200'
+                                                    }`}
+                                                  >
+                                                    <div className="flex items-center mb-1">
+                                                      <span className={`h-3 w-3 rounded-full mr-2 ${
+                                                        pref.type === 'day' ? 'bg-green-500' : 'bg-blue-500'
+                                                      }`}></span>
+                                                      <span className="font-medium">
+                                                        {pref.type === 'day' ? 'Dagshift' : 'Nachtshift'}
+                                                      </span>
+                                                    </div>
+                                                    <div className="ml-5">
+                                                      <div>
+                                                        <span className="text-sm">{timeSlot}</span>
+                                                        {shiftPart && (
+                                                          <span className="text-sm text-gray-600 ml-1">{shiftPart}</span>
+                                                        )}
+                                                      </div>
+                                                      {pref.notes && (
+                                                        <div className="text-xs text-gray-600 mt-1">
+                                                          <span className="font-medium">Notitie:</span> {pref.notes}
+                                                        </div>
                                                       )}
-                                                    </>
-                                                  )}
-                                                </>
-                                              )}
-                                              {(!pref.startTime || !pref.endTime) && (
-                                                <span>-</span>
-                                              )}
-                                            </span>
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
                                           )}
                                         </div>
-                                        <div className="text-sm">
-                                          {timeSlot}
-                                        </div>
-                                        <div>{pref.notes || '-'}</div>
-                                      </div>
-                                    );
-                                  })}
+                                      </DialogContent>
+                                    </Dialog>
+                                  );
+                                })}
+                              </div>
+                              
+                              <div className="flex items-center gap-4 text-sm text-gray-600 mt-2 border-t pt-2">
+                                <div className="flex items-center">
+                                  <span className="h-3 w-3 bg-green-100 border border-green-400 rounded-md mr-1"></span>
+                                  <span>Beschikbaar</span>
                                 </div>
-                              </TabsContent>
-                            </Tabs>
+                                <div className="flex items-center">
+                                  <span className="h-3 w-3 bg-red-100 border border-red-400 rounded-md mr-1"></span>
+                                  <span>Niet beschikbaar</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <span className="h-3 w-3 bg-gray-50 border border-gray-200 rounded-md mr-1"></span>
+                                  <span>Geen voorkeur opgegeven</span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
