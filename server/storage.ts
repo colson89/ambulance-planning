@@ -245,26 +245,47 @@ export class DatabaseStorage implements IStorage {
         return currentHours < user.hours;
       });
       
-      // Sorteren op basis van hoeveel uren de gebruiker al gewerkt heeft
-      return filteredUsers.sort((a, b) => {
-        const userA = activeUsers.find(u => u.id === a);
-        const userB = activeUsers.find(u => u.id === b);
+      // Willekeurigheid toevoegen aan de sortering voor meer variatie
+      // We maken drie groepen op basis van uren:
+      // 1. Urgente groep: minder dan 33% van uren gewerkt
+      // 2. Normale groep: tussen 33-66% van uren gewerkt
+      // 3. Lage prioriteit groep: meer dan 66% van uren gewerkt
+      
+      const urgentUsers: number[] = [];
+      const normalUsers: number[] = [];
+      const lowPriorityUsers: number[] = [];
+      
+      filteredUsers.forEach(userId => {
+        const user = activeUsers.find(u => u.id === userId);
+        if (!user) return;
         
-        if (!userA || !userB) return 0;
+        const currentHours = userAssignedHours.get(userId) || 0;
+        const percentage = (currentHours / user.hours) * 100;
         
-        const hoursA = userAssignedHours.get(a) || 0;
-        const hoursB = userAssignedHours.get(b) || 0;
-        
-        // Als een gebruiker minder dan 50% van zijn uren heeft, hogere prioriteit
-        const thresholdA = userA.hours * 0.5;
-        const thresholdB = userB.hours * 0.5;
-        
-        if (hoursA < thresholdA && hoursB >= thresholdB) return -1;
-        if (hoursB < thresholdB && hoursA >= thresholdA) return 1;
-        
-        // Anders sorteren op huidige toegewezen uren (minder uren = eerder ingepland)
-        return hoursA - hoursB;
+        if (percentage < 33) {
+          urgentUsers.push(userId);
+        } else if (percentage < 66) {
+          normalUsers.push(userId);
+        } else {
+          lowPriorityUsers.push(userId);
+        }
       });
+      
+      // Shuffle (willekeurig door elkaar) elke groep voor meer variatie
+      const shuffleArray = (array: number[]): number[] => {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      };
+      
+      // Combineer de groepen met hogere prioriteit vooraan
+      return [
+        ...shuffleArray(urgentUsers),
+        ...shuffleArray(normalUsers),
+        ...shuffleArray(lowPriorityUsers)
+      ];
     };
     
     // Voor elke dag in de maand (1-31)
