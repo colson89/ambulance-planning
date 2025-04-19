@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -49,6 +49,29 @@ export default function ScheduleGenerator() {
   const [generatedSchedule, setGeneratedSchedule] = useState<Shift[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [isGeneratingTestPreferences, setIsGeneratingTestPreferences] = useState(false);
+  // Mutatie om alle shift tijden te corrigeren
+  const fixShiftTimesMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/shifts/fix-times");
+      if (!res.ok) throw new Error("Kon shift tijden niet corrigeren");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Succes",
+        description: data.message || "Shift tijden succesvol gecorrigeerd",
+      });
+      // Vernieuw de shifts na een update
+      refetchShifts();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message || "Er is een fout opgetreden bij het corrigeren van shift tijden",
+        variant: "destructive",
+      });
+    },
+  });
   const [lastGeneratedDate, setLastGeneratedDate] = useState<Date | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number>(0);
   
@@ -422,31 +445,37 @@ export default function ScheduleGenerator() {
                 </Button>
               </div>
               
-              <div className="mt-4 p-4 border border-amber-100 rounded-md bg-amber-50">
-                <h3 className="font-semibold mb-2 flex items-center text-amber-800">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Shift Tijden Corrigeren
+              <div className="mt-4 p-4 border border-red-100 rounded-md bg-red-50">
+                <h3 className="font-semibold mb-2 flex items-center text-red-800">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Planning Verwijderen
                 </h3>
-                <p className="text-sm text-amber-800 mb-4">
-                  Corrigeer alle bestaande shifts naar de juiste tijden (dagen: 07:00-19:00, nachten: 19:00-07:00)
+                <p className="text-sm text-red-800 mb-4">
+                  Verwijder alle planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
                 </p>
                 
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200"
-                  disabled={fixShiftTimesMutation.isPending}
-                  onClick={() => fixShiftTimesMutation.mutate()}
+                  className="w-full border-red-300 bg-red-100 text-red-900 hover:bg-red-200"
+                  onClick={() => {
+                    const monthName = format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl });
+                    // Toon bevestigingsdialoog
+                    if (window.confirm(`Weet u zeker dat u de volledige planning voor ${monthName} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.`)) {
+                      deleteMonthShiftsMutation.mutate();
+                    }
+                  }}
+                  disabled={deleteMonthShiftsMutation.isPending}
                 >
-                  {fixShiftTimesMutation.isPending ? (
+                  {deleteMonthShiftsMutation.isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Bezig met corrigeren...
+                      Bezig met verwijderen...
                     </>
                   ) : (
                     <>
-                      <Clock className="h-4 w-4 mr-2" />
-                      Shift Tijden Corrigeren
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Planning Verwijderen
                     </>
                   )}
                 </Button>
