@@ -956,35 +956,40 @@ export default function ScheduleGenerator() {
           
           {selectedDate && (
             <div>
-              <h3 className="font-semibold mb-2">Dag Shift (07:00 - 19:00)</h3>
-              <div className="mb-4 space-y-1 max-h-40 overflow-y-auto">
-                {getUsersAvailableForDate(selectedDate, "day").length > 0 ? (
-                  getUsersAvailableForDate(selectedDate, "day").map((user) => (
-                    <div 
-                      key={user.userId} 
-                      className="p-2 border rounded flex justify-between items-center"
-                    >
-                      <div className="flex items-center">
-                        <span className="font-medium">{user.firstName} {user.lastName}</span>
-                        <span className="text-gray-500 text-sm ml-2">({user.username})</span>
-                      </div>
-                      <div>
-                        <Badge variant={
-                          user.preferenceType === "full" ? "default" :
-                          user.preferenceType === "first" ? "outline" :
-                          "secondary"
-                        }>
-                          {user.preferenceType === "full" ? "Volledige shift" :
-                           user.preferenceType === "first" ? "Eerste helft" :
-                           user.preferenceType === "second" ? "Tweede helft" : "Beschikbaar"}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-gray-500 italic">Geen beschikbare medewerkers gevonden</div>
-                )}
-              </div>
+              {/* Alleen dagshifts tonen in het weekend */}
+              {isWeekend(selectedDate) && (
+                <>
+                  <h3 className="font-semibold mb-2">Dag Shift (07:00 - 19:00)</h3>
+                  <div className="mb-4 space-y-1 max-h-40 overflow-y-auto">
+                    {getUsersAvailableForDate(selectedDate, "day").length > 0 ? (
+                      getUsersAvailableForDate(selectedDate, "day").map((user) => (
+                        <div 
+                          key={user.userId} 
+                          className="p-2 border rounded flex justify-between items-center"
+                        >
+                          <div className="flex items-center">
+                            <span className="font-medium">{user.firstName} {user.lastName}</span>
+                            <span className="text-gray-500 text-sm ml-2">({user.username})</span>
+                          </div>
+                          <div>
+                            <Badge variant={
+                              user.preferenceType === "full" ? "default" :
+                              user.preferenceType === "first" ? "outline" :
+                              "secondary"
+                            }>
+                              {user.preferenceType === "full" ? "Volledige shift" :
+                               user.preferenceType === "first" ? "Eerste helft" :
+                               user.preferenceType === "second" ? "Tweede helft" : "Beschikbaar"}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-gray-500 italic">Geen beschikbare medewerkers gevonden</div>
+                    )}
+                  </div>
+                </>
+              )}
               
               <h3 className="font-semibold mb-2">Nacht Shift (19:00 - 07:00)</h3>
               <div className="mb-4 space-y-1 max-h-40 overflow-y-auto">
