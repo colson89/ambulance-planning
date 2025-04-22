@@ -981,13 +981,13 @@ export class DatabaseStorage implements IStorage {
                   date: currentDate,
                   type: "night" as const,
                   startTime: new Date(year, month - 1, day, 19, 0, 0),
-                  endTime: new Date(year, month - 1, day, 1, 0, 0), // Tot 1:00
+                  endTime: new Date(year, month - 1, day, 23, 0, 0), // Tot 23:00
                   status: "planned" as const,
                   month,
                   year,
                   isSplitShift: true,
                   splitStartTime: new Date(year, month - 1, day, 19, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day, 1, 0, 0)
+                  splitEndTime: new Date(year, month - 1, day, 23, 0, 0)
                 };
                 
                 // Voeg toe aan de lijst van toegewezen gebruikers voor deze nacht
