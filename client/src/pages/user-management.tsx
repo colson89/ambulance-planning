@@ -502,28 +502,27 @@ export default function UserManagement() {
                                                   const startHour = new Date(pref.startTime).getHours();
                                                   const endHour = new Date(pref.endTime).getHours();
                                                   
-                                                  timeSlot = `${startHour}:00 - ${endHour}:00`;
-                                                  
+                                                  // Standaardiseer hier de tijden in plaats van de daadwerkelijke uren te tonen
                                                   if (pref.type === 'day') {
-                                                    if (startHour === 7 && endHour === 19) {
-                                                      timeSlot = '7:00 - 19:00';
+                                                    if ((startHour === 7 || startHour === 9) && (endHour === 19 || endHour === 21)) {
+                                                      timeSlot = '07:00 - 19:00';
                                                       shiftPart = '(volledige shift)';
-                                                    } else if (startHour === 7 && endHour === 13) {
-                                                      timeSlot = '7:00 - 13:00';
+                                                    } else if ((startHour === 7 || startHour === 9) && (endHour === 13 || endHour === 15)) {
+                                                      timeSlot = '07:00 - 13:00';
                                                       shiftPart = '(eerste helft)';
-                                                    } else if (startHour === 13 && endHour === 19) {
+                                                    } else if ((startHour === 13 || startHour === 15) && (endHour === 19 || endHour === 21)) {
                                                       timeSlot = '13:00 - 19:00';
                                                       shiftPart = '(tweede helft)';
                                                     }
                                                   } else if (pref.type === 'night') {
-                                                    if (startHour === 19 && endHour === 7) {
-                                                      timeSlot = '19:00 - 7:00';
+                                                    if ((startHour === 19 || startHour === 21) && (endHour === 7 || endHour === 9)) {
+                                                      timeSlot = '19:00 - 07:00';
                                                       shiftPart = '(volledige shift)';
-                                                    } else if (startHour === 19 && endHour === 23) {
+                                                    } else if ((startHour === 19 || startHour === 21) && (endHour === 23 || endHour === 1)) {
                                                       timeSlot = '19:00 - 23:00';
                                                       shiftPart = '(eerste helft)';
-                                                    } else if (startHour === 23 && endHour === 7) {
-                                                      timeSlot = '23:00 - 7:00';
+                                                    } else if ((startHour === 23 || startHour === 1) && (endHour === 7 || endHour === 9)) {
+                                                      timeSlot = '23:00 - 07:00';
                                                       shiftPart = '(tweede helft)';
                                                     }
                                                   }
