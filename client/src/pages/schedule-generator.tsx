@@ -223,26 +223,39 @@ export default function ScheduleGenerator() {
       .map(pref => {
         const userInfo = users.find(u => u.id === pref.userId);
         
-        // Bepaal het soort shift op basis van de tijden
+        // Bepaal het soort shift op basis van de canSplit eigenschap
         let shiftPart = "full";
+        
+        // Veilige check om te zorgen dat we hier geen ongeldige tijdswaarden gebruiken
         if (pref.canSplit) {
-          if (pref.startTime && pref.endTime) {
-            const startHour = new Date(pref.startTime).getHours();
-            const endHour = new Date(pref.endTime).getHours();
-            
-            if (pref.type === "day") {
-              if (startHour === 7 && endHour === 13) {
-                shiftPart = "first";
-              } else if (startHour === 13 && endHour === 19) {
-                shiftPart = "second";
-              }
-            } else if (pref.type === "night") {
-              if (startHour === 19 && endHour === 23) {
-                shiftPart = "first";
-              } else if (startHour === 23 && endHour === 7) {
-                shiftPart = "second";
+          try {
+            if (pref.startTime && pref.endTime) {
+              const startDate = new Date(pref.startTime);
+              const endDate = new Date(pref.endTime);
+              
+              // Alleen doorgaan als beide datums geldig zijn
+              if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                const startHour = startDate.getHours();
+                const endHour = endDate.getHours();
+                
+                if (pref.type === "day") {
+                  if (startHour === 7 && endHour === 13) {
+                    shiftPart = "first";
+                  } else if (startHour === 13 && endHour === 19) {
+                    shiftPart = "second";
+                  }
+                } else if (pref.type === "night") {
+                  if (startHour === 19 && endHour === 23) {
+                    shiftPart = "first";
+                  } else if (startHour === 23 && endHour === 7) {
+                    shiftPart = "second";
+                  }
+                }
               }
             }
+          } catch (error) {
+            console.error("Fout bij verwerken van shift tijden:", error);
+            // Bij een fout gebruiken we de standaardwaarde "full"
           }
         }
         
