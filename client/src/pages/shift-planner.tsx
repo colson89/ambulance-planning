@@ -371,7 +371,7 @@ export default function ShiftPlanner() {
                         checked={getPreferenceForDate(selectedDate, "night") === "first"}
                         onChange={(e) => handleTypeChange(e, selectedDate, "night")}
                       />
-                      <span>Eerste deel (19:00-1:00)</span>
+                      <span>Eerste deel (19:00-23:00)</span>
                     </label>
                     <label className="flex items-center space-x-2">
                       <input
@@ -381,7 +381,7 @@ export default function ShiftPlanner() {
                         checked={getPreferenceForDate(selectedDate, "night") === "second"}
                         onChange={(e) => handleTypeChange(e, selectedDate, "night")}
                       />
-                      <span>Tweede deel (1:00-7:00)</span>
+                      <span>Tweede deel (23:00-7:00)</span>
                     </label>
                     <label className="flex items-center space-x-2">
                       <input
