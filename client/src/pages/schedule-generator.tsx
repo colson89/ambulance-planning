@@ -207,85 +207,77 @@ export default function ScheduleGenerator() {
     return prefsCount * 12;
   };
 
-  // Vereenvoudigde helper functie om gebruikers te vinden die beschikbaar zijn op een bepaalde datum
+  // Functie om beschikbare medewerkers te tonen op basis van bestaande shifts
   const getUsersAvailableForDate = (date: Date | null, shiftType: "day" | "night") => {
     // Veiligheidsmaatregel: returnt een lege array als de datum null is
     if (!date) return [];
     
     console.log("Zoeken naar beschikbare medewerkers voor datum:", date);
     console.log("Shift type:", shiftType);
-    console.log("Aantal voorkeuren in database:", preferences.length);
     
     try {
-      // Gedetailleerde debug informatie om te zien welke voorkeuren er zijn
-      // en waarom ze niet overeenkomen met de gezochte datum
-      const gezochteYMD = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-      console.log("Alle voorkeuren in detail inspecteren voor geselecteerde datum:", gezochteYMD);
-      
-      // Maak een veilige lijst van voorkeuren voor deze datum en shift type
       const result = [];
       
-      // Toon de eerste 20 voorkeuren met hun datums voor debug
-      preferences.slice(0, 20).forEach((pref, index) => {
-        if (pref.date) {
-          const prefDate = new Date(pref.date);
-          console.log(`Pref ${index}: id=${pref.id}, datum=${prefDate.toISOString()}, type=${pref.type}, userId=${pref.userId}`);
+      // Gezochte datum in YMD formaat voor eenvoudigere vergelijking
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1; // JavaScript maanden zijn 0-11
+      const day = date.getDate();
+      const gezochteYMD = `${year}-${month}-${day}`;
+      
+      console.log(`Zoeken naar shifts voor datum: ${gezochteYMD}`);
+      
+      // In plaats van te zoeken in voorkeuren, kijken we direct naar de shifts
+      // om te zien wie er gepland staat voor deze datum
+      const matchingShifts = shifts.filter(shift => {
+        if (!shift.date) return false;
+        
+        const shiftDate = new Date(shift.date);
+        const shiftYMD = `${shiftDate.getFullYear()}-${shiftDate.getMonth() + 1}-${shiftDate.getDate()}`;
+        
+        // Controleer het shift type (dag of nacht)
+        const isTypeMatch = (shiftType === "day" && shift.type === "day") || 
+                           (shiftType === "night" && shift.type === "night");
+        
+        return shiftYMD === gezochteYMD && isTypeMatch;
+      });
+      
+      console.log(`Gevonden aantal shifts voor deze datum en type: ${matchingShifts.length}`);
+      
+      // Voor elke gevonden shift, zoek de toegewezen medewerker
+      const assignedUserIds = new Set();
+      matchingShifts.forEach(shift => {
+        if (shift.userId > 0) {
+          assignedUserIds.add(shift.userId);
         }
       });
       
-      // Meer flexibele datum-matching
-      for (const pref of preferences) {
-        try {
-          // Skip als er geen datum is
-          if (!pref.date) continue;
-          
-          // Converteer preference datum naar string voor simpelere vergelijking
-          const prefDate = new Date(pref.date);
-          const prefYMD = `${prefDate.getFullYear()}-${prefDate.getMonth() + 1}-${prefDate.getDate()}`;
-          
-          // Debug
-          if (prefYMD === gezochteYMD) {
-            console.log(`Potentiële match gevonden voor datum ${prefYMD}, type=${pref.type}, verwacht type=${shiftType}`);
-          }
-          
-          // Controleer of de datum en shift type overeen komen
-          if (prefYMD === gezochteYMD && pref.type === shiftType) {
-            console.log("Match gevonden voor gebruiker ID:", pref.userId);
-            
-            // Zoek gebruikersinfo
-            const userInfo = users.find(u => u.id === pref.userId);
-            
-            if (!userInfo) {
-              console.log("Gebruiker niet gevonden voor ID:", pref.userId);
-              continue; // Skip als gebruiker niet gevonden wordt
-            }
-            
-            console.log(`Gebruiker ${userInfo.firstName} ${userInfo.lastName} toegevoegd aan resultaten`);
-            
-            // Voeg gebruiker toe aan resultaat
-            result.push({
-              userId: pref.userId,
-              username: userInfo.username || "Onbekend",
-              firstName: userInfo.firstName || "",
-              lastName: userInfo.lastName || "",
-              preferenceType: pref.preferenceType || "full",
-              canSplit: pref.canSplit || false
-            });
-          }
-        } catch (err) {
-          console.error("Fout bij verwerken individuele voorkeur:", err);
-          // Ga door naar de volgende voorkeur
-        }
-      }
+      console.log(`Aantal toegewezen gebruikers: ${assignedUserIds.size}`);
       
-      console.log("Gevonden aantal beschikbare medewerkers:", result.length);
+      // Haal alle ambulanciers op
+      const ambulanciers = users.filter(u => u.role === "ambulancier");
       
-      if (result.length === 0) {
-        console.log("Geen echte matches gevonden - zullen we voor elke datum test data genereren?");
-      }
+      // Toon alle ambulanciers en markeer degenen die al zijn toegewezen
+      ambulanciers.forEach(ambulancier => {
+        const isAssigned = assignedUserIds.has(ambulancier.id);
+        
+        result.push({
+          userId: ambulancier.id,
+          username: ambulancier.username || "Onbekend",
+          firstName: ambulancier.firstName || "",
+          lastName: ambulancier.lastName || "",
+          preferenceType: isAssigned ? "assigned" : "available", // Markeer als toegewezen indien van toepassing
+          canSplit: false, // Niet relevant voor weergave
+          isAssigned: isAssigned // Extra veld om snel te kunnen checken of deze gebruiker al is toegewezen
+        });
+      });
       
       // Sorteer de resultaten op naam
       result.sort((a, b) => {
+        // Sorteren: eerst op basis van toewijzing (niet-toegewezen eerst), dan op naam
+        if (a.isAssigned !== b.isAssigned) {
+          return a.isAssigned ? 1 : -1;
+        }
+        
         const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
         const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
         return nameA.localeCompare(nameB);
@@ -1006,13 +998,9 @@ export default function ScheduleGenerator() {
                       </div>
                       <div>
                         <Badge variant={
-                          user.preferenceType === "full" ? "default" :
-                          user.preferenceType === "first" ? "outline" :
-                          "secondary"
+                          user.isAssigned ? "secondary" : "default"
                         }>
-                          {user.preferenceType === "full" ? "Volledige shift" :
-                           user.preferenceType === "first" ? "Eerste helft (19:00-23:00)" :
-                           user.preferenceType === "second" ? "Tweede helft (23:00-07:00)" : "Beschikbaar"}
+                          {user.isAssigned ? "Reeds ingepland" : "Beschikbaar"}
                         </Badge>
                       </div>
                     </div>
