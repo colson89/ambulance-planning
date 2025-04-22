@@ -478,7 +478,7 @@ export class DatabaseStorage implements IStorage {
           let hasAssignedHalfShift1 = false;
           let hasAssignedHalfShift2 = false;
           
-          // Eerste helft van de nacht (19:00 - 1:00)
+          // Eerste helft van de nacht (19:00 - 23:00)
           const sortedNightFirstHalfUsers = getSortedUsersForAssignment(availableForNightFirstHalf);
           if (sortedNightFirstHalfUsers.length > 0) {
             const halfShiftHours = 6; // 6 uur voor de eerste helft
@@ -492,7 +492,7 @@ export class DatabaseStorage implements IStorage {
                   date: currentDate,
                   type: "night" as const,
                   startTime: new Date(year, month - 1, day, 19, 0, 0),
-                  endTime: new Date(year, month - 1, day, 1, 0, 0), // Tot 1:00
+                  endTime: new Date(year, month - 1, day, 23, 0, 0), // Tot 23:00
                   status: "planned" as const,
                   month,
                   year,
@@ -510,7 +510,7 @@ export class DatabaseStorage implements IStorage {
             }
           }
           
-          // Tweede helft van de nacht (1:00 - 7:00)
+          // Tweede helft van de nacht (23:00 - 7:00)
           const sortedNightSecondHalfUsers = getSortedUsersForAssignment(availableForNightSecondHalf);
           if (sortedNightSecondHalfUsers.length > 0) {
             const halfShiftHours = 6; // 6 uur voor de tweede helft

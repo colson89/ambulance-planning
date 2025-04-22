@@ -137,13 +137,13 @@ export default function ShiftPlanner() {
           }
         } else if (shiftType === "night") {
           if (preferenceType === "first") {
-            // Eerste helft nachtshift (19:00-1:00)
+            // Eerste helft nachtshift (19:00-23:00)
             startTimeHour = 19;
-            endTimeHour = 1;
+            endTimeHour = 23;
             endDateOffset = 0; // Eindigt nog op dezelfde dag
           } else if (preferenceType === "second") {
-            // Tweede helft nachtshift (1:00-7:00)
-            startTimeHour = 1;
+            // Tweede helft nachtshift (23:00-7:00)
+            startTimeHour = 23;
             endTimeHour = 7;
             endDateOffset = 1; // Eindigt de volgende dag
           }
