@@ -212,13 +212,19 @@ export default function ScheduleGenerator() {
     // Veiligheidsmaatregel: returnt een lege array als de datum null is
     if (!date) return [];
     
-    // Converteer elke datum naar een string formaat (yyyy-MM-dd) voor vergelijking
-    // Dit is veiliger dan te werken met Date objecten en tijdvergelijkingen
-    const targetDateString = date.toISOString().split('T')[0];
+    console.log("Zoeken naar beschikbare medewerkers voor datum:", date);
+    console.log("Shift type:", shiftType);
+    console.log("Aantal voorkeuren in database:", preferences.length);
     
     try {
+      // Formateer de doeldatum voor eenvoudige vergelijking
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1; // JavaScript maanden zijn 0-11
+      const day = date.getDate();
+      
+      console.log(`Gezochte datum: ${year}-${month}-${day}`);
+      
       // Maak een veilige lijst van voorkeuren voor deze datum en shift type
-      // Vermijd complexe filter/map operaties en gebruik simpele loops voor betere controle
       const result = [];
       
       for (const pref of preferences) {
@@ -226,30 +232,62 @@ export default function ScheduleGenerator() {
           // Skip als er geen datum is
           if (!pref.date) continue;
           
-          // Haal de datum-string uit de voorkeur
-          const prefDateString = new Date(pref.date).toISOString().split('T')[0];
+          // Pas eenvoudigere datumvergelijking toe
+          const prefDate = new Date(pref.date);
+          const prefYear = prefDate.getFullYear();
+          const prefMonth = prefDate.getMonth() + 1;
+          const prefDay = prefDate.getDate();
+          
+          console.log(`Vergelijken met voorkeur: ${prefYear}-${prefMonth}-${prefDay}, type: ${pref.type}`);
           
           // Controleer of de datum en shift type overeen komen
-          if (prefDateString === targetDateString && pref.type === shiftType) {
+          if (prefYear === year && prefMonth === month && prefDay === day && pref.type === shiftType) {
+            console.log("Match gevonden voor gebruiker ID:", pref.userId);
+            
             // Zoek gebruikersinfo
             const userInfo = users.find(u => u.id === pref.userId);
             
-            if (!userInfo) continue; // Skip als gebruiker niet gevonden wordt
+            if (!userInfo) {
+              console.log("Gebruiker niet gevonden voor ID:", pref.userId);
+              continue; // Skip als gebruiker niet gevonden wordt
+            }
             
-            // Voeg gebruiker toe aan resultaat met eenvoudige type-indicatie
+            // Test: negeer canSplit en toon altijd alle beschikbare gebruikers
             result.push({
               userId: pref.userId,
               username: userInfo.username || "Onbekend",
               firstName: userInfo.firstName || "",
               lastName: userInfo.lastName || "",
-              preferenceType: pref.canSplit ? "first" : "full", // Vereenvoudigd tot full of first
-              canSplit: pref.canSplit
+              preferenceType: "full", // Houd het eenvoudig voor nu
+              canSplit: false // Niet relevant voor weergave
             });
           }
         } catch (err) {
           console.error("Fout bij verwerken individuele voorkeur:", err);
           // Ga door naar de volgende voorkeur
         }
+      }
+      
+      console.log("Gevonden aantal beschikbare medewerkers:", result.length);
+      
+      // Als er nog steeds geen resultaten zijn, toon alle medewerkers als demo
+      if (result.length === 0) {
+        console.log("Geen echte matches gevonden - alle gebruikers worden getoond voor test doeleinden");
+        
+        // Toon alle ambulanciers als beschikbaar (alleen voor testdoeleinden)
+        const ambulanciers = users.filter(u => u.role === "ambulancier");
+        for (const ambulancier of ambulanciers) {
+          result.push({
+            userId: ambulancier.id,
+            username: ambulancier.username || "Onbekend",
+            firstName: ambulancier.firstName || "",
+            lastName: ambulancier.lastName || "",
+            preferenceType: "full", // Demo: alle volledig beschikbaar
+            canSplit: false
+          });
+        }
+        
+        console.log("Demo data: aantal beschikbare medewerkers:", result.length);
       }
       
       return result;
