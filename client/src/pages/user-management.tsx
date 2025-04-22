@@ -41,6 +41,7 @@ export default function UserManagement() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [, setLocation] = useLocation();
+  const [searchTerm, setSearchTerm] = useState("");
   
   // Query om alle beschikbaarheden te krijgen voor een bepaalde gebruiker
   const { data: userPreferences, isLoading: isLoadingPreferences } = useQuery({
@@ -185,6 +186,17 @@ export default function UserManagement() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gebruikersbeheer</h1>
+        
+        <div className="flex items-center gap-4 flex-1 max-w-md mx-4">
+          <Input
+            type="search"
+            placeholder="Zoek op naam of gebruikersnaam..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -281,8 +293,19 @@ export default function UserManagement() {
       </div>
 
       <div className="grid gap-4">
-        {users?.map((u) => (
-          <Card key={u.id}>
+        {users
+          ?.filter(u => 
+            searchTerm === "" || 
+            u.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            u.lastName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            u.username.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+          .map((u) => (
+          <Card key={u.id} className={searchTerm && (
+            u.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            u.lastName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            u.username.toLowerCase().includes(searchTerm.toLowerCase())
+          ) ? "border-2 border-primary" : ""}>
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
