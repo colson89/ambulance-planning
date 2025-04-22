@@ -255,8 +255,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Bepaal beschikbaarheid - 25% kans op beschikbaarheid
           const randomValue = Math.random();
           
-          // 25% kans dat iemand beschikbaar is
-          if (randomValue < 0.25) {
+          // Voor elke gebruiker maken we een vaste verdeling van beschikbare dagen
+          // Elke gebruiker krijgt precies 25% beschikbaarheid (8 dagen voor een maand van 31 dagen)
+          
+          // Gebruik een deterministische aanpak op basis van userID en dag van de maand
+          // Dit zorgt ervoor dat elke gebruiker andere dagen beschikbaar is
+          const userOffset = user.id % 4; // Verdeel gebruikers in 4 groepen
+          
+          // Bepaal of de dag beschikbaar is voor deze gebruiker
+          // We delen de maand in 4 groepen van ~8 dagen, en elke userOffset groep krijgt andere dagen
+          const isAvailable = ((day + userOffset) % 4 === 0);
+          
+          if (isAvailable) {
             // Even user IDs prefer night shifts
             const preferNight = isEvenUserId ? Math.random() < 0.7 : Math.random() < 0.3;
             const shiftType = preferNight ? "night" : "day";
@@ -264,6 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Preference types: 75% full shifts, 25% half shifts (verdeeld over first en second)
             let preferenceType;
             const halfShiftRand = Math.random();
+            // Exacte verdeling: 75% volledig, 25% half (12.5% eerste helft, 12.5% tweede helft)
             if (halfShiftRand < 0.75) {
               preferenceType = "full";
             } else if (halfShiftRand < 0.875) {
@@ -318,8 +329,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
             createdPreferences++;
           } 
-          // 5% kans dat iemand expliciet NIET beschikbaar is (rest is geen voorkeur)
-          else if (randomValue < 0.30) {
+          // Voor alle andere dagen (75%) expliciet markeren als onbeschikbaar
+          else {
             // Maak een "unavailable" voorkeur
             await storage.createShiftPreference({
               userId: user.id,
@@ -334,7 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
             createdPreferences++;
           }
-          // De overige 70% van de dagen: geen voorkeur gemaakt (noch beschikbaar, noch onbeschikbaar)
+          // GEEN neutrale voorkeuren meer
         }
       }
       
