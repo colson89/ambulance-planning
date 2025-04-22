@@ -324,7 +324,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ 
         message: `Successfully generated ${createdPreferences} test preferences for ${users.length} users`,
         timestamp: timestamp,
-        formattedTimestamp: now.toLocaleString('nl-NL')
+        formattedTimestamp: now.toLocaleString('nl-NL', { 
+          timeZone: 'Europe/Brussels',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false 
+        })
       });
     } catch (error) {
       console.error("Error generating test preferences:", error);
