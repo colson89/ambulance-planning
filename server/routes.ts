@@ -181,6 +181,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Clear all preferences for a user and month
+  app.delete("/api/preferences/clearMonth/:userId/:month/:year", requireAdmin, async (req, res) => {
+    try {
+      const { userId, month, year } = req.params;
+      const userPrefs = await storage.getUserShiftPreferences(
+        parseInt(userId),
+        parseInt(month),
+        parseInt(year)
+      );
+      
+      // Delete each preference
+      for (const pref of userPrefs) {
+        await storage.deleteShiftPreference(pref.id);
+      }
+      
+      res.status(200).json({ message: `Deleted ${userPrefs.length} preferences for user ${userId} in ${month}/${year}` });
+    } catch (error) {
+      console.error("Error clearing preferences:", error);
+      res.status(500).json({ message: "Failed to clear preferences" });
+    }
+  });
+  
   // Generate random preferences for testing (admin only)
   app.post("/api/preferences/generate-test-data", requireAdmin, async (req, res) => {
     try {
