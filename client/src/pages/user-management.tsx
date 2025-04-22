@@ -427,7 +427,7 @@ export default function UserManagement() {
                                           className={`p-2 rounded-md border cursor-pointer hover:border-gray-400 ${
                                             isUnavailable ? 'bg-red-100 border-red-400' : 
                                             isAvailable ? 'bg-green-100 border-green-400' : 
-                                            'bg-red-100 border-red-400' // Toon neutrale voorkeuren ook als rood (onbeschikbaar)
+                                            'bg-gray-50 border-gray-200' // Neutrale voorkeuren blijven neutraal in weergave
                                           }`}
                                         >
                                           <div className="flex justify-between items-center">
@@ -555,6 +555,10 @@ export default function UserManagement() {
                                 <div className="flex items-center">
                                   <span className="h-3 w-3 bg-red-100 border border-red-400 rounded-md mr-1"></span>
                                   <span>Niet beschikbaar</span>
+                                </div>
+                                <div className="flex items-center">
+                                  <span className="h-3 w-3 bg-gray-50 border border-gray-200 rounded-md mr-1"></span>
+                                  <span>Geen voorkeur opgegeven</span>
                                 </div>
                               </div>
                             </div>
