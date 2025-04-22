@@ -549,13 +549,13 @@ export class DatabaseStorage implements IStorage {
               date: currentDate,
               type: "night" as const,
               startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day, 1, 0, 0),
+              endTime: new Date(year, month - 1, day, 23, 0, 0),
               status: "open" as const,
               month,
               year,
               isSplitShift: true,
               splitStartTime: new Date(year, month - 1, day, 19, 0, 0),
-              splitEndTime: new Date(year, month - 1, day, 1, 0, 0)
+              splitEndTime: new Date(year, month - 1, day, 23, 0, 0)
             };
             
             const savedOpenHalfShift1 = await this.createShift(openNightHalfShift1);
@@ -574,7 +574,7 @@ export class DatabaseStorage implements IStorage {
               month,
               year,
               isSplitShift: true,
-              splitStartTime: new Date(year, month - 1, day, 1, 0, 0),
+              splitStartTime: new Date(year, month - 1, day, 23, 0, 0),
               splitEndTime: new Date(year, month - 1, day + 1, 7, 0, 0)
             };
             
@@ -1018,13 +1018,13 @@ export class DatabaseStorage implements IStorage {
                   userId: userId,
                   date: currentDate,
                   type: "night" as const,
-                  startTime: new Date(year, month - 1, day, 1, 0, 0), // Vanaf 1:00
+                  startTime: new Date(year, month - 1, day, 23, 0, 0), // Vanaf 1:00
                   endTime: new Date(year, month - 1, day + 1, 7, 0, 0), // Tot 7:00 volgende dag
                   status: "planned" as const,
                   month,
                   year,
                   isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 1, 0, 0),
+                  splitStartTime: new Date(year, month - 1, day, 23, 0, 0),
                   splitEndTime: new Date(year, month - 1, day + 1, 7, 0, 0)
                 };
                 
@@ -1046,13 +1046,13 @@ export class DatabaseStorage implements IStorage {
               date: currentDate,
               type: "night" as const,
               startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day, 1, 0, 0),
+              endTime: new Date(year, month - 1, day, 23, 0, 0),
               status: "open" as const,
               month,
               year,
               isSplitShift: true,
               splitStartTime: new Date(year, month - 1, day, 19, 0, 0),
-              splitEndTime: new Date(year, month - 1, day, 1, 0, 0)
+              splitEndTime: new Date(year, month - 1, day, 23, 0, 0)
             };
             
             const savedOpenHalfShift1 = await this.createShift(openNightHalfShift1);
@@ -1071,7 +1071,7 @@ export class DatabaseStorage implements IStorage {
               month,
               year,
               isSplitShift: true,
-              splitStartTime: new Date(year, month - 1, day, 1, 0, 0),
+              splitStartTime: new Date(year, month - 1, day, 23, 0, 0),
               splitEndTime: new Date(year, month - 1, day + 1, 7, 0, 0)
             };
             
