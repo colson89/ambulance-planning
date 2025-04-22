@@ -48,6 +48,8 @@ export default function ScheduleGenerator() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [generatedSchedule, setGeneratedSchedule] = useState<Shift[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showAvailabilityDialog, setShowAvailabilityDialog] = useState<boolean>(false);
   const [isGeneratingTestPreferences, setIsGeneratingTestPreferences] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   
@@ -202,6 +204,57 @@ export default function ScheduleGenerator() {
     // Elke voorkeur vertegenwoordigt ongeveer 12 uur (een volledige shift)
     const prefsCount = preferences.filter(p => p.userId === userId).length;
     return prefsCount * 12;
+  };
+
+  // Helper functie om gebruikers te vinden die beschikbaar zijn op een bepaalde datum
+  const getUsersAvailableForDate = (date: Date, shiftType: "day" | "night") => {
+    const formattedDate = format(date, "yyyy-MM-dd");
+    
+    // Filter voorkeuren op de juiste datum en type
+    return preferences
+      .filter(pref => {
+        const prefDate = new Date(pref.date);
+        return (
+          format(prefDate, "yyyy-MM-dd") === formattedDate && 
+          pref.type === shiftType &&
+          pref.type !== "unavailable"
+        );
+      })
+      .map(pref => {
+        const userInfo = users.find(u => u.id === pref.userId);
+        
+        // Bepaal het soort shift op basis van de tijden
+        let shiftPart = "full";
+        if (pref.canSplit) {
+          if (pref.startTime && pref.endTime) {
+            const startHour = new Date(pref.startTime).getHours();
+            const endHour = new Date(pref.endTime).getHours();
+            
+            if (pref.type === "day") {
+              if (startHour === 7 && endHour === 13) {
+                shiftPart = "first";
+              } else if (startHour === 13 && endHour === 19) {
+                shiftPart = "second";
+              }
+            } else if (pref.type === "night") {
+              if (startHour === 19 && endHour === 23) {
+                shiftPart = "first";
+              } else if (startHour === 23 && endHour === 7) {
+                shiftPart = "second";
+              }
+            }
+          }
+        }
+        
+        return {
+          userId: pref.userId,
+          username: userInfo?.username || "Unknown",
+          firstName: userInfo?.firstName || "",
+          lastName: userInfo?.lastName || "",
+          preferenceType: shiftPart,
+          canSplit: pref.canSplit
+        };
+      });
   };
 
   // Helper functie om gegenereerde shifts in uren per gebruiker te berekenen
@@ -664,7 +717,17 @@ export default function ScheduleGenerator() {
                           key={shift.id}
                           className={`${shift.status === "open" || isUserDeleted ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""}`}
                         >
-                          <TableCell>{format(new Date(shift.date), "dd MMMM (EEEE)", { locale: nl })}</TableCell>
+                          <TableCell>
+                            <button 
+                              className="hover:underline text-left"
+                              onClick={() => {
+                                setSelectedDate(new Date(shift.date));
+                                setShowAvailabilityDialog(true);
+                              }}
+                            >
+                              {format(new Date(shift.date), "dd MMMM (EEEE)", { locale: nl })}
+                            </button>
+                          </TableCell>
                           <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
                           <TableCell>
                             {shift.startTime && shift.endTime ? (
@@ -833,6 +896,92 @@ export default function ScheduleGenerator() {
                 )}
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Beschikbaarheid Dialog */}
+      <Dialog open={showAvailabilityDialog} onOpenChange={setShowAvailabilityDialog}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Beschikbaarheid Overzicht</DialogTitle>
+            <DialogDescription>
+              {selectedDate && (
+                <span>
+                  Beschikbare medewerkers voor {format(selectedDate, "dd MMMM yyyy (EEEE)", { locale: nl })}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedDate && (
+            <div>
+              <h3 className="font-semibold mb-2">Dag Shift (07:00 - 19:00)</h3>
+              <div className="mb-4 space-y-1 max-h-40 overflow-y-auto">
+                {getUsersAvailableForDate(selectedDate, "day").length > 0 ? (
+                  getUsersAvailableForDate(selectedDate, "day").map((user) => (
+                    <div 
+                      key={user.userId} 
+                      className="p-2 border rounded flex justify-between items-center"
+                    >
+                      <div className="flex items-center">
+                        <span className="font-medium">{user.firstName} {user.lastName}</span>
+                        <span className="text-gray-500 text-sm ml-2">({user.username})</span>
+                      </div>
+                      <div>
+                        <Badge variant={
+                          user.preferenceType === "full" ? "default" :
+                          user.preferenceType === "first" ? "outline" :
+                          "secondary"
+                        }>
+                          {user.preferenceType === "full" ? "Volledige shift" :
+                           user.preferenceType === "first" ? "Eerste helft" :
+                           user.preferenceType === "second" ? "Tweede helft" : "Beschikbaar"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-gray-500 italic">Geen beschikbare medewerkers gevonden</div>
+                )}
+              </div>
+              
+              <h3 className="font-semibold mb-2">Nacht Shift (19:00 - 07:00)</h3>
+              <div className="mb-4 space-y-1 max-h-40 overflow-y-auto">
+                {getUsersAvailableForDate(selectedDate, "night").length > 0 ? (
+                  getUsersAvailableForDate(selectedDate, "night").map((user) => (
+                    <div 
+                      key={user.userId} 
+                      className="p-2 border rounded flex justify-between items-center"
+                    >
+                      <div className="flex items-center">
+                        <span className="font-medium">{user.firstName} {user.lastName}</span>
+                        <span className="text-gray-500 text-sm ml-2">({user.username})</span>
+                      </div>
+                      <div>
+                        <Badge variant={
+                          user.preferenceType === "full" ? "default" :
+                          user.preferenceType === "first" ? "outline" :
+                          "secondary"
+                        }>
+                          {user.preferenceType === "full" ? "Volledige shift" :
+                           user.preferenceType === "first" ? "Eerste helft (19:00-23:00)" :
+                           user.preferenceType === "second" ? "Tweede helft (23:00-07:00)" : "Beschikbaar"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-gray-500 italic">Geen beschikbare medewerkers gevonden</div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button onClick={() => setShowAvailabilityDialog(false)}>
+              Sluiten
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
