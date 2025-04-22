@@ -198,7 +198,13 @@ export class DatabaseStorage implements IStorage {
       const user = activeUsers.find(u => u.id === userId);
       if (!user) return false;
       
+      // Nul doeluren betekent dat deze gebruiker niet ingedeeld moet worden
+      if (user.hours === 0) return false;
+      
       const currentHours = userAssignedHours.get(userId) || 0;
+      
+      // Log voor debugging
+      console.log(`Checking user ${user.username} (ID: ${userId}): hours=${user.hours}, currentHours=${currentHours}, adding=${hoursToAdd}`);
       
       // Controleer of deze toewijzing binnen de opgegeven uren valt
       return currentHours + hoursToAdd <= user.hours;
@@ -218,6 +224,11 @@ export class DatabaseStorage implements IStorage {
       
       const currentHours = userAssignedHours.get(userId) || 0;
       const targetHours = user.hours;
+      
+      // Nul doeluren betekent dat deze gebruiker niet ingedeeld moet worden
+      if (targetHours === 0) {
+        return 0;
+      }
       
       // Als gebruiker minder dan 50% van zijn opgegeven uren heeft, hogere prioriteit geven
       if (currentHours < targetHours * 0.5) {
@@ -244,6 +255,9 @@ export class DatabaseStorage implements IStorage {
       const filteredUsers = availableUserIds.filter(userId => {
         const user = activeUsers.find(u => u.id === userId);
         if (!user) return false;
+        
+        // Nul doeluren betekent dat deze gebruiker niet ingedeeld moet worden
+        if (user.hours === 0) return false;
         
         const currentHours = userAssignedHours.get(userId) || 0;
         return currentHours < user.hours;
