@@ -10,6 +10,7 @@ import { nl } from "date-fns/locale";
 import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -216,8 +217,7 @@ export default function ScheduleGenerator() {
         const prefDate = new Date(pref.date);
         return (
           format(prefDate, "yyyy-MM-dd") === formattedDate && 
-          pref.type === shiftType &&
-          pref.type !== "unavailable"
+          pref.type === shiftType
         );
       })
       .map(pref => {
