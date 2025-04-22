@@ -207,61 +207,52 @@ export default function ScheduleGenerator() {
     return prefsCount * 12;
   };
 
-  // Helper functie om gebruikers te vinden die beschikbaar zijn op een bepaalde datum
+  // Vereenvoudigde helper functie om gebruikers te vinden die beschikbaar zijn op een bepaalde datum
   const getUsersAvailableForDate = (date: Date | null, shiftType: "day" | "night") => {
     // Veiligheidsmaatregel: returnt een lege array als de datum null is
     if (!date) return [];
     
+    // Converteer elke datum naar een string formaat (yyyy-MM-dd) voor vergelijking
+    // Dit is veiliger dan te werken met Date objecten en tijdvergelijkingen
+    const targetDateString = date.toISOString().split('T')[0];
+    
     try {
-      const formattedDate = format(date, "yyyy-MM-dd");
+      // Maak een veilige lijst van voorkeuren voor deze datum en shift type
+      // Vermijd complexe filter/map operaties en gebruik simpele loops voor betere controle
+      const result = [];
       
-      // Filter voorkeuren op de juiste datum en type
-      const filteredPrefs = preferences.filter(pref => {
+      for (const pref of preferences) {
         try {
-          // Veilige manier om de datum te vergelijken
-          if (!pref.date) return false;
+          // Skip als er geen datum is
+          if (!pref.date) continue;
           
-          const prefDate = new Date(pref.date);
-          // Controleer of de datum geldig is
-          if (isNaN(prefDate.getTime())) return false;
+          // Haal de datum-string uit de voorkeur
+          const prefDateString = new Date(pref.date).toISOString().split('T')[0];
           
-          return format(prefDate, "yyyy-MM-dd") === formattedDate && 
-                 pref.type === shiftType;
-        } catch (err) {
-          console.error("Fout bij filteren van voorkeur:", err);
-          return false;
-        }
-      });
-      
-      // Map de gefilterde voorkeuren naar gebruikers met voorkeurstypes
-      return filteredPrefs.map(pref => {
-        // Zoek gebruikersinformatie
-        const userInfo = users.find(u => u.id === pref.userId);
-        
-        // Bepaal het soort shift (standaard volledige shift)
-        let shiftPart = "full";
-        
-        // Probeer split tijden te bepalen als de voorkeur gesplitst kan worden
-        if (pref.canSplit) {
-          // Voorzichtig controleren of de shift gesplitst is op basis van beschikbare informatie
-          if (pref.type === "day") {
-            // Dag shifts: eerste helft 7-13, tweede helft 13-19
-            shiftPart = "first"; // Aanname, als we niet zeker zijn
-          } else if (pref.type === "night") {
-            // Nacht shifts: eerste helft 19-23, tweede helft 23-7
-            shiftPart = "first"; // Aanname, als we niet zeker zijn
+          // Controleer of de datum en shift type overeen komen
+          if (prefDateString === targetDateString && pref.type === shiftType) {
+            // Zoek gebruikersinfo
+            const userInfo = users.find(u => u.id === pref.userId);
+            
+            if (!userInfo) continue; // Skip als gebruiker niet gevonden wordt
+            
+            // Voeg gebruiker toe aan resultaat met eenvoudige type-indicatie
+            result.push({
+              userId: pref.userId,
+              username: userInfo.username || "Onbekend",
+              firstName: userInfo.firstName || "",
+              lastName: userInfo.lastName || "",
+              preferenceType: pref.canSplit ? "first" : "full", // Vereenvoudigd tot full of first
+              canSplit: pref.canSplit
+            });
           }
+        } catch (err) {
+          console.error("Fout bij verwerken individuele voorkeur:", err);
+          // Ga door naar de volgende voorkeur
         }
-        
-        return {
-          userId: pref.userId,
-          username: userInfo?.username || "Onbekend",
-          firstName: userInfo?.firstName || "",
-          lastName: userInfo?.lastName || "",
-          preferenceType: shiftPart,
-          canSplit: pref.canSplit
-        };
-      });
+      }
+      
+      return result;
     } catch (error) {
       console.error("Algemene fout in getUsersAvailableForDate:", error);
       return [];
