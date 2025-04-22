@@ -695,10 +695,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timestamp = await storage.getSystemSetting('last_preferences_generated');
       
       if (timestamp) {
+        // Correcte timezone-aware formattering met expliciete opties
         const date = new Date(timestamp);
         res.json({
           timestamp,
-          formattedTimestamp: date.toLocaleString('nl-NL')
+          formattedTimestamp: date.toLocaleString('nl-NL', { 
+            timeZone: 'Europe/Brussels',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false 
+          })
         });
       } else {
         res.json({
