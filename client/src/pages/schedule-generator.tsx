@@ -270,24 +270,9 @@ export default function ScheduleGenerator() {
       
       console.log("Gevonden aantal beschikbare medewerkers:", result.length);
       
-      // Als er nog steeds geen resultaten zijn, toon alle medewerkers als demo
+      // In productieversie alleen echte matches tonen
       if (result.length === 0) {
-        console.log("Geen echte matches gevonden - alle gebruikers worden getoond voor test doeleinden");
-        
-        // Toon alle ambulanciers als beschikbaar (alleen voor testdoeleinden)
-        const ambulanciers = users.filter(u => u.role === "ambulancier");
-        for (const ambulancier of ambulanciers) {
-          result.push({
-            userId: ambulancier.id,
-            username: ambulancier.username || "Onbekend",
-            firstName: ambulancier.firstName || "",
-            lastName: ambulancier.lastName || "",
-            preferenceType: "full", // Demo: alle volledig beschikbaar
-            canSplit: false
-          });
-        }
-        
-        console.log("Demo data: aantal beschikbare medewerkers:", result.length);
+        console.log("Geen beschikbare medewerkers gevonden voor deze datum en shift type");
       }
       
       return result;
