@@ -963,7 +963,7 @@ export class DatabaseStorage implements IStorage {
             id => !assignedDayIds.includes(id)
           );
           
-          // Eerste helft van de nacht (19:00 - 1:00)
+          // Eerste helft van de nacht (19:00 - 23:00)
           // Filter: gebruikers die niet al zijn toegewezen aan een dagshift of nachtshift op deze dag
           const sortedNightFirstHalfUsers = getSortedUsersForAssignment(
             availableForNightFirstHalfFiltered.filter(id => !assignedNightIds.includes(id))
@@ -1001,7 +1001,7 @@ export class DatabaseStorage implements IStorage {
             }
           }
           
-          // Tweede helft van de nacht (1:00 - 7:00)
+          // Tweede helft van de nacht (23:00 - 7:00)
           // Filter: gebruikers die niet al zijn toegewezen aan een dagshift of nachtshift op deze dag
           const sortedNightSecondHalfUsers = getSortedUsersForAssignment(
             availableForNightSecondHalfFiltered.filter(id => !assignedNightIds.includes(id))
