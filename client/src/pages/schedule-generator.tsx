@@ -217,31 +217,39 @@ export default function ScheduleGenerator() {
     console.log("Aantal voorkeuren in database:", preferences.length);
     
     try {
-      // Formateer de doeldatum voor eenvoudige vergelijking
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1; // JavaScript maanden zijn 0-11
-      const day = date.getDate();
-      
-      console.log(`Gezochte datum: ${year}-${month}-${day}`);
+      // Gedetailleerde debug informatie om te zien welke voorkeuren er zijn
+      // en waarom ze niet overeenkomen met de gezochte datum
+      const gezochteYMD = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+      console.log("Alle voorkeuren in detail inspecteren voor geselecteerde datum:", gezochteYMD);
       
       // Maak een veilige lijst van voorkeuren voor deze datum en shift type
       const result = [];
       
+      // Toon de eerste 20 voorkeuren met hun datums voor debug
+      preferences.slice(0, 20).forEach((pref, index) => {
+        if (pref.date) {
+          const prefDate = new Date(pref.date);
+          console.log(`Pref ${index}: id=${pref.id}, datum=${prefDate.toISOString()}, type=${pref.type}, userId=${pref.userId}`);
+        }
+      });
+      
+      // Meer flexibele datum-matching
       for (const pref of preferences) {
         try {
           // Skip als er geen datum is
           if (!pref.date) continue;
           
-          // Pas eenvoudigere datumvergelijking toe
+          // Converteer preference datum naar string voor simpelere vergelijking
           const prefDate = new Date(pref.date);
-          const prefYear = prefDate.getFullYear();
-          const prefMonth = prefDate.getMonth() + 1;
-          const prefDay = prefDate.getDate();
+          const prefYMD = `${prefDate.getFullYear()}-${prefDate.getMonth() + 1}-${prefDate.getDate()}`;
           
-          console.log(`Vergelijken met voorkeur: ${prefYear}-${prefMonth}-${prefDay}, type: ${pref.type}`);
+          // Debug
+          if (prefYMD === gezochteYMD) {
+            console.log(`Potentiële match gevonden voor datum ${prefYMD}, type=${pref.type}, verwacht type=${shiftType}`);
+          }
           
           // Controleer of de datum en shift type overeen komen
-          if (prefYear === year && prefMonth === month && prefDay === day && pref.type === shiftType) {
+          if (prefYMD === gezochteYMD && pref.type === shiftType) {
             console.log("Match gevonden voor gebruiker ID:", pref.userId);
             
             // Zoek gebruikersinfo
@@ -252,14 +260,16 @@ export default function ScheduleGenerator() {
               continue; // Skip als gebruiker niet gevonden wordt
             }
             
-            // Test: negeer canSplit en toon altijd alle beschikbare gebruikers
+            console.log(`Gebruiker ${userInfo.firstName} ${userInfo.lastName} toegevoegd aan resultaten`);
+            
+            // Voeg gebruiker toe aan resultaat
             result.push({
               userId: pref.userId,
               username: userInfo.username || "Onbekend",
               firstName: userInfo.firstName || "",
               lastName: userInfo.lastName || "",
-              preferenceType: "full", // Houd het eenvoudig voor nu
-              canSplit: false // Niet relevant voor weergave
+              preferenceType: pref.preferenceType || "full",
+              canSplit: pref.canSplit || false
             });
           }
         } catch (err) {
@@ -270,10 +280,16 @@ export default function ScheduleGenerator() {
       
       console.log("Gevonden aantal beschikbare medewerkers:", result.length);
       
-      // In productieversie alleen echte matches tonen
       if (result.length === 0) {
-        console.log("Geen beschikbare medewerkers gevonden voor deze datum en shift type");
+        console.log("Geen echte matches gevonden - zullen we voor elke datum test data genereren?");
       }
+      
+      // Sorteer de resultaten op naam
+      result.sort((a, b) => {
+        const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
       
       return result;
     } catch (error) {
