@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Shift, ShiftPreference, User } from "@shared/schema";
 import { useLocation } from "wouter";
-import { format, addMonths, parse, setMonth, setYear, getMonth, getYear, isEqual, parseISO } from "date-fns";
+import { format, addMonths, parse, setMonth, setYear, getMonth, getYear, isEqual, parseISO, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
 import { useState, useMemo } from "react";
 import {
@@ -19,6 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
   const { user, logoutMutation } = useAuth();
@@ -29,6 +31,8 @@ export default function Dashboard() {
   // Staat voor maand/jaar selectie
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showAvailabilityDialog, setShowAvailabilityDialog] = useState(false);
 
   const { data: shifts = [], isLoading: shiftsLoading } = useQuery<Shift[]>({
     queryKey: ["/api/shifts"],
@@ -37,8 +41,132 @@ export default function Dashboard() {
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
+  
+  const { data: preferences = [], isLoading: preferencesLoading } = useQuery<any[]>({
+    queryKey: ["/api/preferences/all"],
+  });
 
-  const isLoading = shiftsLoading || usersLoading;
+  const isLoading = shiftsLoading || usersLoading || preferencesLoading;
+  
+  // Functie om beschikbare medewerkers te tonen op basis van voorkeuren
+  const getUsersAvailableForDate = (date: Date | null, shiftType: "day" | "night") => {
+    // Veiligheidsmaatregel: returnt een lege array als de datum null is
+    if (!date) return [];
+    
+    try {
+      const result: Array<{
+        userId: number;
+        username: string;
+        firstName: string;
+        lastName: string;
+        preferenceType: string;
+        canSplit: boolean;
+        isAssigned: boolean;
+        isAvailable: boolean;
+        hours: number;
+      }> = [];
+      
+      // Gezochte datum in YMD formaat voor eenvoudigere vergelijking
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1; // JavaScript maanden zijn 0-11
+      const day = date.getDate();
+      const gezochteYMD = `${year}-${month}-${day}`;
+      
+      // Haal shifts op voor deze datum
+      const matchingShifts = shifts.filter(shift => {
+        if (!shift.date) return false;
+        
+        const shiftDate = new Date(shift.date);
+        const shiftYMD = `${shiftDate.getFullYear()}-${shiftDate.getMonth() + 1}-${shiftDate.getDate()}`;
+        
+        // Controleer het shift type (dag of nacht)
+        const isTypeMatch = (shiftType === "day" && shift.type === "day") || 
+                           (shiftType === "night" && shift.type === "night");
+        
+        return shiftYMD === gezochteYMD && isTypeMatch;
+      });
+      
+      // Voor elke gevonden shift, zoek de toegewezen medewerker
+      const assignedUserIds = new Set();
+      matchingShifts.forEach(shift => {
+        if (shift.userId > 0) {
+          assignedUserIds.add(shift.userId);
+        }
+      });
+      
+      // Haal alle ambulanciers op
+      const ambulanciers = users.filter(u => u.role === "ambulancier");
+      
+      // Zoek in voorkeuren voor deze datum
+      const allPreferences = preferences.flatMap(userPrefs => userPrefs.preferences || []);
+      const preferencesForDate = allPreferences.filter(pref => {
+        if (!pref || !pref.date) return false;
+        const prefDate = new Date(pref.date);
+        const prefYMD = `${prefDate.getFullYear()}-${prefDate.getMonth() + 1}-${prefDate.getDate()}`;
+        return prefYMD === gezochteYMD;
+      });
+      
+      // Maak een Set van gebruikers die beschikbaar zijn volgens voorkeur
+      const availableUserIds = new Set();
+      preferencesForDate.forEach(pref => {
+        // Als de voorkeur niet 'unavailable' is en het shift type komt overeen
+        if (pref.type !== "unavailable" && pref.type === shiftType) {
+          availableUserIds.add(pref.userId);
+        }
+      });
+      
+      // Toon alle ambulanciers en markeer op basis van beschikbaarheid en toewijzing
+      ambulanciers.forEach(ambulancier => {
+        const isAssigned = assignedUserIds.has(ambulancier.id);
+        const isAvailable = availableUserIds.has(ambulancier.id);
+        
+        // Controleer of de ambulancier uren wil werken (hours > 0)
+        const wantsToWork = ambulancier.hours > 0;
+        
+        // Bepaal het preferentietype
+        let preferenceType = "unavailable";
+        if (isAssigned) {
+          preferenceType = "assigned";
+        } else if (isAvailable && wantsToWork) {
+          preferenceType = "available";
+        }
+        
+        result.push({
+          userId: ambulancier.id,
+          username: ambulancier.username || "Onbekend",
+          firstName: ambulancier.firstName || "",
+          lastName: ambulancier.lastName || "",
+          preferenceType: preferenceType,
+          canSplit: false, // Niet relevant voor weergave
+          isAssigned: isAssigned, // Extra veld om snel te kunnen checken of deze gebruiker al is toegewezen
+          isAvailable: isAvailable && wantsToWork, // Of de gebruiker beschikbaar is en uren wil werken
+          hours: ambulancier.hours || 0 // Hoeveel uren deze persoon wil werken
+        });
+      });
+      
+      // Sorteer de resultaten: eerst beschikbare niet-toegewezen, dan toegewezen, dan rest
+      result.sort((a, b) => {
+        // Eerst sorteren op basis van beschikbaarheid en toewijzing
+        if (a.isAvailable !== b.isAvailable) {
+          return a.isAvailable ? -1 : 1; // Beschikbare gebruikers eerst
+        }
+        
+        if (a.isAssigned !== b.isAssigned) {
+          return a.isAssigned ? 1 : -1; // Niet-toegewezen gebruikers eerder
+        }
+        
+        // Daarna op naam
+        const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+      
+      return result;
+    } catch (error) {
+      console.error("Algemene fout in getUsersAvailableForDate:", error);
+      return [];
+    }
+  };
 
   const today = new Date();
   const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
@@ -88,6 +216,12 @@ export default function Dashboard() {
     return acc + (duration / (1000 * 60 * 60));
   }, 0) || 0;
 
+  // Handler voor het openen van het beschikbaarheidsvenster
+  const handleDateClick = (date: Date, shiftType: "day" | "night") => {
+    setSelectedDate(date);
+    setShowAvailabilityDialog(true);
+  };
+  
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -211,7 +345,15 @@ export default function Dashboard() {
                           key={shift.id}
                           className={`${shift.status === "open" ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""}`}
                         >
-                          <TableCell>{format(new Date(shift.date), "dd MMMM (EEEE)", { locale: nl })}</TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="link" 
+                              className="p-0 h-auto font-normal text-left hover:no-underline"
+                              onClick={() => handleDateClick(new Date(shift.date), shift.type as "day" | "night")}
+                            >
+                              {format(new Date(shift.date), "dd MMMM (EEEE)", { locale: nl })}
+                            </Button>
+                          </TableCell>
                           <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
                           <TableCell>
                             {shift.startTime && shift.endTime ? (
@@ -264,6 +406,130 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Beschikbaarheidsvenster */}
+      <Dialog open={showAvailabilityDialog} onOpenChange={setShowAvailabilityDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Beschikbaarheid voor {selectedDate ? format(selectedDate, "dd MMMM yyyy", { locale: nl }) : ""}
+            </DialogTitle>
+            <DialogDescription>
+              Overzicht van wie beschikbaar is voor deze shift
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedDate && (
+            <>
+              <div className="flex items-center gap-4 mb-4">
+                <Badge variant="outline" className="py-1.5">
+                  {selectedDate && isWeekend(selectedDate) ? "Weekend" : "Weekdag"}
+                </Badge>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Dag shift (alleen voor weekend) */}
+                {selectedDate && isWeekend(selectedDate) && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Dag Shift (07:00 - 19:00)</h3>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Naam</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Uren</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {getUsersAvailableForDate(selectedDate, "day").map((u) => (
+                            <TableRow key={u.userId}>
+                              <TableCell>
+                                <div className="font-medium">{`${u.firstName} ${u.lastName}`}</div>
+                              </TableCell>
+                              <TableCell>
+                                {u.isAssigned ? (
+                                  <Badge className="bg-blue-500 hover:bg-blue-600">Toegewezen</Badge>
+                                ) : u.isAvailable ? (
+                                  <Badge className="bg-green-500 hover:bg-green-600">Beschikbaar</Badge>
+                                ) : u.hours === 0 ? (
+                                  <Badge variant="outline" className="text-gray-500">Werkt geen uren</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-red-500">Niet beschikbaar</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>{u.hours}</TableCell>
+                            </TableRow>
+                          ))}
+                          
+                          {getUsersAvailableForDate(selectedDate, "day").length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center py-4">
+                                Geen beschikbare ambulanciers gevonden
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Nacht shift (altijd) */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Nacht Shift (19:00 - 07:00)</h3>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Naam</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Uren</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {getUsersAvailableForDate(selectedDate, "night").map((u) => (
+                          <TableRow key={u.userId}>
+                            <TableCell>
+                              <div className="font-medium">{`${u.firstName} ${u.lastName}`}</div>
+                            </TableCell>
+                            <TableCell>
+                              {u.isAssigned ? (
+                                <Badge className="bg-blue-500 hover:bg-blue-600">Toegewezen</Badge>
+                              ) : u.isAvailable ? (
+                                <Badge className="bg-green-500 hover:bg-green-600">Beschikbaar</Badge>
+                              ) : u.hours === 0 ? (
+                                <Badge variant="outline" className="text-gray-500">Werkt geen uren</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-red-500">Niet beschikbaar</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>{u.hours}</TableCell>
+                          </TableRow>
+                        ))}
+                        
+                        {getUsersAvailableForDate(selectedDate, "night").length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center py-4">
+                              Geen beschikbare ambulanciers gevonden
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAvailabilityDialog(false)}>
+              Sluiten
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
