@@ -207,7 +207,7 @@ export default function ScheduleGenerator() {
     return prefsCount * 12;
   };
 
-  // Functie om beschikbare medewerkers te tonen op basis van bestaande shifts
+  // Functie om beschikbare medewerkers te tonen op basis van voorkeuren
   const getUsersAvailableForDate = (date: Date | null, shiftType: "day" | "night") => {
     // Veiligheidsmaatregel: returnt een lege array als de datum null is
     if (!date) return [];
@@ -216,7 +216,17 @@ export default function ScheduleGenerator() {
     console.log("Shift type:", shiftType);
     
     try {
-      const result = [];
+      const result: Array<{
+        userId: number;
+        username: string;
+        firstName: string;
+        lastName: string;
+        preferenceType: string;
+        canSplit: boolean;
+        isAssigned: boolean;
+        isAvailable: boolean;
+        hours: number;
+      }> = [];
       
       // Gezochte datum in YMD formaat voor eenvoudigere vergelijking
       const year = date.getFullYear();
@@ -256,28 +266,63 @@ export default function ScheduleGenerator() {
       // Haal alle ambulanciers op
       const ambulanciers = users.filter(u => u.role === "ambulancier");
       
-      // Toon alle ambulanciers en markeer degenen die al zijn toegewezen
+      // Filter voorkeuren voor de geselecteerde datum en shift type
+      const preferencesForDate = preferences.filter(pref => {
+        const prefDate = new Date(pref.date);
+        const prefYMD = `${prefDate.getFullYear()}-${prefDate.getMonth() + 1}-${prefDate.getDate()}`;
+        return prefYMD === gezochteYMD;
+      });
+      
+      // Maak een Set van gebruikers die beschikbaar zijn volgens voorkeur
+      const availableUserIds = new Set();
+      preferencesForDate.forEach(pref => {
+        // Als de voorkeur niet 'unavailable' is en het shift type komt overeen
+        if (pref.type !== "unavailable" && pref.type === shiftType) {
+          availableUserIds.add(pref.userId);
+        }
+      });
+      
+      // Toon alle ambulanciers en markeer op basis van beschikbaarheid en toewijzing
       ambulanciers.forEach(ambulancier => {
         const isAssigned = assignedUserIds.has(ambulancier.id);
+        const isAvailable = availableUserIds.has(ambulancier.id);
+        
+        // Controleer of de ambulancier uren wil werken (hours > 0)
+        const wantsToWork = ambulancier.hours > 0;
+        
+        // Bepaal het preferentietype
+        let preferenceType = "unavailable";
+        if (isAssigned) {
+          preferenceType = "assigned";
+        } else if (isAvailable && wantsToWork) {
+          preferenceType = "available";
+        }
         
         result.push({
           userId: ambulancier.id,
           username: ambulancier.username || "Onbekend",
           firstName: ambulancier.firstName || "",
           lastName: ambulancier.lastName || "",
-          preferenceType: isAssigned ? "assigned" : "available", // Markeer als toegewezen indien van toepassing
+          preferenceType: preferenceType,
           canSplit: false, // Niet relevant voor weergave
-          isAssigned: isAssigned // Extra veld om snel te kunnen checken of deze gebruiker al is toegewezen
+          isAssigned: isAssigned, // Extra veld om snel te kunnen checken of deze gebruiker al is toegewezen
+          isAvailable: isAvailable && wantsToWork, // Of de gebruiker beschikbaar is en uren wil werken
+          hours: ambulancier.hours || 0 // Hoeveel uren deze persoon wil werken
         });
       });
       
-      // Sorteer de resultaten op naam
+      // Sorteer de resultaten: eerst beschikbare niet-toegewezen, dan toegewezen, dan rest
       result.sort((a, b) => {
-        // Sorteren: eerst op basis van toewijzing (niet-toegewezen eerst), dan op naam
-        if (a.isAssigned !== b.isAssigned) {
-          return a.isAssigned ? 1 : -1;
+        // Eerst sorteren op basis van beschikbaarheid en toewijzing
+        if (a.isAvailable !== b.isAvailable) {
+          return a.isAvailable ? -1 : 1; // Beschikbare gebruikers eerst
         }
         
+        if (a.isAssigned !== b.isAssigned) {
+          return a.isAssigned ? 1 : -1; // Niet-toegewezen gebruikers eerder
+        }
+        
+        // Daarna op naam
         const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
         const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
         return nameA.localeCompare(nameB);
@@ -958,21 +1003,24 @@ export default function ScheduleGenerator() {
                       getUsersAvailableForDate(selectedDate, "day").map((user) => (
                         <div 
                           key={user.userId} 
-                          className="p-2 border rounded flex justify-between items-center"
+                          className={`p-2 border rounded flex justify-between items-center ${user.isAvailable ? 'bg-green-50' : 'bg-gray-50'}`}
                         >
                           <div className="flex items-center">
                             <span className="font-medium">{user.firstName} {user.lastName}</span>
                             <span className="text-gray-500 text-sm ml-2">({user.username})</span>
+                            {user.hours === 0 && (
+                              <span className="ml-2 text-amber-600 text-xs">Wil 0 uren werken</span>
+                            )}
                           </div>
                           <div>
                             <Badge variant={
-                              user.preferenceType === "full" ? "default" :
-                              user.preferenceType === "first" ? "outline" :
+                              user.isAssigned ? "default" :
+                              user.isAvailable ? "outline" :
                               "secondary"
                             }>
-                              {user.preferenceType === "full" ? "Volledige shift" :
-                               user.preferenceType === "first" ? "Eerste helft" :
-                               user.preferenceType === "second" ? "Tweede helft" : "Beschikbaar"}
+                              {user.isAssigned ? "Ingepland" :
+                               user.isAvailable ? "Beschikbaar" :
+                               "Niet beschikbaar"}
                             </Badge>
                           </div>
                         </div>
@@ -990,17 +1038,24 @@ export default function ScheduleGenerator() {
                   getUsersAvailableForDate(selectedDate, "night").map((user) => (
                     <div 
                       key={user.userId} 
-                      className="p-2 border rounded flex justify-between items-center"
+                      className={`p-2 border rounded flex justify-between items-center ${user.isAvailable ? 'bg-green-50' : 'bg-gray-50'}`}
                     >
                       <div className="flex items-center">
                         <span className="font-medium">{user.firstName} {user.lastName}</span>
                         <span className="text-gray-500 text-sm ml-2">({user.username})</span>
+                        {user.hours === 0 && (
+                          <span className="ml-2 text-amber-600 text-xs">Wil 0 uren werken</span>
+                        )}
                       </div>
                       <div>
                         <Badge variant={
-                          user.isAssigned ? "secondary" : "default"
+                          user.isAssigned ? "default" :
+                          user.isAvailable ? "outline" :
+                          "secondary"
                         }>
-                          {user.isAssigned ? "Reeds ingepland" : "Beschikbaar"}
+                          {user.isAssigned ? "Ingepland" :
+                           user.isAvailable ? "Beschikbaar" :
+                           "Niet beschikbaar"}
                         </Badge>
                       </div>
                     </div>
