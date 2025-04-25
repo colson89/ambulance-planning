@@ -241,7 +241,7 @@ export default function Dashboard() {
                               <span className="text-red-500 font-medium">Niet ingevuld</span>
                             ) : (
                               <span className={isCurrentUserShift ? "font-bold text-green-600" : ""}>
-                                {shiftUser?.username || "Onbekend"}
+                                {shiftUser ? `${shiftUser.firstName} ${shiftUser.lastName}` : "Onbekend"}
                               </span>
                             )}
                           </TableCell>
