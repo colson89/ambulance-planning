@@ -108,6 +108,9 @@ export default function Dashboard() {
         return prefYMD === gezochteYMD;
       });
       
+      // Debug: log alle voorkeuren voor deze datum
+      console.log(`Voorkeuren voor ${gezochteYMD}:`, preferencesForDate);
+      
       // Maak een Map van gebruikers met hun voorkeuren en tijdsblokken
       const userPreferencesMap = new Map();
       preferencesForDate.forEach(pref => {
