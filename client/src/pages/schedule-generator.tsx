@@ -987,97 +987,124 @@ export default function ScheduleGenerator() {
         </DialogContent>
       </Dialog>
       
-      {/* Beschikbaarheid Dialog */}
+      {/* Beschikbaarheidsvenster */}
       <Dialog open={showAvailabilityDialog} onOpenChange={setShowAvailabilityDialog}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Beschikbaarheid Overzicht</DialogTitle>
+            <DialogTitle>
+              Beschikbaarheid voor {selectedDate ? format(selectedDate, "dd MMMM yyyy", { locale: nl }) : ""}
+            </DialogTitle>
             <DialogDescription>
-              {selectedDate && (
-                <span>
-                  Beschikbare medewerkers voor {format(selectedDate, "dd MMMM yyyy (EEEE)", { locale: nl })}
-                </span>
-              )}
+              Overzicht van wie beschikbaar is voor deze shift
             </DialogDescription>
           </DialogHeader>
           
           {selectedDate && (
-            <div>
-              {/* Alleen dagshifts tonen in het weekend */}
-              {isWeekend(selectedDate) && (
-                <>
-                  <h3 className="font-semibold mb-2">Dag Shift (07:00 - 19:00)</h3>
-                  <div className="mb-4 space-y-1 max-h-40 overflow-y-auto">
-                    {getUsersAvailableForDate(selectedDate, "day").length > 0 ? (
-                      getUsersAvailableForDate(selectedDate, "day").map((user) => (
-                        <div 
-                          key={user.userId} 
-                          className={`p-2 border rounded flex justify-between items-center ${user.isAvailable ? 'bg-green-50' : 'bg-gray-50'}`}
-                        >
-                          <div className="flex items-center">
-                            <span className="font-medium">{user.firstName} {user.lastName}</span>
-                            <span className="text-gray-500 text-sm ml-2">({user.username})</span>
-                            {user.hours === 0 && (
-                              <span className="ml-2 text-amber-600 text-xs">Wil 0 uren werken</span>
-                            )}
-                          </div>
-                          <div>
-                            <Badge variant={
-                              user.isAssigned ? "default" :
-                              user.isAvailable ? "outline" :
-                              "secondary"
-                            }>
-                              {user.isAssigned ? "Ingepland" :
-                               user.isAvailable ? "Beschikbaar" :
-                               "Niet beschikbaar"}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-gray-500 italic">Geen beschikbare medewerkers gevonden</div>
-                    )}
-                  </div>
-                </>
-              )}
-              
-              <h3 className="font-semibold mb-2">Nacht Shift (19:00 - 07:00)</h3>
-              <div className="mb-4 space-y-1 max-h-40 overflow-y-auto">
-                {getUsersAvailableForDate(selectedDate, "night").length > 0 ? (
-                  getUsersAvailableForDate(selectedDate, "night").map((user) => (
-                    <div 
-                      key={user.userId} 
-                      className={`p-2 border rounded flex justify-between items-center ${user.isAvailable ? 'bg-green-50' : 'bg-gray-50'}`}
-                    >
-                      <div className="flex items-center">
-                        <span className="font-medium">{user.firstName} {user.lastName}</span>
-                        <span className="text-gray-500 text-sm ml-2">({user.username})</span>
-                        {user.hours === 0 && (
-                          <span className="ml-2 text-amber-600 text-xs">Wil 0 uren werken</span>
-                        )}
-                      </div>
-                      <div>
-                        <Badge variant={
-                          user.isAssigned ? "default" :
-                          user.isAvailable ? "outline" :
-                          "secondary"
-                        }>
-                          {user.isAssigned ? "Ingepland" :
-                           user.isAvailable ? "Beschikbaar" :
-                           "Niet beschikbaar"}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-gray-500 italic">Geen beschikbare medewerkers gevonden</div>
-                )}
+            <>
+              <div className="flex items-center gap-4 mb-4">
+                <Badge variant="outline" className="py-1.5">
+                  {selectedDate && isWeekend(selectedDate) ? "Weekend" : "Weekdag"}
+                </Badge>
               </div>
-            </div>
+              
+              <div className="space-y-6">
+                {/* Dag shift (alleen voor weekend) */}
+                {selectedDate && isWeekend(selectedDate) && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Dag Shift (07:00 - 19:00)</h3>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Naam</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Uren</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {getUsersAvailableForDate(selectedDate, "day").map((u) => (
+                            <TableRow key={u.userId}>
+                              <TableCell>
+                                <div className="font-medium">{`${u.firstName} ${u.lastName}`}</div>
+                              </TableCell>
+                              <TableCell>
+                                {u.isAssigned ? (
+                                  <Badge className="bg-blue-500 hover:bg-blue-600">Toegewezen</Badge>
+                                ) : u.isAvailable ? (
+                                  <Badge className="bg-green-500 hover:bg-green-600">Beschikbaar</Badge>
+                                ) : u.hours === 0 ? (
+                                  <Badge variant="outline" className="text-gray-500">Werkt geen uren</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-red-500">Niet beschikbaar</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>{u.hours}</TableCell>
+                            </TableRow>
+                          ))}
+                          
+                          {getUsersAvailableForDate(selectedDate, "day").length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center py-4">
+                                Geen beschikbare ambulanciers gevonden
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Nacht shift (altijd) */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Nacht Shift (19:00 - 07:00)</h3>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Naam</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Uren</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {getUsersAvailableForDate(selectedDate, "night").map((u) => (
+                          <TableRow key={u.userId}>
+                            <TableCell>
+                              <div className="font-medium">{`${u.firstName} ${u.lastName}`}</div>
+                            </TableCell>
+                            <TableCell>
+                              {u.isAssigned ? (
+                                <Badge className="bg-blue-500 hover:bg-blue-600">Toegewezen</Badge>
+                              ) : u.isAvailable ? (
+                                <Badge className="bg-green-500 hover:bg-green-600">Beschikbaar</Badge>
+                              ) : u.hours === 0 ? (
+                                <Badge variant="outline" className="text-gray-500">Werkt geen uren</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-red-500">Niet beschikbaar</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>{u.hours}</TableCell>
+                          </TableRow>
+                        ))}
+                        
+                        {getUsersAvailableForDate(selectedDate, "night").length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center py-4">
+                              Geen beschikbare ambulanciers gevonden
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
           
           <DialogFooter>
-            <Button onClick={() => setShowAvailabilityDialog(false)}>
+            <Button variant="outline" onClick={() => setShowAvailabilityDialog(false)}>
               Sluiten
             </Button>
           </DialogFooter>
