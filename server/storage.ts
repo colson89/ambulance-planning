@@ -807,9 +807,10 @@ export class DatabaseStorage implements IStorage {
           }
         }
         
-        // Stap 2: Als we minder dan 2 volledige shifts hebben, probeer halve shifts
-        const remainingShiftsNeeded = 2 - assignedFullShifts;
-        if (remainingShiftsNeeded > 0) {
+        // Stap 2: Alleen halve shifts maken als we helemaal geen volledige shifts hebben
+        // Als we al volledige shifts hebben, geen halve shifts meer toevoegen
+        if (assignedFullShifts === 0) {
+          const remainingShiftsNeeded = 2;
           // Filter gebruikers voor nachtshift halve shifts - niet dezelfde als dagshift
           const availableForNightFirstHalfFiltered = availableForNightFirstHalf.filter(
             id => !assignedDayIds.includes(id) && !assignedNightIds.includes(id)
