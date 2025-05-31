@@ -13,8 +13,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLocation } from "wouter";
 
 const WEEKDAY_NAMES = [
-  "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"
+  "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag", "Zondag"
 ];
+
+const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Monday to Sunday order
 
 export default function WeekdaySettings() {
   const { toast } = useToast();
@@ -145,7 +147,8 @@ export default function WeekdaySettings() {
       </div>
 
       <div className="grid gap-6">
-        {WEEKDAY_NAMES.map((dayName, dayOfWeek) => {
+        {WEEKDAY_ORDER.map((dayOfWeek, index) => {
+          const dayName = WEEKDAY_NAMES[index];
           const config = configs.find(c => c.dayOfWeek === dayOfWeek);
           if (!config) return null;
 
