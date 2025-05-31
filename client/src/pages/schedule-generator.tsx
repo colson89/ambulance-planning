@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, RefreshCw, Calendar, Eye } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -1159,8 +1159,8 @@ export default function ScheduleGenerator() {
                     >
                       <Split className="h-4 w-4 mr-2" />
                       {editingShift.type === "night" 
-                        ? "Splitsen (19:00-23:00 / 23:00-07:00)" 
-                        : "Splitsen (07:00-13:00 / 13:00-19:00)"
+                        ? "Splitsen" 
+                        : "Splitsen"
                       }
                     </Button>
                   )}
@@ -1173,7 +1173,7 @@ export default function ScheduleGenerator() {
                       disabled={updateShiftMutation.isPending}
                     >
                       <Merge className="h-4 w-4 mr-2" />
-                      Samenvoegen (1 persoon)
+                      Samenvoegen
                     </Button>
                   )}
                 </div>
