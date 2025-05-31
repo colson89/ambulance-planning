@@ -278,20 +278,21 @@ export class DatabaseStorage implements IStorage {
         generatedShifts.push(savedOpenShift);
       }
 
-      // NIGHT SHIFTS - SIMPLIFIED LOGIC FOR WEEKENDS TO PREVENT OVERLAPS
+      // NIGHT SHIFTS - WEEKEND STRATEGY: FULL SHIFTS FIRST, HALF SHIFTS AS BACKUP
       if (isWeekend) {
-        // WEEKEND: Only create 2 full night shifts (19:00-07:00) - NO HALF SHIFTS
+        // WEEKEND: Try full night shifts first (19:00-07:00)
         const availableForNight = allAvailableUsers.filter(id => !assignedDayIds.includes(id));
         const sortedNightUsers = getSortedUsersForAssignment(availableForNight);
-        let assignedNightShifts = 0;
+        let assignedFullNightShifts = 0;
 
+        // Step 1: Try to assign full night shifts
         for (const userId of sortedNightUsers) {
-          if (assignedNightShifts >= 2) break;
+          if (assignedFullNightShifts >= 2) break;
           
           if (canAssignHours(userId, 12)) {
             assignedNightIds.push(userId);
             addAssignedHours(userId, 12);
-            assignedNightShifts++;
+            assignedFullNightShifts++;
             
             const nightShift = {
               userId: userId,
@@ -310,22 +311,89 @@ export class DatabaseStorage implements IStorage {
           }
         }
 
-        // Create open night shifts for remaining positions
-        for (let i = assignedNightShifts; i < 2; i++) {
-          const openNightShift = {
-            userId: 0,
-            date: currentDate,
-            type: "night" as const,
-            startTime: new Date(year, month - 1, day, 19, 0, 0),
-            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-            status: "open" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
+        // Step 2: If we couldn't fill with full shifts, use half shifts as backup
+        if (assignedFullNightShifts < 2) {
+          const remainingAvailable = availableForNight.filter(id => !assignedNightIds.includes(id));
           
-          const savedOpenShift = await this.createShift(openNightShift);
-          generatedShifts.push(savedOpenShift);
+          // First half (19:00-23:00)
+          const sortedFirstHalf = getSortedUsersForAssignment(remainingAvailable);
+          let assignedFirstHalf = 0;
+          const neededFirstHalf = (2 - assignedFullNightShifts);
+
+          for (const userId of sortedFirstHalf) {
+            if (assignedFirstHalf >= neededFirstHalf) break;
+            
+            if (canAssignHours(userId, 4)) {
+              assignedNightIds.push(userId);
+              addAssignedHours(userId, 4);
+              assignedFirstHalf++;
+              
+              const nightHalfShift = {
+                userId: userId,
+                date: currentDate,
+                type: "night" as const,
+                startTime: new Date(year, month - 1, day, 19, 0, 0),
+                endTime: new Date(year, month - 1, day, 23, 0, 0),
+                status: "planned" as const,
+                month,
+                year,
+                isSplitShift: true
+              };
+              
+              const savedShift = await this.createShift(nightHalfShift);
+              generatedShifts.push(savedShift);
+            }
+          }
+
+          // Second half (23:00-07:00)
+          const stillAvailable = remainingAvailable.filter(id => !assignedNightIds.includes(id));
+          const sortedSecondHalf = getSortedUsersForAssignment(stillAvailable);
+          let assignedSecondHalf = 0;
+
+          for (const userId of sortedSecondHalf) {
+            if (assignedSecondHalf >= neededFirstHalf) break;
+            
+            if (canAssignHours(userId, 8)) {
+              assignedNightIds.push(userId);
+              addAssignedHours(userId, 8);
+              assignedSecondHalf++;
+              
+              const nightHalfShift = {
+                userId: userId,
+                date: currentDate,
+                type: "night" as const,
+                startTime: new Date(year, month - 1, day, 23, 0, 0),
+                endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+                status: "planned" as const,
+                month,
+                year,
+                isSplitShift: true
+              };
+              
+              const savedShift = await this.createShift(nightHalfShift);
+              generatedShifts.push(savedShift);
+            }
+          }
+
+          // Create open shifts for any remaining unfilled positions
+          const totalAssigned = assignedFullNightShifts + Math.min(assignedFirstHalf, assignedSecondHalf);
+          for (let i = totalAssigned; i < 2; i++) {
+            // Create open full shift
+            const openNightShift = {
+              userId: 0,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 19, 0, 0),
+              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              status: "open" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedOpenShift = await this.createShift(openNightShift);
+            generatedShifts.push(savedOpenShift);
+          }
         }
 
       } else {
