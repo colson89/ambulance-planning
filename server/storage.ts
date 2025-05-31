@@ -224,15 +224,32 @@ export class DatabaseStorage implements IStorage {
       const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-      // Get all available users for this day
-      const allAvailableUsers = activeUsers.map(u => u.id);
+      // Get users who have submitted preferences for this specific date
+      const dayPreferences = await db.select()
+        .from(shiftPreferences)
+        .where(and(
+          eq(shiftPreferences.date, currentDate),
+          eq(shiftPreferences.type, "day"),
+          ne(shiftPreferences.type, "unavailable")
+        ));
+      
+      const nightPreferences = await db.select()
+        .from(shiftPreferences)
+        .where(and(
+          eq(shiftPreferences.date, currentDate),
+          eq(shiftPreferences.type, "night"),
+          ne(shiftPreferences.type, "unavailable")
+        ));
+      
+      const availableDayUsers = dayPreferences.map(p => p.userId);
+      const availableNightUsers = nightPreferences.map(p => p.userId);
       
       // Track assigned users for this day to prevent double assignment
       const assignedDayIds: number[] = [];
       const assignedNightIds: number[] = [];
 
       // DAY SHIFTS (7:00-19:00) - Always 2 people
-      const sortedDayUsers = getSortedUsersForAssignment(allAvailableUsers);
+      const sortedDayUsers = getSortedUsersForAssignment(availableDayUsers);
       let assignedDayShifts = 0;
 
       for (const userId of sortedDayUsers) {
@@ -281,7 +298,7 @@ export class DatabaseStorage implements IStorage {
       // NIGHT SHIFTS - WEEKEND STRATEGY: FULL SHIFTS FIRST, HALF SHIFTS AS BACKUP
       if (isWeekend) {
         // WEEKEND: Try full night shifts first (19:00-07:00)
-        const availableForNight = allAvailableUsers.filter(id => !assignedDayIds.includes(id));
+        const availableForNight = availableNightUsers.filter(id => !assignedDayIds.includes(id));
         const sortedNightUsers = getSortedUsersForAssignment(availableForNight);
         let assignedFullNightShifts = 0;
 
