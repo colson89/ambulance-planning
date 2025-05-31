@@ -89,3 +89,18 @@ export const systemSettings = pgTable("system_settings", {
   value: text("value"),
   updatedAt: timestamp("updated_at").defaultNow()
 });
+
+// Weekdag configuratie voor shift generatie
+export const weekdayConfigs = pgTable("weekday_configs", {
+  id: serial("id").primaryKey(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0 = Sunday, 1 = Monday, etc.
+  enableDayShifts: boolean("enable_day_shifts").notNull().default(false),
+  enableNightShifts: boolean("enable_night_shifts").notNull().default(true),
+  dayShiftCount: integer("day_shift_count").notNull().default(2),
+  nightShiftCount: integer("night_shift_count").notNull().default(2),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertWeekdayConfigSchema = createInsertSchema(weekdayConfigs);
+export type WeekdayConfig = typeof weekdayConfigs.$inferSelect;
+export type InsertWeekdayConfig = z.infer<typeof insertWeekdayConfigSchema>;
