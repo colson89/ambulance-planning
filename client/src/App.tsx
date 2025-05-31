@@ -12,6 +12,7 @@ import Profile from "@/pages/profile";
 import UserManagement from "@/pages/user-management";
 import ScheduleGenerator from "@/pages/schedule-generator";
 import WeekdaySettings from "@/pages/weekday-settings";
+import Statistics from "@/pages/statistics";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <ProtectedRoute path="/users" component={UserManagement} />
       <ProtectedRoute path="/schedule" component={ScheduleGenerator} />
       <ProtectedRoute path="/settings" component={WeekdaySettings} />
+      <ProtectedRoute path="/statistics" component={Statistics} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

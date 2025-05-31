@@ -111,13 +111,23 @@ export default function Statistics() {
       nightShiftWeek: acc.nightShiftWeek + user.nightShiftWeek,
       dayShiftWeekend: acc.dayShiftWeekend + user.dayShiftWeekend,
       nightShiftWeekend: acc.nightShiftWeekend + user.nightShiftWeekend,
-      totalShifts: acc.totalShifts + user.totalShifts,
+      totalPreferences: acc.totalPreferences + user.totalPreferences,
+      actualDayShiftWeek: acc.actualDayShiftWeek + user.actualDayShiftWeek,
+      actualNightShiftWeek: acc.actualNightShiftWeek + user.actualNightShiftWeek,
+      actualDayShiftWeekend: acc.actualDayShiftWeekend + user.actualDayShiftWeekend,
+      actualNightShiftWeekend: acc.actualNightShiftWeekend + user.actualNightShiftWeekend,
+      totalActualShifts: acc.totalActualShifts + user.totalActualShifts,
     }), {
       dayShiftWeek: 0,
       nightShiftWeek: 0,
       dayShiftWeekend: 0,
       nightShiftWeekend: 0,
-      totalShifts: 0,
+      totalPreferences: 0,
+      actualDayShiftWeek: 0,
+      actualNightShiftWeek: 0,
+      actualDayShiftWeekend: 0,
+      actualNightShiftWeekend: 0,
+      totalActualShifts: 0,
     });
   };
 
@@ -231,67 +241,71 @@ export default function Statistics() {
 
       {/* Summary cards */}
       {totalStats && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Dagshifts Week</p>
-                  <p className="text-2xl font-bold">{totalStats.dayShiftWeek}</p>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Voorkeuren Totaal</CardTitle>
+                <CardDescription>Aantal ingediende voorkeuren</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Dagshift Week</p>
+                    <p className="text-xl font-bold text-blue-600">{totalStats.dayShiftWeek}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Nachtshift Week</p>
+                    <p className="text-xl font-bold text-purple-600">{totalStats.nightShiftWeek}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Dagshift Weekend</p>
+                    <p className="text-xl font-bold text-green-600">{totalStats.dayShiftWeekend}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Nachtshift Weekend</p>
+                    <p className="text-xl font-bold text-orange-600">{totalStats.nightShiftWeekend}</p>
+                  </div>
                 </div>
-                <Clock className="h-8 w-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
+                <div className="mt-4 pt-4 border-t text-center">
+                  <p className="text-sm text-muted-foreground">Totaal Voorkeuren</p>
+                  <p className="text-2xl font-bold">{totalStats.totalPreferences}</p>
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Nachtshifts Week</p>
-                  <p className="text-2xl font-bold">{totalStats.nightShiftWeek}</p>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Werkelijke Shifts</CardTitle>
+                <CardDescription>Aantal daadwerkelijk uitgevoerde shifts</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Dagshift Week</p>
+                    <p className="text-xl font-bold text-blue-600">{totalStats.actualDayShiftWeek}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Nachtshift Week</p>
+                    <p className="text-xl font-bold text-purple-600">{totalStats.actualNightShiftWeek}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Dagshift Weekend</p>
+                    <p className="text-xl font-bold text-green-600">{totalStats.actualDayShiftWeekend}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Nachtshift Weekend</p>
+                    <p className="text-xl font-bold text-orange-600">{totalStats.actualNightShiftWeekend}</p>
+                  </div>
                 </div>
-                <Clock className="h-8 w-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Dagshifts Weekend</p>
-                  <p className="text-2xl font-bold">{totalStats.dayShiftWeekend}</p>
+                <div className="mt-4 pt-4 border-t text-center">
+                  <p className="text-sm text-muted-foreground">Totaal Shifts</p>
+                  <p className="text-2xl font-bold">{totalStats.totalActualShifts}</p>
                 </div>
-                <Clock className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Nachtshifts Weekend</p>
-                  <p className="text-2xl font-bold">{totalStats.nightShiftWeekend}</p>
-                </div>
-                <Clock className="h-8 w-8 text-orange-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Totaal Shifts</p>
-                  <p className="text-2xl font-bold">{totalStats.totalShifts}</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-gray-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
       )}
 
       {/* Main statistics table */}
@@ -318,44 +332,79 @@ export default function Statistics() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Medewerker</TableHead>
-                  <TableHead className="text-center">Dagshift Week</TableHead>
-                  <TableHead className="text-center">Nachtshift Week</TableHead>
-                  <TableHead className="text-center">Dagshift Weekend</TableHead>
-                  <TableHead className="text-center">Nachtshift Weekend</TableHead>
-                  <TableHead className="text-center">Totaal</TableHead>
+                  <TableHead rowSpan={2} className="align-middle">Medewerker</TableHead>
+                  <TableHead colSpan={4} className="text-center">Voorkeuren</TableHead>
+                  <TableHead colSpan={4} className="text-center">Werkelijke Shifts</TableHead>
+                  <TableHead rowSpan={2} className="text-center align-middle">Totaal</TableHead>
+                </TableRow>
+                <TableRow>
+                  <TableHead className="text-center text-xs">Dag Week</TableHead>
+                  <TableHead className="text-center text-xs">Nacht Week</TableHead>
+                  <TableHead className="text-center text-xs">Dag Weekend</TableHead>
+                  <TableHead className="text-center text-xs">Nacht Weekend</TableHead>
+                  <TableHead className="text-center text-xs">Dag Week</TableHead>
+                  <TableHead className="text-center text-xs">Nacht Week</TableHead>
+                  <TableHead className="text-center text-xs">Dag Weekend</TableHead>
+                  <TableHead className="text-center text-xs">Nacht Weekend</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {statistics
-                  .sort((a, b) => b.totalShifts - a.totalShifts)
+                  .sort((a, b) => b.totalActualShifts - a.totalActualShifts)
                   .map((user) => (
                     <TableRow key={user.userId}>
                       <TableCell className="font-medium">{user.username}</TableCell>
+                      {/* Voorkeuren */}
                       <TableCell className="text-center">
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        <Badge variant="outline" className="text-blue-700 border-blue-300">
                           {user.dayShiftWeek}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                        <Badge variant="outline" className="text-purple-700 border-purple-300">
                           {user.nightShiftWeek}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        <Badge variant="outline" className="text-green-700 border-green-300">
                           {user.dayShiftWeekend}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                        <Badge variant="outline" className="text-orange-700 border-orange-300">
                           {user.nightShiftWeekend}
                         </Badge>
                       </TableCell>
+                      {/* Werkelijke shifts */}
                       <TableCell className="text-center">
-                        <Badge variant="default">
-                          {user.totalShifts}
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                          {user.actualDayShiftWeek}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                          {user.actualNightShiftWeek}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          {user.actualDayShiftWeekend}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                          {user.actualNightShiftWeekend}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="outline" className="text-xs">
+                            V: {user.totalPreferences}
+                          </Badge>
+                          <Badge variant="default" className="text-xs">
+                            W: {user.totalActualShifts}
+                          </Badge>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
