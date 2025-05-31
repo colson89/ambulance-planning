@@ -663,13 +663,14 @@ export default function ScheduleGenerator() {
                   className="w-full"
                   disabled={isGeneratingTestPreferences}
                   onClick={async () => {
+                    let pollInterval: NodeJS.Timeout | null = null;
                     try {
                       setIsGeneratingTestPreferences(true);
                       setProgressPercentage(0);
                       setProgressMessage("Starten van voorkeurengeneratie...");
                       
                       // Start polling voor voortgang
-                      const pollInterval = setInterval(async () => {
+                      pollInterval = setInterval(async () => {
                         try {
                           const progressRes = await fetch('/api/preferences/progress');
                           if (progressRes.ok) {
@@ -678,7 +679,7 @@ export default function ScheduleGenerator() {
                             setProgressMessage(progressData.message || "");
                             
                             if (progressData.percentage >= 100) {
-                              clearInterval(pollInterval);
+                              if (pollInterval) clearInterval(pollInterval);
                             }
                           }
                         } catch (error) {
@@ -705,13 +706,13 @@ export default function ScheduleGenerator() {
                       refetchPreferences();
                       
                       // Stop polling
-                      clearInterval(pollInterval);
+                      if (pollInterval) clearInterval(pollInterval);
                       
                       // Vernieuw ook de tijdstempel
                       queryClient.invalidateQueries({ queryKey: ["/api/system/settings/last-preferences-generated"] });
                     } catch (error) {
                       // Stop polling bij fout
-                      clearInterval(pollInterval);
+                      if (pollInterval) clearInterval(pollInterval);
                       toast({
                         title: "Fout",
                         description: error instanceof Error ? error.message : "Onbekende fout bij genereren testdata",
