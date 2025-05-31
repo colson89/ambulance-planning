@@ -312,10 +312,17 @@ export class DatabaseStorage implements IStorage {
       const currentDate = new Date(year, month - 1, day);
       const isWeekendDay = currentDate.getDay() === 0 || currentDate.getDay() === 6;
       
-      // Log voortgang elke 5 dagen
+      // Log voortgang elke 5 dagen met uitgebreide berichten
       if (day % 5 === 0 || day === daysInMonth) {
         const progress = Math.round(15 + ((day / daysInMonth) * 70)); // 15% tot 85%
-        console.log(`[${progress}%] Planning dag ${day}/${daysInMonth} (${currentDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })})`);
+        const dayName = currentDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
+        console.log(`[${progress}%] Planning dag ${day}/${daysInMonth} (${dayName})`);
+        
+        // Update progress for website
+        if (typeof generateProgress !== 'undefined') {
+          generateProgress.percentage = progress;
+          generateProgress.message = `Planning ${dayName} (dag ${day}/${daysInMonth})`;
+        }
       }
       
       // Verzamel beschikbare gebruikers voor deze specifieke dag

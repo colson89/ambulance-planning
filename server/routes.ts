@@ -648,8 +648,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { month, year } = req.body;
       console.log(`[0%] Planning generatie gestart voor ${month}/${year}`);
       
+      // Initialize progress tracking
+      generateProgress = { percentage: 0, message: "Planning generatie gestart...", isActive: true };
+      
       const generatedShifts = await storage.generateMonthlySchedule(month, year);
       
+      // Complete progress tracking
+      generateProgress = { percentage: 100, message: "Planning voltooid!", isActive: false };
       console.log(`[100%] Planning generatie voltooid voor ${month}/${year}`);
       
       // Log gebruikers uren voor verificatie
