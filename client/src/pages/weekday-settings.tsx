@@ -111,10 +111,12 @@ export default function WeekdaySettings() {
         <Button 
           onClick={() => initializeMutation.mutate()} 
           disabled={initializeMutation.isPending}
-          className="mt-4"
+          className="mt-6"
+          size="lg"
         >
           {initializeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Initialiseren
+          <Settings className="mr-2 h-4 w-4" />
+          Standaard Configuraties Initialiseren
         </Button>
       </div>
     );
