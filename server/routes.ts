@@ -589,16 +589,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`[0%] Begonnen met verwijderen van ${totalShifts} shifts...`);
       
+      // Initialize progress tracking
+      deleteProgress = { percentage: 0, message: "Beginnen met verwijderen...", isActive: true };
+      
       // Verwijder alle shifts voor deze maand/jaar met voortgangsindicatie
       for (let i = 0; i < shifts.length; i++) {
         await storage.deleteShift(shifts[i].id);
         
+        // Update progress for every shift
+        const progress = Math.round(((i + 1) / totalShifts) * 100);
+        deleteProgress.percentage = progress;
+        deleteProgress.message = `${i + 1}/${totalShifts} shifts verwijderd`;
+        
         // Log voortgang elke 10 shifts of bij de laatste
         if (i % 10 === 0 || i === shifts.length - 1) {
-          const progress = Math.round(((i + 1) / totalShifts) * 100);
           console.log(`[${progress}%] ${i + 1}/${totalShifts} shifts verwijderd`);
         }
       }
+      
+      // Complete progress tracking
+      deleteProgress = { percentage: 100, message: "Verwijderen voltooid!", isActive: false };
       
       console.log(`[100%] ${totalShifts} shifts succesvol verwijderd voor ${month}/${year}`);
       res.status(200).json({ 
