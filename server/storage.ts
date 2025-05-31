@@ -167,7 +167,7 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
-  async generateMonthlySchedule(month: number, year: number): Promise<Shift[]> {
+  async generateMonthlySchedule(month: number, year: number, updateProgress?: (percentage: number, message: string) => void): Promise<Shift[]> {
     // Verwijder bestaande shifts voor deze maand
     await db.delete(shifts)
       .where(and(
@@ -319,9 +319,8 @@ export class DatabaseStorage implements IStorage {
         console.log(`[${progress}%] Planning dag ${day}/${daysInMonth} (${dayName})`);
         
         // Update progress for website
-        if (typeof generateProgress !== 'undefined') {
-          generateProgress.percentage = progress;
-          generateProgress.message = `Planning ${dayName} (dag ${day}/${daysInMonth})`;
+        if (updateProgress) {
+          updateProgress(progress, `Planning ${dayName} (dag ${day}/${daysInMonth})`);
         }
       }
       

@@ -651,7 +651,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Initialize progress tracking
       generateProgress = { percentage: 0, message: "Planning generatie gestart...", isActive: true };
       
-      const generatedShifts = await storage.generateMonthlySchedule(month, year);
+      const generatedShifts = await storage.generateMonthlySchedule(month, year, (percentage, message) => {
+        generateProgress.percentage = percentage;
+        generateProgress.message = message;
+      });
       
       // Complete progress tracking
       generateProgress = { percentage: 100, message: "Planning voltooid!", isActive: false };
