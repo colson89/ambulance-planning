@@ -353,9 +353,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
             createdPreferences++;
           }
+          
+          completedOperations++;
           // GEEN neutrale voorkeuren meer
         }
+        
+        // Log voortgang na elke gebruiker
+        const overallProgress = Math.round((completedOperations / totalOperations) * 100);
+        console.log(`[${overallProgress}%] Voltooid voor ${user.username} - ${completedOperations}/${totalOperations} operaties`);
       }
+      
+      console.log(`[100%] Voorkeuren generatie voltooid!`);
       
       // Sla de huidige tijd op als tijdstempel voor de laatste generatie
       const now = new Date();
@@ -518,17 +526,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Haal eerst alle shifts op voor deze maand/jaar
       const shifts = await storage.getShiftsByMonth(parseInt(month), parseInt(year));
-      const deletedCount = shifts.length;
+      const totalShifts = shifts.length;
       
-      // Verwijder alle shifts voor deze maand/jaar
-      for (const shift of shifts) {
-        await storage.deleteShift(shift.id);
+      console.log(`[0%] Begonnen met verwijderen van ${totalShifts} shifts...`);
+      
+      // Verwijder alle shifts voor deze maand/jaar met voortgangsindicatie
+      for (let i = 0; i < shifts.length; i++) {
+        await storage.deleteShift(shifts[i].id);
+        
+        // Log voortgang elke 10 shifts of bij de laatste
+        if (i % 10 === 0 || i === shifts.length - 1) {
+          const progress = Math.round(((i + 1) / totalShifts) * 100);
+          console.log(`[${progress}%] ${i + 1}/${totalShifts} shifts verwijderd`);
+        }
       }
       
-      console.log(`${deletedCount} shifts verwijderd voor ${month}/${year}`);
+      console.log(`[100%] ${totalShifts} shifts succesvol verwijderd voor ${month}/${year}`);
       res.status(200).json({ 
-        message: `${deletedCount} shifts verwijderd voor ${month}/${year}`,
-        count: deletedCount
+        message: `${totalShifts} shifts verwijderd voor ${month}/${year}`,
+        count: totalShifts
       });
     } catch (error) {
       console.error("Error deleting shifts:", error);
@@ -571,9 +587,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/schedule/generate", async (req, res) => {
     try {
       const { month, year } = req.body;
-      console.log(`Generating schedule for ${month}/${year}`);
+      console.log(`[0%] Planning generatie gestart voor ${month}/${year}`);
       
       const generatedShifts = await storage.generateMonthlySchedule(month, year);
+      
+      console.log(`[100%] Planning generatie voltooid voor ${month}/${year}`);
       
       // Log gebruikers uren voor verificatie
       console.log("Gebruikers uren na planning generatie:");

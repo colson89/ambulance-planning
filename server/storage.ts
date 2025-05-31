@@ -191,7 +191,8 @@ export class DatabaseStorage implements IStorage {
       userAssignedHours.set(user.id, 0);
     });
     
-    console.log(`Generating schedule for ${month}/${year} with ${activeUsers.length} actieve gebruikers`);
+    console.log(`[5%] Planning generatie gestart voor ${month}/${year} met ${activeUsers.length} actieve gebruikers`);
+    console.log(`[10%] ${daysInMonth} dagen moeten ingepland worden...`);
     
     // Helper functie om te controleren of een gebruiker nog uren kan werken
     const canAssignHours = (userId: number, hoursToAdd: number): boolean => {
@@ -310,6 +311,12 @@ export class DatabaseStorage implements IStorage {
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(year, month - 1, day);
       const isWeekendDay = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+      
+      // Log voortgang elke 5 dagen
+      if (day % 5 === 0 || day === daysInMonth) {
+        const progress = Math.round(15 + ((day / daysInMonth) * 70)); // 15% tot 85%
+        console.log(`[${progress}%] Planning dag ${day}/${daysInMonth} (${currentDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })})`);
+      }
       
       // Verzamel beschikbare gebruikers voor deze specifieke dag
       const availableForDay: number[] = [];
