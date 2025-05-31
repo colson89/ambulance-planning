@@ -359,7 +359,7 @@ export default function Dashboard() {
                             {shift.startTime && shift.endTime ? (
                               shift.type === "night" ? (
                                 shift.isSplitShift ? (
-                                  format(new Date(shift.startTime), "HH") === "19" && format(new Date(shift.endTime), "HH") === "23" ? 
+                                  new Date(shift.startTime).getHours() === 19 ? 
                                   "19:00 - 23:00" : 
                                   "23:00 - 07:00"
                                 ) : (
@@ -367,7 +367,7 @@ export default function Dashboard() {
                                 )
                               ) : (
                                 shift.isSplitShift ? (
-                                  format(new Date(shift.startTime), "HH") === "7" && format(new Date(shift.endTime), "HH") === "13" ? 
+                                  new Date(shift.startTime).getHours() === 7 ? 
                                   "07:00 - 13:00" : 
                                   "13:00 - 19:00"
                                 ) : (
