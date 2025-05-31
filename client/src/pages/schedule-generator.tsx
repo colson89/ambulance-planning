@@ -263,8 +263,8 @@ export default function ScheduleGenerator() {
       
       console.log(`Aantal toegewezen gebruikers: ${assignedUserIds.size}`);
       
-      // Haal alle ambulanciers op
-      const ambulanciers = users.filter(u => u.role === "ambulancier");
+      // Haal alle ambulanciers EN admins op die shifts kunnen draaien
+      const ambulanciers = users.filter(u => u.role === "ambulancier" || u.role === "admin");
       
       // Filter voorkeuren voor de geselecteerde datum en shift type
       const preferencesForDate = preferences.filter(pref => {

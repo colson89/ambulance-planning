@@ -94,8 +94,8 @@ export default function Dashboard() {
         }
       });
       
-      // Haal alle ambulanciers op
-      const ambulanciers = users.filter(u => u.role === "ambulancier");
+      // Haal alle ambulanciers EN admins op die shifts kunnen draaien
+      const ambulanciers = users.filter(u => u.role === "ambulancier" || u.role === "admin");
       
       // Zoek in voorkeuren voor deze datum
       const allPreferences = preferences.flatMap(userPrefs => userPrefs.preferences || []);
