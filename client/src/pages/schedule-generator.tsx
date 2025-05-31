@@ -586,6 +586,19 @@ export default function ScheduleGenerator() {
                   </div>
                 )}
                 
+                {isGeneratingTestPreferences && (
+                  <div className="mb-4">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span>Voortgang</span>
+                      <span>{progressPercentage}%</span>
+                    </div>
+                    <Progress value={progressPercentage} className="w-full" />
+                    {progressMessage && (
+                      <p className="text-xs text-muted-foreground mt-1">{progressMessage}</p>
+                    )}
+                  </div>
+                )}
+                
                 <Button
                   variant="outline"
                   size="sm"
@@ -594,6 +607,27 @@ export default function ScheduleGenerator() {
                   onClick={async () => {
                     try {
                       setIsGeneratingTestPreferences(true);
+                      setProgressPercentage(0);
+                      setProgressMessage("Starten van voorkeurengeneratie...");
+                      
+                      // Start polling voor voortgang
+                      const pollInterval = setInterval(async () => {
+                        try {
+                          const progressRes = await fetch('/api/preferences/progress');
+                          if (progressRes.ok) {
+                            const progressData = await progressRes.json();
+                            setProgressPercentage(progressData.percentage || 0);
+                            setProgressMessage(progressData.message || "");
+                            
+                            if (progressData.percentage >= 100) {
+                              clearInterval(pollInterval);
+                            }
+                          }
+                        } catch (error) {
+                          // Stille fout - polling mag niet het hoofdproces verstoren
+                        }
+                      }, 1000);
+                      
                       const res = await apiRequest("POST", "/api/preferences/generate-test-data", {
                         month: selectedMonth + 1,
                         year: selectedYear

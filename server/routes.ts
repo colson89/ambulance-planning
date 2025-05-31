@@ -205,6 +205,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Track active preference generation processes
   let isGeneratingPreferences = false;
+  let currentProgress = { percentage: 0, message: "", isActive: false };
+
+  // Progress endpoint for frontend polling
+  app.get("/api/preferences/progress", requireAdmin, (req, res) => {
+    res.json(currentProgress);
+  });
 
   // Generate random preferences for testing (admin only)
   app.post("/api/preferences/generate-test-data", requireAdmin, async (req, res) => {
@@ -224,6 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Mark process as active
       isGeneratingPreferences = true;
+      currentProgress = { percentage: 0, message: "Voorkeurengeneratie gestart...", isActive: true };
       console.log("[BLOKKERING] Voorkeurengeneratie proces gestart - nieuwe verzoeken worden geblokkeerd");
       
       let users;
@@ -240,6 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Eerst alle bestaande voorkeuren voor deze maand/jaar verwijderen
+      currentProgress.message = `Verwijderen van bestaande voorkeuren voor maand ${month}/${year}...`;
       console.log(`[0%] Verwijderen van bestaande voorkeuren voor maand ${month}/${year}...`);
       
       for (let userIndex = 0; userIndex < users.length; userIndex++) {
@@ -254,9 +262,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.deleteShiftPreference(preference.id);
         }
         
+        currentProgress.percentage = deleteProgress;
+        currentProgress.message = `Verwijderd voor ${user.username} (${userIndex + 1}/${users.length})`;
         console.log(`[${deleteProgress}%] ${existingPreferences.length} voorkeuren verwijderd voor gebruiker ${user.username} (${userIndex + 1}/${users.length})`);
       }
       
+      currentProgress.percentage = 50;
+      currentProgress.message = "Nieuwe voorkeuren genereren...";
       console.log(`[50%] Alle bestaande voorkeuren verwijderd, nu nieuwe voorkeuren genereren...`);
       
       const daysInMonth = new Date(year, month, 0).getDate();
