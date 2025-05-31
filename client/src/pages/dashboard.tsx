@@ -139,19 +139,22 @@ export default function Dashboard() {
           preferenceType = "available";
         }
         
-        result.push({
-          userId: ambulancier.id,
-          username: ambulancier.username || "Onbekend",
-          firstName: ambulancier.firstName || "",
-          lastName: ambulancier.lastName || "",
-          preferenceType: preferenceType,
-          canSplit: userPreference?.canSplit || false,
-          isAssigned: isAssigned,
-          isAvailable: isAvailable && wantsToWork,
-          hours: ambulancier.hours || 0,
-          startTime: userPreference?.startTime,
-          endTime: userPreference?.endTime
-        });
+        // Alleen toevoegen als ze toegewezen zijn OF een voorkeur hebben ingediend
+        if (isAssigned || isAvailable) {
+          result.push({
+            userId: ambulancier.id,
+            username: ambulancier.username || "Onbekend",
+            firstName: ambulancier.firstName || "",
+            lastName: ambulancier.lastName || "",
+            preferenceType: preferenceType,
+            canSplit: userPreference?.canSplit || false,
+            isAssigned: isAssigned,
+            isAvailable: isAvailable && wantsToWork,
+            hours: ambulancier.hours || 0,
+            startTime: userPreference?.startTime,
+            endTime: userPreference?.endTime
+          });
+        }
       });
       
       // Sorteer de resultaten: eerst beschikbare niet-toegewezen, dan toegewezen, dan rest
