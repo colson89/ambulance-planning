@@ -246,51 +246,54 @@ export class DatabaseStorage implements IStorage {
       const assignedDayIds: number[] = [];
       const assignedNightIds: number[] = [];
 
-      // DAY SHIFTS (7:00-19:00) - Always 2 people
-      const sortedDayUsers = getSortedUsersForAssignment(availableDayUsers);
+      // DAY SHIFTS (7:00-19:00) - ONLY ON WEEKENDS!
       let assignedDayShifts = 0;
+      
+      if (isWeekend) {
+        const sortedDayUsers = getSortedUsersForAssignment(availableDayUsers);
 
-      for (const userId of sortedDayUsers) {
-        if (assignedDayShifts >= 2) break;
-        
-        if (canAssignHours(userId, 12)) {
-          assignedDayIds.push(userId);
-          addAssignedHours(userId, 12);
-          assignedDayShifts++;
+        for (const userId of sortedDayUsers) {
+          if (assignedDayShifts >= 2) break;
           
-          const dayShift = {
-            userId: userId,
+          if (canAssignHours(userId, 12)) {
+            assignedDayIds.push(userId);
+            addAssignedHours(userId, 12);
+            assignedDayShifts++;
+            
+            const dayShift = {
+              userId: userId,
+              date: currentDate,
+              type: "day" as const,
+              startTime: new Date(year, month - 1, day, 7, 0, 0),
+              endTime: new Date(year, month - 1, day, 19, 0, 0),
+              status: "planned" as const,
+              month,
+              year,
+              isSplitShift: false
+            };
+            
+            const savedDayShift = await this.createShift(dayShift);
+            generatedShifts.push(savedDayShift);
+          }
+        }
+
+        // Create open day shifts for remaining positions (only on weekends)
+        for (let i = assignedDayShifts; i < 2; i++) {
+          const openDayShift = {
+            userId: 0,
             date: currentDate,
             type: "day" as const,
             startTime: new Date(year, month - 1, day, 7, 0, 0),
             endTime: new Date(year, month - 1, day, 19, 0, 0),
-            status: "planned" as const,
+            status: "open" as const,
             month,
             year,
             isSplitShift: false
           };
           
-          const savedDayShift = await this.createShift(dayShift);
-          generatedShifts.push(savedDayShift);
+          const savedOpenShift = await this.createShift(openDayShift);
+          generatedShifts.push(savedOpenShift);
         }
-      }
-
-      // Create open day shifts for remaining positions
-      for (let i = assignedDayShifts; i < 2; i++) {
-        const openDayShift = {
-          userId: 0,
-          date: currentDate,
-          type: "day" as const,
-          startTime: new Date(year, month - 1, day, 7, 0, 0),
-          endTime: new Date(year, month - 1, day, 19, 0, 0),
-          status: "open" as const,
-          month,
-          year,
-          isSplitShift: false
-        };
-        
-        const savedOpenShift = await this.createShift(openDayShift);
-        generatedShifts.push(savedOpenShift);
       }
 
       // NIGHT SHIFTS - WEEKEND STRATEGY: FULL SHIFTS FIRST, HALF SHIFTS AS BACKUP
