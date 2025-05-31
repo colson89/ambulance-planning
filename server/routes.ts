@@ -240,8 +240,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Eerst alle bestaande voorkeuren voor deze maand/jaar verwijderen
-      console.log(`Verwijderen van bestaande voorkeuren voor maand ${month}/${year}...`);
-      for (const user of users) {
+      console.log(`[0%] Verwijderen van bestaande voorkeuren voor maand ${month}/${year}...`);
+      
+      for (let userIndex = 0; userIndex < users.length; userIndex++) {
+        const user = users[userIndex];
+        const deleteProgress = Math.round((userIndex / users.length) * 50); // 0% tot 50%
+        
         // Haal bestaande voorkeuren op
         const existingPreferences = await storage.getUserShiftPreferences(user.id, month, year);
         
@@ -250,19 +254,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.deleteShiftPreference(preference.id);
         }
         
-        console.log(`- ${existingPreferences.length} voorkeuren verwijderd voor gebruiker ${user.username}`);
+        console.log(`[${deleteProgress}%] ${existingPreferences.length} voorkeuren verwijderd voor gebruiker ${user.username} (${userIndex + 1}/${users.length})`);
       }
+      
+      console.log(`[50%] Alle bestaande voorkeuren verwijderd, nu nieuwe voorkeuren genereren...`);
       
       const daysInMonth = new Date(year, month, 0).getDate();
       let createdPreferences = 0;
       const totalOperations = users.length * daysInMonth;
       let completedOperations = 0;
       
-      console.log(`Begonnen met genereren van voorkeuren voor ${users.length} gebruikers...`);
+      console.log(`[50%] Begonnen met genereren van voorkeuren voor ${users.length} gebruikers...`);
       
       for (let userIndex = 0; userIndex < users.length; userIndex++) {
         const user = users[userIndex];
-        const userProgress = Math.round((userIndex / users.length) * 100);
+        const userProgress = Math.round(50 + ((userIndex / users.length) * 40)); // 50% tot 90%
         console.log(`[${userProgress}%] Voorkeuren genereren voor ${user.username} (${userIndex + 1}/${users.length})`);
         
         // Voor elke dag in de maand
@@ -373,7 +379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Log voortgang na elke gebruiker
-        const overallProgress = Math.round((completedOperations / totalOperations) * 100);
+        const overallProgress = Math.round(90 + ((completedOperations / totalOperations) * 10)); // 90% tot 100%
         console.log(`[${overallProgress}%] Voltooid voor ${user.username} - ${completedOperations}/${totalOperations} operaties`);
       }
       
