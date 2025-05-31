@@ -1,6 +1,6 @@
 import { users, shifts, shiftPreferences, systemSettings, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, desc, asc } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, ne } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -229,16 +229,14 @@ export class DatabaseStorage implements IStorage {
         .from(shiftPreferences)
         .where(and(
           eq(shiftPreferences.date, currentDate),
-          eq(shiftPreferences.type, "day"),
-          ne(shiftPreferences.type, "unavailable")
+          eq(shiftPreferences.type, "day")
         ));
       
       const nightPreferences = await db.select()
         .from(shiftPreferences)
         .where(and(
           eq(shiftPreferences.date, currentDate),
-          eq(shiftPreferences.type, "night"),
-          ne(shiftPreferences.type, "unavailable")
+          eq(shiftPreferences.type, "night")
         ));
       
       const availableDayUsers = dayPreferences.map(p => p.userId);
@@ -330,7 +328,7 @@ export class DatabaseStorage implements IStorage {
 
         // Step 2: If we couldn't fill with full shifts, use half shifts as backup
         if (assignedFullNightShifts < 2) {
-          const remainingAvailable = availableForNight.filter(id => !assignedNightIds.includes(id));
+          const remainingAvailable = availableForNight.filter((id: number) => !assignedNightIds.includes(id));
           
           // First half (19:00-23:00)
           const sortedFirstHalf = getSortedUsersForAssignment(remainingAvailable);
@@ -415,7 +413,7 @@ export class DatabaseStorage implements IStorage {
 
       } else {
         // WEEKDAY: Create half shifts (19:00-23:00 and 23:00-07:00)
-        const availableForNight = allAvailableUsers.filter(id => !assignedDayIds.includes(id));
+        const availableForNight = availableNightUsers.filter((id: number) => !assignedDayIds.includes(id));
 
         // First half (19:00-23:00)
         const sortedFirstHalf = getSortedUsersForAssignment(availableForNight);
