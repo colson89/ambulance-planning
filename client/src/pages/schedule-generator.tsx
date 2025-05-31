@@ -290,25 +290,34 @@ export default function ScheduleGenerator() {
         // Controleer of de ambulancier uren wil werken (hours > 0)
         const wantsToWork = ambulancier.hours > 0;
         
+        // AANGEPAST: Toon ALLE ambulanciers die zich beschikbaar hebben gesteld
+        // Dit helpt bij het vinden van vervangingen
+        const hasPreference = isAvailable || isAssigned;
+        
         // Bepaal het preferentietype
         let preferenceType = "unavailable";
         if (isAssigned) {
           preferenceType = "assigned";
         } else if (isAvailable && wantsToWork) {
           preferenceType = "available";
+        } else if (isAvailable && !wantsToWork) {
+          preferenceType = "available_no_hours";
         }
         
-        result.push({
-          userId: ambulancier.id,
-          username: ambulancier.username || "Onbekend",
-          firstName: ambulancier.firstName || "",
-          lastName: ambulancier.lastName || "",
-          preferenceType: preferenceType,
-          canSplit: false, // Niet relevant voor weergave
-          isAssigned: isAssigned, // Extra veld om snel te kunnen checken of deze gebruiker al is toegewezen
-          isAvailable: isAvailable && wantsToWork, // Of de gebruiker beschikbaar is en uren wil werken
-          hours: ambulancier.hours || 0 // Hoeveel uren deze persoon wil werken
-        });
+        // Voeg toe aan resultaat als ze zich beschikbaar hebben gesteld OF al zijn toegewezen
+        if (hasPreference) {
+          result.push({
+            userId: ambulancier.id,
+            username: ambulancier.username || "Onbekend",
+            firstName: ambulancier.firstName || "",
+            lastName: ambulancier.lastName || "",
+            preferenceType: preferenceType,
+            canSplit: false, // Niet relevant voor weergave
+            isAssigned: isAssigned, // Extra veld om snel te kunnen checken of deze gebruiker al is toegewezen
+            isAvailable: isAvailable && wantsToWork, // Of de gebruiker beschikbaar is en uren wil werken
+            hours: ambulancier.hours || 0 // Hoeveel uren deze persoon wil werken
+          });
+        }
       });
       
       // Sorteer de resultaten: eerst beschikbare niet-toegewezen, dan toegewezen, dan rest
