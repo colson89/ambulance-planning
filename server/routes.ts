@@ -203,14 +203,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Track active preference generation processes
+  let isGeneratingPreferences = false;
+
   // Generate random preferences for testing (admin only)
   app.post("/api/preferences/generate-test-data", requireAdmin, async (req, res) => {
     try {
+      // Check if another process is already running
+      if (isGeneratingPreferences) {
+        return res.status(409).json({ 
+          message: "Er is al een voorkeurengeneratie proces bezig. Wacht tot het huidige proces is voltooid." 
+        });
+      }
+
       const { month, year, userId } = req.body;
       
       if (!month || !year) {
         return res.status(400).json({ message: "Month and year are required" });
       }
+
+      // Mark process as active
+      isGeneratingPreferences = true;
+      console.log("[BLOKKERING] Voorkeurengeneratie proces gestart - nieuwe verzoeken worden geblokkeerd");
       
       let users;
       if (userId) {
@@ -370,6 +384,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timestamp = now.toISOString();
       await storage.setSystemSetting('last_preferences_generated', timestamp);
       
+      // Release the lock
+      isGeneratingPreferences = false;
+      console.log("[BLOKKERING] Voorkeurengeneratie proces voltooid - nieuwe verzoeken zijn weer toegestaan");
+      
       res.status(200).json({ 
         message: `Successfully generated ${createdPreferences} test preferences for ${users.length} users`,
         timestamp: timestamp,
@@ -386,6 +404,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error generating test preferences:", error);
+      
+      // Release the lock in case of error
+      isGeneratingPreferences = false;
+      console.log("[BLOKKERING] Voorkeurengeneratie proces gefaald - blokkering vrijgegeven");
+      
       res.status(500).json({ 
         message: "Failed to generate test preferences",
         error: error instanceof Error ? error.message : "Unknown error" 
