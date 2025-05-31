@@ -358,8 +358,8 @@ export default function Dashboard() {
                           <TableCell>
                             {shift.startTime && shift.endTime ? (
                               (() => {
-                                const startHour = new Date(shift.startTime).getHours();
-                                const endHour = new Date(shift.endTime).getHours();
+                                const startHour = new Date(shift.startTime).getUTCHours();
+                                const endHour = new Date(shift.endTime).getUTCHours();
                                 
                                 if (shift.type === "night") {
                                   if (shift.isSplitShift) {
