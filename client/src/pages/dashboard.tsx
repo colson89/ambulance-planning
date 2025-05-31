@@ -461,6 +461,7 @@ export default function Dashboard() {
                           <TableRow>
                             <TableHead>Naam</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead>Beschikbare tijden</TableHead>
                             <TableHead>Uren</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -481,13 +482,26 @@ export default function Dashboard() {
                                   <Badge variant="outline" className="text-red-500">Niet beschikbaar</Badge>
                                 )}
                               </TableCell>
+                              <TableCell>
+                                {u.startTime && u.endTime ? (
+                                  (() => {
+                                    const startHour = new Date(u.startTime).getUTCHours();
+                                    const endHour = new Date(u.endTime).getUTCHours();
+                                    return `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
+                                  })()
+                                ) : u.isAvailable || u.isAssigned ? (
+                                  "Hele dag (07:00 - 19:00)"
+                                ) : (
+                                  "-"
+                                )}
+                              </TableCell>
                               <TableCell>{u.hours}</TableCell>
                             </TableRow>
                           ))}
                           
                           {getUsersAvailableForDate(selectedDate, "day").length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={3} className="text-center py-4">
+                              <TableCell colSpan={4} className="text-center py-4">
                                 Geen beschikbare ambulanciers gevonden
                               </TableCell>
                             </TableRow>
