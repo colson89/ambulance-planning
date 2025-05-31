@@ -64,6 +64,8 @@ export default function Dashboard() {
         isAssigned: boolean;
         isAvailable: boolean;
         hours: number;
+        startTime?: string | null;
+        endTime?: string | null;
       }> = [];
       
       // Gezochte datum in YMD formaat voor eenvoudigere vergelijking
@@ -106,19 +108,25 @@ export default function Dashboard() {
         return prefYMD === gezochteYMD;
       });
       
-      // Maak een Set van gebruikers die beschikbaar zijn volgens voorkeur
-      const availableUserIds = new Set();
+      // Maak een Map van gebruikers met hun voorkeuren en tijdsblokken
+      const userPreferencesMap = new Map();
       preferencesForDate.forEach(pref => {
         // Als de voorkeur niet 'unavailable' is en het shift type komt overeen
         if (pref.type !== "unavailable" && pref.type === shiftType) {
-          availableUserIds.add(pref.userId);
+          userPreferencesMap.set(pref.userId, {
+            startTime: pref.startTime,
+            endTime: pref.endTime,
+            preferenceType: pref.type,
+            canSplit: pref.canSplit || false
+          });
         }
       });
       
       // Toon alle ambulanciers en markeer op basis van beschikbaarheid en toewijzing
       ambulanciers.forEach(ambulancier => {
         const isAssigned = assignedUserIds.has(ambulancier.id);
-        const isAvailable = availableUserIds.has(ambulancier.id);
+        const userPreference = userPreferencesMap.get(ambulancier.id);
+        const isAvailable = !!userPreference;
         
         // Controleer of de ambulancier uren wil werken (hours > 0)
         const wantsToWork = ambulancier.hours > 0;
@@ -137,10 +145,12 @@ export default function Dashboard() {
           firstName: ambulancier.firstName || "",
           lastName: ambulancier.lastName || "",
           preferenceType: preferenceType,
-          canSplit: false, // Niet relevant voor weergave
-          isAssigned: isAssigned, // Extra veld om snel te kunnen checken of deze gebruiker al is toegewezen
-          isAvailable: isAvailable && wantsToWork, // Of de gebruiker beschikbaar is en uren wil werken
-          hours: ambulancier.hours || 0 // Hoeveel uren deze persoon wil werken
+          canSplit: userPreference?.canSplit || false,
+          isAssigned: isAssigned,
+          isAvailable: isAvailable && wantsToWork,
+          hours: ambulancier.hours || 0,
+          startTime: userPreference?.startTime,
+          endTime: userPreference?.endTime
         });
       });
       
@@ -497,6 +507,7 @@ export default function Dashboard() {
                         <TableRow>
                           <TableHead>Naam</TableHead>
                           <TableHead>Status</TableHead>
+                          <TableHead>Beschikbare tijden</TableHead>
                           <TableHead>Uren</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -517,13 +528,26 @@ export default function Dashboard() {
                                 <Badge variant="outline" className="text-red-500">Niet beschikbaar</Badge>
                               )}
                             </TableCell>
+                            <TableCell>
+                              {u.startTime && u.endTime ? (
+                                (() => {
+                                  const startHour = new Date(u.startTime).getUTCHours();
+                                  const endHour = new Date(u.endTime).getUTCHours();
+                                  return `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
+                                })()
+                              ) : u.isAvailable || u.isAssigned ? (
+                                "Hele nacht (19:00 - 07:00)"
+                              ) : (
+                                "-"
+                              )}
+                            </TableCell>
                             <TableCell>{u.hours}</TableCell>
                           </TableRow>
                         ))}
                         
                         {getUsersAvailableForDate(selectedDate, "night").length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={3} className="text-center py-4">
+                            <TableCell colSpan={4} className="text-center py-4">
                               Geen beschikbare ambulanciers gevonden
                             </TableCell>
                           </TableRow>
