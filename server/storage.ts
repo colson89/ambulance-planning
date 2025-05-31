@@ -503,113 +503,21 @@ export class DatabaseStorage implements IStorage {
             generatedShifts.push(savedOpenShift2);
           }
         } else {
-          // Probeer halve shifts toe te wijzen als er geen volledige shifts mogelijk zijn
-          let hasAssignedHalfShift1 = false;
-          let hasAssignedHalfShift2 = false;
+          // Alleen open shifts maken als er helemaal geen medewerkers beschikbaar zijn
+          const openShift = {
+            userId: 0,
+            date: currentDate,
+            type: "night" as const,
+            startTime: new Date(year, month - 1, day, 19, 0, 0),
+            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+            status: "open" as const,
+            month,
+            year,
+            isSplitShift: false
+          };
           
-          // Eerste helft van de nacht (19:00 - 23:00)
-          const sortedNightFirstHalfUsers = getSortedUsersForAssignment(availableForNightFirstHalf);
-          if (sortedNightFirstHalfUsers.length > 0) {
-            const halfShiftHours = 6; // 6 uur voor de eerste helft
-            
-            // Eerste persoon voor eerste helft
-            for (const userId of sortedNightFirstHalfUsers) {
-              if (canAssignHours(userId, halfShiftHours)) {
-                // Maak shift aan voor de eerste helft
-                const nightHalfShift1 = {
-                  userId: userId,
-                  date: currentDate,
-                  type: "night" as const,
-                  startTime: new Date(year, month - 1, day, 19, 0, 0),
-                  endTime: new Date(year, month - 1, day, 23, 0, 0), // Tot 23:00
-                  status: "planned" as const,
-                  month,
-                  year,
-                  isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 19, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day, 1, 0, 0)
-                };
-                
-                addAssignedHours(userId, halfShiftHours);
-                const savedHalfShift1 = await this.createShift(nightHalfShift1);
-                generatedShifts.push(savedHalfShift1);
-                hasAssignedHalfShift1 = true;
-                break;
-              }
-            }
-          }
-          
-          // Tweede helft van de nacht (23:00 - 7:00)
-          const sortedNightSecondHalfUsers = getSortedUsersForAssignment(availableForNightSecondHalf);
-          if (sortedNightSecondHalfUsers.length > 0) {
-            const halfShiftHours = 6; // 6 uur voor de tweede helft
-            
-            // Tweede persoon voor tweede helft
-            for (const userId of sortedNightSecondHalfUsers) {
-              if (canAssignHours(userId, halfShiftHours)) {
-                // Maak shift aan voor de tweede helft
-                const nightHalfShift2 = {
-                  userId: userId,
-                  date: currentDate,
-                  type: "night" as const,
-                  startTime: new Date(year, month - 1, day, 23, 0, 0), // Vanaf 23:00
-                  endTime: new Date(year, month - 1, day + 1, 7, 0, 0), // Tot 7:00 volgende dag
-                  status: "planned" as const,
-                  month,
-                  year,
-                  isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 23, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day + 1, 7, 0, 0)
-                };
-                
-                addAssignedHours(userId, halfShiftHours);
-                const savedHalfShift2 = await this.createShift(nightHalfShift2);
-                generatedShifts.push(savedHalfShift2);
-                hasAssignedHalfShift2 = true;
-                break;
-              }
-            }
-          }
-          
-          // Als eerste helft niet toegewezen kon worden, maak open shift aan
-          if (!hasAssignedHalfShift1) {
-            const openNightHalfShift1 = {
-              userId: 0,
-              date: currentDate,
-              type: "night" as const,
-              startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day, 23, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: true,
-              splitStartTime: new Date(year, month - 1, day, 19, 0, 0),
-              splitEndTime: new Date(year, month - 1, day, 23, 0, 0)
-            };
-            
-            const savedOpenHalfShift1 = await this.createShift(openNightHalfShift1);
-            generatedShifts.push(savedOpenHalfShift1);
-          }
-          
-          // Als tweede helft niet toegewezen kon worden, maak open shift aan
-          if (!hasAssignedHalfShift2) {
-            const openNightHalfShift2 = {
-              userId: 0,
-              date: currentDate,
-              type: "night" as const,
-              startTime: new Date(year, month - 1, day, 23, 0, 0),
-              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: true,
-              splitStartTime: new Date(year, month - 1, day, 23, 0, 0),
-              splitEndTime: new Date(year, month - 1, day + 1, 7, 0, 0)
-            };
-            
-            const savedOpenHalfShift2 = await this.createShift(openNightHalfShift2);
-            generatedShifts.push(savedOpenHalfShift2);
-          }
+          const savedOpenShift = await this.createShift(openShift);
+          generatedShifts.push(savedOpenShift);
         }
       } 
       // Weekend: zowel dag- als nachtshifts plannen
