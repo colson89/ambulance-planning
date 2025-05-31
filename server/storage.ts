@@ -134,8 +134,7 @@ export class DatabaseStorage implements IStorage {
           eq(shiftPreferences.month, month),
           eq(shiftPreferences.year, year)
         )
-      )
-      .orderBy(asc(shiftPreferences.day));
+      );
   }
 
   async createShiftPreference(preference: InsertShiftPreference): Promise<ShiftPreference> {

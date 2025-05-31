@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   role: text("role", { enum: ["admin", "ambulancier"] }).notNull().default("ambulancier"),
   isAdmin: boolean("is_admin").notNull().default(false),
+  active: boolean("active").notNull().default(true),
   hours: integer("hours").notNull().default(24)
 });
 
@@ -31,14 +32,11 @@ export const shifts = pgTable("shifts", {
 export const shiftPreferences = pgTable("shift_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
-  date: timestamp("date").notNull(),
-  type: text("type", { enum: ["day", "night", "unavailable"] }).notNull(),
-  startTime: timestamp("start_time"),  
-  endTime: timestamp("end_time"),      
-  status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
+  day: integer("day").notNull(),
   month: integer("month").notNull(),
   year: integer("year").notNull(),
-  canSplit: boolean("can_split").notNull().default(false),
+  shiftType: text("shift_type", { enum: ["day", "night"] }).notNull(),
+  preferenceType: text("preference_type", { enum: ["full", "first", "second", "unavailable"] }).notNull(),
   notes: text("notes")
 });
 
