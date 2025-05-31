@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { WeekdayConfig } from "@shared/schema";
-import { Loader2, Save, Calendar, Settings } from "lucide-react";
+import { Loader2, Save, Calendar, Settings, Home, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useLocation } from "wouter";
 
 const WEEKDAY_NAMES = [
   "Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"
@@ -17,6 +18,7 @@ const WEEKDAY_NAMES = [
 
 export default function WeekdaySettings() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   const { data: configs, isLoading, error } = useQuery<WeekdayConfig[]>({
     queryKey: ["/api/weekday-configs"],
@@ -79,14 +81,24 @@ export default function WeekdaySettings() {
   if (error || !configs) {
     return (
       <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Settings className="h-8 w-8" />
-            Weekdag Instellingen
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Configureer welke shifts per weekdag gegenereerd moeten worden
-          </p>
+        <div className="flex items-center gap-4 mb-8">
+          <Button 
+            variant="outline"
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Terug naar Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Settings className="h-8 w-8" />
+              Weekdag Instellingen
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Configureer welke shifts per weekdag gegenereerd moeten worden
+            </p>
+          </div>
         </div>
 
         <Alert>
@@ -110,14 +122,24 @@ export default function WeekdaySettings() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Settings className="h-8 w-8" />
-          Weekdag Instellingen
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Configureer welke shifts per weekdag gegenereerd moeten worden
-        </p>
+      <div className="flex items-center gap-4 mb-8">
+        <Button 
+          variant="outline"
+          onClick={() => setLocation("/")}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Terug naar Dashboard
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Settings className="h-8 w-8" />
+            Weekdag Instellingen
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Configureer welke shifts per weekdag gegenereerd moeten worden
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-6">
