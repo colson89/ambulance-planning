@@ -455,29 +455,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all preferences for admin view
   app.get("/api/preferences/all", requireAdmin, async (req, res) => {
     try {
-      const allUsers = await storage.getAllUsers();
+      // Get month and year from query parameters, fallback to current date
+      const { month, year } = req.query;
+      const targetMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
+      const targetYear = year ? parseInt(year as string) : new Date().getFullYear();
       
-      // Get the current month and year
-      const now = new Date();
-      const currentMonth = now.getMonth() + 1;
-      const currentYear = now.getFullYear();
+      // Get all shift preferences for the specified month/year directly
+      const allPreferences = await storage.getUserShiftPreferences(0, targetMonth, targetYear);
       
-      // Start getting preferences for all users
-      const allPreferencesPromises = allUsers.map(async (user) => {
-        const userPreferences = await storage.getUserShiftPreferences(
-          user.id,
-          currentMonth,
-          currentYear
-        );
-        
-        return {
-          userId: user.id,
-          userName: `${user.firstName} ${user.lastName}`,
-          preferences: userPreferences
-        };
-      });
-      
-      const allPreferences = await Promise.all(allPreferencesPromises);
       res.json(allPreferences);
     } catch (error) {
       console.error("Error fetching preferences:", error);

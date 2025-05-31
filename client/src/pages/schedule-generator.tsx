@@ -277,10 +277,13 @@ export default function ScheduleGenerator() {
       
       // Filter voorkeuren voor de geselecteerde datum en shift type
       const preferencesForDate = preferences.filter(pref => {
+        if (!pref || !pref.date) return false;
         const prefDate = new Date(pref.date);
         const prefYMD = `${prefDate.getFullYear()}-${prefDate.getMonth() + 1}-${prefDate.getDate()}`;
         return prefYMD === gezochteYMD;
       });
+      
+      console.log(`Gevonden voorkeuren voor datum ${gezochteYMD}:`, preferencesForDate.length);
       
       // Maak een Set van gebruikers die beschikbaar zijn volgens voorkeur
       const availableUserIds = new Set();
@@ -288,6 +291,7 @@ export default function ScheduleGenerator() {
         // Als de voorkeur niet 'unavailable' is en het shift type komt overeen
         if (pref.type !== "unavailable" && pref.type === shiftType) {
           availableUserIds.add(pref.userId);
+          console.log(`Gebruiker ${pref.userId} is beschikbaar voor ${shiftType} shift op ${gezochteYMD}`);
         }
       });
       
