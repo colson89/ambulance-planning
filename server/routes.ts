@@ -281,6 +281,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (let userIndex = 0; userIndex < users.length; userIndex++) {
         const user = users[userIndex];
         const userProgress = Math.round(50 + ((userIndex / users.length) * 40)); // 50% tot 90%
+        currentProgress.percentage = userProgress;
+        currentProgress.message = `Voorkeuren genereren voor ${user.username} (${userIndex + 1}/${users.length})`;
         console.log(`[${userProgress}%] Voorkeuren genereren voor ${user.username} (${userIndex + 1}/${users.length})`);
         
         // Voor elke dag in de maand
@@ -392,9 +394,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Log voortgang na elke gebruiker
         const overallProgress = Math.round(90 + ((completedOperations / totalOperations) * 10)); // 90% tot 100%
+        currentProgress.percentage = overallProgress;
+        currentProgress.message = `Voltooid voor ${user.username} - ${completedOperations}/${totalOperations} operaties`;
         console.log(`[${overallProgress}%] Voltooid voor ${user.username} - ${completedOperations}/${totalOperations} operaties`);
       }
       
+      currentProgress.percentage = 100;
+      currentProgress.message = "Voorkeuren generatie voltooid!";
       console.log(`[100%] Voorkeuren generatie voltooid!`);
       
       // Sla de huidige tijd op als tijdstempel voor de laatste generatie
@@ -402,8 +408,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timestamp = now.toISOString();
       await storage.setSystemSetting('last_preferences_generated', timestamp);
       
-      // Release the lock
+      // Release the lock and reset progress
       isGeneratingPreferences = false;
+      currentProgress = { percentage: 0, message: "", isActive: false };
       console.log("[BLOKKERING] Voorkeurengeneratie proces voltooid - nieuwe verzoeken zijn weer toegestaan");
       
       res.status(200).json({ 
@@ -425,6 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Release the lock in case of error
       isGeneratingPreferences = false;
+      currentProgress = { percentage: 0, message: "", isActive: false };
       console.log("[BLOKKERING] Voorkeurengeneratie proces gefaald - blokkering vrijgegeven");
       
       res.status(500).json({ 
