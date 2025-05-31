@@ -37,6 +37,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import type { User, ShiftPreference, Shift } from "@shared/schema";
 
 export default function ScheduleGenerator() {
@@ -52,6 +53,8 @@ export default function ScheduleGenerator() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showAvailabilityDialog, setShowAvailabilityDialog] = useState<boolean>(false);
   const [isGeneratingTestPreferences, setIsGeneratingTestPreferences] = useState(false);
+  const [progressPercentage, setProgressPercentage] = useState<number>(0);
+  const [progressMessage, setProgressMessage] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   
   // Query om de laatste tijdstempel voor gegenereerde testvoorkeuren op te halen
