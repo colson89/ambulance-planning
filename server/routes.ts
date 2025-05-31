@@ -842,9 +842,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Shift not found" });
       }
       
-      // Only night shifts can be split
-      if (existingShift.type !== "night") {
-        return res.status(400).json({ message: "Only night shifts can be split" });
+      // Only day and night shifts can be split
+      if (existingShift.type !== "night" && existingShift.type !== "day") {
+        return res.status(400).json({ message: "Only day and night shifts can be split" });
       }
       
       // Check if already split
@@ -852,11 +852,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Shift is already split" });
       }
       
+      // Determine split times based on shift type
+      let firstHalfStart, firstHalfEnd, secondHalfStart, secondHalfEnd;
+      
+      if (existingShift.type === "night") {
+        // Night shift: 19:00-23:00 and 23:00-07:00
+        firstHalfStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0);
+        firstHalfEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 23, 0, 0);
+        secondHalfStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 23, 0, 0);
+        secondHalfEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate() + 1, 7, 0, 0);
+      } else {
+        // Day shift: 07:00-13:00 and 13:00-19:00
+        firstHalfStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 7, 0, 0);
+        firstHalfEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 13, 0, 0);
+        secondHalfStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 13, 0, 0);
+        secondHalfEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0);
+      }
+
       // Update the existing shift to mark it as split and set hours to first half
       await storage.updateShift(shiftId, {
         isSplitShift: true,
-        startTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0),
-        endTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 23, 0, 0),
+        startTime: firstHalfStart,
+        endTime: firstHalfEnd,
         userId: 0,
         status: "open"
       });
@@ -864,9 +881,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create a second half shift
       const secondHalfShift = await storage.createShift({
         date: existingShift.date,
-        type: "night",
-        startTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 23, 0, 0),
-        endTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate() + 1, 7, 0, 0),
+        type: existingShift.type,
+        startTime: secondHalfStart,
+        endTime: secondHalfEnd,
         userId: 0,
         status: "open",
         isSplitShift: true,
@@ -900,9 +917,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Shift not found" });
       }
       
-      // Only split night shifts can be merged
-      if (existingShift.type !== "night" || !existingShift.isSplitShift) {
-        return res.status(400).json({ message: "Only split night shifts can be merged" });
+      // Only split shifts can be merged
+      if (!existingShift.isSplitShift) {
+        return res.status(400).json({ message: "Only split shifts can be merged" });
       }
       
       // Find the other half of the split shift
@@ -923,18 +940,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.deleteShift(otherHalf.id);
       }
       
-      // Update the original shift to be a full night shift again
+      // Determine full shift times based on shift type
+      let fullShiftStart, fullShiftEnd, shiftDescription;
+      
+      if (existingShift.type === "night") {
+        // Night shift: 19:00-07:00
+        fullShiftStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0);
+        fullShiftEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate() + 1, 7, 0, 0);
+        shiftDescription = "full night shift";
+      } else {
+        // Day shift: 07:00-19:00
+        fullShiftStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 7, 0, 0);
+        fullShiftEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0);
+        shiftDescription = "full day shift";
+      }
+
+      // Update the original shift to be a full shift again
       await storage.updateShift(shiftId, {
         isSplitShift: false,
         splitGroup: null,
-        startTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0),
-        endTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate() + 1, 7, 0, 0),
+        startTime: fullShiftStart,
+        endTime: fullShiftEnd,
         userId: 0,
         status: "open"
       });
       
       res.status(200).json({ 
-        message: "Split shifts successfully merged into one full night shift",
+        message: `Split shifts successfully merged into one ${shiftDescription}`,
         mergedShift: shiftId
       });
     } catch (error) {

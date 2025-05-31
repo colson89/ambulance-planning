@@ -520,7 +520,7 @@ export default function ScheduleGenerator() {
   }
 
   const handleSplitShift = async () => {
-    if (!editingShift || editingShift.type !== "night" || editingShift.isSplitShift) return;
+    if (!editingShift || (editingShift.type !== "night" && editingShift.type !== "day") || editingShift.isSplitShift) return;
     
     try {
       const res = await apiRequest("POST", `/api/shifts/${editingShift.id}/split`, {});
@@ -529,9 +529,13 @@ export default function ScheduleGenerator() {
         throw new Error("Kon shift niet splitsen");
       }
       
+      const splitDescription = editingShift.type === "night" 
+        ? "De nachtshift is opgesplitst in twee halve shifts (19:00-23:00 en 23:00-07:00)"
+        : "De dagshift is opgesplitst in twee halve shifts (07:00-13:00 en 13:00-19:00)";
+      
       toast({
         title: "Shift gesplitst",
-        description: "De nachtshift is opgesplitst in twee halve shifts (19:00-23:00 en 23:00-07:00)",
+        description: splitDescription,
       });
       
       setEditingShift(null);
@@ -546,7 +550,7 @@ export default function ScheduleGenerator() {
   }
 
   const handleMergeShift = async () => {
-    if (!editingShift || editingShift.type !== "night" || !editingShift.isSplitShift) return;
+    if (!editingShift || (editingShift.type !== "night" && editingShift.type !== "day") || !editingShift.isSplitShift) return;
     
     try {
       const res = await apiRequest("POST", `/api/shifts/${editingShift.id}/merge`, {});
@@ -555,9 +559,13 @@ export default function ScheduleGenerator() {
         throw new Error("Kon shift niet samenvoegen");
       }
       
+      const mergeDescription = editingShift.type === "night" 
+        ? "De halve shifts zijn samengevoegd tot één volledige nachtshift (19:00-07:00)"
+        : "De halve shifts zijn samengevoegd tot één volledige dagshift (07:00-19:00)";
+      
       toast({
         title: "Shift samengevoegd",
-        description: "De halve shifts zijn samengevoegd tot één volledige nachtshift (19:00-07:00)",
+        description: mergeDescription,
       });
       
       setEditingShift(null);
@@ -1134,7 +1142,7 @@ export default function ScheduleGenerator() {
           
           <DialogFooter className="flex flex-col gap-4">
             {/* Shift bewerking knoppen */}
-            {editingShift && editingShift.type === "night" && (
+            {editingShift && (editingShift.type === "night" || editingShift.type === "day") && (
               <div className="flex flex-col gap-2 border-t pt-4">
                 <Label className="text-sm font-medium">Shift opties:</Label>
                 <div className="flex flex-wrap gap-2">
@@ -1146,7 +1154,10 @@ export default function ScheduleGenerator() {
                       disabled={updateShiftMutation.isPending}
                     >
                       <Split className="h-4 w-4 mr-2" />
-                      Splitsen (2 personen)
+                      {editingShift.type === "night" 
+                        ? "Splitsen (19:00-23:00 / 23:00-07:00)" 
+                        : "Splitsen (07:00-13:00 / 13:00-19:00)"
+                      }
                     </Button>
                   )}
                   
