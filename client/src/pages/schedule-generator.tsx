@@ -802,7 +802,7 @@ export default function ScheduleGenerator() {
                       } catch (error) {
                         // Stille fout - polling mag niet het hoofdproces verstoren
                       }
-                    }, 500);
+                    }, 250); // Poll every 250ms for very smooth progress updates
                     
                     generateScheduleMutation.mutate(undefined, {
                       onSettled: () => {
