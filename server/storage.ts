@@ -1,14 +1,13 @@
 import { users, shifts, shiftPreferences, systemSettings, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, lt, gte } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
-import { scrypt, randomBytes } from "crypto";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 
 const scryptAsync = promisify(scrypt);
-const PostgresSessionStore = connectPg(session);
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -44,35 +43,37 @@ export interface IStorage {
   setSystemSetting(key: string, value: string): Promise<void>;
 }
 
+const PostgresSessionStore = connectPg(session);
+
 export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.sessionStore = new PostgresSessionStore({
-      pool,
-      createTableIfMissing: true
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    return user || undefined;
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    return await db.select().from(users).orderBy(asc(users.username));
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values({
-      ...insertUser,
-      password: await hashPassword(insertUser.password)
-    }).returning();
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
@@ -82,19 +83,16 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(users.id, userId))
       .returning();
-
-    if (!user) throw new Error("User not found");
     return user;
   }
 
   async updateUserPassword(userId: number, newPassword: string): Promise<User> {
+    const hashedPassword = await hashPassword(newPassword);
     const [user] = await db
       .update(users)
-      .set({ password: await hashPassword(newPassword) })
+      .set({ password: hashedPassword })
       .where(eq(users.id, userId))
       .returning();
-
-    if (!user) throw new Error("User not found");
     return user;
   }
 
@@ -103,51 +101,57 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllShifts(): Promise<Shift[]> {
-    return await db.select().from(shifts);
+    return await db.select().from(shifts).orderBy(asc(shifts.date));
   }
 
   async getShiftsByMonth(month: number, year: number): Promise<Shift[]> {
-    return await db.select()
-      .from(shifts)
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    
+    return await db.select().from(shifts)
       .where(
         and(
-          eq(shifts.month, month),
-          eq(shifts.year, year)
+          gte(shifts.date, startDate),
+          lte(shifts.date, endDate)
         )
-      );
+      )
+      .orderBy(asc(shifts.date));
   }
 
   async createShift(shiftData: any): Promise<Shift> {
-    const [shift] = await db.insert(shifts).values(shiftData).returning();
+    const [shift] = await db
+      .insert(shifts)
+      .values(shiftData)
+      .returning();
     return shift;
   }
 
   async getUserShiftPreferences(userId: number, month: number, year: number): Promise<ShiftPreference[]> {
-    return await db.select()
-      .from(shiftPreferences)
+    return await db.select().from(shiftPreferences)
       .where(
         and(
           eq(shiftPreferences.userId, userId),
           eq(shiftPreferences.month, month),
           eq(shiftPreferences.year, year)
         )
-      );
+      )
+      .orderBy(asc(shiftPreferences.day));
   }
 
   async createShiftPreference(preference: InsertShiftPreference): Promise<ShiftPreference> {
-    const [pref] = await db.insert(shiftPreferences)
+    const [pref] = await db
+      .insert(shiftPreferences)
       .values(preference)
       .returning();
     return pref;
   }
 
   async updateShiftPreference(id: number, updateData: Partial<ShiftPreference>): Promise<ShiftPreference> {
-    const [pref] = await db.update(shiftPreferences)
+    const [pref] = await db
+      .update(shiftPreferences)
       .set(updateData)
       .where(eq(shiftPreferences.id, id))
       .returning();
-
-    if (!pref) throw new Error("Shift preference not found");
     return pref;
   }
 
@@ -156,639 +160,155 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOpenShiftsForPlanning(month: number, year: number): Promise<Shift[]> {
-    return await db.select()
-      .from(shifts)
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    
+    return await db.select().from(shifts)
       .where(
         and(
-          eq(shifts.month, month),
-          eq(shifts.year, year),
+          gte(shifts.date, startDate),
+          lte(shifts.date, endDate),
           eq(shifts.status, "open")
         )
-      );
+      )
+      .orderBy(asc(shifts.date));
   }
 
   async generateMonthlySchedule(month: number, year: number, updateProgress?: (percentage: number, message: string) => void): Promise<Shift[]> {
-    // Verwijder bestaande shifts voor deze maand
-    await db.delete(shifts)
-      .where(and(
-        eq(shifts.month, month),
-        eq(shifts.year, year)
-      ));
+    // Verwijder bestaande shifts voor de maand
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    
+    await db.delete(shifts).where(
+      and(
+        gte(shifts.date, startDate),
+        lte(shifts.date, endDate)
+      )
+    );
 
-    // Haal alle gebruikers op die uren willen werken
-    const allUsers = await this.getAllUsers();
-    const activeUsers = allUsers.filter(user => user.hours > 0);
-    
-    // Maak eerst een kalender voor de maand
-    const daysInMonth = new Date(year, month, 0).getDate();
+    const activeUsers = await db.select().from(users).where(eq(users.active, true));
+    const allPreferences = await db.select().from(shiftPreferences)
+      .where(
+        and(
+          eq(shiftPreferences.month, month),
+          eq(shiftPreferences.year, year)
+        )
+      );
+
     const generatedShifts: Shift[] = [];
+    const daysInMonth = new Date(year, month, 0).getDate();
     
-    // Bijhouden hoeveel uren elke medewerker al is ingepland
+    // Track assigned hours per user
     const userAssignedHours = new Map<number, number>();
-    
-    // Initialiseer hours tracking voor elke actieve gebruiker
-    activeUsers.forEach(user => {
-      userAssignedHours.set(user.id, 0);
-    });
-    
-    console.log(`[5%] Planning generatie gestart voor ${month}/${year} met ${activeUsers.length} actieve gebruikers`);
-    console.log(`[10%] ${daysInMonth} dagen moeten ingepland worden...`);
-    
-    // Helper functie om te controleren of een gebruiker nog uren kan werken
+    activeUsers.forEach(user => userAssignedHours.set(user.id, 0));
+
+    // Helper functions
     const canAssignHours = (userId: number, hoursToAdd: number): boolean => {
-      const user = activeUsers.find(u => u.id === userId);
-      if (!user) return false;
-      
-      // Nul doeluren betekent dat deze gebruiker niet ingedeeld moet worden
-      if (user.hours === 0) return false;
-      
       const currentHours = userAssignedHours.get(userId) || 0;
-      
-      // Log voor debugging
-      console.log(`Checking user ${user.username} (ID: ${userId}): hours=${user.hours}, currentHours=${currentHours}, adding=${hoursToAdd}`);
-      
-      // Controleer of deze toewijzing binnen de opgegeven uren valt
-      return currentHours + hoursToAdd <= user.hours;
+      const user = activeUsers.find(u => u.id === userId);
+      return user && (currentHours + hoursToAdd) <= user.hours;
     };
-    
-    // Helper functie om bij te houden hoeveel uren een gebruiker werkt
+
     const addAssignedHours = (userId: number, hoursToAdd: number): void => {
-      if (userId === 0) return; // 0 = niet toegewezen
       const currentHours = userAssignedHours.get(userId) || 0;
       userAssignedHours.set(userId, currentHours + hoursToAdd);
     };
-    
-    // Bereken gewicht voor toewijzing op basis van huidige uren
-    const getUserWeight = (userId: number, preferredHours: number = 0): number => {
-      const user = activeUsers.find(u => u.id === userId);
-      if (!user) return 0;
-      
-      const currentHours = userAssignedHours.get(userId) || 0;
-      const targetHours = user.hours;
-      
-      // Nul doeluren betekent dat deze gebruiker niet ingedeeld moet worden
-      if (targetHours === 0) {
-        return 0;
-      }
-      
-      // Als gebruiker minder dan 50% van zijn opgegeven uren heeft, hogere prioriteit geven
-      if (currentHours < targetHours * 0.5) {
-        return 2.0;
-      }
-      
-      // Als gebruiker tussen 50% en 75% van zijn opgegeven uren heeft, gemiddelde prioriteit
-      if (currentHours < targetHours * 0.75) {
-        return 1.0;
-      }
-      
-      // Als gebruiker meer dan 75% maar minder dan zijn opgegeven uren heeft, lagere prioriteit
-      if (currentHours < targetHours) {
-        return 0.5;
-      }
-      
-      // Gebruiker is al aan opgegeven uren, laagste prioriteit
-      return 0.1;
-    };
-    
-    // Functie om actieve gebruikers te sorteren op basis van werklast en voorkeuren
+
     const getSortedUsersForAssignment = (availableUserIds: number[]): number[] => {
-      // Eerst filteren op gebruikers die nog uren kunnen werken
-      const filteredUsers = availableUserIds.filter(userId => {
-        const user = activeUsers.find(u => u.id === userId);
-        if (!user) return false;
-        
-        // Nul doeluren betekent dat deze gebruiker niet ingedeeld moet worden
-        if (user.hours === 0) return false;
-        
-        const currentHours = userAssignedHours.get(userId) || 0;
-        return currentHours < user.hours;
+      return availableUserIds.sort((a, b) => {
+        const hoursA = userAssignedHours.get(a) || 0;
+        const hoursB = userAssignedHours.get(b) || 0;
+        return hoursA - hoursB;
       });
-      
-      // Willekeurigheid toevoegen aan de sortering voor meer variatie
-      // We maken drie groepen op basis van uren:
-      // 1. Urgente groep: minder dan 33% van uren gewerkt
-      // 2. Normale groep: tussen 33-66% van uren gewerkt
-      // 3. Lage prioriteit groep: meer dan 66% van uren gewerkt
-      
-      const urgentUsers: number[] = [];
-      const normalUsers: number[] = [];
-      const lowPriorityUsers: number[] = [];
-      
-      filteredUsers.forEach(userId => {
-        const user = activeUsers.find(u => u.id === userId);
-        if (!user) return;
-        
-        const currentHours = userAssignedHours.get(userId) || 0;
-        const percentage = (currentHours / user.hours) * 100;
-        
-        if (percentage < 33) {
-          urgentUsers.push(userId);
-        } else if (percentage < 66) {
-          normalUsers.push(userId);
-        } else {
-          lowPriorityUsers.push(userId);
-        }
-      });
-      
-      // Shuffle (willekeurig door elkaar) elke groep voor meer variatie
-      const shuffleArray = (array: number[]): number[] => {
-        for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-      };
-      
-      // Combineer de groepen met hogere prioriteit vooraan
-      return [
-        ...shuffleArray(urgentUsers),
-        ...shuffleArray(normalUsers),
-        ...shuffleArray(lowPriorityUsers)
-      ];
     };
-    
-    // Voor elke dag in de maand (1-31)
+
+    // Generate shifts for each day
     for (let day = 1; day <= daysInMonth; day++) {
-      const currentDate = new Date(year, month - 1, day);
-      const isWeekendDay = currentDate.getDay() === 0 || currentDate.getDay() === 6;
-      
-      // Update voortgang voor elke dag
-      const progress = Math.round(15 + ((day / daysInMonth) * 70)); // 15% tot 85%
-      const dayName = currentDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
-      
-      // Log voortgang elke 5 dagen
-      if (day % 5 === 0 || day === daysInMonth) {
-        console.log(`[${progress}%] Planning dag ${day}/${daysInMonth} (${dayName})`);
-      }
-      
-      // Update progress for website voor elke dag
       if (updateProgress) {
-        updateProgress(progress, `Planning ${dayName} (dag ${day}/${daysInMonth})`);
+        const percentage = Math.round((day / daysInMonth) * 100);
+        updateProgress(percentage, `Planning dag ${day}/${daysInMonth}`);
       }
-      
-      // Verzamel beschikbare gebruikers voor deze specifieke dag
-      const availableForDay: number[] = [];
-      const availableForDayFirstHalf: number[] = [];
-      const availableForDaySecondHalf: number[] = [];
-      const availableForNight: number[] = [];
-      const availableForNightFirstHalf: number[] = [];
-      const availableForNightSecondHalf: number[] = [];
-      
-      // Check beschikbaarheid voor elke actieve gebruiker
-      for (const user of activeUsers) {
-        const preferences = await this.getUserShiftPreferences(user.id, month, year);
+
+      const currentDate = new Date(year, month - 1, day);
+      const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+      // Get preferences for this day
+      const dayPreferences = allPreferences.filter(p => p.day === day);
+
+      // Track assigned users for this day to prevent double assignment
+      const assignedDayIds: number[] = [];
+      const assignedNightIds: number[] = [];
+
+      // DAY SHIFTS (7:00-19:00) - Always 2 people
+      const availableForDay = dayPreferences
+        .filter(p => p.shiftType === 'day' && (p.preferenceType === 'full' || p.preferenceType === 'first' || p.preferenceType === 'second'))
+        .map(p => p.userId);
+
+      const sortedDayUsers = getSortedUsersForAssignment(availableForDay);
+      let assignedDayShifts = 0;
+
+      for (const userId of sortedDayUsers) {
+        if (assignedDayShifts >= 2) break;
         
-        // Voorkeuren filteren voor deze specifieke dag
-        const prefsForThisDay = preferences.filter(pref => {
-          const prefDate = new Date(pref.date);
-          return prefDate.getDate() === day && 
-                 prefDate.getMonth() === (month - 1) && 
-                 prefDate.getFullYear() === year;
-        });
-        
-        // Als er een voorkeur is, controleer het type
-        for (const pref of prefsForThisDay) {
-          if (pref.type !== 'unavailable') {
-            // Haal preferenceType op uit het notes veld indien beschikbaar (first, second, full)
-            // Format: "first", "second", "full" of niet aanwezig (dan "full" aannemen)
-            const preferenceType = pref.notes?.includes("first") ? "first" : 
-                                  pref.notes?.includes("second") ? "second" : 
-                                  "full";
-            
-            if (pref.type === 'day') {
-              if (preferenceType === "full") {
-                availableForDay.push(user.id);
-              } else if (preferenceType === "first") {
-                availableForDayFirstHalf.push(user.id);
-              } else if (preferenceType === "second") {
-                availableForDaySecondHalf.push(user.id);
-              }
-            } else if (pref.type === 'night') {
-              if (preferenceType === "full") {
-                availableForNight.push(user.id);
-              } else if (preferenceType === "first") {
-                availableForNightFirstHalf.push(user.id);
-              } else if (preferenceType === "second") {
-                availableForNightSecondHalf.push(user.id);
-              }
-            }
-          }
-        }
-      }
-      
-      console.log(`Day ${day}: ${availableForDay.length} available for day, ${availableForNight.length} available for night`);
-      
-      // Weekdagen: alleen nachtshifts plannen (2 personen per shift)
-      if (!isWeekendDay) {
-        // Maximaal 2 personen toewijzen voor de nachtshift
-        const assignedIds: number[] = [];
-        
-        // De nachtshift is 12 uur
-        const shiftHours = 12;
-        
-        // Sorteer beschikbare gebruikers op basis van werklast
-        const sortedNightUsers = getSortedUsersForAssignment(availableForNight);
-        
-        // Eerste persoon
-        let selectedId = 0;
-        if (sortedNightUsers.length > 0) {
-          // Kies de eerste geschikte medewerker
-          for (const userId of sortedNightUsers) {
-            if (canAssignHours(userId, shiftHours)) {
-              selectedId = userId;
-              break;
-            }
-          }
+        if (canAssignHours(userId, 12)) {
+          assignedDayIds.push(userId);
+          addAssignedHours(userId, 12);
+          assignedDayShifts++;
           
-          if (selectedId > 0) {
-            assignedIds.push(selectedId);
-            addAssignedHours(selectedId, shiftHours);
-            
-            // Shift aanmaken
-            const nightShift1 = {
-              userId: selectedId,
-              date: currentDate,
-              type: "night" as const,
-              startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-              status: "planned" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedShift1 = await this.createShift(nightShift1);
-            generatedShifts.push(savedShift1);
-          } else {
-            // Geen geschikte medewerker gevonden
-            const openShift1 = {
-              userId: 0,
-              date: currentDate,
-              type: "night" as const,
-              startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedOpenShift1 = await this.createShift(openShift1);
-            generatedShifts.push(savedOpenShift1);
-          }
-        } else {
-          // Geen beschikbare gebruikers
-          const openShift1 = {
-            userId: 0,
-            date: currentDate,
-            type: "night" as const,
-            startTime: new Date(year, month - 1, day, 19, 0, 0),
-            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-            status: "open" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
-          
-          const savedOpenShift1 = await this.createShift(openShift1);
-          generatedShifts.push(savedOpenShift1);
-        }
-        
-        // Tweede medewerker (niet dezelfde als de eerste)
-        const remainingNightUsers = sortedNightUsers.filter(id => !assignedIds.includes(id));
-        
-        selectedId = 0;
-        if (remainingNightUsers.length > 0) {
-          // Kies de eerste geschikte medewerker
-          for (const userId of remainingNightUsers) {
-            if (canAssignHours(userId, shiftHours)) {
-              selectedId = userId;
-              break;
-            }
-          }
-          
-          if (selectedId > 0) {
-            addAssignedHours(selectedId, shiftHours);
-            
-            // Shift aanmaken
-            const nightShift2 = {
-              userId: selectedId,
-              date: currentDate,
-              type: "night" as const,
-              startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-              status: "planned" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedShift2 = await this.createShift(nightShift2);
-            generatedShifts.push(savedShift2);
-          } else {
-            // Geen geschikte medewerker gevonden
-            const openShift2 = {
-              userId: 0,
-              date: currentDate,
-              type: "night" as const,
-              startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedOpenShift2 = await this.createShift(openShift2);
-            generatedShifts.push(savedOpenShift2);
-          }
-        } else {
-          // Alleen open shifts maken als er helemaal geen medewerkers beschikbaar zijn
-          const openShift = {
-            userId: 0,
-            date: currentDate,
-            type: "night" as const,
-            startTime: new Date(year, month - 1, day, 19, 0, 0),
-            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-            status: "open" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
-          
-          const savedOpenShift = await this.createShift(openShift);
-          generatedShifts.push(savedOpenShift);
-        }
-      } 
-      // Weekend: zowel dag- als nachtshifts plannen
-      else {
-        // DAGSHIFT - Maximaal 2 medewerkers toewijzen
-        const assignedDayIds: number[] = [];
-        const dayShiftHours = 12; // 12 uur per dagshift
-        
-        // Sorteer op basis van werklast
-        const sortedDayUsers = getSortedUsersForAssignment(availableForDay);
-        
-        // Eerste medewerker dag
-        let selectedId = 0;
-        if (sortedDayUsers.length > 0) {
-          // Kies de eerste geschikte medewerker
-          for (const userId of sortedDayUsers) {
-            if (canAssignHours(userId, dayShiftHours)) {
-              selectedId = userId;
-              break;
-            }
-          }
-          
-          if (selectedId > 0) {
-            assignedDayIds.push(selectedId);
-            addAssignedHours(selectedId, dayShiftHours);
-            
-            const dayShift1 = {
-              userId: selectedId,
-              date: currentDate,
-              type: "day" as const,
-              startTime: new Date(year, month - 1, day, 7, 0, 0),
-              endTime: new Date(year, month - 1, day, 19, 0, 0),
-              status: "planned" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedDayShift1 = await this.createShift(dayShift1);
-            generatedShifts.push(savedDayShift1);
-          } else {
-            // Geen geschikte medewerker gevonden
-            const openDayShift1 = {
-              userId: 0,
-              date: currentDate,
-              type: "day" as const,
-              startTime: new Date(year, month - 1, day, 7, 0, 0),
-              endTime: new Date(year, month - 1, day, 19, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedOpenDayShift1 = await this.createShift(openDayShift1);
-            generatedShifts.push(savedOpenDayShift1);
-          }
-        } else {
-          // Geen beschikbare gebruikers
-          const openDayShift1 = {
-            userId: 0,
+          const dayShift = {
+            userId: userId,
             date: currentDate,
             type: "day" as const,
             startTime: new Date(year, month - 1, day, 7, 0, 0),
             endTime: new Date(year, month - 1, day, 19, 0, 0),
-            status: "open" as const,
+            status: "planned" as const,
             month,
             year,
             isSplitShift: false
           };
           
-          const savedOpenDayShift1 = await this.createShift(openDayShift1);
-          generatedShifts.push(savedOpenDayShift1);
+          const savedDayShift = await this.createShift(dayShift);
+          generatedShifts.push(savedDayShift);
         }
+      }
+
+      // Create open day shifts for remaining positions
+      for (let i = assignedDayShifts; i < 2; i++) {
+        const openDayShift = {
+          userId: 0,
+          date: currentDate,
+          type: "day" as const,
+          startTime: new Date(year, month - 1, day, 7, 0, 0),
+          endTime: new Date(year, month - 1, day, 19, 0, 0),
+          status: "open" as const,
+          month,
+          year,
+          isSplitShift: false
+        };
         
-        // Tweede medewerker dag
-        const remainingDayUsers = sortedDayUsers.filter(id => !assignedDayIds.includes(id));
-        
-        selectedId = 0;
-        if (remainingDayUsers.length > 0) {
-          // Kies de eerste geschikte medewerker
-          for (const userId of remainingDayUsers) {
-            if (canAssignHours(userId, dayShiftHours)) {
-              selectedId = userId;
-              break;
-            }
-          }
-          
-          if (selectedId > 0) {
-            addAssignedHours(selectedId, dayShiftHours);
-            
-            const dayShift2 = {
-              userId: selectedId,
-              date: currentDate,
-              type: "day" as const,
-              startTime: new Date(year, month - 1, day, 7, 0, 0),
-              endTime: new Date(year, month - 1, day, 19, 0, 0),
-              status: "planned" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedDayShift2 = await this.createShift(dayShift2);
-            generatedShifts.push(savedDayShift2);
-          } else {
-            // Geen geschikte medewerker gevonden
-            const openDayShift2 = {
-              userId: 0,
-              date: currentDate,
-              type: "day" as const,
-              startTime: new Date(year, month - 1, day, 7, 0, 0),
-              endTime: new Date(year, month - 1, day, 19, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedOpenDayShift2 = await this.createShift(openDayShift2);
-            generatedShifts.push(savedOpenDayShift2);
-          }
-        } else {
-          // Probeer halve shifts toe te wijzen als er geen volledige shifts mogelijk zijn
-          let hasAssignedHalfShift1 = false;
-          let hasAssignedHalfShift2 = false;
-          
-          // Eerste helft van de dag (7:00 - 13:00)
-          // Filter: alleen gebruikers die niet al zijn toegewezen aan een shift op deze dag
-          const sortedDayFirstHalfUsers = getSortedUsersForAssignment(
-            availableForDayFirstHalf.filter(id => !assignedDayIds.includes(id))
-          );
-          
-          if (sortedDayFirstHalfUsers.length > 0) {
-            const halfShiftHours = 6; // 6 uur voor de eerste helft
-            
-            // Eerste persoon voor eerste helft
-            for (const userId of sortedDayFirstHalfUsers) {
-              if (canAssignHours(userId, halfShiftHours)) {
-                // Maak shift aan voor de eerste helft
-                const dayHalfShift1 = {
-                  userId: userId,
-                  date: currentDate,
-                  type: "day" as const,
-                  startTime: new Date(year, month - 1, day, 7, 0, 0),
-                  endTime: new Date(year, month - 1, day, 13, 0, 0), // Tot 13:00
-                  status: "planned" as const,
-                  month,
-                  year,
-                  isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 7, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day, 13, 0, 0)
-                };
-                
-                // Voeg toe aan de lijst van toegewezen gebruikers voor deze dag
-                assignedDayIds.push(userId);
-                addAssignedHours(userId, halfShiftHours);
-                const savedHalfShift1 = await this.createShift(dayHalfShift1);
-                generatedShifts.push(savedHalfShift1);
-                hasAssignedHalfShift1 = true;
-                break;
-              }
-            }
-          }
-          
-          // Tweede helft van de dag (13:00 - 19:00)
-          // Filter: alleen gebruikers die niet al zijn toegewezen aan een shift op deze dag
-          const sortedDaySecondHalfUsers = getSortedUsersForAssignment(
-            availableForDaySecondHalf.filter(id => !assignedDayIds.includes(id))
-          );
-          
-          if (sortedDaySecondHalfUsers.length > 0) {
-            const halfShiftHours = 6; // 6 uur voor de tweede helft
-            
-            // Tweede persoon voor tweede helft
-            for (const userId of sortedDaySecondHalfUsers) {
-              if (canAssignHours(userId, halfShiftHours)) {
-                // Maak shift aan voor de tweede helft
-                const dayHalfShift2 = {
-                  userId: userId,
-                  date: currentDate,
-                  type: "day" as const,
-                  startTime: new Date(year, month - 1, day, 13, 0, 0), // Vanaf 13:00
-                  endTime: new Date(year, month - 1, day, 19, 0, 0), // Tot 19:00
-                  status: "planned" as const,
-                  month,
-                  year,
-                  isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 13, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day, 19, 0, 0)
-                };
-                
-                // Voeg toe aan de lijst van toegewezen gebruikers voor deze dag
-                assignedDayIds.push(userId);
-                addAssignedHours(userId, halfShiftHours);
-                const savedHalfShift2 = await this.createShift(dayHalfShift2);
-                generatedShifts.push(savedHalfShift2);
-                hasAssignedHalfShift2 = true;
-                break;
-              }
-            }
-          }
-          
-          // Als eerste helft niet toegewezen kon worden, maak open shift aan
-          if (!hasAssignedHalfShift1) {
-            const openDayHalfShift1 = {
-              userId: 0,
-              date: currentDate,
-              type: "day" as const,
-              startTime: new Date(year, month - 1, day, 7, 0, 0),
-              endTime: new Date(year, month - 1, day, 13, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: true,
-              splitStartTime: new Date(year, month - 1, day, 7, 0, 0),
-              splitEndTime: new Date(year, month - 1, day, 13, 0, 0)
-            };
-            
-            const savedOpenHalfShift1 = await this.createShift(openDayHalfShift1);
-            generatedShifts.push(savedOpenHalfShift1);
-          }
-          
-          // Als tweede helft niet toegewezen kon worden, maak open shift aan
-          if (!hasAssignedHalfShift2) {
-            const openDayHalfShift2 = {
-              userId: 0,
-              date: currentDate,
-              type: "day" as const,
-              startTime: new Date(year, month - 1, day, 13, 0, 0),
-              endTime: new Date(year, month - 1, day, 19, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: true,
-              splitStartTime: new Date(year, month - 1, day, 13, 0, 0),
-              splitEndTime: new Date(year, month - 1, day, 19, 0, 0)
-            };
-            
-            const savedOpenHalfShift2 = await this.createShift(openDayHalfShift2);
-            generatedShifts.push(savedOpenHalfShift2);
-          }
-        }
-        
-        // NACHTSHIFT - Maximaal 2 medewerkers toewijzen, niet dezelfde als dagshift
-        const assignedNightIds: number[] = [];
-        const nightShiftHours = 12; // 12 uur per nachtshift
-        
-        // Filter gebruikers voor nachtshift - niet dezelfde als dagshift
-        const availableForNightFiltered = availableForNight.filter(
-          id => !assignedDayIds.includes(id)
-        );
-        
-        // GEOPTIMALISEERDE NACHTSHIFT TOEWIJZING
-        // Strategie: Probeer eerst volledige shifts, dan geoptimaliseerde halve shifts
-        
-        // Sorteer op basis van werklast
-        const sortedNightUsers = getSortedUsersForAssignment(availableForNightFiltered);
-        
-        // Stap 1: Probeer twee volledige nachtshifts toe te wijzen
-        let assignedFullShifts = 0;
-        let nightShiftsAssigned = [];
-        
+        const savedOpenShift = await this.createShift(openDayShift);
+        generatedShifts.push(savedOpenShift);
+      }
+
+      // NIGHT SHIFTS - SIMPLIFIED LOGIC TO PREVENT OVERLAPS
+      if (isWeekend) {
+        // WEEKEND: Only create 2 full night shifts (19:00-07:00) - NO HALF SHIFTS
+        const availableForNight = dayPreferences
+          .filter(p => p.shiftType === 'night' && (p.preferenceType === 'full' || p.preferenceType === 'first' || p.preferenceType === 'second'))
+          .map(p => p.userId)
+          .filter(id => !assignedDayIds.includes(id));
+
+        const sortedNightUsers = getSortedUsersForAssignment(availableForNight);
+        let assignedNightShifts = 0;
+
         for (const userId of sortedNightUsers) {
-          if (assignedFullShifts >= 2) break; // Max 2 mensen per nacht
+          if (assignedNightShifts >= 2) break;
           
-          if (canAssignHours(userId, nightShiftHours) && !assignedNightIds.includes(userId)) {
+          if (canAssignHours(userId, 12)) {
             assignedNightIds.push(userId);
-            addAssignedHours(userId, nightShiftHours);
-            nightShiftsAssigned.push(userId);
-            assignedFullShifts++;
+            addAssignedHours(userId, 12);
+            assignedNightShifts++;
             
             const nightShift = {
               userId: userId,
@@ -806,160 +326,125 @@ export class DatabaseStorage implements IStorage {
             generatedShifts.push(savedNightShift);
           }
         }
-        
-        // Stap 2: Alleen halve shifts maken als we helemaal geen volledige shifts hebben
-        // Als we al volledige shifts hebben, geen halve shifts meer toevoegen
-        if (assignedFullShifts === 0) {
-          const remainingShiftsNeeded = 2;
-          // Filter gebruikers voor nachtshift halve shifts - niet dezelfde als dagshift
-          const availableForNightFirstHalfFiltered = availableForNightFirstHalf.filter(
-            id => !assignedDayIds.includes(id) && !assignedNightIds.includes(id)
-          );
-          const availableForNightSecondHalfFiltered = availableForNightSecondHalf.filter(
-            id => !assignedDayIds.includes(id) && !assignedNightIds.includes(id)
-          );
 
-          // OPTIMALISATIE: Probeer complementaire halve shifts toe te wijzen
-          // Zoek mensen die beide helften kunnen doen
-          const canDoBothHalves = availableForNightFirstHalfFiltered.filter(id => 
-            availableForNightSecondHalfFiltered.includes(id) && canAssignHours(id, 12)
-          );
+        // Create open night shifts for remaining positions
+        for (let i = assignedNightShifts; i < 2; i++) {
+          const openNightShift = {
+            userId: 0,
+            date: currentDate,
+            type: "night" as const,
+            startTime: new Date(year, month - 1, day, 19, 0, 0),
+            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+            status: "open" as const,
+            month,
+            year,
+            isSplitShift: false
+          };
+          
+          const savedOpenShift = await this.createShift(openNightShift);
+          generatedShifts.push(savedOpenShift);
+        }
 
-          let shiftsAssigned = 0;
+      } else {
+        // WEEKDAY: Create half shifts (19:00-23:00 and 23:00-07:00)
+        const availableForNightFirstHalf = dayPreferences
+          .filter(p => p.shiftType === 'night' && (p.preferenceType === 'full' || p.preferenceType === 'first'))
+          .map(p => p.userId)
+          .filter(id => !assignedDayIds.includes(id));
 
-          // Strategie A: Wijs eerst complementaire paren toe (voorkomt gaten)
-          for (let i = 0; i < Math.min(canDoBothHalves.length, remainingShiftsNeeded) && shiftsAssigned < remainingShiftsNeeded; i++) {
-            const userId = canDoBothHalves[i];
-            if (canAssignHours(userId, 12)) {
-              // Maak twee halve shifts voor deze persoon
-              const nightHalfShift1 = {
-                userId: userId,
-                date: currentDate,
-                type: "night" as const,
-                startTime: new Date(year, month - 1, day, 19, 0, 0),
-                endTime: new Date(year, month - 1, day, 23, 0, 0),
-                status: "planned" as const,
-                month,
-                year,
-                isSplitShift: true,
-                splitStartTime: new Date(year, month - 1, day, 19, 0, 0),
-                splitEndTime: new Date(year, month - 1, day, 23, 0, 0)
-              };
+        const availableForNightSecondHalf = dayPreferences
+          .filter(p => p.shiftType === 'night' && (p.preferenceType === 'full' || p.preferenceType === 'second'))
+          .map(p => p.userId)
+          .filter(id => !assignedDayIds.includes(id));
 
-              const nightHalfShift2 = {
-                userId: userId,
-                date: currentDate,
-                type: "night" as const,
-                startTime: new Date(year, month - 1, day, 23, 0, 0),
-                endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-                status: "planned" as const,
-                month,
-                year,
-                isSplitShift: true,
-                splitStartTime: new Date(year, month - 1, day, 23, 0, 0),
-                splitEndTime: new Date(year, month - 1, day + 1, 7, 0, 0)
-              };
+        // First half (19:00-23:00)
+        const sortedFirstHalf = getSortedUsersForAssignment(availableForNightFirstHalf);
+        let assignedFirstHalf = 0;
 
-              assignedNightIds.push(userId);
-              addAssignedHours(userId, 12);
-              
-              const savedShift1 = await this.createShift(nightHalfShift1);
-              const savedShift2 = await this.createShift(nightHalfShift2);
-              generatedShifts.push(savedShift1, savedShift2);
-              shiftsAssigned += 2; // Dit telt als 2 shifts (volledige dekking)
-            }
-          }
-
-          // Strategie B: Vul resterende shifts op met aparte halve shifts
-          if (shiftsAssigned < remainingShiftsNeeded * 2) {
-            // Eerste helft
-            const sortedFirstHalf = getSortedUsersForAssignment(availableForNightFirstHalfFiltered);
-            for (const userId of sortedFirstHalf) {
-              if (shiftsAssigned >= remainingShiftsNeeded * 2) break;
-              if (canAssignHours(userId, 6) && !assignedNightIds.includes(userId)) {
-                const nightHalfShift = {
-                  userId: userId,
-                  date: currentDate,
-                  type: "night" as const,
-                  startTime: new Date(year, month - 1, day, 19, 0, 0),
-                  endTime: new Date(year, month - 1, day, 23, 0, 0),
-                  status: "planned" as const,
-                  month,
-                  year,
-                  isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 19, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day, 23, 0, 0)
-                };
-
-                assignedNightIds.push(userId);
-                addAssignedHours(userId, 6);
-                const savedShift = await this.createShift(nightHalfShift);
-                generatedShifts.push(savedShift);
-                shiftsAssigned++;
-              }
-            }
-
-            // Tweede helft
-            const sortedSecondHalf = getSortedUsersForAssignment(availableForNightSecondHalfFiltered);
-            for (const userId of sortedSecondHalf) {
-              if (shiftsAssigned >= remainingShiftsNeeded * 2) break;
-              if (canAssignHours(userId, 8) && !assignedNightIds.includes(userId)) {
-                const nightHalfShift = {
-                  userId: userId,
-                  date: currentDate,
-                  type: "night" as const,
-                  startTime: new Date(year, month - 1, day, 23, 0, 0),
-                  endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-                  status: "planned" as const,
-                  month,
-                  year,
-                  isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 23, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day + 1, 7, 0, 0)
-                };
-
-                assignedNightIds.push(userId);
-                addAssignedHours(userId, 8);
-                const savedShift = await this.createShift(nightHalfShift);
-                generatedShifts.push(savedShift);
-                shiftsAssigned++;
-              }
-            }
+        for (const userId of sortedFirstHalf) {
+          if (assignedFirstHalf >= 2) break;
+          
+          if (canAssignHours(userId, 4) && !assignedNightIds.includes(userId)) {
+            assignedNightIds.push(userId);
+            addAssignedHours(userId, 4);
+            assignedFirstHalf++;
+            
+            const nightHalfShift = {
+              userId: userId,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 19, 0, 0),
+              endTime: new Date(year, month - 1, day, 23, 0, 0),
+              status: "planned" as const,
+              month,
+              year,
+              isSplitShift: true
+            };
+            
+            const savedShift = await this.createShift(nightHalfShift);
+            generatedShifts.push(savedShift);
           }
         }
 
-        // Maak open shifts voor niet-ingevulde posities
-        const totalNightShiftsNeeded = 4; // 2 mensen x 2 shifts per persoon
-        const actualShiftsCreated = generatedShifts.filter(s => 
-          s.date.toDateString() === currentDate.toDateString() && 
-          s.type === 'night' && 
-          s.status === 'planned'
-        ).length;
-
-        // Maak open shifts aan voor alle nog niet ingevulde posities
-        const neededOpenShifts = Math.max(0, 4 - actualShiftsCreated);
-        for (let i = 0; i < neededOpenShifts; i++) {
-          const isFirstHalf = i % 2 === 0;
+        // Create open shifts for remaining first half positions
+        for (let i = assignedFirstHalf; i < 2; i++) {
           const openShift = {
             userId: 0,
             date: currentDate,
             type: "night" as const,
-            startTime: isFirstHalf 
-              ? new Date(year, month - 1, day, 19, 0, 0)
-              : new Date(year, month - 1, day, 23, 0, 0),
-            endTime: isFirstHalf 
-              ? new Date(year, month - 1, day, 23, 0, 0)
-              : new Date(year, month - 1, day + 1, 7, 0, 0),
+            startTime: new Date(year, month - 1, day, 19, 0, 0),
+            endTime: new Date(year, month - 1, day, 23, 0, 0),
             status: "open" as const,
             month,
             year,
-            isSplitShift: true,
-            splitStartTime: isFirstHalf 
-              ? new Date(year, month - 1, day, 19, 0, 0)
-              : new Date(year, month - 1, day, 23, 0, 0),
-            splitEndTime: isFirstHalf 
-              ? new Date(year, month - 1, day, 23, 0, 0)
-              : new Date(year, month - 1, day + 1, 7, 0, 0)
+            isSplitShift: true
+          };
+          
+          const savedOpenShift = await this.createShift(openShift);
+          generatedShifts.push(savedOpenShift);
+        }
+
+        // Second half (23:00-07:00)
+        const sortedSecondHalf = getSortedUsersForAssignment(availableForNightSecondHalf);
+        let assignedSecondHalf = 0;
+
+        for (const userId of sortedSecondHalf) {
+          if (assignedSecondHalf >= 2) break;
+          
+          if (canAssignHours(userId, 8) && !assignedNightIds.includes(userId)) {
+            assignedNightIds.push(userId);
+            addAssignedHours(userId, 8);
+            assignedSecondHalf++;
+            
+            const nightHalfShift = {
+              userId: userId,
+              date: currentDate,
+              type: "night" as const,
+              startTime: new Date(year, month - 1, day, 23, 0, 0),
+              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              status: "planned" as const,
+              month,
+              year,
+              isSplitShift: true
+            };
+            
+            const savedShift = await this.createShift(nightHalfShift);
+            generatedShifts.push(savedShift);
+          }
+        }
+
+        // Create open shifts for remaining second half positions
+        for (let i = assignedSecondHalf; i < 2; i++) {
+          const openShift = {
+            userId: 0,
+            date: currentDate,
+            type: "night" as const,
+            startTime: new Date(year, month - 1, day, 23, 0, 0),
+            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+            status: "open" as const,
+            month,
+            year,
+            isSplitShift: true
           };
           
           const savedOpenShift = await this.createShift(openShift);
@@ -968,14 +453,13 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    // Log de uiteindelijke uren per gebruiker
+    // Log final hours assignment
     console.log("Assigned hours per user:");
-    // Convert entries to array to avoid iterator issues
     const entries = Array.from(userAssignedHours.entries());
     for (const [userId, hours] of entries) {
       const user = activeUsers.find(u => u.id === userId);
       if (user && hours > 0) {
-        console.log(`${user.username}: ${hours} hours (opgegeven: ${user.hours})`);
+        console.log(`${user.username}: ${hours} hours (target: ${user.hours})`);
       }
     }
     
@@ -988,48 +472,46 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(shiftPreferences)
       .where(eq(shiftPreferences.id, id));
-    return preference;
+    return preference || undefined;
   }
-  
+
   async getShift(id: number): Promise<Shift | undefined> {
     const [shift] = await db
       .select()
       .from(shifts)
       .where(eq(shifts.id, id));
-    return shift;
+    return shift || undefined;
   }
-  
+
   async updateShift(id: number, updateData: Partial<Shift>): Promise<Shift> {
     const [shift] = await db
       .update(shifts)
       .set(updateData)
       .where(eq(shifts.id, id))
       .returning();
-      
-    if (!shift) throw new Error("Shift not found");
     return shift;
   }
-  
+
   async deleteShift(id: number): Promise<void> {
     await db.delete(shifts).where(eq(shifts.id, id));
   }
-  
+
   async getSystemSetting(key: string): Promise<string | null> {
-    const [setting] = await db.select().from(systemSettings).where(eq(systemSettings.key, key));
+    const [setting] = await db
+      .select()
+      .from(systemSettings)
+      .where(eq(systemSettings.key, key));
     return setting?.value || null;
   }
   
   async setSystemSetting(key: string, value: string): Promise<void> {
-    // Controleer of de instelling al bestaat
     const existing = await this.getSystemSetting(key);
     
     if (existing !== null) {
-      // Update bestaande instelling
       await db.update(systemSettings)
         .set({ value, updatedAt: new Date() })
         .where(eq(systemSettings.key, key));
     } else {
-      // Maak nieuwe instelling aan
       await db.insert(systemSettings).values({
         key,
         value,
