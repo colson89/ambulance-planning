@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -515,6 +515,58 @@ export default function ScheduleGenerator() {
         title: "Medewerker verwijderd",
         description: "De medewerker is uit de shift verwijderd. De shift staat nu op 'Open'.",
         variant: "default",
+      });
+    }
+  }
+
+  const handleSplitShift = async () => {
+    if (!editingShift || editingShift.type !== "night" || editingShift.isSplitShift) return;
+    
+    try {
+      const res = await apiRequest("POST", `/api/shifts/${editingShift.id}/split`, {});
+      
+      if (!res.ok) {
+        throw new Error("Kon shift niet splitsen");
+      }
+      
+      toast({
+        title: "Shift gesplitst",
+        description: "De nachtshift is opgesplitst in twee halve shifts (19:00-23:00 en 23:00-07:00)",
+      });
+      
+      setEditingShift(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+    } catch (error) {
+      toast({
+        title: "Fout bij splitsen",
+        description: "Er ging iets mis bij het splitsen van de shift",
+        variant: "destructive",
+      });
+    }
+  }
+
+  const handleMergeShift = async () => {
+    if (!editingShift || editingShift.type !== "night" || !editingShift.isSplitShift) return;
+    
+    try {
+      const res = await apiRequest("POST", `/api/shifts/${editingShift.id}/merge`, {});
+      
+      if (!res.ok) {
+        throw new Error("Kon shift niet samenvoegen");
+      }
+      
+      toast({
+        title: "Shift samengevoegd",
+        description: "De halve shifts zijn samengevoegd tot één volledige nachtshift (19:00-07:00)",
+      });
+      
+      setEditingShift(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+    } catch (error) {
+      toast({
+        title: "Fout bij samenvoegen",
+        description: "Er ging iets mis bij het samenvoegen van de shift",
+        variant: "destructive",
       });
     }
   };
@@ -1079,7 +1131,39 @@ export default function ScheduleGenerator() {
             </div>
           )}
           
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex flex-col gap-4">
+            {/* Shift bewerking knoppen */}
+            {editingShift && editingShift.type === "night" && (
+              <div className="flex flex-col gap-2 border-t pt-4">
+                <Label className="text-sm font-medium">Shift opties:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {!editingShift.isSplitShift && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleSplitShift}
+                      disabled={updateShiftMutation.isPending}
+                    >
+                      <Split className="h-4 w-4 mr-2" />
+                      Splitsen (2 personen)
+                    </Button>
+                  )}
+                  
+                  {editingShift.isSplitShift && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleMergeShift}
+                      disabled={updateShiftMutation.isPending}
+                    >
+                      <Merge className="h-4 w-4 mr-2" />
+                      Samenvoegen (1 persoon)
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+            
             <div className="flex gap-2 w-full justify-between">
               <Button variant="outline" onClick={() => setEditingShift(null)}>
                 Annuleren

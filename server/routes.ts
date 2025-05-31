@@ -831,6 +831,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Split a night shift into two half shifts
+  app.post("/api/shifts/:id/split", requireAdmin, async (req, res) => {
+    try {
+      const shiftId = parseInt(req.params.id);
+      
+      // Get the existing shift
+      const existingShift = await storage.getShift(shiftId);
+      if (!existingShift) {
+        return res.status(404).json({ message: "Shift not found" });
+      }
+      
+      // Only night shifts can be split
+      if (existingShift.type !== "night") {
+        return res.status(400).json({ message: "Only night shifts can be split" });
+      }
+      
+      // Check if already split
+      if (existingShift.isSplitShift) {
+        return res.status(400).json({ message: "Shift is already split" });
+      }
+      
+      // Update the existing shift to mark it as split and set hours to first half
+      await storage.updateShift(shiftId, {
+        isSplitShift: true,
+        startTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0),
+        endTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 23, 0, 0),
+        userId: 0,
+        status: "open"
+      });
+      
+      // Create a second half shift
+      const secondHalfShift = await storage.createShift({
+        date: existingShift.date,
+        type: "night",
+        startTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 23, 0, 0),
+        endTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate() + 1, 7, 0, 0),
+        userId: 0,
+        status: "open",
+        isSplitShift: true,
+        splitGroup: shiftId // Link to the original shift
+      });
+      
+      // Update the original shift with the split group reference
+      await storage.updateShift(shiftId, {
+        splitGroup: shiftId
+      });
+      
+      res.status(200).json({ 
+        message: "Shift successfully split into two half shifts",
+        originalShift: shiftId,
+        secondHalfShift: secondHalfShift.id
+      });
+    } catch (error) {
+      console.error("Error splitting shift:", error);
+      res.status(500).json({ message: "Failed to split shift" });
+    }
+  });
+
+  // Merge split shifts back into one full night shift
+  app.post("/api/shifts/:id/merge", requireAdmin, async (req, res) => {
+    try {
+      const shiftId = parseInt(req.params.id);
+      
+      // Get the existing shift
+      const existingShift = await storage.getShift(shiftId);
+      if (!existingShift) {
+        return res.status(404).json({ message: "Shift not found" });
+      }
+      
+      // Only split night shifts can be merged
+      if (existingShift.type !== "night" || !existingShift.isSplitShift) {
+        return res.status(400).json({ message: "Only split night shifts can be merged" });
+      }
+      
+      // Find the other half of the split shift
+      const allShifts = await storage.getShiftsByMonth(
+        existingShift.date.getMonth() + 1,
+        existingShift.date.getFullYear()
+      );
+      
+      const splitGroup = existingShift.splitGroup;
+      const otherHalf = allShifts.find(shift => 
+        shift.id !== shiftId && 
+        shift.splitGroup === splitGroup &&
+        shift.isSplitShift
+      );
+      
+      if (otherHalf) {
+        // Delete the other half
+        await storage.deleteShift(otherHalf.id);
+      }
+      
+      // Update the original shift to be a full night shift again
+      await storage.updateShift(shiftId, {
+        isSplitShift: false,
+        splitGroup: null,
+        startTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0),
+        endTime: new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate() + 1, 7, 0, 0),
+        userId: 0,
+        status: "open"
+      });
+      
+      res.status(200).json({ 
+        message: "Split shifts successfully merged into one full night shift",
+        mergedShift: shiftId
+      });
+    } catch (error) {
+      console.error("Error merging shifts:", error);
+      res.status(500).json({ message: "Failed to merge shifts" });
+    }
+  });
+
   // Note: De bulk-import endpoint voor ambulanciers is verwijderd omdat deze niet meer nodig is
   // De ambulanciers zijn al direct toegevoegd via SQL
 

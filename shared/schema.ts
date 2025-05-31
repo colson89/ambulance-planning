@@ -22,6 +22,7 @@ export const shifts = pgTable("shifts", {
   type: text("type", { enum: ["day", "night"] }).notNull(),
   status: text("status", { enum: ["planned", "open"] }).notNull().default("open"),
   isSplitShift: boolean("is_split_shift").notNull().default(false),
+  splitGroup: integer("split_group"),
   splitStartTime: timestamp("split_start_time"),
   splitEndTime: timestamp("split_end_time"),
   month: integer("month").notNull(),
