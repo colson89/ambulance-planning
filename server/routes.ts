@@ -2,12 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword, comparePasswords } from "./auth";
-import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shiftPreferences, insertWeekdayConfigSchema } from "@shared/schema";
+import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shiftPreferences, shifts, insertWeekdayConfigSchema } from "@shared/schema";
 import { z } from "zod";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
 import { db } from "./db";
-import { and, gte, lte, asc } from "drizzle-orm";
+import { and, gte, lte, asc, ne } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -254,8 +254,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         users = [user];
       } else {
         users = await storage.getAllUsers();
-        // Filter out admin users
-        users = users.filter(u => u.role !== 'admin');
+        // Include all users including admins
       }
       
       // Eerst alle bestaande voorkeuren voor deze maand/jaar verwijderen
@@ -1055,6 +1054,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error initializing weekday configs:", error);
       res.status(500).json({ message: "Failed to initialize weekday configurations" });
+    }
+  });
+
+  // Statistics routes
+  app.get("/api/statistics/shifts", requireAdmin, async (req, res) => {
+    try {
+      const { type, year, month, quarter } = req.query;
+      
+      if (!type || !year) {
+        return res.status(400).json({ message: "Type and year are required" });
+      }
+      
+      const targetYear = parseInt(year as string);
+      let startDate: Date, endDate: Date;
+      
+      switch (type) {
+        case "month":
+          if (!month) {
+            return res.status(400).json({ message: "Month is required for monthly statistics" });
+          }
+          const targetMonth = parseInt(month as string);
+          startDate = new Date(targetYear, targetMonth - 1, 1);
+          endDate = new Date(targetYear, targetMonth, 0);
+          break;
+          
+        case "quarter":
+          if (!quarter) {
+            return res.status(400).json({ message: "Quarter is required for quarterly statistics" });
+          }
+          const targetQuarter = parseInt(quarter as string);
+          const quarterStartMonth = (targetQuarter - 1) * 3;
+          startDate = new Date(targetYear, quarterStartMonth, 1);
+          endDate = new Date(targetYear, quarterStartMonth + 3, 0);
+          break;
+          
+        case "year":
+          startDate = new Date(targetYear, 0, 1);
+          endDate = new Date(targetYear, 11, 31);
+          break;
+          
+        default:
+          return res.status(400).json({ message: "Invalid type. Must be month, quarter, or year" });
+      }
+      
+      // Get all users
+      const users = await storage.getAllUsers();
+      
+      // Get shift preferences for the period
+      const preferences = await db.select()
+        .from(shiftPreferences)
+        .where(
+          and(
+            gte(shiftPreferences.date, startDate),
+            lte(shiftPreferences.date, endDate)
+          )
+        );
+      
+      // Get actual shifts for the period
+      const actualShifts = await db.select()
+        .from(shifts)
+        .where(
+          and(
+            gte(shifts.date, startDate),
+            lte(shifts.date, endDate),
+            ne(shifts.userId, 0) // Exclude open shifts
+          )
+        );
+      
+      // Calculate statistics for each user
+      const statistics = users.map(user => {
+        const userPreferences = preferences.filter(p => p.userId === user.id);
+        const userActualShifts = actualShifts.filter(s => s.userId === user.id);
+        
+        // Count preferences by type and weekend/weekday
+        const prefStats = userPreferences.reduce((acc, pref) => {
+          const isWeekend = pref.date.getDay() === 0 || pref.date.getDay() === 6;
+          const key = `${pref.type}${isWeekend ? 'Weekend' : 'Week'}` as keyof typeof acc;
+          // Only count approved or pending preferences (not unavailable)
+          if (pref.type !== 'unavailable') {
+            acc[key]++;
+          }
+          return acc;
+        }, {
+          dayWeek: 0,
+          nightWeek: 0,
+          dayWeekend: 0,
+          nightWeekend: 0
+        });
+        
+        // Count actual shifts by type and weekend/weekday
+        const actualStats = userActualShifts.reduce((acc, shift) => {
+          const isWeekend = shift.date.getDay() === 0 || shift.date.getDay() === 6;
+          const key = `${shift.type}${isWeekend ? 'Weekend' : 'Week'}` as keyof typeof acc;
+          acc[key]++;
+          return acc;
+        }, {
+          dayWeek: 0,
+          nightWeek: 0,
+          dayWeekend: 0,
+          nightWeekend: 0
+        });
+        
+        return {
+          userId: user.id,
+          username: user.username,
+          // Preferences
+          dayShiftWeek: prefStats.dayWeek,
+          nightShiftWeek: prefStats.nightWeek,
+          dayShiftWeekend: prefStats.dayWeekend,
+          nightShiftWeekend: prefStats.nightWeekend,
+          totalPreferences: prefStats.dayWeek + prefStats.nightWeek + prefStats.dayWeekend + prefStats.nightWeekend,
+          // Actual shifts
+          actualDayShiftWeek: actualStats.dayWeek,
+          actualNightShiftWeek: actualStats.nightWeek,
+          actualDayShiftWeekend: actualStats.dayWeekend,
+          actualNightShiftWeekend: actualStats.nightWeekend,
+          totalActualShifts: actualStats.dayWeek + actualStats.nightWeek + actualStats.dayWeekend + actualStats.nightWeekend
+        };
+      });
+      
+      res.json(statistics);
+    } catch (error) {
+      console.error("Error fetching shift statistics:", error);
+      res.status(500).json({ message: "Failed to get shift statistics" });
     }
   });
 
