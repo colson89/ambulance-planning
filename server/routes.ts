@@ -203,13 +203,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Track active preference generation processes
+  // Track active processes
   let isGeneratingPreferences = false;
   let currentProgress = { percentage: 0, message: "", isActive: false };
+  let deleteProgress = { percentage: 0, message: "", isActive: false };
+  let generateProgress = { percentage: 0, message: "", isActive: false };
 
-  // Progress endpoint for frontend polling
+  // Progress endpoints for frontend polling
   app.get("/api/preferences/progress", requireAdmin, (req, res) => {
     res.json(currentProgress);
+  });
+
+  app.get("/api/schedule/delete-progress", requireAdmin, (req, res) => {
+    res.json(deleteProgress);
+  });
+
+  app.get("/api/schedule/generate-progress", requireAdmin, (req, res) => {
+    res.json(generateProgress);
   });
 
   // Generate random preferences for testing (admin only)

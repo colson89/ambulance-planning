@@ -55,6 +55,12 @@ export default function ScheduleGenerator() {
   const [isGeneratingTestPreferences, setIsGeneratingTestPreferences] = useState(false);
   const [progressPercentage, setProgressPercentage] = useState<number>(0);
   const [progressMessage, setProgressMessage] = useState<string>("");
+  const [isDeletingSchedule, setIsDeletingSchedule] = useState(false);
+  const [deleteProgressPercentage, setDeleteProgressPercentage] = useState<number>(0);
+  const [deleteProgressMessage, setDeleteProgressMessage] = useState<string>("");
+  const [isGeneratingSchedule, setIsGeneratingSchedule] = useState(false);
+  const [generateProgressPercentage, setGenerateProgressPercentage] = useState<number>(0);
+  const [generateProgressMessage, setGenerateProgressMessage] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   
   // Query om de laatste tijdstempel voor gegenereerde testvoorkeuren op te halen
@@ -686,6 +692,19 @@ export default function ScheduleGenerator() {
                   Verwijder alle planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
                 </p>
                 
+                {isDeletingSchedule && (
+                  <div className="mb-4">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span>Voortgang</span>
+                      <span>{deleteProgressPercentage}%</span>
+                    </div>
+                    <Progress value={deleteProgressPercentage} className="w-full" />
+                    {deleteProgressMessage && (
+                      <p className="text-xs text-muted-foreground mt-1">{deleteProgressMessage}</p>
+                    )}
+                  </div>
+                )}
+                
                 <Button
                   variant="outline"
                   size="sm"
@@ -694,7 +713,36 @@ export default function ScheduleGenerator() {
                     const monthName = format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl });
                     // Toon bevestigingsdialoog
                     if (window.confirm(`Weet u zeker dat u de volledige planning voor ${monthName} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.`)) {
-                      deleteMonthShiftsMutation.mutate();
+                      setIsDeletingSchedule(true);
+                      setDeleteProgressPercentage(0);
+                      setDeleteProgressMessage("Planning verwijderen...");
+                      
+                      // Start polling voor voortgang
+                      const deleteInterval = setInterval(async () => {
+                        try {
+                          const progressRes = await fetch('/api/schedule/delete-progress');
+                          if (progressRes.ok) {
+                            const progressData = await progressRes.json();
+                            setDeleteProgressPercentage(progressData.percentage || 0);
+                            setDeleteProgressMessage(progressData.message || "");
+                            
+                            if (progressData.percentage >= 100) {
+                              clearInterval(deleteInterval);
+                            }
+                          }
+                        } catch (error) {
+                          // Stille fout - polling mag niet het hoofdproces verstoren
+                        }
+                      }, 500);
+                      
+                      deleteMonthShiftsMutation.mutate(undefined, {
+                        onSettled: () => {
+                          clearInterval(deleteInterval);
+                          setIsDeletingSchedule(false);
+                          setDeleteProgressPercentage(0);
+                          setDeleteProgressMessage("");
+                        }
+                      });
                     }
                   }}
                   disabled={deleteMonthShiftsMutation.isPending}
@@ -715,12 +763,56 @@ export default function ScheduleGenerator() {
 
 
 
+              {isGeneratingSchedule && (
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span>Voortgang</span>
+                    <span>{generateProgressPercentage}%</span>
+                  </div>
+                  <Progress value={generateProgressPercentage} className="w-full" />
+                  {generateProgressMessage && (
+                    <p className="text-xs text-muted-foreground mt-1">{generateProgressMessage}</p>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-between items-center mt-6">
                 <span className="text-sm text-gray-500">
                   Planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
                 </span>
                 <Button
-                  onClick={() => generateScheduleMutation.mutate()}
+                  onClick={() => {
+                    setIsGeneratingSchedule(true);
+                    setGenerateProgressPercentage(0);
+                    setGenerateProgressMessage("Planning genereren...");
+                    
+                    // Start polling voor voortgang
+                    const generateInterval = setInterval(async () => {
+                      try {
+                        const progressRes = await fetch('/api/schedule/generate-progress');
+                        if (progressRes.ok) {
+                          const progressData = await progressRes.json();
+                          setGenerateProgressPercentage(progressData.percentage || 0);
+                          setGenerateProgressMessage(progressData.message || "");
+                          
+                          if (progressData.percentage >= 100) {
+                            clearInterval(generateInterval);
+                          }
+                        }
+                      } catch (error) {
+                        // Stille fout - polling mag niet het hoofdproces verstoren
+                      }
+                    }, 500);
+                    
+                    generateScheduleMutation.mutate(undefined, {
+                      onSettled: () => {
+                        clearInterval(generateInterval);
+                        setIsGeneratingSchedule(false);
+                        setGenerateProgressPercentage(0);
+                        setGenerateProgressMessage("");
+                      }
+                    });
+                  }}
                   disabled={generateScheduleMutation.isPending}
                 >
                   {generateScheduleMutation.isPending ? (
