@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword, comparePasswords } from "./auth";
-import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shiftPreferences } from "@shared/schema";
+import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shiftPreferences, insertWeekdayConfigSchema } from "@shared/schema";
 import { z } from "zod";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
@@ -1006,6 +1006,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching last preferences generation timestamp:", error);
       res.status(500).json({ message: "Kon tijdstempel niet ophalen" });
+    }
+  });
+
+  // Weekday configuration routes
+  app.get("/api/weekday-configs", requireAdmin, async (req, res) => {
+    try {
+      const configs = await storage.getWeekdayConfigs();
+      res.json(configs);
+    } catch (error) {
+      console.error("Error getting weekday configs:", error);
+      res.status(500).json({ message: "Failed to get weekday configurations" });
+    }
+  });
+
+  app.get("/api/weekday-configs/:dayOfWeek", requireAdmin, async (req, res) => {
+    try {
+      const dayOfWeek = parseInt(req.params.dayOfWeek);
+      const config = await storage.getWeekdayConfig(dayOfWeek);
+      if (!config) {
+        return res.status(404).json({ message: "Configuration not found" });
+      }
+      res.json(config);
+    } catch (error) {
+      console.error("Error getting weekday config:", error);
+      res.status(500).json({ message: "Failed to get weekday configuration" });
+    }
+  });
+
+  app.put("/api/weekday-configs/:dayOfWeek", requireAdmin, async (req, res) => {
+    try {
+      const dayOfWeek = parseInt(req.params.dayOfWeek);
+      const updateData = req.body;
+      
+      const updatedConfig = await storage.updateWeekdayConfig(dayOfWeek, updateData);
+      res.json(updatedConfig);
+    } catch (error) {
+      console.error("Error updating weekday config:", error);
+      res.status(500).json({ message: "Failed to update weekday configuration" });
+    }
+  });
+
+  app.post("/api/weekday-configs/initialize", requireAdmin, async (req, res) => {
+    try {
+      await storage.initializeDefaultWeekdayConfigs();
+      const configs = await storage.getWeekdayConfigs();
+      res.json(configs);
+    } catch (error) {
+      console.error("Error initializing weekday configs:", error);
+      res.status(500).json({ message: "Failed to initialize weekday configurations" });
     }
   });
 

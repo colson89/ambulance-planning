@@ -292,8 +292,8 @@ export class DatabaseStorage implements IStorage {
           }
         }
 
-        // Create open day shifts for remaining positions (only on weekends)
-        for (let i = assignedDayShifts; i < 2; i++) {
+        // Create open day shifts for remaining positions
+        for (let i = assignedDayShifts; i < dayConfig.dayShiftCount; i++) {
           const openDayShift = {
             userId: 0,
             date: currentDate,
@@ -311,8 +311,9 @@ export class DatabaseStorage implements IStorage {
         }
       }
 
-      // NIGHT SHIFTS - WEEKEND STRATEGY: FULL SHIFTS FIRST, HALF SHIFTS AS BACKUP
-      if (isWeekend) {
+      // NIGHT SHIFTS - Based on weekday configuration
+      if (dayConfig.enableNightShifts) {
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         // WEEKEND: Try full night shifts first (19:00-07:00)
         const availableForNight = availableNightUsers.filter(id => !assignedDayIds.includes(id));
         const sortedNightUsers = getSortedUsersForAssignment(availableForNight);
