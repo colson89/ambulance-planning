@@ -241,8 +241,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const daysInMonth = new Date(year, month, 0).getDate();
       let createdPreferences = 0;
+      const totalOperations = users.length * daysInMonth;
+      let completedOperations = 0;
       
-      for (const user of users) {
+      console.log(`Begonnen met genereren van voorkeuren voor ${users.length} gebruikers...`);
+      
+      for (let userIndex = 0; userIndex < users.length; userIndex++) {
+        const user = users[userIndex];
+        const userProgress = Math.round((userIndex / users.length) * 100);
+        console.log(`[${userProgress}%] Voorkeuren genereren voor ${user.username} (${userIndex + 1}/${users.length})`);
+        
         // Voor elke dag in de maand
         for (let day = 1; day <= daysInMonth; day++) {
           const currentDate = new Date(year, month - 1, day);
