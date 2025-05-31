@@ -357,23 +357,36 @@ export default function Dashboard() {
                           <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
                           <TableCell>
                             {shift.startTime && shift.endTime ? (
-                              shift.type === "night" ? (
-                                shift.isSplitShift ? (
-                                  new Date(shift.startTime).getHours() === 19 ? 
-                                  "19:00 - 23:00" : 
-                                  "23:00 - 07:00"
-                                ) : (
-                                  "19:00 - 07:00"
-                                )
-                              ) : (
-                                shift.isSplitShift ? (
-                                  new Date(shift.startTime).getHours() === 7 ? 
-                                  "07:00 - 13:00" : 
-                                  "13:00 - 19:00"
-                                ) : (
-                                  "07:00 - 19:00"
-                                )
-                              )
+                              (() => {
+                                const startHour = new Date(shift.startTime).getHours();
+                                const endHour = new Date(shift.endTime).getHours();
+                                
+                                if (shift.type === "night") {
+                                  if (shift.isSplitShift) {
+                                    if (startHour === 19 && endHour === 23) {
+                                      return "19:00 - 23:00";
+                                    } else if (startHour === 23 && endHour === 7) {
+                                      return "23:00 - 07:00";
+                                    } else {
+                                      return `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
+                                    }
+                                  } else {
+                                    return "19:00 - 07:00";
+                                  }
+                                } else {
+                                  if (shift.isSplitShift) {
+                                    if (startHour === 7 && endHour === 13) {
+                                      return "07:00 - 13:00";
+                                    } else if (startHour === 13 && endHour === 19) {
+                                      return "13:00 - 19:00";
+                                    } else {
+                                      return `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
+                                    }
+                                  } else {
+                                    return "07:00 - 19:00";
+                                  }
+                                }
+                              })()
                             ) : (
                               "-"
                             )}
