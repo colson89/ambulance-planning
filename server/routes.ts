@@ -2,10 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword, comparePasswords } from "./auth";
-import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema } from "@shared/schema";
+import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shiftPreferences } from "@shared/schema";
 import { z } from "zod";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
+import { db } from "./db";
+import { and, gte, lte, asc } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -460,8 +462,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const targetMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
       const targetYear = year ? parseInt(year as string) : new Date().getFullYear();
       
-      // Get all shift preferences for the specified month/year directly
-      const allPreferences = await storage.getUserShiftPreferences(0, targetMonth, targetYear);
+      // Get all shift preferences for the specified month/year using SQL query
+      const startDate = new Date(targetYear, targetMonth - 1, 1);
+      const endDate = new Date(targetYear, targetMonth, 0);
+      
+      const allPreferences = await db.select()
+        .from(shiftPreferences)
+        .where(
+          and(
+            gte(shiftPreferences.date, startDate),
+            lte(shiftPreferences.date, endDate)
+          )
+        )
+        .orderBy(asc(shiftPreferences.date), asc(shiftPreferences.userId));
       
       res.json(allPreferences);
     } catch (error) {
