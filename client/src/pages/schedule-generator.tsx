@@ -646,9 +646,14 @@ export default function ScheduleGenerator() {
                       // Ververs de gegevens
                       refetchPreferences();
                       
+                      // Stop polling
+                      clearInterval(pollInterval);
+                      
                       // Vernieuw ook de tijdstempel
                       queryClient.invalidateQueries({ queryKey: ["/api/system/settings/last-preferences-generated"] });
                     } catch (error) {
+                      // Stop polling bij fout
+                      clearInterval(pollInterval);
                       toast({
                         title: "Fout",
                         description: error instanceof Error ? error.message : "Onbekende fout bij genereren testdata",
@@ -656,6 +661,8 @@ export default function ScheduleGenerator() {
                       });
                     } finally {
                       setIsGeneratingTestPreferences(false);
+                      setProgressPercentage(0);
+                      setProgressMessage("");
                     }
                   }}
                 >
