@@ -186,6 +186,14 @@ export class DatabaseStorage implements IStorage {
     );
 
     const activeUsers = await db.select().from(users);
+    const allPreferences = await db.select().from(shiftPreferences)
+      .where(
+        and(
+          eq(shiftPreferences.month, month),
+          eq(shiftPreferences.year, year)
+        )
+      );
+
     const generatedShifts: Shift[] = [];
     const daysInMonth = new Date(year, month, 0).getDate();
     
@@ -224,15 +232,22 @@ export class DatabaseStorage implements IStorage {
       const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-      // Get all available users for this day
-      const allAvailableUsers = activeUsers.map(u => u.id);
-      
+      // Get preferences for this day
+      const dayPreferences = allPreferences.filter(p => {
+        const prefDate = new Date(p.date);
+        return prefDate.getDate() === day;
+      });
+
       // Track assigned users for this day to prevent double assignment
       const assignedDayIds: number[] = [];
       const assignedNightIds: number[] = [];
 
       // DAY SHIFTS (7:00-19:00) - Always 2 people
-      const sortedDayUsers = getSortedUsersForAssignment(allAvailableUsers);
+      const availableForDay = dayPreferences
+        .filter(p => p.type === 'day')
+        .map(p => p.userId);
+
+      const sortedDayUsers = getSortedUsersForAssignment(availableForDay);
       let assignedDayShifts = 0;
 
       for (const userId of sortedDayUsers) {
@@ -278,10 +293,14 @@ export class DatabaseStorage implements IStorage {
         generatedShifts.push(savedOpenShift);
       }
 
-      // NIGHT SHIFTS - SIMPLIFIED LOGIC FOR WEEKENDS TO PREVENT OVERLAPS
+      // NIGHT SHIFTS - SIMPLIFIED LOGIC TO PREVENT OVERLAPS
       if (isWeekend) {
         // WEEKEND: Only create 2 full night shifts (19:00-07:00) - NO HALF SHIFTS
-        const availableForNight = allAvailableUsers.filter(id => !assignedDayIds.includes(id));
+        const availableForNight = dayPreferences
+          .filter(p => p.shiftType === 'night' && (p.preferenceType === 'full' || p.preferenceType === 'first' || p.preferenceType === 'second'))
+          .map(p => p.userId)
+          .filter(id => !assignedDayIds.includes(id));
+
         const sortedNightUsers = getSortedUsersForAssignment(availableForNight);
         let assignedNightShifts = 0;
 
@@ -330,10 +349,18 @@ export class DatabaseStorage implements IStorage {
 
       } else {
         // WEEKDAY: Create half shifts (19:00-23:00 and 23:00-07:00)
-        const availableForNight = allAvailableUsers.filter(id => !assignedDayIds.includes(id));
+        const availableForNightFirstHalf = dayPreferences
+          .filter(p => p.shiftType === 'night' && (p.preferenceType === 'full' || p.preferenceType === 'first'))
+          .map(p => p.userId)
+          .filter(id => !assignedDayIds.includes(id));
+
+        const availableForNightSecondHalf = dayPreferences
+          .filter(p => p.shiftType === 'night' && (p.preferenceType === 'full' || p.preferenceType === 'second'))
+          .map(p => p.userId)
+          .filter(id => !assignedDayIds.includes(id));
 
         // First half (19:00-23:00)
-        const sortedFirstHalf = getSortedUsersForAssignment(availableForNight);
+        const sortedFirstHalf = getSortedUsersForAssignment(availableForNightFirstHalf);
         let assignedFirstHalf = 0;
 
         for (const userId of sortedFirstHalf) {
@@ -380,14 +407,13 @@ export class DatabaseStorage implements IStorage {
         }
 
         // Second half (23:00-07:00)
-        const remainingAvailable = availableForNight.filter(id => !assignedNightIds.includes(id));
-        const sortedSecondHalf = getSortedUsersForAssignment(remainingAvailable);
+        const sortedSecondHalf = getSortedUsersForAssignment(availableForNightSecondHalf);
         let assignedSecondHalf = 0;
 
         for (const userId of sortedSecondHalf) {
           if (assignedSecondHalf >= 2) break;
           
-          if (canAssignHours(userId, 8)) {
+          if (canAssignHours(userId, 8) && !assignedNightIds.includes(userId)) {
             assignedNightIds.push(userId);
             addAssignedHours(userId, 8);
             assignedSecondHalf++;
@@ -426,6 +452,16 @@ export class DatabaseStorage implements IStorage {
           const savedOpenShift = await this.createShift(openShift);
           generatedShifts.push(savedOpenShift);
         }
+      }
+    }
+    
+    // Log final hours assignment
+    console.log("Assigned hours per user:");
+    const entries = Array.from(userAssignedHours.entries());
+    for (const [userId, hours] of entries) {
+      const user = activeUsers.find(u => u.id === userId);
+      if (user && hours > 0) {
+        console.log(`${user.username}: ${hours} hours (target: ${user.hours})`);
       }
     }
     
