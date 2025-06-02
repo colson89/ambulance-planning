@@ -113,32 +113,58 @@ export default function Profile() {
             <CardTitle>Werk Voorkeuren</CardTitle>
           </CardHeader>
           <CardContent>
-            <Form {...preferencesForm}>
-              <form onSubmit={preferencesForm.handleSubmit((data) => updatePreferencesMutation.mutate(data))} className="space-y-4">
+            {user?.role === 'admin' ? (
+              <Form {...preferencesForm}>
+                <form onSubmit={preferencesForm.handleSubmit((data) => updatePreferencesMutation.mutate(data))} className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Maximum Uren per Week</label>
+                    <Input
+                      type="number"
+                      {...preferencesForm.register("maxHours", { valueAsNumber: true })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">Voorkeur Uren per Week</label>
+                    <Input
+                      type="number"
+                      {...preferencesForm.register("preferredHours", { valueAsNumber: true })}
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit"
+                    disabled={updatePreferencesMutation.isPending}
+                  >
+                    Voorkeuren Opslaan
+                  </Button>
+                </form>
+              </Form>
+            ) : (
+              <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Maximum Uren per Week</label>
-                  <Input
-                    type="number"
-                    {...preferencesForm.register("maxHours", { valueAsNumber: true })}
-                  />
+                  <label className="text-sm font-medium text-gray-600">Maximum Uren per Maand</label>
+                  <div className="text-2xl font-bold text-gray-900 mt-1">
+                    {user?.hours || 0} uren
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Door administrator ingesteld</p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium">Voorkeur Uren per Week</label>
-                  <Input
-                    type="number"
-                    {...preferencesForm.register("preferredHours", { valueAsNumber: true })}
-                  />
+                  <label className="text-sm font-medium text-gray-600">Gebruikersrol</label>
+                  <div className="text-lg font-medium text-gray-900 mt-1 capitalize">
+                    {user?.role || 'ambulancier'}
+                  </div>
                 </div>
 
-                <Button 
-                  type="submit"
-                  disabled={updatePreferencesMutation.isPending}
-                >
-                  Voorkeuren Opslaan
-                </Button>
-              </form>
-            </Form>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Info:</strong> Je werkuren worden beheerd door de administrator. 
+                    Neem contact op met het management als je wijzigingen nodig hebt.
+                  </p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
