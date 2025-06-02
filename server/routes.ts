@@ -1202,8 +1202,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const users = await storage.getAllUsers();
       const userMap = new Map(users.map(u => [u.id, u]));
       
-      // Create CSV header - using semicolon for European Excel compatibility
-      let csvContent = "Datum;Dag;Type;Start Tijd;Eind Tijd;Voornaam;Achternaam;Status\n";
+      // Create TSV header - using tabs for better Excel compatibility
+      let csvContent = "Datum\tDag\tType\tStart Tijd\tEind Tijd\tVoornaam\tAchternaam\tStatus\n";
       
       // Sort shifts by date
       const sortedShifts = shifts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -1222,8 +1222,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const type = shift.type === 'day' ? 'Dag' : 'Nacht';
         const status = shift.status === 'planned' ? 'Gepland' : 'Open';
         
-        // Escape any quotes in the data and separate columns properly
-        const escapedData = [
+        // Use tab separation for better Excel compatibility
+        const rowData = [
           dateStr,
           dayName,
           type,
@@ -1232,9 +1232,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName,
           lastName,
           status
-        ].map(field => `"${String(field).replace(/"/g, '""')}"`);
+        ];
         
-        csvContent += escapedData.join(';') + '\n';
+        csvContent += rowData.join('\t') + '\n';
       }
       
       // Set headers for CSV download
