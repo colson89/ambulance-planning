@@ -1059,6 +1059,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get admin contact information (accessible to all authenticated users)
+  app.get("/api/admins/contact", requireAuth, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      const admins = users.filter(user => user.role === 'admin');
+      
+      // Return only the contact information, not sensitive data
+      const adminContacts = admins.map(admin => ({
+        id: admin.id,
+        username: admin.username,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        role: admin.role
+      }));
+      
+      res.json(adminContacts);
+    } catch (error) {
+      console.error("Error fetching admin contacts:", error);
+      res.status(500).json({ message: "Kon administrator contactgegevens niet ophalen" });
+    }
+  });
+
   // Weekday configuration routes
   app.get("/api/weekday-configs", requireAdmin, async (req, res) => {
     try {

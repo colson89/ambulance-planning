@@ -6,11 +6,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Home } from "lucide-react";
 import { useLocation } from "wouter";
+import type { User } from "@shared/schema";
 
 const preferencesSchema = z.object({
   maxHours: z.number().min(0).max(168),
@@ -25,6 +26,54 @@ const passwordSchema = z.object({
   message: "Wachtwoorden komen niet overeen",
   path: ["confirmPassword"],
 });
+
+// Component to show admin contact information
+function AdminContactList() {
+  const { data: admins = [], isLoading } = useQuery<User[]>({
+    queryKey: ["/api/admins/contact"],
+    queryFn: async () => {
+      const res = await fetch('/api/admins/contact');
+      if (!res.ok) {
+        throw new Error('Kon administrator contactgegevens niet ophalen');
+      }
+      return res.json();
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <p className="text-xs text-blue-700">
+        Laden...
+      </p>
+    );
+  }
+
+  if (admins.length === 0) {
+    return (
+      <p className="text-xs text-blue-700">
+        Geen administrators gevonden.
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-xs font-medium text-blue-700 mb-1">Administrators:</p>
+      <ul className="text-xs text-blue-700 space-y-1">
+        {admins.map(admin => (
+          <li key={admin.id} className="flex items-center">
+            <span className="font-medium">
+              {admin.firstName} {admin.lastName}
+            </span>
+            <span className="text-blue-600 ml-1">
+              ({admin.username})
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export default function Profile() {
   const { user } = useAuth();
@@ -158,10 +207,11 @@ export default function Profile() {
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-sm text-blue-800">
-                    <strong>Info:</strong> Je werkuren worden beheerd door de administrator. 
-                    Neem contact op met het management als je wijzigingen nodig hebt.
+                  <p className="text-sm text-blue-800 mb-2">
+                    Je werkuren worden beheerd door de administrator. 
+                    Neem contact op met de administrator als je dit wilt veranderen.
                   </p>
+                  <AdminContactList />
                 </div>
               </div>
             )}
