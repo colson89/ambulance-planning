@@ -961,7 +961,7 @@ export default function ScheduleGenerator() {
                   disabled={!shifts || shifts.length === 0}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Export Excel
+                  Export Planning
                 </Button>
               </div>
             </div>
