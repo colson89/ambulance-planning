@@ -1237,9 +1237,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         csvContent += rowData.join('\t') + '\n';
       }
       
-      // Set headers for text file download that Excel can import
-      const filename = `planning_${targetMonth}_${targetYear}.txt`;
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      // Set headers for Excel file download
+      const filename = `planning_${targetMonth}_${targetYear}.xls`;
+      res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Content-Length', Buffer.byteLength(csvContent, 'utf8'));
       
