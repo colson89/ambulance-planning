@@ -1205,8 +1205,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create CSV header
       let csvContent = "Datum,Dag,Type,Start Tijd,Eind Tijd,Voornaam,Achternaam,Status\n";
       
+      // Sort shifts by date
+      const sortedShifts = shifts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
       // Add shifts to CSV
-      for (const shift of shifts) {
+      for (const shift of sortedShifts) {
         const user = userMap.get(shift.userId);
         const date = new Date(shift.date);
         const dayName = date.toLocaleDateString('nl-NL', { weekday: 'long' });
@@ -1219,7 +1222,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const type = shift.type === 'day' ? 'Dag' : 'Nacht';
         const status = shift.status === 'planned' ? 'Gepland' : 'Open';
         
-        csvContent += `"${dateStr}","${dayName}","${type}","${startTime}","${endTime}","${firstName}","${lastName}","${status}"\n`;
+        // Escape any quotes in the data and separate columns properly
+        const escapedData = [
+          dateStr,
+          dayName,
+          type,
+          startTime,
+          endTime,
+          firstName,
+          lastName,
+          status
+        ].map(field => `"${String(field).replace(/"/g, '""')}"`);
+        
+        csvContent += escapedData.join(',') + '\n';
       }
       
       // Set headers for CSV download
