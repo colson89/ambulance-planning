@@ -8,6 +8,7 @@ import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
 import { db } from "./db";
 import { and, gte, lte, asc, ne } from "drizzle-orm";
+import * as XLSX from 'xlsx';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -1183,7 +1184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Export planning to CSV
+  // Export planning to HTML (legacy)
   app.get("/api/schedule/export", requireAdmin, async (req, res) => {
     try {
       const { month, year } = req.query;
@@ -1277,6 +1278,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error exporting schedule:", error);
       res.status(500).json({ message: "Failed to export schedule" });
+    }
+  });
+
+  // Export planning to XLSX (modern Excel format)
+  app.get("/api/schedule/export-xlsx", requireAdmin, async (req, res) => {
+    try {
+      const { month, year } = req.query;
+      
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+      
+      const targetMonth = parseInt(month as string);
+      const targetYear = parseInt(year as string);
+      
+      // Get shifts for the month
+      const shifts = await storage.getShiftsByMonth(targetMonth, targetYear);
+      
+      // Get all users to map names
+      const users = await storage.getAllUsers();
+      const userMap = new Map(users.map(u => [u.id, u]));
+      
+      // Sort shifts by date
+      const sortedShifts = shifts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+      // Prepare data for Excel
+      const excelData = [
+        // Header row
+        ['Datum', 'Dag', 'Type', 'Start Tijd', 'Eind Tijd', 'Voornaam', 'Achternaam', 'Status']
+      ];
+      
+      // Add data rows
+      for (const shift of sortedShifts) {
+        const user = userMap.get(shift.userId);
+        const date = new Date(shift.date);
+        const dayName = date.toLocaleDateString('nl-NL', { weekday: 'long' });
+        const dateStr = date.toLocaleDateString('nl-NL');
+        const startTime = new Date(shift.startTime).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+        const endTime = new Date(shift.endTime).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+        
+        const firstName = user ? user.firstName : 'Open';
+        const lastName = user ? user.lastName : 'Shift';
+        const type = shift.type === 'day' ? 'Dag' : 'Nacht';
+        const status = shift.status === 'planned' ? 'Gepland' : 'Open';
+        
+        excelData.push([
+          dateStr,
+          dayName,
+          type,
+          startTime,
+          endTime,
+          firstName,
+          lastName,
+          status
+        ]);
+      }
+      
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.aoa_to_sheet(excelData);
+      
+      // Set column widths
+      const colWidths = [
+        { wch: 12 }, // Datum
+        { wch: 12 }, // Dag
+        { wch: 8 },  // Type
+        { wch: 12 }, // Start Tijd
+        { wch: 12 }, // Eind Tijd
+        { wch: 15 }, // Voornaam
+        { wch: 15 }, // Achternaam
+        { wch: 10 }  // Status
+      ];
+      worksheet['!cols'] = colWidths;
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Planning');
+      
+      // Generate XLSX buffer
+      const xlsxBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      
+      // Set headers for XLSX download
+      const filename = `planning_${targetMonth}_${targetYear}.xlsx`;
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', xlsxBuffer.length);
+      
+      res.end(xlsxBuffer);
+      
+    } catch (error) {
+      console.error("Error exporting XLSX schedule:", error);
+      res.status(500).json({ message: "Failed to export XLSX schedule" });
     }
   });
 

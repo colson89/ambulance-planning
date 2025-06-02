@@ -962,7 +962,20 @@ export default function ScheduleGenerator() {
                   disabled={!shifts || shifts.length === 0}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Export Planning
+                  Export Excel (XLS)
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const timestamp = Date.now();
+                    const url = `/api/schedule/export-xlsx?month=${selectedMonth + 1}&year=${selectedYear}&t=${timestamp}`;
+                    window.location.href = url;
+                  }}
+                  disabled={!shifts || shifts.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Excel (XLSX)
                 </Button>
               </div>
             </div>
