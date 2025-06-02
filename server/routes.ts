@@ -1202,13 +1202,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const users = await storage.getAllUsers();
       const userMap = new Map(users.map(u => [u.id, u]));
       
-      // Create TSV header - using tabs for better Excel compatibility
-      let csvContent = "Datum\tDag\tType\tStart Tijd\tEind Tijd\tVoornaam\tAchternaam\tStatus\n";
+      // Create HTML table for better Excel compatibility
+      let htmlContent = `
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <table>
+            <tr>
+              <th>Datum</th>
+              <th>Dag</th>
+              <th>Type</th>
+              <th>Start Tijd</th>
+              <th>Eind Tijd</th>
+              <th>Voornaam</th>
+              <th>Achternaam</th>
+              <th>Status</th>
+            </tr>
+      `;
       
       // Sort shifts by date
       const sortedShifts = shifts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       
-      // Add shifts to CSV
+      // Add shifts to HTML table
       for (const shift of sortedShifts) {
         const user = userMap.get(shift.userId);
         const date = new Date(shift.date);
@@ -1222,30 +1244,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const type = shift.type === 'day' ? 'Dag' : 'Nacht';
         const status = shift.status === 'planned' ? 'Gepland' : 'Open';
         
-        // Use tab separation for better Excel compatibility
-        const rowData = [
-          dateStr,
-          dayName,
-          type,
-          startTime,
-          endTime,
-          firstName,
-          lastName,
-          status
-        ];
-        
-        csvContent += rowData.join('\t') + '\n';
+        htmlContent += `
+            <tr>
+              <td>${dateStr}</td>
+              <td>${dayName}</td>
+              <td>${type}</td>
+              <td>${startTime}</td>
+              <td>${endTime}</td>
+              <td>${firstName}</td>
+              <td>${lastName}</td>
+              <td>${status}</td>
+            </tr>
+        `;
       }
+      
+      htmlContent += `
+          </table>
+        </body>
+        </html>
+      `;
       
       // Set headers for Excel file download
       const filename = `planning_${targetMonth}_${targetYear}.xls`;
       res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Content-Length', Buffer.byteLength(csvContent, 'utf8'));
+      res.setHeader('Content-Length', Buffer.byteLength(htmlContent, 'utf8'));
       
       // Add BOM for proper UTF-8 handling in Excel
       res.write('\uFEFF');
-      res.end(csvContent);
+      res.end(htmlContent);
       
     } catch (error) {
       console.error("Error exporting schedule:", error);
