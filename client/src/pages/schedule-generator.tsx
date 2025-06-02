@@ -955,8 +955,9 @@ export default function ScheduleGenerator() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const url = `/api/schedule/export?month=${selectedMonth + 1}&year=${selectedYear}`;
-                    window.open(url, '_blank');
+                    const timestamp = Date.now();
+                    const url = `/api/schedule/export?month=${selectedMonth + 1}&year=${selectedYear}&t=${timestamp}`;
+                    window.location.href = url;
                   }}
                   disabled={!shifts || shifts.length === 0}
                 >
