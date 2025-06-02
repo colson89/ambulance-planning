@@ -63,11 +63,11 @@ export default function ScheduleGenerator() {
   const [generateProgressMessage, setGenerateProgressMessage] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   
-  // Query om de laatste tijdstempel voor gegenereerde testvoorkeuren op te halen
+  // Query om de laatste tijdstempel voor gegenereerde testvoorkeuren op te halen (per maand)
   const { data: lastGeneratedTimestamp, isLoading: isLoadingTimestamp } = useQuery({
-    queryKey: ["/api/system/settings/last-preferences-generated"],
+    queryKey: ["/api/system/settings/last-preferences-generated", selectedMonth + 1, selectedYear],
     queryFn: async () => {
-      const res = await fetch('/api/system/settings/last-preferences-generated');
+      const res = await fetch(`/api/system/settings/last-preferences-generated?month=${selectedMonth + 1}&year=${selectedYear}`);
       if (!res.ok) {
         console.error("Error fetching last generated timestamp");
         return null;
@@ -720,8 +720,8 @@ export default function ScheduleGenerator() {
                       // Stop polling
                       if (pollInterval) clearInterval(pollInterval);
                       
-                      // Vernieuw ook de tijdstempel
-                      queryClient.invalidateQueries({ queryKey: ["/api/system/settings/last-preferences-generated"] });
+                      // Vernieuw ook de tijdstempel voor de huidige maand
+                      queryClient.invalidateQueries({ queryKey: ["/api/system/settings/last-preferences-generated", selectedMonth + 1, selectedYear] });
                     } catch (error) {
                       // Stop polling bij fout
                       if (pollInterval) clearInterval(pollInterval);

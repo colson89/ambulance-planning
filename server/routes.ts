@@ -415,10 +415,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       currentProgress.message = "Voorkeuren generatie voltooid!";
       console.log(`[100%] Voorkeuren generatie voltooid!`);
       
-      // Sla de huidige tijd op als tijdstempel voor de laatste generatie
+      // Sla de huidige tijd op als tijdstempel per maand voor de laatste generatie
       const now = new Date();
       const timestamp = now.toISOString();
-      await storage.setSystemSetting('last_preferences_generated', timestamp);
+      const key = `last_preferences_generated_${month}_${year}`;
+      await storage.setSystemSetting(key, timestamp);
       
       // Release the lock and reset progress
       isGeneratingPreferences = false;
@@ -976,10 +977,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Note: De bulk-import endpoint voor ambulanciers is verwijderd omdat deze niet meer nodig is
   // De ambulanciers zijn al direct toegevoegd via SQL
 
-  // Haal de laatste tijdstempel op voor het genereren van testvoorkeuren
+  // Haal de laatste tijdstempel op voor het genereren van testvoorkeuren (per maand)
   app.get("/api/system/settings/last-preferences-generated", requireAuth, async (req, res) => {
     try {
-      const timestamp = await storage.getSystemSetting('last_preferences_generated');
+      const { month, year } = req.query;
+      const targetMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
+      const targetYear = year ? parseInt(year as string) : new Date().getFullYear();
+      
+      const key = `last_preferences_generated_${targetMonth}_${targetYear}`;
+      const timestamp = await storage.getSystemSetting(key);
       
       if (timestamp) {
         // Correcte timezone-aware formattering met expliciete opties
