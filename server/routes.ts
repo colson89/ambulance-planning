@@ -1183,6 +1183,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export planning to CSV
+  app.get("/api/schedule/export", requireAdmin, async (req, res) => {
+    try {
+      const { month, year } = req.query;
+      
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+      
+      const targetMonth = parseInt(month as string);
+      const targetYear = parseInt(year as string);
+      
+      // Get shifts for the month
+      const shifts = await storage.getShiftsByMonth(targetMonth, targetYear);
+      
+      // Get all users to map names
+      const users = await storage.getAllUsers();
+      const userMap = new Map(users.map(u => [u.id, u]));
+      
+      // Create CSV header
+      let csvContent = "Datum,Dag,Type,Start Tijd,Eind Tijd,Voornaam,Achternaam,Status\n";
+      
+      // Add shifts to CSV
+      for (const shift of shifts) {
+        const user = userMap.get(shift.userId);
+        const date = new Date(shift.date);
+        const dayName = date.toLocaleDateString('nl-NL', { weekday: 'long' });
+        const dateStr = date.toLocaleDateString('nl-NL');
+        const startTime = new Date(shift.startTime).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+        const endTime = new Date(shift.endTime).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+        
+        const firstName = user ? user.firstName : 'Open';
+        const lastName = user ? user.lastName : 'Shift';
+        const type = shift.type === 'day' ? 'Dag' : 'Nacht';
+        const status = shift.status === 'planned' ? 'Gepland' : 'Open';
+        
+        csvContent += `"${dateStr}","${dayName}","${type}","${startTime}","${endTime}","${firstName}","${lastName}","${status}"\n`;
+      }
+      
+      // Set headers for CSV download
+      const filename = `planning_${targetMonth}_${targetYear}.csv`;
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', Buffer.byteLength(csvContent, 'utf8'));
+      
+      // Add BOM for proper UTF-8 handling in Excel
+      res.write('\uFEFF');
+      res.end(csvContent);
+      
+    } catch (error) {
+      console.error("Error exporting schedule:", error);
+      res.status(500).json({ message: "Failed to export schedule" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
