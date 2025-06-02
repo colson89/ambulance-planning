@@ -1,11 +1,11 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3 } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Shift, ShiftPreference, User } from "@shared/schema";
+import type { Shift, ShiftPreference, User as UserType } from "@shared/schema";
 import { useLocation } from "wouter";
 import { format, addMonths, parse, setMonth, setYear, getMonth, getYear, isEqual, parseISO, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -38,7 +38,7 @@ export default function Dashboard() {
     queryKey: ["/api/shifts"],
   });
   
-  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
+  const { data: users = [], isLoading: usersLoading } = useQuery<UserType[]>({
     queryKey: ["/api/users"],
   });
   
@@ -275,6 +275,13 @@ export default function Dashboard() {
             </>
           )}
           {/* Shift Planner knop verwijderd, alleen "Voorkeuren Opgeven" behouden */}
+          <Button 
+            variant="outline"
+            onClick={() => setLocation("/profile")}
+          >
+            <UserIcon className="h-4 w-4 mr-2" />
+            Profiel
+          </Button>
           <Button 
             variant="outline" 
             onClick={() => logoutMutation.mutate()}
