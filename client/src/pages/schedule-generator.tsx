@@ -75,6 +75,19 @@ export default function ScheduleGenerator() {
       return res.json();
     }
   });
+
+  // Query om de laatste tijdstempel voor planning generatie op te halen (per maand)
+  const { data: lastScheduleTimestamp, isLoading: isLoadingScheduleTimestamp } = useQuery({
+    queryKey: ["/api/system/settings/last-schedule-generated", selectedMonth + 1, selectedYear],
+    queryFn: async () => {
+      const res = await fetch(`/api/system/settings/last-schedule-generated?month=${selectedMonth + 1}&year=${selectedYear}`);
+      if (!res.ok) {
+        console.error("Error fetching last schedule timestamp");
+        return null;
+      }
+      return res.json();
+    }
+  });
   // Mutatie om alle shift tijden te corrigeren
   const fixShiftTimesMutation = useMutation({
     mutationFn: async () => {
@@ -171,6 +184,8 @@ export default function ScheduleGenerator() {
         description: "Planning gegenereerd voor " + format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl }),
       });
       refetchShifts();
+      // Vernieuw ook de planning timestamp voor de huidige maand
+      queryClient.invalidateQueries({ queryKey: ["/api/system/settings/last-schedule-generated", selectedMonth + 1, selectedYear] });
     },
     onError: (error: Error) => {
       toast({
@@ -842,9 +857,17 @@ export default function ScheduleGenerator() {
               )}
 
               <div className="flex justify-between items-center mt-6">
-                <span className="text-sm text-gray-500">
-                  Planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-sm text-gray-500">
+                    Planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+                  </span>
+                  {lastScheduleTimestamp && (
+                    <div className="flex items-center text-xs text-gray-500 mt-1">
+                      <Clock className="h-3 w-3 mr-1" />
+                      <span>Laatst gegenereerd: {lastScheduleTimestamp.formattedTimestamp}</span>
+                    </div>
+                  )}
+                </div>
                 <Button
                   onClick={() => {
                     setIsGeneratingSchedule(true);

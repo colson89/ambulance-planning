@@ -669,6 +669,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       generateProgress = { percentage: 100, message: "Planning voltooid!", isActive: false };
       console.log(`[100%] Planning generatie voltooid voor ${month}/${year}`);
       
+      // Sla de huidige tijd op als tijdstempel per maand voor de laatste planning generatie
+      const now = new Date();
+      const timestamp = now.toISOString();
+      const key = `last_schedule_generated_${month}_${year}`;
+      await storage.setSystemSetting(key, timestamp);
+      
       // Log gebruikers uren voor verificatie
       console.log("Gebruikers uren na planning generatie:");
       const users = await storage.getAllUsers();
@@ -1011,6 +1017,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Error fetching last preferences generation timestamp:", error);
+      res.status(500).json({ message: "Kon tijdstempel niet ophalen" });
+    }
+  });
+
+  // Haal de laatste tijdstempel op voor het genereren van planning (per maand)
+  app.get("/api/system/settings/last-schedule-generated", requireAuth, async (req, res) => {
+    try {
+      const { month, year } = req.query;
+      const targetMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
+      const targetYear = year ? parseInt(year as string) : new Date().getFullYear();
+      
+      const key = `last_schedule_generated_${targetMonth}_${targetYear}`;
+      const timestamp = await storage.getSystemSetting(key);
+      
+      if (timestamp) {
+        // Correcte timezone-aware formattering met expliciete opties
+        const date = new Date(timestamp);
+        res.json({
+          timestamp,
+          formattedTimestamp: date.toLocaleString('nl-NL', { 
+            timeZone: 'Europe/Brussels',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false 
+          })
+        });
+      } else {
+        res.json({
+          timestamp: null,
+          formattedTimestamp: "Nog niet gegenereerd"
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching last schedule generation timestamp:", error);
       res.status(500).json({ message: "Kon tijdstempel niet ophalen" });
     }
   });
