@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Form } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -175,35 +175,53 @@ export default function Profile() {
           <CardContent>
             <Form {...passwordForm}>
               <form onSubmit={passwordForm.handleSubmit((data) => updatePasswordMutation.mutate(data))} className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Huidig Wachtwoord</label>
-                  <Input
-                    type="password"
-                    {...passwordForm.register("currentPassword")}
-                  />
-                </div>
+                <FormField
+                  control={passwordForm.control}
+                  name="currentPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Huidig Wachtwoord</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                <div>
-                  <label className="text-sm font-medium">Nieuw Wachtwoord</label>
-                  <Input
-                    type="password"
-                    {...passwordForm.register("newPassword")}
-                  />
-                </div>
+                <FormField
+                  control={passwordForm.control}
+                  name="newPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nieuw Wachtwoord</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                <div>
-                  <label className="text-sm font-medium">Bevestig Nieuw Wachtwoord</label>
-                  <Input
-                    type="password"
-                    {...passwordForm.register("confirmPassword")}
-                  />
-                </div>
+                <FormField
+                  control={passwordForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bevestig Nieuw Wachtwoord</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <Button 
                   type="submit"
                   disabled={updatePasswordMutation.isPending}
                 >
-                  Wachtwoord Wijzigen
+                  {updatePasswordMutation.isPending ? "Wijzigen..." : "Wachtwoord Wijzigen"}
                 </Button>
               </form>
             </Form>
