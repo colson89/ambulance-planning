@@ -1159,6 +1159,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return {
           userId: user.id,
           username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
           // Preferences
           dayShiftWeek: prefStats.dayWeek,
           nightShiftWeek: prefStats.nightWeek,

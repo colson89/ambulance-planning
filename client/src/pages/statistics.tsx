@@ -20,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 type ShiftStatistics = {
   userId: number;
   username: string;
+  firstName: string;
+  lastName: string;
   // Preferences
   dayShiftWeek: number;
   nightShiftWeek: number;
@@ -353,7 +355,12 @@ export default function Statistics() {
                   .sort((a, b) => b.totalActualShifts - a.totalActualShifts)
                   .map((user) => (
                     <TableRow key={user.userId}>
-                      <TableCell className="font-medium">{user.username}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col">
+                          <span className="text-sm">{user.firstName}</span>
+                          <span className="text-sm text-muted-foreground">{user.lastName}</span>
+                        </div>
+                      </TableCell>
                       {/* Voorkeuren */}
                       <TableCell className="text-center">
                         <Badge variant="outline" className="text-blue-700 border-blue-300">
