@@ -505,22 +505,6 @@ export class DatabaseStorage implements IStorage {
             const savedOpenShift1 = await this.createShift(openShift1);
             generatedShifts.push(savedOpenShift1);
           }
-        } else {
-          // Geen beschikbare gebruikers
-          const openShift1 = {
-            userId: 0,
-            date: currentDate,
-            type: "night" as const,
-            startTime: new Date(year, month - 1, day, 19, 0, 0),
-            endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-            status: "open" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
-          
-          const savedOpenShift1 = await this.createShift(openShift1);
-          generatedShifts.push(savedOpenShift1);
         }
         
         // Tweede medewerker (niet dezelfde als de eerste)
@@ -554,22 +538,6 @@ export class DatabaseStorage implements IStorage {
             
             const savedShift2 = await this.createShift(nightShift2);
             generatedShifts.push(savedShift2);
-          } else {
-            // Geen geschikte medewerker gevonden
-            const openShift2 = {
-              userId: 0,
-              date: currentDate,
-              type: "night" as const,
-              startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedOpenShift2 = await this.createShift(openShift2);
-            generatedShifts.push(savedOpenShift2);
           }
         } else {
           // Probeer halve shifts toe te wijzen als er geen volledige shifts mogelijk zijn
@@ -719,39 +687,7 @@ export class DatabaseStorage implements IStorage {
             
             const savedDayShift1 = await this.createShift(dayShift1);
             generatedShifts.push(savedDayShift1);
-          } else {
-            // Geen geschikte medewerker gevonden
-            const openDayShift1 = {
-              userId: 0,
-              date: currentDate,
-              type: "day" as const,
-              startTime: new Date(year, month - 1, day, 7, 0, 0),
-              endTime: new Date(year, month - 1, day, 19, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedOpenDayShift1 = await this.createShift(openDayShift1);
-            generatedShifts.push(savedOpenDayShift1);
           }
-        } else {
-          // Geen beschikbare gebruikers
-          const openDayShift1 = {
-            userId: 0,
-            date: currentDate,
-            type: "day" as const,
-            startTime: new Date(year, month - 1, day, 7, 0, 0),
-            endTime: new Date(year, month - 1, day, 19, 0, 0),
-            status: "open" as const,
-            month,
-            year,
-            isSplitShift: false
-          };
-          
-          const savedOpenDayShift1 = await this.createShift(openDayShift1);
-          generatedShifts.push(savedOpenDayShift1);
         }
         
         // Tweede medewerker dag
@@ -784,22 +720,6 @@ export class DatabaseStorage implements IStorage {
             
             const savedDayShift2 = await this.createShift(dayShift2);
             generatedShifts.push(savedDayShift2);
-          } else {
-            // Geen geschikte medewerker gevonden
-            const openDayShift2 = {
-              userId: 0,
-              date: currentDate,
-              type: "day" as const,
-              startTime: new Date(year, month - 1, day, 7, 0, 0),
-              endTime: new Date(year, month - 1, day, 19, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedOpenDayShift2 = await this.createShift(openDayShift2);
-            generatedShifts.push(savedOpenDayShift2);
           }
         } else {
           // Probeer halve shifts toe te wijzen als er geen volledige shifts mogelijk zijn
@@ -1088,43 +1008,7 @@ export class DatabaseStorage implements IStorage {
           }
         }
 
-        // Maak open shifts voor niet-ingevulde posities
-        const totalNightShiftsNeeded = 4; // 2 mensen x 2 shifts per persoon
-        const actualShiftsCreated = generatedShifts.filter(s => 
-          s.date.toDateString() === currentDate.toDateString() && 
-          s.type === 'night' && 
-          s.status === 'planned'
-        ).length;
 
-        // Maak open shifts aan voor alle nog niet ingevulde posities
-        const neededOpenShifts = Math.max(0, 4 - actualShiftsCreated);
-        for (let i = 0; i < neededOpenShifts; i++) {
-          const isFirstHalf = i % 2 === 0;
-          const openShift = {
-            userId: 0,
-            date: currentDate,
-            type: "night" as const,
-            startTime: isFirstHalf 
-              ? new Date(year, month - 1, day, 19, 0, 0)
-              : new Date(year, month - 1, day, 23, 0, 0),
-            endTime: isFirstHalf 
-              ? new Date(year, month - 1, day, 23, 0, 0)
-              : new Date(year, month - 1, day + 1, 7, 0, 0),
-            status: "open" as const,
-            month,
-            year,
-            isSplitShift: true,
-            splitStartTime: isFirstHalf 
-              ? new Date(year, month - 1, day, 19, 0, 0)
-              : new Date(year, month - 1, day, 23, 0, 0),
-            splitEndTime: isFirstHalf 
-              ? new Date(year, month - 1, day, 23, 0, 0)
-              : new Date(year, month - 1, day + 1, 7, 0, 0)
-          };
-          
-          const savedOpenShift = await this.createShift(openShift);
-          generatedShifts.push(savedOpenShift);
-        }
       }
     };
 
