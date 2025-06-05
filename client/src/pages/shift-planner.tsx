@@ -236,22 +236,26 @@ export default function ShiftPlanner() {
                 onMonthChange={setSelectedMonth}
                 disabled={(date) => date.getMonth() !== selectedMonth.getMonth()}
                 modifiers={{
-                  // Eenvoudige aanpak: groen voor elke dag waar voorkeuren zijn ingesteld
-                  available: (date) => {
-                    // Voorkeuren ophalen voor deze datum
+                  // Groen voor dagen waar voorkeuren zijn opgegeven (niet unavailable)
+                  hasPreference: (date) => {
                     const prefs = getDayPreferences(date);
-                    // Dag is beschikbaar als er minstens één voorkeur is die niet 'unavailable' is
-                    return prefs.some(p => p.type !== "unavailable");
+                    return prefs.length > 0 && prefs.some(p => p.type !== "unavailable");
                   },
-                  // Rood alleen voor expliciet onbeschikbare dagen
+                  // Rood voor expliciet onbeschikbare dagen
                   unavailable: (date) => {
                     const prefs = getDayPreferences(date);
-                    return prefs.some(p => p.type === "unavailable");
+                    return prefs.length > 0 && prefs.every(p => p.type === "unavailable");
+                  },
+                  // Geen kleur (wit) voor dagen zonder voorkeuren
+                  noPreference: (date) => {
+                    const prefs = getDayPreferences(date);
+                    return prefs.length === 0;
                   }
                 }}
                 modifiersClassNames={{
-                  available: "!bg-green-100 hover:!bg-green-200",
-                  unavailable: "!bg-red-100 hover:!bg-red-200"
+                  hasPreference: "!bg-green-100 hover:!bg-green-200",
+                  unavailable: "!bg-red-100 hover:!bg-red-200",
+                  noPreference: "!bg-white hover:!bg-gray-50"
                 }}
                 className="rounded-md border"
                 locale={nl}
