@@ -353,7 +353,7 @@ export default function ShiftPlanner() {
                           type="radio"
                           name="dayShift"
                           value="first"
-                          checked={getPreferenceForDate(selectedDate, "day") === "first"}
+                          checked={currentDaySelection === "first"}
                           onChange={(e) => handleTypeChange(e, selectedDate, "day")}
                         />
                         <span>Eerste deel (7:00-13:00)</span>
@@ -363,7 +363,7 @@ export default function ShiftPlanner() {
                           type="radio"
                           name="dayShift"
                           value="second"
-                          checked={getPreferenceForDate(selectedDate, "day") === "second"}
+                          checked={currentDaySelection === "second"}
                           onChange={(e) => handleTypeChange(e, selectedDate, "day")}
                         />
                         <span>Tweede deel (13:00-19:00)</span>
@@ -373,7 +373,7 @@ export default function ShiftPlanner() {
                           type="radio"
                           name="dayShift"
                           value="unavailable"
-                          checked={getPreferenceForDate(selectedDate, "day") === "unavailable"}
+                          checked={currentDaySelection === "unavailable"}
                           onChange={(e) => handleTypeChange(e, selectedDate, "day")}
                         />
                         <span>Niet beschikbaar</span>
@@ -404,7 +404,7 @@ export default function ShiftPlanner() {
                         type="radio"
                         name="nightShift"
                         value="full"
-                        checked={getPreferenceForDate(selectedDate, "night") === "full"}
+                        checked={currentNightSelection === "full"}
                         onChange={(e) => handleTypeChange(e, selectedDate, "night")}
                       />
                       <span>Volledige shift (19:00-7:00)</span>
@@ -414,7 +414,7 @@ export default function ShiftPlanner() {
                         type="radio"
                         name="nightShift"
                         value="first"
-                        checked={getPreferenceForDate(selectedDate, "night") === "first"}
+                        checked={currentNightSelection === "first"}
                         onChange={(e) => handleTypeChange(e, selectedDate, "night")}
                       />
                       <span>Eerste deel (19:00-23:00)</span>
@@ -424,7 +424,7 @@ export default function ShiftPlanner() {
                         type="radio"
                         name="nightShift"
                         value="second"
-                        checked={getPreferenceForDate(selectedDate, "night") === "second"}
+                        checked={currentNightSelection === "second"}
                         onChange={(e) => handleTypeChange(e, selectedDate, "night")}
                       />
                       <span>Tweede deel (23:00-7:00)</span>
@@ -434,7 +434,7 @@ export default function ShiftPlanner() {
                         type="radio"
                         name="nightShift"
                         value="unavailable"
-                        checked={getPreferenceForDate(selectedDate, "night") === "unavailable"}
+                        checked={currentNightSelection === "unavailable"}
                         onChange={(e) => handleTypeChange(e, selectedDate, "night")}
                       />
                       <span>Niet beschikbaar</span>
