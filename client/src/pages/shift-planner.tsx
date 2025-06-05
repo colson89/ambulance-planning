@@ -109,7 +109,6 @@ export default function ShiftPlanner() {
 
   const handleSubmit = async (event: React.FormEvent, shiftType: ShiftType) => {
     event.preventDefault();
-    console.log("Form submit", { selectedDate, shiftType, preferenceType: selectedDate ? getPreferenceForDate(selectedDate, shiftType) : null });
 
     if (!selectedDate) {
       toast({
@@ -120,8 +119,22 @@ export default function ShiftPlanner() {
       return;
     }
 
+    // Haal de geselecteerde waarde uit de form data
+    const formData = new FormData(event.target as HTMLFormElement);
+    const preferenceType = formData.get(shiftType === "day" ? "dayShift" : "nightShift") as PreferenceType;
+    
+    console.log("Form submit", { selectedDate, shiftType, preferenceType });
+
+    if (!preferenceType) {
+      toast({
+        title: "Fout",
+        description: "Selecteer een voorkeur",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const preferenceType = getPreferenceForDate(selectedDate, shiftType);
       let startTimeHour = 7;  // Default voor dagshift
       let endTimeHour = 19; // Default voor dagshift
       let endDateOffset = 0; // Default voor dagshift
