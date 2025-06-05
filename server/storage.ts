@@ -1,6 +1,6 @@
-import { users, shifts, shiftPreferences, systemSettings, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference } from "@shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, lt, gte, lte, ne } from "drizzle-orm";
+import { eq, and, lt, gte, lte, ne, asc } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -42,6 +42,12 @@ export interface IStorage {
   // Systeeminstellingen
   getSystemSetting(key: string): Promise<string | null>;
   setSystemSetting(key: string, value: string): Promise<void>;
+  
+  // Weekdag configuraties
+  getWeekdayConfigs(): Promise<WeekdayConfig[]>;
+  getWeekdayConfig(dayOfWeek: number): Promise<WeekdayConfig | null>;
+  updateWeekdayConfig(dayOfWeek: number, config: Partial<WeekdayConfig>): Promise<WeekdayConfig>;
+  initializeDefaultWeekdayConfigs(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1196,6 +1202,46 @@ export class DatabaseStorage implements IStorage {
         value,
         updatedAt: new Date()
       });
+    }
+  }
+
+  async getWeekdayConfigs(): Promise<WeekdayConfig[]> {
+    return await db.select().from(weekdayConfigs).orderBy(asc(weekdayConfigs.dayOfWeek));
+  }
+
+  async getWeekdayConfig(dayOfWeek: number): Promise<WeekdayConfig | null> {
+    const [config] = await db.select()
+      .from(weekdayConfigs)
+      .where(eq(weekdayConfigs.dayOfWeek, dayOfWeek));
+    return config || null;
+  }
+
+  async updateWeekdayConfig(dayOfWeek: number, configData: Partial<WeekdayConfig>): Promise<WeekdayConfig> {
+    const [config] = await db.update(weekdayConfigs)
+      .set({ ...configData, updatedAt: new Date() })
+      .where(eq(weekdayConfigs.dayOfWeek, dayOfWeek))
+      .returning();
+    return config;
+  }
+
+  async initializeDefaultWeekdayConfigs(): Promise<void> {
+    // Check if configs already exist
+    const existingConfigs = await this.getWeekdayConfigs();
+    if (existingConfigs.length > 0) return;
+
+    // Default configuration: weekends have day+night shifts, weekdays only night shifts
+    const defaultConfigs = [
+      { dayOfWeek: 0, enableDayShifts: true, enableNightShifts: true, dayShiftCount: 2, nightShiftCount: 2 },   // Sunday
+      { dayOfWeek: 1, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Monday
+      { dayOfWeek: 2, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Tuesday
+      { dayOfWeek: 3, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Wednesday
+      { dayOfWeek: 4, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Thursday
+      { dayOfWeek: 5, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Friday
+      { dayOfWeek: 6, enableDayShifts: true, enableNightShifts: true, dayShiftCount: 2, nightShiftCount: 2 },   // Saturday
+    ];
+
+    for (const config of defaultConfigs) {
+      await db.insert(weekdayConfigs).values(config);
     }
   }
 }
