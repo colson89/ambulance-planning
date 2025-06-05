@@ -1,6 +1,6 @@
 import { users, shifts, shiftPreferences, systemSettings, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, lt, gte } from "drizzle-orm";
+import { eq, and, lt, gte, lte, ne } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -269,6 +269,36 @@ export class DatabaseStorage implements IStorage {
       return 0.1;
     };
     
+    // Functie voor weekend shiften - prioriteert eerlijke verdeling gebaseerd op jaarlijkse geschiedenis
+    const getSortedUsersForWeekendAssignment = async (availableUserIds: number[]): Promise<number[]> => {
+      const filteredUsers = availableUserIds.filter(userId => {
+        const user = activeUsers.find(u => u.id === userId);
+        if (!user) return false;
+        if (user.hours === 0) return false;
+        const currentHours = userAssignedHours.get(userId) || 0;
+        return currentHours < user.hours;
+      });
+
+      const usersWithHistory = await Promise.all(
+        filteredUsers.map(async (userId) => ({
+          userId,
+          weekendShifts: await getWeekendShiftHistory(userId),
+          currentHours: userAssignedHours.get(userId) || 0
+        }))
+      );
+
+      return usersWithHistory
+        .sort((a, b) => {
+          // Eerste prioriteit: minder weekend shiften in geschiedenis (jaarbasis)
+          if (a.weekendShifts !== b.weekendShifts) {
+            return a.weekendShifts - b.weekendShifts;
+          }
+          // Tweede prioriteit: minder uren toegewezen deze maand
+          return a.currentHours - b.currentHours;
+        })
+        .map(user => user.userId);
+    };
+
     // Functie om actieve gebruikers te sorteren op basis van werklast en voorkeuren
     const getSortedUsersForAssignment = (availableUserIds: number[]): number[] => {
       // Eerst filteren op gebruikers die nog uren kunnen werken
@@ -326,10 +356,40 @@ export class DatabaseStorage implements IStorage {
       ];
     };
     
-    // Voor elke dag in de maand (1-31)
+    // Verzamel alle dagen en splits ze op in weekends en weekdagen
+    const allDays: Array<{day: number, date: Date, isWeekend: boolean}> = [];
+    const weekendDays: Array<{day: number, date: Date, isWeekend: boolean}> = [];
+    const weekDays: Array<{day: number, date: Date, isWeekend: boolean}> = [];
+
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(year, month - 1, day);
       const isWeekendDay = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+      
+      const dayInfo = { day, date: currentDate, isWeekend: isWeekendDay };
+      allDays.push(dayInfo);
+      
+      if (isWeekendDay) {
+        weekendDays.push(dayInfo);
+      } else {
+        weekDays.push(dayInfo);
+      }
+    }
+
+    console.log(`Planning ${weekendDays.length} weekend dagen eerst, daarna ${weekDays.length} weekdagen`);
+
+    // FASE 1: Plan alle weekend shiften eerst (voor eerlijke verdeling)
+    for (const dayInfo of weekendDays) {
+      await planDayShifts(dayInfo, true);
+    }
+
+    // FASE 2: Plan weekdag shiften
+    for (const dayInfo of weekDays) {
+      await planDayShifts(dayInfo, false);
+    }
+
+    // Helper functie om shifts voor een specifieke dag te plannen
+    const planDayShifts = async (dayInfo: {day: number, date: Date, isWeekend: boolean}, isWeekend: boolean): Promise<void> => {
+      const { day, date: currentDate } = dayInfo;
       
       // Verzamel beschikbare gebruikers voor deze specifieke dag
       const availableForDay: number[] = [];
@@ -344,7 +404,7 @@ export class DatabaseStorage implements IStorage {
         const preferences = await this.getUserShiftPreferences(user.id, month, year);
         
         // Voorkeuren filteren voor deze specifieke dag
-        const prefsForThisDay = preferences.filter(pref => {
+        const prefsForThisDay = preferences.filter((pref: any) => {
           const prefDate = new Date(pref.date);
           return prefDate.getDate() === day && 
                  prefDate.getMonth() === (month - 1) && 
@@ -381,10 +441,15 @@ export class DatabaseStorage implements IStorage {
         }
       }
       
-      console.log(`Day ${day}: ${availableForDay.length} available for day, ${availableForNight.length} available for night`);
+      console.log(`Day ${day} (${isWeekend ? 'weekend' : 'weekdag'}): ${availableForDay.length} available for day, ${availableForNight.length} available for night`);
+      
+      // Voor weekends: gebruik eerlijke verdeling, voor weekdagen: normale verdeling
+      const sortedNightUsers = isWeekend 
+        ? await getSortedUsersForWeekendAssignment(availableForNight)
+        : getSortedUsersForAssignment(availableForNight);
       
       // Weekdagen: alleen nachtshifts plannen (2 personen per shift)
-      if (!isWeekendDay) {
+      if (!isWeekend) {
         // Maximaal 2 personen toewijzen voor de nachtshift
         const assignedIds: number[] = [];
         
