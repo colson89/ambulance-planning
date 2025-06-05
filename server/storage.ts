@@ -377,16 +377,6 @@ export class DatabaseStorage implements IStorage {
 
     console.log(`Planning ${weekendDays.length} weekend dagen eerst, daarna ${weekDays.length} weekdagen`);
 
-    // FASE 1: Plan alle weekend shiften eerst (voor eerlijke verdeling)
-    for (const dayInfo of weekendDays) {
-      await planDayShifts(dayInfo, true);
-    }
-
-    // FASE 2: Plan weekdag shiften
-    for (const dayInfo of weekDays) {
-      await planDayShifts(dayInfo, false);
-    }
-
     // Helper functie om shifts voor een specifieke dag te plannen
     const planDayShifts = async (dayInfo: {day: number, date: Date, isWeekend: boolean}, isWeekend: boolean): Promise<void> => {
       const { day, date: currentDate } = dayInfo;
@@ -1127,6 +1117,16 @@ export class DatabaseStorage implements IStorage {
           generatedShifts.push(savedOpenShift);
         }
       }
+    };
+
+    // FASE 1: Plan alle weekend shiften eerst (voor eerlijke verdeling)
+    for (const dayInfo of weekendDays) {
+      await planDayShifts(dayInfo, true);
+    }
+
+    // FASE 2: Plan weekdag shiften
+    for (const dayInfo of weekDays) {
+      await planDayShifts(dayInfo, false);
     }
     
     // Log de uiteindelijke uren per gebruiker
