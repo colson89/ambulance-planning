@@ -173,13 +173,7 @@ export default function Profile() {
                     />
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium">Voorkeur Uren per Week</label>
-                    <Input
-                      type="number"
-                      {...preferencesForm.register("preferredHours", { valueAsNumber: true })}
-                    />
-                  </div>
+
 
                   <Button 
                     type="submit"
