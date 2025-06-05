@@ -173,7 +173,7 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
-  async generateMonthlySchedule(month: number, year: number): Promise<Shift[]> {
+  async generateMonthlySchedule(month: number, year: number, updateProgress?: (percentage: number, message: string) => void): Promise<Shift[]> {
     // Verwijder bestaande shifts voor deze maand
     await db.delete(shifts)
       .where(and(
@@ -382,6 +382,9 @@ export class DatabaseStorage implements IStorage {
     }
 
     console.log(`Planning ${weekendDays.length} weekend dagen eerst, daarna ${weekDays.length} weekdagen`);
+
+    const totalDays = allDays.length;
+    let processedDays = 0;
 
     // Helper functie om shifts voor een specifieke dag te plannen
     const planDayShifts = async (dayInfo: {day: number, date: Date, isWeekend: boolean}, isWeekend: boolean): Promise<void> => {
@@ -1126,12 +1129,31 @@ export class DatabaseStorage implements IStorage {
     };
 
     // FASE 1: Plan alle weekend shiften eerst (voor eerlijke verdeling)
+    if (updateProgress) {
+      updateProgress(0, "Planning weekend shiften eerst...");
+    }
+    
     for (const dayInfo of weekendDays) {
+      processedDays++;
+      if (updateProgress) {
+        const percentage = Math.round((processedDays / totalDays) * 100);
+        updateProgress(percentage, `Planning weekend dag ${dayInfo.day}/${daysInMonth}`);
+      }
       await planDayShifts(dayInfo, true);
     }
 
     // FASE 2: Plan weekdag shiften
+    if (updateProgress) {
+      const weekendPercentage = Math.round((weekendDays.length / totalDays) * 100);
+      updateProgress(weekendPercentage, "Planning weekdag shiften...");
+    }
+    
     for (const dayInfo of weekDays) {
+      processedDays++;
+      if (updateProgress) {
+        const percentage = Math.round((processedDays / totalDays) * 100);
+        updateProgress(percentage, `Planning weekdag ${dayInfo.day}/${daysInMonth}`);
+      }
       await planDayShifts(dayInfo, false);
     }
     
@@ -1147,6 +1169,11 @@ export class DatabaseStorage implements IStorage {
     }
     
     console.log(`Schedule generation complete: ${generatedShifts.length} shifts created`);
+    
+    if (updateProgress) {
+      updateProgress(100, "Planning generatie voltooid!");
+    }
+    
     return generatedShifts;
   }
 

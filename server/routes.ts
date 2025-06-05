@@ -221,7 +221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(deleteProgress);
   });
 
-  app.get("/api/schedule/generate-progress", requireAdmin, (req, res) => {
+  app.get("/api/schedule/generate-progress", (req, res) => {
     res.json(generateProgress);
   });
 
