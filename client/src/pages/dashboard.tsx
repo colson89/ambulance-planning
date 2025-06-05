@@ -90,9 +90,16 @@ export default function Dashboard() {
       
       // Voor elke gevonden shift, zoek de toegewezen medewerker
       const assignedUserIds = new Set();
+      const assignedShiftDetails = new Map(); // Map userId -> shift details
+      
       matchingShifts.forEach(shift => {
         if (shift.userId > 0) {
           assignedUserIds.add(shift.userId);
+          assignedShiftDetails.set(shift.userId, {
+            startTime: shift.startTime,
+            endTime: shift.endTime,
+            isSplitShift: shift.isSplitShift
+          });
         }
       });
       
@@ -143,6 +150,7 @@ export default function Dashboard() {
         
         // Alleen toevoegen als ze toegewezen zijn OF een voorkeur hebben ingediend
         if (isAssigned || isAvailable) {
+          const shiftDetails = assignedShiftDetails.get(ambulancier.id);
           result.push({
             userId: ambulancier.id,
             username: ambulancier.username || "Onbekend",
@@ -153,8 +161,8 @@ export default function Dashboard() {
             isAssigned: isAssigned,
             isAvailable: isAvailable && wantsToWork,
             hours: ambulancier.hours || 0,
-            startTime: userPreference?.startTime,
-            endTime: userPreference?.endTime
+            startTime: isAssigned ? shiftDetails?.startTime : userPreference?.startTime,
+            endTime: isAssigned ? shiftDetails?.endTime : userPreference?.endTime
           });
         }
       });
