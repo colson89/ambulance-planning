@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import type { ShiftPreference } from "@shared/schema";
 
-type PreferenceType = "full" | "first" | "second" | "unavailable";
+type PreferenceType = "full" | "first" | "second" | "unavailable" | "none";
 type ShiftType = "day" | "night";
 
 export default function ShiftPlanner() {
@@ -85,9 +85,26 @@ export default function ShiftPlanner() {
   };
 
   const getPreferenceForDate = (date: Date, shiftType: ShiftType): PreferenceType => {
-    const dateKey = format(date, "yyyy-MM-dd");
-    const prefs = datePreferences.get(dateKey);
-    return prefs?.[shiftType] || "full";
+    const prefs = getDayPreferences(date);
+    
+    // Zoek naar een voorkeur voor dit specifieke shift type
+    const specificPref = prefs.find(p => p.type === shiftType);
+    if (specificPref) {
+      // Als er notes zijn, gebruik die om het preference type te bepalen
+      if (specificPref.notes === "first") return "first";
+      if (specificPref.notes === "second") return "second";
+      if (specificPref.notes === "Niet beschikbaar") return "unavailable";
+      return "full"; // Default voor voorkeuren zonder specifieke notes
+    }
+    
+    // Zoek naar een "unavailable" voorkeur voor deze dag
+    const unavailablePref = prefs.find(p => p.type === "unavailable");
+    if (unavailablePref) {
+      return "unavailable";
+    }
+    
+    // Geen voorkeur gevonden
+    return "none";
   };
 
   const handleSubmit = async (event: React.FormEvent, shiftType: ShiftType) => {
