@@ -369,15 +369,24 @@ export class DatabaseStorage implements IStorage {
 
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(year, month - 1, day);
-      const isWeekendDay = currentDate.getDay() === 0 || currentDate.getDay() === 6;
+      const dayOfWeek = currentDate.getDay();
+      const isWeekendDay = dayOfWeek === 0 || dayOfWeek === 6;
       
-      const dayInfo = { day, date: currentDate, isWeekend: isWeekendDay };
-      allDays.push(dayInfo);
+      // Controleer weekdag configuratie
+      const weekdayConfig = await this.getWeekdayConfig(dayOfWeek);
+      const shouldPlanDay = isWeekendDay || (weekdayConfig && weekdayConfig.enableNightShift);
       
-      if (isWeekendDay) {
-        weekendDays.push(dayInfo);
+      if (shouldPlanDay) {
+        const dayInfo = { day, date: currentDate, isWeekend: isWeekendDay };
+        allDays.push(dayInfo);
+        
+        if (isWeekendDay) {
+          weekendDays.push(dayInfo);
+        } else {
+          weekDays.push(dayInfo);
+        }
       } else {
-        weekDays.push(dayInfo);
+        console.log(`Dag ${day} (${['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'][dayOfWeek]}) overgeslagen - nachtshift uitgeschakeld`);
       }
     }
 
