@@ -488,22 +488,6 @@ export class DatabaseStorage implements IStorage {
             
             const savedShift1 = await this.createShift(nightShift1);
             generatedShifts.push(savedShift1);
-          } else {
-            // Geen geschikte medewerker gevonden
-            const openShift1 = {
-              userId: 0,
-              date: currentDate,
-              type: "night" as const,
-              startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: false
-            };
-            
-            const savedOpenShift1 = await this.createShift(openShift1);
-            generatedShifts.push(savedOpenShift1);
           }
         }
         
@@ -608,45 +592,7 @@ export class DatabaseStorage implements IStorage {
             }
           }
           
-          // Als eerste helft niet toegewezen kon worden, maak open shift aan
-          if (!hasAssignedHalfShift1) {
-            const openNightHalfShift1 = {
-              userId: 0,
-              date: currentDate,
-              type: "night" as const,
-              startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day, 23, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: true,
-              splitStartTime: new Date(year, month - 1, day, 19, 0, 0),
-              splitEndTime: new Date(year, month - 1, day, 23, 0, 0)
-            };
-            
-            const savedOpenHalfShift1 = await this.createShift(openNightHalfShift1);
-            generatedShifts.push(savedOpenHalfShift1);
-          }
-          
-          // Als tweede helft niet toegewezen kon worden, maak open shift aan
-          if (!hasAssignedHalfShift2) {
-            const openNightHalfShift2 = {
-              userId: 0,
-              date: currentDate,
-              type: "night" as const,
-              startTime: new Date(year, month - 1, day, 23, 0, 0),
-              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
-              status: "open" as const,
-              month,
-              year,
-              isSplitShift: true,
-              splitStartTime: new Date(year, month - 1, day, 23, 0, 0),
-              splitEndTime: new Date(year, month - 1, day + 1, 7, 0, 0)
-            };
-            
-            const savedOpenHalfShift2 = await this.createShift(openNightHalfShift2);
-            generatedShifts.push(savedOpenHalfShift2);
-          }
+
         }
       } 
       // Weekend: zowel dag- als nachtshifts plannen
