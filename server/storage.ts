@@ -199,6 +199,27 @@ export class DatabaseStorage implements IStorage {
     const userAssignedHours = new Map<number, number>();
     activeUsers.forEach(user => userAssignedHours.set(user.id, 0));
 
+    // Calculate previous weekend shifts for fair distribution
+    const getWeekendShiftHistory = async (userId: number): Promise<number> => {
+      // Look at last 3 months of weekend shifts
+      const threeMonthsAgo = new Date(year, month - 4, 1);
+      const lastMonth = new Date(year, month - 1, 0);
+      
+      const weekendShifts = await db.select()
+        .from(shifts)
+        .where(and(
+          eq(shifts.userId, userId),
+          gte(shifts.date, threeMonthsAgo),
+          lte(shifts.date, lastMonth),
+          ne(shifts.status, "open")
+        ));
+      
+      return weekendShifts.filter(shift => {
+        const shiftDay = shift.date.getDay();
+        return shiftDay === 0 || shiftDay === 6; // Sunday or Saturday
+      }).length;
+    };
+
     // Helper functions
     const canAssignHours = (userId: number, hoursToAdd: number): boolean => {
       const currentHours = userAssignedHours.get(userId) || 0;
@@ -217,6 +238,28 @@ export class DatabaseStorage implements IStorage {
         const hoursB = userAssignedHours.get(b) || 0;
         return hoursA - hoursB;
       });
+    };
+
+    // Enhanced sorting for weekend shifts - prioritize fair distribution
+    const getSortedUsersForWeekendAssignment = async (availableUserIds: number[]): Promise<number[]> => {
+      const usersWithHistory = await Promise.all(
+        availableUserIds.map(async (userId) => ({
+          userId,
+          weekendShifts: await getWeekendShiftHistory(userId),
+          currentHours: userAssignedHours.get(userId) || 0
+        }))
+      );
+
+      return usersWithHistory
+        .sort((a, b) => {
+          // First priority: fewer weekend shifts in history
+          if (a.weekendShifts !== b.weekendShifts) {
+            return a.weekendShifts - b.weekendShifts;
+          }
+          // Second priority: fewer hours assigned this month
+          return a.currentHours - b.currentHours;
+        })
+        .map(user => user.userId);
     };
 
     // Ensure weekday configs are initialized
