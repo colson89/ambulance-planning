@@ -25,6 +25,8 @@ export default function ShiftPlanner() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [datePreferences, setDatePreferences] = useState<Map<string, { day?: PreferenceType; night?: PreferenceType }>>(new Map());
+  const [currentDaySelection, setCurrentDaySelection] = useState<PreferenceType>("none");
+  const [currentNightSelection, setCurrentNightSelection] = useState<PreferenceType>("none");
 
   const today = new Date();
   const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
@@ -45,6 +47,16 @@ export default function ShiftPlanner() {
     },
     enabled: !!user,
   });
+
+  // Update lokale selecties wanneer een datum wordt geselecteerd
+  useEffect(() => {
+    if (selectedDate && preferences) {
+      const dayPref = getPreferenceForDate(selectedDate, "day");
+      const nightPref = getPreferenceForDate(selectedDate, "night");
+      setCurrentDaySelection(dayPref);
+      setCurrentNightSelection(nightPref);
+    }
+  }, [selectedDate, preferences]);
 
   const createPreferenceMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -74,14 +86,14 @@ export default function ShiftPlanner() {
   });
 
   const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>, date: Date, shiftType: ShiftType) => {
-    const dateKey = format(date, "yyyy-MM-dd");
     const newValue = event.target.value as PreferenceType;
-    const existingPreferences = datePreferences.get(dateKey) || {};
-
-    setDatePreferences(new Map(datePreferences).set(dateKey, {
-      ...existingPreferences,
-      [shiftType]: newValue
-    }));
+    
+    // Update lokale selectie
+    if (shiftType === "day") {
+      setCurrentDaySelection(newValue);
+    } else {
+      setCurrentNightSelection(newValue);
+    }
   };
 
   const getPreferenceForDate = (date: Date, shiftType: ShiftType): PreferenceType => {
@@ -331,7 +343,7 @@ export default function ShiftPlanner() {
                           type="radio"
                           name="dayShift"
                           value="full"
-                          checked={getPreferenceForDate(selectedDate, "day") === "full"}
+                          checked={currentDaySelection === "full"}
                           onChange={(e) => handleTypeChange(e, selectedDate, "day")}
                         />
                         <span>Volledige shift (7:00-19:00)</span>
