@@ -374,7 +374,7 @@ export class DatabaseStorage implements IStorage {
       
       // Controleer weekdag configuratie
       const weekdayConfig = await this.getWeekdayConfig(dayOfWeek);
-      const shouldPlanDay = isWeekendDay || (weekdayConfig && weekdayConfig.enableNightShift);
+      const shouldPlanDay = isWeekendDay || (weekdayConfig && weekdayConfig.enableNightShifts);
       
       if (shouldPlanDay) {
         const dayInfo = { day, date: currentDate, isWeekend: isWeekendDay };
