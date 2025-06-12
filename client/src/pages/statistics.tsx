@@ -386,7 +386,6 @@ export default function Statistics() {
                   <TableHead rowSpan={2} className="align-middle">Medewerker</TableHead>
                   <TableHead colSpan={4} className="text-center">Voorkeuren</TableHead>
                   <TableHead colSpan={4} className="text-center">Werkelijke Shifts</TableHead>
-                  <TableHead rowSpan={2} className="text-center align-middle">Totaal</TableHead>
                 </TableRow>
                 <TableRow>
                   <TableHead className="text-center text-xs">Dag Week</TableHead>
@@ -451,16 +450,6 @@ export default function Statistics() {
                         <Badge variant="secondary" className="bg-orange-100 text-orange-800">
                           {user.actualNightShiftWeekend}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex flex-col gap-1">
-                          <Badge variant="outline" className="text-xs">
-                            V: {user.totalPreferences}
-                          </Badge>
-                          <Badge variant="default" className="text-xs">
-                            W: {user.totalActualShifts}
-                          </Badge>
-                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
