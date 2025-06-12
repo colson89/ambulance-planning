@@ -27,6 +27,7 @@ export default function ShiftPlanner() {
   const [datePreferences, setDatePreferences] = useState<Map<string, { day?: PreferenceType; night?: PreferenceType }>>(new Map());
   const [currentDaySelection, setCurrentDaySelection] = useState<PreferenceType>("none");
   const [currentNightSelection, setCurrentNightSelection] = useState<PreferenceType>("none");
+  const [comment, setComment] = useState<string>("");
 
   const today = new Date();
   const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
@@ -48,6 +49,16 @@ export default function ShiftPlanner() {
     enabled: !!user,
   });
 
+  const { data: userComment } = useQuery({
+    queryKey: ["/api/comments", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/comments/${selectedMonth.getMonth() + 1}/${selectedMonth.getFullYear()}`);
+      if (!res.ok && res.status !== 404) throw new Error("Kon opmerking niet ophalen");
+      return res.status === 404 ? null : res.json();
+    },
+    enabled: !!user,
+  });
+
   // Update lokale selecties wanneer een datum wordt geselecteerd
   useEffect(() => {
     if (selectedDate && preferences) {
@@ -57,6 +68,15 @@ export default function ShiftPlanner() {
       setCurrentNightSelection(nightPref);
     }
   }, [selectedDate, preferences]);
+
+  // Update opmerking wanneer deze wordt opgehaald
+  useEffect(() => {
+    if (userComment) {
+      setComment(userComment.comment || "");
+    } else {
+      setComment("");
+    }
+  }, [userComment]);
 
   const createPreferenceMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -80,6 +100,32 @@ export default function ShiftPlanner() {
       toast({
         title: "Fout",
         description: error.message || "Er is een fout opgetreden bij het opslaan van uw voorkeur",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const saveCommentMutation = useMutation({
+    mutationFn: async (commentText: string) => {
+      const res = await apiRequest("POST", "/api/comments", {
+        comment: commentText,
+        month: selectedMonth.getMonth() + 1,
+        year: selectedMonth.getFullYear()
+      });
+      if (!res.ok) throw new Error("Kon opmerking niet opslaan");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/comments"] });
+      toast({
+        title: "Succes",
+        description: "Opmerking opgeslagen",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message || "Er is een fout opgetreden bij het opslaan van uw opmerking",
         variant: "destructive",
       });
     },
@@ -457,6 +503,63 @@ export default function ShiftPlanner() {
                 </form>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Opmerkingen sectie */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Opmerkingen voor {format(selectedMonth, "MMMM yyyy", { locale: nl })}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="comment" className="block text-sm font-medium mb-2">
+                  Opmerkingen (bijv. vakantie, persoonlijke omstandigheden)
+                </label>
+                <textarea
+                  id="comment"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Voeg hier uw opmerkingen toe voor deze maand..."
+                  className="w-full p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={4}
+                  maxLength={1000}
+                />
+                <div className="text-sm text-gray-500 mt-1">
+                  {comment.length}/1000 karakters
+                </div>
+              </div>
+              
+              <Button
+                onClick={() => saveCommentMutation.mutate(comment)}
+                disabled={saveCommentMutation.isPending || comment.trim().length === 0}
+                className="w-full"
+              >
+                {saveCommentMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Bezig met opslaan...
+                  </>
+                ) : (
+                  "Opmerking Opslaan"
+                )}
+              </Button>
+              
+              {userComment && (
+                <Alert>
+                  <AlertDescription>
+                    <strong>Laatste opmerking:</strong> {userComment.comment}
+                    <br />
+                    <span className="text-sm text-gray-500">
+                      Laatst bijgewerkt: {new Date(userComment.updatedAt).toLocaleString('nl-NL')}
+                    </span>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

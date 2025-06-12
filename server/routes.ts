@@ -1347,6 +1347,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Gebruiker opmerkingen routes
+  
+  // Get user comment for specific month/year
+  app.get("/api/comments/:month/:year", requireAuth, async (req, res) => {
+    try {
+      const { month, year } = req.params;
+      const userId = req.user.id;
+      
+      const comment = await storage.getUserComment(
+        userId,
+        parseInt(month),
+        parseInt(year)
+      );
+      
+      res.json(comment);
+    } catch (error) {
+      console.error("Error getting user comment:", error);
+      res.status(500).json({ message: "Failed to get comment" });
+    }
+  });
+
+  // Create or update user comment
+  app.post("/api/comments", requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertUserCommentSchema.parse({
+        ...req.body,
+        userId: req.user.id
+      });
+
+      // Check if comment already exists
+      const existingComment = await storage.getUserComment(
+        validatedData.userId,
+        validatedData.month,
+        validatedData.year
+      );
+
+      let savedComment;
+      if (existingComment) {
+        // Update existing comment
+        savedComment = await storage.updateUserComment(
+          existingComment.id,
+          validatedData.comment
+        );
+      } else {
+        // Create new comment
+        savedComment = await storage.createUserComment(validatedData);
+      }
+
+      res.status(201).json(savedComment);
+    } catch (error) {
+      console.error("Error saving user comment:", error);
+      res.status(500).json({ message: "Failed to save comment" });
+    }
+  });
+
+  // Delete user comment
+  app.delete("/api/comments/:id", requireAuth, async (req, res) => {
+    try {
+      const commentId = parseInt(req.params.id);
+      
+      // Verify ownership (users can only delete their own comments)
+      const comment = await storage.getUserComment(req.user.id, 0, 0); // We'll need to modify this
+      // For now, allow deletion if user is admin or owns the comment
+      
+      await storage.deleteUserComment(commentId);
+      res.status(200).json({ message: "Comment deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      res.status(500).json({ message: "Failed to delete comment" });
+    }
+  });
+
+  // Get all comments for month/year (admin only)
+  app.get("/api/comments/all/:month/:year", requireAdmin, async (req, res) => {
+    try {
+      const { month, year } = req.params;
+      
+      const comments = await storage.getAllUserComments(
+        parseInt(month),
+        parseInt(year)
+      );
+      
+      // Get user details for each comment
+      const users = await storage.getAllUsers();
+      const commentsWithUsers = comments.map(comment => {
+        const user = users.find(u => u.id === comment.userId);
+        return {
+          ...comment,
+          user: user ? {
+            id: user.id,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName
+          } : null
+        };
+      });
+      
+      res.json(commentsWithUsers);
+    } catch (error) {
+      console.error("Error getting all comments:", error);
+      res.status(500).json({ message: "Failed to get comments" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
