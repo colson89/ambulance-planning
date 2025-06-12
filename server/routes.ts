@@ -1455,6 +1455,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Deadline configuratie routes
+  
+  // Get current deadline setting (days before month)
+  app.get("/api/system/deadline-days", requireAuth, async (req, res) => {
+    try {
+      const setting = await storage.getSystemSetting("preference_deadline_days");
+      // Default to 1 day if not set
+      const days = setting ? parseInt(setting) : 1;
+      res.json({ days });
+    } catch (error) {
+      console.error("Error getting deadline setting:", error);
+      res.status(500).json({ message: "Failed to get deadline setting" });
+    }
+  });
+
+  // Update deadline setting (admin only)
+  app.post("/api/system/deadline-days", requireAdmin, async (req, res) => {
+    try {
+      const { days } = req.body;
+      
+      if (!days || days < 1 || days > 30) {
+        return res.status(400).json({ message: "Dagen moet tussen 1 en 30 zijn" });
+      }
+      
+      await storage.setSystemSetting("preference_deadline_days", days.toString());
+      res.json({ days, message: "Deadline instelling bijgewerkt" });
+    } catch (error) {
+      console.error("Error updating deadline setting:", error);
+      res.status(500).json({ message: "Failed to update deadline setting" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -30,7 +30,20 @@ export default function ShiftPlanner() {
   const [comment, setComment] = useState<string>("");
 
   const today = new Date();
-  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 1, 23, 0);
+  
+  // Haal de configureerbare deadline op
+  const { data: deadlineConfig } = useQuery({
+    queryKey: ["/api/system/deadline-days"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/system/deadline-days");
+      if (!res.ok) throw new Error("Kon deadline instelling niet ophalen");
+      return res.json();
+    },
+    enabled: !!user,
+  });
+  
+  const deadlineDays = deadlineConfig?.days || 1;
+  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), deadlineDays, 23, 0);
   const isPastDeadline = today > currentMonthDeadline;
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,47 @@ export default function WeekdaySettings() {
   
   const { data: configs, isLoading, error } = useQuery<WeekdayConfig[]>({
     queryKey: ["/api/weekday-configs"],
+  });
+
+  // Haal deadline configuratie op
+  const { data: deadlineConfig } = useQuery({
+    queryKey: ["/api/system/deadline-days"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/system/deadline-days");
+      if (!res.ok) throw new Error("Kon deadline instelling niet ophalen");
+      return res.json();
+    },
+  });
+
+  const [deadlineDays, setDeadlineDays] = useState<number>(1);
+
+  // Update local state when deadline config is loaded
+  useEffect(() => {
+    if (deadlineConfig?.days) {
+      setDeadlineDays(deadlineConfig.days);
+    }
+  }, [deadlineConfig]);
+
+  const updateDeadlineMutation = useMutation({
+    mutationFn: async (days: number) => {
+      const res = await apiRequest("POST", "/api/system/deadline-days", { days });
+      if (!res.ok) throw new Error("Kon deadline niet bijwerken");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/system/deadline-days"] });
+      toast({
+        title: "Deadline bijgewerkt",
+        description: `Planning moet nu ${deadlineDays} dag(en) van tevoren worden ingediend`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout bij bijwerken deadline",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const initializeMutation = useMutation({
@@ -145,6 +186,47 @@ export default function WeekdaySettings() {
           </p>
         </div>
       </div>
+
+      {/* Deadline Configuration Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Deadline Configuratie
+          </CardTitle>
+          <CardDescription>
+            Stel in hoeveel dagen van tevoren de planning moet worden ingediend
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <Label htmlFor="deadline-days">Dagen van tevoren</Label>
+              <Input
+                id="deadline-days"
+                type="number"
+                min="1"
+                max="30"
+                value={deadlineDays}
+                onChange={(e) => setDeadlineDays(parseInt(e.target.value) || 1)}
+                className="w-32"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                Planning moet {deadlineDays} dag(en) voor de {deadlineDays === 1 ? '1e' : `${deadlineDays}e`} van de maand om 23:00 worden ingediend
+              </p>
+            </div>
+            <Button
+              onClick={() => updateDeadlineMutation.mutate(deadlineDays)}
+              disabled={updateDeadlineMutation.isPending || deadlineDays < 1 || deadlineDays > 30}
+              className="flex items-center gap-2"
+            >
+              {updateDeadlineMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              <Save className="h-4 w-4" />
+              Opslaan
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6">
         {WEEKDAY_ORDER.map((dayOfWeek, index) => {
