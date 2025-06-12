@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig } from "@shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc } from "drizzle-orm";
 import session from "express-session";
@@ -48,6 +48,13 @@ export interface IStorage {
   getWeekdayConfig(dayOfWeek: number): Promise<WeekdayConfig | null>;
   updateWeekdayConfig(dayOfWeek: number, config: Partial<WeekdayConfig>): Promise<WeekdayConfig>;
   initializeDefaultWeekdayConfigs(): Promise<void>;
+  
+  // Gebruiker opmerkingen
+  getUserComment(userId: number, month: number, year: number): Promise<UserComment | null>;
+  createUserComment(comment: InsertUserComment): Promise<UserComment>;
+  updateUserComment(id: number, comment: string): Promise<UserComment>;
+  deleteUserComment(id: number): Promise<void>;
+  getAllUserComments(month: number, year: number): Promise<UserComment[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1109,6 +1116,54 @@ export class DatabaseStorage implements IStorage {
     for (const config of defaultConfigs) {
       await db.insert(weekdayConfigs).values(config);
     }
+  }
+
+  // Gebruiker opmerkingen functionaliteit
+  async getUserComment(userId: number, month: number, year: number): Promise<UserComment | null> {
+    const [comment] = await db
+      .select()
+      .from(userComments)
+      .where(and(
+        eq(userComments.userId, userId),
+        eq(userComments.month, month),
+        eq(userComments.year, year)
+      ));
+    return comment || null;
+  }
+
+  async createUserComment(commentData: InsertUserComment): Promise<UserComment> {
+    const [comment] = await db
+      .insert(userComments)
+      .values(commentData)
+      .returning();
+    return comment;
+  }
+
+  async updateUserComment(id: number, comment: string): Promise<UserComment> {
+    const [updated] = await db
+      .update(userComments)
+      .set({ 
+        comment,
+        updatedAt: new Date()
+      })
+      .where(eq(userComments.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteUserComment(id: number): Promise<void> {
+    await db.delete(userComments).where(eq(userComments.id, id));
+  }
+
+  async getAllUserComments(month: number, year: number): Promise<UserComment[]> {
+    return await db
+      .select()
+      .from(userComments)
+      .where(and(
+        eq(userComments.month, month),
+        eq(userComments.year, year)
+      ))
+      .orderBy(asc(userComments.createdAt));
   }
 }
 

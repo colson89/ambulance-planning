@@ -101,6 +101,22 @@ export const weekdayConfigs = pgTable("weekday_configs", {
   updatedAt: timestamp("updated_at").defaultNow()
 });
 
+export const userComments = pgTable("user_comments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  comment: text("comment").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
 export const insertWeekdayConfigSchema = createInsertSchema(weekdayConfigs);
 export type WeekdayConfig = typeof weekdayConfigs.$inferSelect;
 export type InsertWeekdayConfig = z.infer<typeof insertWeekdayConfigSchema>;
+
+export const insertUserCommentSchema = createInsertSchema(userComments, {
+  comment: z.string().min(1, "Opmerking mag niet leeg zijn").max(1000, "Opmerking mag maximaal 1000 karakters bevatten")
+});
+export type UserComment = typeof userComments.$inferSelect;
+export type InsertUserComment = z.infer<typeof insertUserCommentSchema>;
