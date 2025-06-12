@@ -1423,11 +1423,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/comments/all/:month/:year", requireAdmin, async (req, res) => {
     try {
       const { month, year } = req.params;
+      console.log(`Fetching comments for month: ${month}, year: ${year}`);
       
       const comments = await storage.getAllUserComments(
         parseInt(month),
         parseInt(year)
       );
+      
+      console.log(`Found ${comments.length} comments:`, comments);
       
       // Get user details for each comment
       const users = await storage.getAllUsers();
@@ -1444,6 +1447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       });
       
+      console.log(`Returning ${commentsWithUsers.length} comments with user details`);
       res.json(commentsWithUsers);
     } catch (error) {
       console.error("Error getting all comments:", error);
