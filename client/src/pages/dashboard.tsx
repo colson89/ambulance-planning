@@ -192,7 +192,7 @@ export default function Dashboard() {
   };
 
   const today = new Date();
-  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
+  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 1, 23, 0);
   const isPastDeadline = today > currentMonthDeadline;
 
   // Als we voorbij de deadline zijn van deze maand, toon dan de planning voor de maand na volgende maand

@@ -30,7 +30,7 @@ export default function ShiftPlanner() {
   const [comment, setComment] = useState<string>("");
 
   const today = new Date();
-  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 19, 23, 0);
+  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), 1, 23, 0);
   const isPastDeadline = today > currentMonthDeadline;
 
   useEffect(() => {
