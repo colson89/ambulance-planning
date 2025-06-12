@@ -166,6 +166,17 @@ export default function ScheduleGenerator() {
     enabled: !!user && user.role === "admin",
   });
 
+  // Haal alle opmerkingen op voor de geselecteerde maand
+  const { data: userComments = [] } = useQuery({
+    queryKey: ["/api/comments/all", selectedMonth + 1, selectedYear],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/comments/all/${selectedMonth + 1}/${selectedYear}`);
+      if (!res.ok && res.status !== 404) throw new Error("Kon opmerkingen niet ophalen");
+      return res.status === 404 ? [] : res.json();
+    },
+    enabled: !!user && user.role === "admin",
+  });
+
   // Mutatie om de planning te genereren
   const generateScheduleMutation = useMutation({
     mutationFn: async () => {
@@ -1382,6 +1393,38 @@ export default function ScheduleGenerator() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Gebruiker Opmerkingen Sectie */}
+      {userComments.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Gebruiker Opmerkingen voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {userComments.map((comment) => (
+                <div key={comment.id} className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-semibold text-blue-700">
+                      {comment.user?.firstName} {comment.user?.lastName}
+                      <span className="text-sm text-gray-500 ml-2">({comment.user?.username})</span>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {new Date(comment.updatedAt).toLocaleString('nl-NL')}
+                    </div>
+                  </div>
+                  <div className="text-gray-800 whitespace-pre-wrap">
+                    {comment.comment}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
