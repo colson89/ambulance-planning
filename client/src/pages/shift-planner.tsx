@@ -43,7 +43,10 @@ export default function ShiftPlanner() {
   });
   
   const deadlineDays = deadlineConfig?.days || 1;
-  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), deadlineDays, 23, 0);
+  // Bereken deadline: X dagen voor de 1e van de volgende maand
+  const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  const currentMonthDeadline = new Date(nextMonthStart.getTime() - (deadlineDays * 24 * 60 * 60 * 1000));
+  currentMonthDeadline.setHours(23, 0, 0, 0);
   const isPastDeadline = today > currentMonthDeadline;
 
   useEffect(() => {

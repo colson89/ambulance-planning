@@ -212,7 +212,7 @@ export default function WeekdaySettings() {
                 className="w-32"
               />
               <p className="text-sm text-muted-foreground mt-1">
-                Planning moet {deadlineDays} dag(en) voor de {deadlineDays === 1 ? '1e' : `${deadlineDays}e`} van de maand om 23:00 worden ingediend
+                Planning moet {deadlineDays} dag(en) voor de 1e van de volgende maand om 23:00 worden ingediend
               </p>
             </div>
             <Button

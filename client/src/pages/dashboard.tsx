@@ -205,7 +205,10 @@ export default function Dashboard() {
   });
   
   const deadlineDays = deadlineConfig?.days || 1;
-  const currentMonthDeadline = new Date(today.getFullYear(), today.getMonth(), deadlineDays, 23, 0);
+  // Bereken deadline: X dagen voor de 1e van de volgende maand
+  const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  const currentMonthDeadline = new Date(nextMonthStart.getTime() - (deadlineDays * 24 * 60 * 60 * 1000));
+  currentMonthDeadline.setHours(23, 0, 0, 0);
   const isPastDeadline = today > currentMonthDeadline;
 
   // Als we voorbij de deadline zijn van deze maand, toon dan de planning voor de maand na volgende maand
@@ -221,7 +224,7 @@ export default function Dashboard() {
     }
   };
 
-  const nextMonth = () => {
+  const goToNextMonth = () => {
     if (selectedMonth === 11) {
       setSelectedMonth(0);
       setSelectedYear(prev => prev + 1);
@@ -369,7 +372,7 @@ export default function Dashboard() {
               <span className="text-sm font-medium">
                 {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
               </span>
-              <Button variant="outline" size="sm" onClick={nextMonth}>
+              <Button variant="outline" size="sm" onClick={goToNextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
