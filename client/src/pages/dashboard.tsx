@@ -325,6 +325,10 @@ export default function Dashboard() {
                 ? `U kunt tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
                 : `U kunt tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
               }
+              <br />
+              <span className="text-xs">
+                Planning moet {deadlineDays} dag{deadlineDays !== 1 ? 'en' : ''} van tevoren worden ingediend
+              </span>
             </p>
             <div className="flex flex-wrap justify-center gap-2 mt-4">
               <Button 

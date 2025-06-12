@@ -318,6 +318,10 @@ export default function ShiftPlanner() {
       <Alert className="mb-6">
         <AlertDescription>
           U geeft nu voorkeuren op voor {format(selectedMonth, "MMMM yyyy", { locale: nl })}.
+          <br />
+          <span className="text-xs mt-1 block">
+            Planning moet {deadlineDays} dag{deadlineDays !== 1 ? 'en' : ''} van tevoren worden ingediend (deadline: {format(isPastDeadline ? addMonths(currentMonthDeadline, 1) : currentMonthDeadline, "d MMMM HH:mm", { locale: nl })})
+          </span>
         </AlertDescription>
       </Alert>
 
