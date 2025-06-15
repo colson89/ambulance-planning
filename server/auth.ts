@@ -77,13 +77,25 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy({
+      usernameField: 'username',
+      passwordField: 'password',
+      passReqToCallback: true
+    }, async (req, username, password, done) => {
       try {
         console.log(`Login attempt for username: ${username}`);
-        const user = await storage.getUserByUsername(username);
+        
+        // Get selected station from request body
+        const selectedStationId = req.body.stationId;
+        if (!selectedStationId) {
+          console.log(`Login failed: No station selected for ${username}`);
+          return done(null, false);
+        }
+        
+        const user = await storage.getUserByUsernameAndStation(username, selectedStationId);
         
         if (!user) {
-          console.log(`Login failed: User ${username} not found`);
+          console.log(`Login failed: User ${username} not found for station ${selectedStationId}`);
           return done(null, false);
         }
         
@@ -94,7 +106,7 @@ export function setupAuth(app: Express) {
         // Gebruik de verbeterde comparePasswords functie die meerdere vergelijkingsmethoden probeert
         try {
           if (await comparePasswords(password, user.password)) {
-            console.log(`Password match for ${username}!`);
+            console.log(`Password match for ${username} at station ${selectedStationId}!`);
             return done(null, user);
           }
         } catch (err) {
@@ -103,11 +115,11 @@ export function setupAuth(app: Express) {
         
         // Laatste directe vergelijking als noodoplossing
         if (user.password === password) {
-          console.log(`Direct string equality match for ${username}`);
+          console.log(`Direct string equality match for ${username} at station ${selectedStationId}`);
           return done(null, user);
         }
         
-        console.log(`Login failed: Incorrect password for ${username}`);
+        console.log(`Login failed: Incorrect password for ${username} at station ${selectedStationId}`);
         return done(null, false);
       } catch (error) {
         console.error("Login error:", error);

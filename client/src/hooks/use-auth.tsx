@@ -34,9 +34,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       try {
-        const res = await apiRequest("POST", "/api/login", credentials);
+        // Get selected station from sessionStorage
+        const stationData = sessionStorage.getItem("selectedStation");
+        if (!stationData) {
+          throw new Error("Geen station geselecteerd. Ga terug naar de startpagina.");
+        }
+        
+        const selectedStation = JSON.parse(stationData);
+        const loginData = {
+          ...credentials,
+          stationId: selectedStation.id
+        };
+        
+        const res = await apiRequest("POST", "/api/login", loginData);
         if (res.status === 401) {
-          throw new Error("Wachtwoord onjuist! Controleer je wachtwoord en probeer opnieuw.");
+          throw new Error("Gebruikersnaam of wachtwoord onjuist voor dit station.");
         }
         if (!res.ok) {
           throw new Error(`Login mislukt (${res.status})`);
