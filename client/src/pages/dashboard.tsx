@@ -531,7 +531,10 @@ export default function Dashboard() {
                       const openSlots = detectOpenTimeSlots(new Date(shift.date));
                       const hasOpenSlots = openSlots.length > 0;
                       
-                      return (
+                      const results = [];
+                      
+                      // Add the regular shift row
+                      results.push(
                         <TableRow 
                           key={shift.id}
                           className={`${shift.status === "open" ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""} ${hasOpenSlots ? "border-l-4 border-l-orange-500" : ""}`}
@@ -600,40 +603,29 @@ export default function Dashboard() {
                               ) : null}
                               {shift.status === "open" ? "Open" : "Ingepland"}
                             </div>
-                            {hasOpenSlots && (
-                              <div className="text-xs text-orange-600 mt-1">
-                                ⚠️ Open tijdslots gedetecteerd
-                              </div>
-                            )}
                           </TableCell>
                         </TableRow>
                       );
+                      
+                      // Add open slot warning row if needed
+                      if (hasOpenSlots) {
+                        results.push(
+                          <TableRow key={`${shift.id}-warning`} className="bg-orange-50 border-l-4 border-l-orange-500">
+                            <TableCell colSpan={5} className="p-0">
+                              <OpenSlotWarning
+                                date={new Date(shift.date)}
+                                shifts={filteredShifts.filter(s => format(new Date(s.date), 'yyyy-MM-dd') === format(new Date(shift.date), 'yyyy-MM-dd'))}
+                                onAddShift={handleAddShift}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+                      
+                      return results;
                     })}
                 </TableBody>
               </Table>
-            </div>
-          )}
-          
-          {/* Open slot warnings voor datums met gaten in nachtshift coverage */}
-          {filteredShifts.length > 0 && (
-            <div className="mt-6 space-y-4">
-              {Array.from(new Set(filteredShifts.map(s => format(new Date(s.date), 'yyyy-MM-dd'))))
-                .sort()
-                .map(dateStr => {
-                  const date = new Date(dateStr);
-                  const shiftsForDate = filteredShifts.filter(s => 
-                    format(new Date(s.date), 'yyyy-MM-dd') === dateStr
-                  );
-                  
-                  return (
-                    <OpenSlotWarning
-                      key={dateStr}
-                      date={date}
-                      shifts={shiftsForDate}
-                      onAddShift={handleAddShift}
-                    />
-                  );
-                })}
             </div>
           )}
         </CardContent>

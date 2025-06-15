@@ -1093,7 +1093,15 @@ export default function ScheduleGenerator() {
                       const isCurrentUserShift = shift.userId === user?.id;
                       const isUserDeleted = shift.userId > 0 && !shiftUser;
                       
-                      return (
+                      // Detecteer open slots voor deze datum
+                      const shiftsForDate = shifts.filter(s => 
+                        format(new Date(s.date), 'yyyy-MM-dd') === format(new Date(shift.date), 'yyyy-MM-dd')
+                      );
+                      
+                      const results = [];
+                      
+                      // Add the regular shift row
+                      results.push(
                         <TableRow 
                           key={shift.id}
                           className={`${shift.status === "open" || isUserDeleted ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""}`}
@@ -1173,7 +1181,36 @@ export default function ScheduleGenerator() {
                           </TableCell>
                         </TableRow>
                       );
-                    })}
+                      
+                      // Check if this is the last shift for this date to add open slot warning
+                      const currentDateStr = format(new Date(shift.date), 'yyyy-MM-dd');
+                      const nextShiftIndex = shifts.findIndex((s, idx) => 
+                        idx > shifts.indexOf(shift) && 
+                        format(new Date(s.date), 'yyyy-MM-dd') !== currentDateStr
+                      );
+                      const isLastShiftForDate = nextShiftIndex === -1 || 
+                        shifts.slice(0, nextShiftIndex).every(s => 
+                          format(new Date(s.date), 'yyyy-MM-dd') !== currentDateStr || 
+                          shifts.indexOf(s) <= shifts.indexOf(shift)
+                        );
+                      
+                      // Add open slot warning if this is the last shift for the date
+                      if (isLastShiftForDate) {
+                        results.push(
+                          <TableRow key={`${shift.id}-warning`} className="bg-orange-50">
+                            <TableCell colSpan={5} className="p-0">
+                              <OpenSlotWarning
+                                date={new Date(shift.date)}
+                                shifts={shiftsForDate}
+                                onAddShift={handleAddShift}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      }
+                      
+                      return results;
+                    }).flat()}
                 </TableBody>
               </Table>
             </div>
@@ -1183,37 +1220,6 @@ export default function ScheduleGenerator() {
                 Er zijn nog geen shifts gegenereerd voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}.
               </AlertDescription>
             </Alert>
-          )}
-          
-          {/* Open slot warnings voor datums met gaten in nachtshift coverage */}
-          {shifts.filter(shift => {
-              const shiftDate = new Date(shift.date);
-              return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
-            }).length > 0 && (
-            <div className="mt-6 space-y-4">
-              {Array.from(new Set(shifts
-                .filter(shift => {
-                  const shiftDate = new Date(shift.date);
-                  return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
-                })
-                .map(s => format(new Date(s.date), 'yyyy-MM-dd'))))
-                .sort()
-                .map(dateStr => {
-                  const date = new Date(dateStr);
-                  const shiftsForDate = shifts.filter(s => 
-                    format(new Date(s.date), 'yyyy-MM-dd') === dateStr
-                  );
-                  
-                  return (
-                    <OpenSlotWarning
-                      key={dateStr}
-                      date={date}
-                      shifts={shiftsForDate}
-                      onAddShift={handleAddShift}
-                    />
-                  );
-                })}
-            </div>
           )}
         </CardContent>
       </Card>
