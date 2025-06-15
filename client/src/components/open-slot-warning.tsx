@@ -31,17 +31,7 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
     new Date(s.date).toDateString() === date.toDateString()
   );
 
-  if (date.toDateString() === 'Tue Jul 01 2025') {
-    console.log(`[OpenSlotWarning] Date: ${date.toDateString()}`);
-    console.log(`[OpenSlotWarning] Night shifts found:`, nightShifts.length);
-    console.log(`[OpenSlotWarning] Night shifts details:`, nightShifts.map(s => ({
-      id: s.id,
-      userId: s.userId,
-      startTime: s.startTime,
-      endTime: s.endTime,
-      type: s.type
-    })));
-  }
+
   
   if (nightShifts.length === 0) return null;
 
@@ -52,38 +42,24 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
     nightShifts.forEach(shift => {
       if (!shift.startTime || !shift.endTime || shift.userId === 0) return;
 
-      // Extract hours directly from the ISO time string to avoid timezone issues
-      const startTimeStr = shift.startTime;
-      const endTimeStr = shift.endTime;
+      // Convert to Date objects and extract hours
+      const startDate = shift.startTime instanceof Date ? shift.startTime : new Date(shift.startTime);
+      const endDate = shift.endTime instanceof Date ? shift.endTime : new Date(shift.endTime);
       
-      // Parse hours from "2025-07-01T19:00:00.000Z" format
-      const startHour = parseInt(startTimeStr.substring(11, 13));
-      const endHour = parseInt(endTimeStr.substring(11, 13));
-      
-      const startDate = new Date(startTimeStr);
-      const endDate = new Date(endTimeStr);
-
-      if (date.toDateString() === 'Tue Jul 01 2025') {
-        console.log(`Shift ${shift.id}: startTime=${shift.startTime}, endTime=${shift.endTime}`);
-        console.log(`  Parsed: ${normalizedStartHour}:00-${normalizedEndHour}:00, startDate=${startTime.getDate()}, endDate=${endTime.getDate()}, checking hour ${hour}`);
-      }
+      // Get local hours using getHours() which accounts for timezone
+      const startHour = startDate.getHours();
+      const endHour = endDate.getHours();
 
       // Handle overnight shifts (endTime is next day)
-      if (endTime.getDate() !== startTime.getDate()) {
+      if (endDate.getDate() !== startDate.getDate()) {
         // Overnight shift: covers from start hour to 24:00, then 0:00 to end hour
-        if (hour >= normalizedStartHour || hour < normalizedEndHour) {
+        if (hour >= startHour || hour < endHour) {
           staffCount++;
-          if (date.toDateString() === 'Tue Jul 01 2025') {
-            console.log(`  -> Hour ${hour} covered by overnight shift ${shift.id}`);
-          }
         }
       } else {
         // Same day shift
-        if (hour >= normalizedStartHour && hour < normalizedEndHour) {
+        if (hour >= startHour && hour < endHour) {
           staffCount++;
-          if (date.toDateString() === 'Tue Jul 01 2025') {
-            console.log(`  -> Hour ${hour} covered by same-day shift ${shift.id}`);
-          }
         }
       }
     });
@@ -92,7 +68,7 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
   });
 
   if (date.toDateString() === 'Tue Jul 01 2025') {
-    console.log(`[OpenSlotWarning] Time slots coverage:`, timeSlots.map((count, hour) => `${hour}:00=${count}`).join(', '));
+    console.log(`[DEBUG] Time slots coverage:`, timeSlots.map((count, hour) => `${hour}:00=${count}`).join(', '));
   }
 
   // Find gaps where we have less than 2 people for night coverage (19:00-07:00)
