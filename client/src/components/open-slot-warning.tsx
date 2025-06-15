@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Shift } from "@shared/schema";
+import { format } from "date-fns";
+import { nl } from "date-fns/locale";
 
 interface OpenSlotWarningProps {
   date: Date;
@@ -93,7 +95,9 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
       <CardContent className="p-4">
         <div className="flex items-center gap-2 mb-3">
           <AlertTriangle className="h-5 w-5 text-orange-600" />
-          <h3 className="font-semibold text-orange-800">Open tijdslots gedetecteerd</h3>
+          <h3 className="font-semibold text-orange-800">
+            Open tijdslots - {format(date, "d MMMM yyyy", { locale: nl })}
+          </h3>
         </div>
         
         <div className="space-y-2">
