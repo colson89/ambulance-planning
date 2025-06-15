@@ -225,6 +225,9 @@ export default function ScheduleGenerator() {
       // Vernieuw alle shift-gerelateerde cache entries
       queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
       queryClient.removeQueries({ queryKey: ["/api/shifts"] });
+      // Vernieuw specifiek de dashboard query voor deze maand
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts", selectedMonth + 1, selectedYear] });
+      queryClient.removeQueries({ queryKey: ["/api/shifts", selectedMonth + 1, selectedYear] });
       refetchShifts();
       setLastGeneratedDate(null);
     },

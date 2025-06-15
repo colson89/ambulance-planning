@@ -35,7 +35,12 @@ export default function Dashboard() {
   const [showAvailabilityDialog, setShowAvailabilityDialog] = useState(false);
 
   const { data: shifts = [], isLoading: shiftsLoading } = useQuery<Shift[]>({
-    queryKey: ["/api/shifts"],
+    queryKey: ["/api/shifts", selectedMonth + 1, selectedYear],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/shifts?month=${selectedMonth + 1}&year=${selectedYear}`);
+      if (!res.ok) throw new Error("Failed to fetch shifts");
+      return res.json();
+    },
   });
   
   const { data: users = [], isLoading: usersLoading } = useQuery<UserType[]>({
