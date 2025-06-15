@@ -112,21 +112,6 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
     };
     
     suggestions.push(gapSuggestion);
-    
-    // If the gap doesn't start at 19:00, also suggest full night coverage
-    if (startHour !== 19) {
-      const fullNightSuggestion = {
-        start: 19,
-        end: 7,
-        startFormatted: "19:00",
-        endFormatted: "07:00",
-        currentStaff: Math.min(...timeSlots),
-        neededStaff: 2,
-        type: 'full'
-      };
-      
-      suggestions.push(fullNightSuggestion);
-    }
   });
 
   if (suggestions.length === 0) return null;
@@ -151,11 +136,6 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
                 <span className="text-sm text-gray-600">
                   {suggestion.currentStaff === 0 ? 'Geen dekking' : `${suggestion.currentStaff}/2 personen`}
                 </span>
-                {suggestion.type === 'full' && (
-                  <Badge variant="secondary" className="text-xs">
-                    Hele nacht
-                  </Badge>
-                )}
               </div>
               
               {showAddButton && onAddShift && (
