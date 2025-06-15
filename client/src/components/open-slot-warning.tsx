@@ -11,45 +11,43 @@ interface OpenSlotWarningProps {
 }
 
 export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningProps) {
-  // Detecteer open slots voor nachtshifts
-  const nightShifts = shifts.filter(s => s.type === 'night');
+  // Alleen detecteren voor nachtshifts met split shifts
+  const nightShifts = shifts.filter(s => 
+    s.type === 'night' && 
+    s.startTime && 
+    s.endTime && 
+    s.status !== 'open'
+  );
   
-  if (nightShifts.length === 0) return null;
+  if (nightShifts.length < 2) return null; // Alleen waarschuwen als er meerdere shifts zijn die mogelijk een gat hebben
 
   // Sorteer shifts op starttijd
   const sortedShifts = nightShifts.sort((a, b) => 
-    new Date(a.startTime || a.date).getTime() - new Date(b.startTime || b.date).getTime()
+    new Date(a.startTime!).getTime() - new Date(b.startTime!).getTime()
   );
 
   const openSlots = [];
-  let currentHour = 19; // Start van nachtshift
-
-  for (const shift of sortedShifts) {
-    const shiftStart = new Date(shift.startTime || shift.date).getHours();
-    const adjustedStart = shiftStart < 12 ? shiftStart + 24 : shiftStart; // Voor tijden na middernacht
+  
+  // Check of er gaten zijn tussen opeenvolgende shifts
+  for (let i = 0; i < sortedShifts.length - 1; i++) {
+    const currentShift = sortedShifts[i];
+    const nextShift = sortedShifts[i + 1];
     
-    if (currentHour < adjustedStart) {
+    const currentEnd = new Date(currentShift.endTime!);
+    const nextStart = new Date(nextShift.startTime!);
+    
+    // Als er een gat is van meer dan 5 minuten tussen shifts
+    if (nextStart.getTime() - currentEnd.getTime() > 5 * 60 * 1000) {
+      const endHour = currentEnd.getUTCHours();
+      const startHour = nextStart.getUTCHours();
+      
       openSlots.push({
-        start: currentHour,
-        end: adjustedStart,
-        startFormatted: `${currentHour.toString().padStart(2, '0')}:00`,
-        endFormatted: `${(adjustedStart > 24 ? adjustedStart - 24 : adjustedStart).toString().padStart(2, '0')}:00`
+        start: endHour,
+        end: startHour,
+        startFormatted: `${endHour.toString().padStart(2, '0')}:00`,
+        endFormatted: `${startHour.toString().padStart(2, '0')}:00`
       });
     }
-    
-    const shiftEnd = new Date(shift.endTime || shift.date).getHours();
-    const adjustedEnd = shiftEnd < 12 ? shiftEnd + 24 : shiftEnd;
-    currentHour = Math.max(currentHour, adjustedEnd);
-  }
-
-  // Check tot einde van nachtshift (07:00)
-  if (currentHour < 31) { // 31 = 24 + 7
-    openSlots.push({
-      start: currentHour,
-      end: 31,
-      startFormatted: `${(currentHour > 24 ? currentHour - 24 : currentHour).toString().padStart(2, '0')}:00`,
-      endFormatted: "07:00"
-    });
   }
 
   if (openSlots.length === 0) return null;
