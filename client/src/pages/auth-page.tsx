@@ -123,10 +123,10 @@ export default function AuthPage() {
       <div className="hidden md:block bg-primary/10 p-8">
         <div className="h-full flex flex-col justify-center max-w-lg mx-auto">
           <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Welcome to Westerlo Ambulance Shift Planning
+            Welkom bij {selectedStation?.displayName || 'Brandweerzone'} Planning Systeem
           </h1>
           <p className="text-lg text-muted-foreground">
-            Efficiently manage ambulance shifts and staff scheduling with our intuitive planning system.
+            Beheer efficiënt diensten en personeelsplanning met ons intuïtieve planningssysteem.
           </p>
         </div>
       </div>

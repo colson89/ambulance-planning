@@ -111,10 +111,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values({
-      ...insertUser,
-      password: await hashPassword(insertUser.password)
-    }).returning();
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
@@ -1126,20 +1123,25 @@ export class DatabaseStorage implements IStorage {
     return config;
   }
 
-  async initializeDefaultWeekdayConfigs(): Promise<void> {
-    // Check if configs already exist
-    const existingConfigs = await this.getWeekdayConfigs();
+  async initializeDefaultWeekdayConfigs(stationId?: number): Promise<void> {
+    // Use stationId 1 as default if not provided (for backward compatibility)
+    const defaultStationId = stationId || 1;
+    
+    // Check if configs already exist for this station
+    const existingConfigs = await db.select()
+      .from(weekdayConfigs)
+      .where(eq(weekdayConfigs.stationId, defaultStationId));
     if (existingConfigs.length > 0) return;
 
     // Default configuration: weekends have day+night shifts, weekdays only night shifts
     const defaultConfigs = [
-      { dayOfWeek: 0, enableDayShifts: true, enableNightShifts: true, dayShiftCount: 2, nightShiftCount: 2 },   // Sunday
-      { dayOfWeek: 1, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Monday
-      { dayOfWeek: 2, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Tuesday
-      { dayOfWeek: 3, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Wednesday
-      { dayOfWeek: 4, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Thursday
-      { dayOfWeek: 5, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Friday
-      { dayOfWeek: 6, enableDayShifts: true, enableNightShifts: true, dayShiftCount: 2, nightShiftCount: 2 },   // Saturday
+      { stationId: defaultStationId, dayOfWeek: 0, enableDayShifts: true, enableNightShifts: true, dayShiftCount: 2, nightShiftCount: 2 },   // Sunday
+      { stationId: defaultStationId, dayOfWeek: 1, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Monday
+      { stationId: defaultStationId, dayOfWeek: 2, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Tuesday
+      { stationId: defaultStationId, dayOfWeek: 3, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Wednesday
+      { stationId: defaultStationId, dayOfWeek: 4, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Thursday
+      { stationId: defaultStationId, dayOfWeek: 5, enableDayShifts: false, enableNightShifts: true, dayShiftCount: 0, nightShiftCount: 2 },  // Friday
+      { stationId: defaultStationId, dayOfWeek: 6, enableDayShifts: true, enableNightShifts: true, dayShiftCount: 2, nightShiftCount: 2 },   // Saturday
     ];
 
     for (const config of defaultConfigs) {

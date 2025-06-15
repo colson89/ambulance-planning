@@ -67,7 +67,8 @@ export const insertUserSchema = createInsertSchema(users, {
   lastName: true,
   role: true,
   isAdmin: true,
-  hours: true
+  hours: true,
+  stationId: true
 });
 
 export const insertShiftSchema = createInsertSchema(shifts);
@@ -79,6 +80,7 @@ export const insertShiftPreferenceSchema = createInsertSchema(shiftPreferences, 
   endTime: z.coerce.date().nullable(),
 }).pick({
   userId: true,
+  stationId: true,
   date: true,
   type: true,
   startTime: true,
