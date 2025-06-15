@@ -200,7 +200,7 @@ export default function UserManagement() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => setLocation("/")}
+            onClick={() => setLocation("/dashboard")}
           >
             <Home className="h-4 w-4 mr-2" />
             Home
