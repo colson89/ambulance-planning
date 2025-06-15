@@ -13,46 +13,54 @@ interface OpenSlotWarningProps {
 }
 
 export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningProps) {
-  // Detecteren voor zowel dag- als nachtshifts
-  const allShifts = shifts.filter(s => 
+  // Alleen detecteren voor nachtshifts
+  const nightShifts = shifts.filter(s => 
+    s.type === 'night' && 
     s.startTime && 
     s.endTime && 
     s.status !== 'open'
   );
   
-  if (allShifts.length === 0) return null;
-
-  // Check coverage voor hele 24-uurs periode (07:00-07:00 volgende dag)
-  const timeSlots = Array(24).fill(0); // 07:00-07:00 = 24 uur slots
+  // Debug: log the shifts for this date
+  if (format(date, 'yyyy-MM-dd') === '2025-07-15') {
+    console.log('15 juli shifts:', nightShifts);
+  }
   
-  allShifts.forEach(shift => {
+  if (nightShifts.length === 0) return null;
+
+  // Check coverage voor hele nachtshift periode (19:00-07:00)
+  const timeSlots = Array(12).fill(0); // 19:00-07:00 = 12 uur slots
+  
+  nightShifts.forEach(shift => {
     const startTime = new Date(shift.startTime!);
     const endTime = new Date(shift.endTime!);
     
     const startHour = startTime.getUTCHours();
     const endHour = endTime.getUTCHours();
     
-    // Map hours to slots starting from 07:00 (slot 0 = 07:00, slot 1 = 08:00, etc.)
-    let startSlot = startHour >= 7 ? startHour - 7 : startHour + 17;
-    let endSlot = endHour >= 7 ? endHour - 7 : endHour + 17;
+    // Map hours to slots (19=0, 20=1, ..., 23=4, 0=5, 1=6, ..., 6=11)
+    let startSlot = startHour >= 19 ? startHour - 19 : startHour + 5;
+    let endSlot = endHour >= 19 ? endHour - 19 : endHour + 5;
     
-    // Handle shifts that cross midnight
-    if (startHour >= 7 && endHour <= 7 && endHour < startHour) {
+    // Handle all shifts properly
+    if (startHour >= 19 && endHour <= 7) {
       // Shift crosses midnight (e.g., 19:00-07:00 or 23:00-07:00)
-      for (let i = startSlot; i < 24; i++) { // From start until midnight
+      for (let i = startSlot; i < 5; i++) { // 19:00-23:59
         timeSlots[i]++;
       }
-      for (let i = 0; i < endSlot; i++) { // From midnight until end
+      if (endHour > 0) {
+        for (let i = 5; i < endSlot && i < 12; i++) { // 00:00-endHour
+          timeSlots[i]++;
+        }
+      }
+    } else if (startHour >= 19 && endHour >= 19) {
+      // Shift within same day after 19:00 (e.g., 19:00-23:00)
+      for (let i = startSlot; i < endSlot && i < 5; i++) {
         timeSlots[i]++;
       }
-    } else if (startHour >= 7) {
-      // Normal shift within same day starting after 07:00
-      for (let i = startSlot; i < endSlot && i < 24; i++) {
-        timeSlots[i]++;
-      }
-    } else {
-      // Early morning shift ending before 07:00
-      for (let i = startSlot; i < endSlot && i < 24; i++) {
+    } else if (startHour < 7 && endHour <= 7) {
+      // Early morning shift (e.g., 00:00-07:00)
+      for (let i = 5; i < endSlot && i < 12; i++) {
         timeSlots[i]++;
       }
     }
