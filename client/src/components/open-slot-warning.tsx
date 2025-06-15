@@ -33,21 +33,29 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
     const startHour = startTime.getUTCHours();
     const endHour = endTime.getUTCHours();
     
-    // Map hours to slots (19=0, 20=1, ..., 23=4, 0=5, 1=6, ..., 7=12)
+    // Map hours to slots (19=0, 20=1, ..., 23=4, 0=5, 1=6, ..., 6=11, 7=12)
     let startSlot = startHour >= 19 ? startHour - 19 : startHour + 5;
     let endSlot = endHour >= 19 ? endHour - 19 : endHour + 5;
     
-    // Handle wraparound shifts (cross midnight)
-    if (startSlot <= endSlot) {
-      for (let i = startSlot; i < endSlot && i < 12; i++) {
+    // Handle all shifts properly
+    if (startHour >= 19 && endHour <= 7) {
+      // Shift crosses midnight (e.g., 19:00-07:00 or 23:00-07:00)
+      for (let i = startSlot; i < 5; i++) { // 19:00-23:59
         timeSlots[i]++;
       }
-    } else {
-      // Shift crosses midnight
-      for (let i = startSlot; i < 12; i++) {
+      if (endHour > 0) {
+        for (let i = 5; i < endSlot && i < 12; i++) { // 00:00-endHour
+          timeSlots[i]++;
+        }
+      }
+    } else if (startHour >= 19 && endHour >= 19) {
+      // Shift within same day after 19:00 (e.g., 19:00-23:00)
+      for (let i = startSlot; i < endSlot && i < 5; i++) {
         timeSlots[i]++;
       }
-      for (let i = 0; i < endSlot && i < 12; i++) {
+    } else if (startHour < 7 && endHour <= 7) {
+      // Early morning shift (e.g., 00:00-07:00)
+      for (let i = 5; i < endSlot && i < 12; i++) {
         timeSlots[i]++;
       }
     }
@@ -77,7 +85,7 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
     }
   }
   
-  // Check final gap
+  // Check final gap at end of night period
   if (gapStart !== -1) {
     const startHour = gapStart < 5 ? gapStart + 19 : gapStart - 5;
     openSlots.push({
