@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -51,7 +51,11 @@ export default function Dashboard() {
     queryKey: ["/api/preferences/all"],
   });
 
-  const isLoading = shiftsLoading || usersLoading || preferencesLoading;
+  const { data: stations = [], isLoading: stationsLoading } = useQuery<any[]>({
+    queryKey: ["/api/stations"],
+  });
+
+  const isLoading = shiftsLoading || usersLoading || preferencesLoading || stationsLoading;
   
   // Functie om beschikbare medewerkers te tonen op basis van voorkeuren
   const getUsersAvailableForDate = (date: Date | null, shiftType: "day" | "night") => {
@@ -272,11 +276,23 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           {user && (
-            <div className="flex items-center gap-2 mt-1">
-              <UserIcon className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                Ingelogd als: <span className="font-medium text-foreground">{user.username}</span> ({user.firstName} {user.lastName})
-              </span>
+            <div className="flex items-center gap-4 mt-1">
+              <div className="flex items-center gap-2">
+                <UserIcon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Ingelogd als: <span className="font-medium text-foreground">{user.username}</span> ({user.firstName} {user.lastName})
+                </span>
+              </div>
+              {user && stations.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Post: <span className="font-medium text-foreground">
+                      {stations.find(s => s.id === user.stationId)?.displayName || 'Onbekend'}
+                    </span>
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
