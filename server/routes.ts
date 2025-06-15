@@ -28,6 +28,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     next();
   };
+
+  // Station management routes
+  app.get("/api/stations", async (req, res) => {
+    try {
+      const stations = await storage.getAllStations();
+      res.json(stations);
+    } catch (error) {
+      console.error("Error getting stations:", error);
+      res.status(500).json({ message: "Failed to get stations" });
+    }
+  });
+
+  app.get("/api/stations/:id", async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.id);
+      const station = await storage.getStation(stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station not found" });
+      }
+      res.json(station);
+    } catch (error) {
+      console.error("Error getting station:", error);
+      res.status(500).json({ message: "Failed to get station" });
+    }
+  });
   
   // Speciale route voor noodgeval login (ALLEEN VOOR ONTWIKKELING)
   app.post("/api/dev-login", async (req, res) => {
