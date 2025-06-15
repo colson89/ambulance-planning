@@ -18,7 +18,7 @@ import StationSelect from "@/pages/station-select";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={StationSelect} />
+      <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/shifts" component={ShiftPlanner} />
       <ProtectedRoute path="/profile" component={Profile} />
@@ -26,6 +26,7 @@ function Router() {
       <ProtectedRoute path="/schedule" component={ScheduleGenerator} />
       <ProtectedRoute path="/settings" component={WeekdaySettings} />
       <ProtectedRoute path="/statistics" component={Statistics} />
+      <Route path="/station-select" component={StationSelect} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

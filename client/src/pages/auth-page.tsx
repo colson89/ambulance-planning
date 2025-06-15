@@ -18,7 +18,7 @@ export default function AuthPage() {
     // Check if station was selected
     const stationData = sessionStorage.getItem("selectedStation");
     if (!stationData) {
-      setLocation("/");
+      setLocation("/station-select");
       return;
     }
     setSelectedStation(JSON.parse(stationData));
@@ -47,7 +47,7 @@ export default function AuthPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setLocation("/")}
+                onClick={() => setLocation("/station-select")}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
