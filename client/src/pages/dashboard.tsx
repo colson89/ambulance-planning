@@ -250,6 +250,57 @@ export default function Dashboard() {
     });
   }, [shifts, selectedMonth, selectedYear]);
 
+  // Functie om open tijdslots te detecteren voor een specifieke datum
+  const detectOpenTimeSlots = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const nightShifts = filteredShifts.filter(shift => 
+      format(new Date(shift.date), 'yyyy-MM-dd') === dateStr && shift.type === 'night'
+    );
+
+    if (nightShifts.length === 0) return [];
+
+    const openSlots = [];
+    
+    // Controleer of er gaten zijn in de nachtshift coverage (19:00-07:00)
+    const nightStart = 19; // 19:00
+    const nightEnd = 31; // 07:00 volgende dag (31 = 24 + 7)
+    
+    // Sorteer shifts op starttijd
+    nightShifts.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    
+    let currentHour = nightStart;
+    
+    for (const shift of nightShifts) {
+      const shiftStart = new Date(shift.startTime).getHours() + (new Date(shift.startTime).getDate() > new Date(shift.date).getDate() ? 24 : 0);
+      const shiftEnd = new Date(shift.endTime).getHours() + (new Date(shift.endTime).getDate() > new Date(shift.date).getDate() ? 24 : 0);
+      
+      // Als er een gat is tussen current hour en shift start
+      if (currentHour < shiftStart) {
+        const endHour = Math.min(shiftStart, nightEnd);
+        openSlots.push({
+          startHour: currentHour >= 24 ? currentHour - 24 : currentHour,
+          endHour: endHour >= 24 ? endHour - 24 : endHour,
+          date: dateStr,
+          type: 'night'
+        });
+      }
+      
+      currentHour = Math.max(currentHour, shiftEnd);
+    }
+    
+    // Controleer of er nog tijd over is na de laatste shift
+    if (currentHour < nightEnd) {
+      openSlots.push({
+        startHour: currentHour >= 24 ? currentHour - 24 : currentHour,
+        endHour: nightEnd >= 24 ? nightEnd - 24 : nightEnd,
+        date: dateStr,
+        type: 'night'
+      });
+    }
+    
+    return openSlots;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -435,10 +486,15 @@ export default function Dashboard() {
                     .map((shift) => {
                       const shiftUser = users.find(u => u.id === shift.userId);
                       const isCurrentUserShift = shift.userId === user?.id;
+                      
+                      // Detecteer open slots voor deze datum en shift type
+                      const openSlots = detectOpenTimeSlots(new Date(shift.date));
+                      const hasOpenSlots = openSlots.length > 0;
+                      
                       return (
                         <TableRow 
                           key={shift.id}
-                          className={`${shift.status === "open" ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""}`}
+                          className={`${shift.status === "open" ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""} ${hasOpenSlots ? "border-l-4 border-l-orange-500" : ""}`}
                         >
                           <TableCell>
                             <Button 
@@ -504,6 +560,11 @@ export default function Dashboard() {
                               ) : null}
                               {shift.status === "open" ? "Open" : "Ingepland"}
                             </div>
+                            {hasOpenSlots && (
+                              <div className="text-xs text-orange-600 mt-1">
+                                ⚠️ Open tijdslots gedetecteerd
+                              </div>
+                            )}
                           </TableCell>
                         </TableRow>
                       );
