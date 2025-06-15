@@ -311,10 +311,10 @@ export default function ShiftPlanner() {
         <h1 className="text-3xl font-bold">Shift Planner</h1>
         <Button
           variant="outline"
-          onClick={() => setLocation("/")}
+          onClick={() => setLocation("/dashboard")}
         >
           <Home className="h-4 w-4 mr-2" />
-          Home
+          Dashboard
         </Button>
       </div>
 

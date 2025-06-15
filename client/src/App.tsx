@@ -18,8 +18,8 @@ import StationSelect from "@/pages/station-select";
 function Router() {
   return (
     <Switch>
-      <Route path="/stations" component={StationSelect} />
-      <ProtectedRoute path="/" component={Dashboard} />
+      <Route path="/" component={StationSelect} />
+      <ProtectedRoute path="/dashboard" component={Dashboard} />
       <ProtectedRoute path="/shifts" component={ShiftPlanner} />
       <ProtectedRoute path="/profile" component={Profile} />
       <ProtectedRoute path="/users" component={UserManagement} />

@@ -5,16 +5,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
-import { Home } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Home, Building2, ArrowLeft } from "lucide-react";
+import type { Station } from "@shared/schema";
 
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
+  const [selectedStation, setSelectedStation] = useState<Station | null>(null);
+
+  useEffect(() => {
+    // Check if station was selected
+    const stationData = sessionStorage.getItem("selectedStation");
+    if (!stationData) {
+      setLocation("/");
+      return;
+    }
+    setSelectedStation(JSON.parse(stationData));
+  }, [setLocation]);
 
   useEffect(() => {
     if (user) {
-      setLocation("/");
+      setLocation("/dashboard");
     }
   }, [user, setLocation]);
 
@@ -30,20 +42,32 @@ export default function AuthPage() {
     <div className="min-h-screen grid md:grid-cols-2">
       <div className="p-8 flex items-center justify-center">
         <Card className="w-full max-w-md">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Ambulance Shift Planner</CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLocation("/")}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Home className="h-4 w-4 mr-2" />
-              Home
-            </Button>
+          <CardHeader>
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLocation("/")}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Andere post
+              </Button>
+            </div>
+            {selectedStation && (
+              <div className="text-center mb-4">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                  <span className="text-lg font-semibold">{selectedStation.displayName}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Log in om door te gaan naar het planning systeem
+                </p>
+              </div>
+            )}
+            <CardTitle className="text-center">Inloggen</CardTitle>
           </CardHeader>
           <CardContent>
-            <h2 className="text-lg font-medium mb-4">Login</h2>
             <Form {...loginForm}>
               <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}>
                 <div className="space-y-4">
