@@ -414,6 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Maak een "unavailable" voorkeur
             await storage.createShiftPreference({
               userId: user.id,
+              stationId: user.stationId,
               date: currentDate,
               type: "unavailable",
               startTime: null,
