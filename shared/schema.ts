@@ -2,6 +2,16 @@ import { pgTable, text, serial, integer, timestamp, boolean, varchar } from "dri
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Brandweerposten tabel
+export const stations = pgTable("stations", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  code: text("code").notNull().unique(), // bijv. "westerlo", "mol"
+  displayName: text("display_name").notNull(), // bijv. "ZW Westerlo", "ZW Mol"
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -10,12 +20,14 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   role: text("role", { enum: ["admin", "ambulancier"] }).notNull().default("ambulancier"),
   isAdmin: boolean("is_admin").notNull().default(false),
-  hours: integer("hours").notNull().default(24)
+  hours: integer("hours").notNull().default(24),
+  stationId: integer("station_id").notNull().references(() => stations.id)
 });
 
 export const shifts = pgTable("shifts", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  stationId: integer("station_id").notNull().references(() => stations.id),
   date: timestamp("date").notNull(),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
@@ -32,6 +44,7 @@ export const shifts = pgTable("shifts", {
 export const shiftPreferences = pgTable("shift_preferences", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  stationId: integer("station_id").notNull().references(() => stations.id),
   date: timestamp("date").notNull(),
   type: text("type", { enum: ["day", "night", "unavailable"] }).notNull(),
   startTime: timestamp("start_time"),  
@@ -93,6 +106,7 @@ export const systemSettings = pgTable("system_settings", {
 // Weekdag configuratie voor shift generatie
 export const weekdayConfigs = pgTable("weekday_configs", {
   id: serial("id").primaryKey(),
+  stationId: integer("station_id").notNull().references(() => stations.id),
   dayOfWeek: integer("day_of_week").notNull(), // 0 = Sunday, 1 = Monday, etc.
   enableDayShifts: boolean("enable_day_shifts").notNull().default(false),
   enableNightShifts: boolean("enable_night_shifts").notNull().default(true),
