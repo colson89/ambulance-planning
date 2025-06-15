@@ -264,7 +264,17 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          {user && (
+            <div className="flex items-center gap-2 mt-1">
+              <UserIcon className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">
+                Ingelogd als: <span className="font-medium text-foreground">{user.username}</span> ({user.firstName} {user.lastName})
+              </span>
+            </div>
+          )}
+        </div>
         <div className="flex gap-2">
           {user?.role === "admin" && (
             <>
