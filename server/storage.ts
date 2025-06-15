@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment } from "@shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc } from "drizzle-orm";
 import session from "express-session";
@@ -17,6 +17,12 @@ async function hashPassword(password: string) {
 }
 
 export interface IStorage {
+  // Station management
+  getAllStations(): Promise<Station[]>;
+  getStation(id: number): Promise<Station | undefined>;
+  getStationByCode(code: string): Promise<Station | undefined>;
+  createStation(station: InsertStation): Promise<Station>;
+  
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;

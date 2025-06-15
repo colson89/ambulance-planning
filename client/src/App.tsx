@@ -13,10 +13,12 @@ import UserManagement from "@/pages/user-management";
 import ScheduleGenerator from "@/pages/schedule-generator";
 import WeekdaySettings from "@/pages/weekday-settings";
 import Statistics from "@/pages/statistics";
+import StationSelect from "@/pages/station-select";
 
 function Router() {
   return (
     <Switch>
+      <Route path="/stations" component={StationSelect} />
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/shifts" component={ShiftPlanner} />
       <ProtectedRoute path="/profile" component={Profile} />

@@ -118,6 +118,7 @@ export const weekdayConfigs = pgTable("weekday_configs", {
 export const userComments = pgTable("user_comments", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  stationId: integer("station_id").notNull().references(() => stations.id),
   month: integer("month").notNull(),
   year: integer("year").notNull(),
   comment: text("comment").notNull(),
@@ -134,3 +135,8 @@ export const insertUserCommentSchema = createInsertSchema(userComments, {
 });
 export type UserComment = typeof userComments.$inferSelect;
 export type InsertUserComment = z.infer<typeof insertUserCommentSchema>;
+
+// Station types
+export const insertStationSchema = createInsertSchema(stations);
+export type Station = typeof stations.$inferSelect;
+export type InsertStation = z.infer<typeof insertStationSchema>;
