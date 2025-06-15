@@ -31,15 +31,15 @@ export interface IStorage {
   updateUser(userId: number, updateData: Partial<User>): Promise<User>;
   updateUserPassword(userId: number, newPassword: string): Promise<User>;
   deleteUser(userId: number): Promise<void>;
-  getAllShifts(): Promise<Shift[]>;
-  getShiftsByMonth(month: number, year: number): Promise<Shift[]>;
+  getAllShifts(stationId?: number): Promise<Shift[]>;
+  getShiftsByMonth(month: number, year: number, stationId?: number): Promise<Shift[]>;
   createShift(shift: any): Promise<Shift>;
   getUserShiftPreferences(userId: number, month: number, year: number): Promise<ShiftPreference[]>;
   createShiftPreference(preference: InsertShiftPreference): Promise<ShiftPreference>;
   updateShiftPreference(id: number, updateData: Partial<ShiftPreference>): Promise<ShiftPreference>;
   deleteShiftPreference(id: number): Promise<void>;
   getOpenShiftsForPlanning(month: number, year: number): Promise<Shift[]>;
-  generateMonthlySchedule(month: number, year: number): Promise<Shift[]>;
+  generateMonthlySchedule(month: number, year: number, stationId?: number): Promise<Shift[]>;
   sessionStore: session.Store;
   getShiftPreference(id: number): Promise<ShiftPreference | undefined>;
   getShift(id: number): Promise<Shift | undefined>;
@@ -152,19 +152,26 @@ export class DatabaseStorage implements IStorage {
     await db.delete(users).where(eq(users.id, userId));
   }
 
-  async getAllShifts(): Promise<Shift[]> {
+  async getAllShifts(stationId?: number): Promise<Shift[]> {
+    if (stationId) {
+      return await db.select().from(shifts).where(eq(shifts.stationId, stationId));
+    }
     return await db.select().from(shifts);
   }
 
-  async getShiftsByMonth(month: number, year: number): Promise<Shift[]> {
+  async getShiftsByMonth(month: number, year: number, stationId?: number): Promise<Shift[]> {
+    const conditions = [
+      eq(shifts.month, month),
+      eq(shifts.year, year)
+    ];
+    
+    if (stationId) {
+      conditions.push(eq(shifts.stationId, stationId));
+    }
+    
     return await db.select()
       .from(shifts)
-      .where(
-        and(
-          eq(shifts.month, month),
-          eq(shifts.year, year)
-        )
-      );
+      .where(and(...conditions));
   }
 
   async createShift(shiftData: any): Promise<Shift> {

@@ -581,13 +581,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/shifts", requireAuth, async (req, res) => {
     try {
       let shifts;
+      const userStationId = req.user?.stationId;
       
       if (req.query.month && req.query.year) {
         const month = parseInt(req.query.month as string);
         const year = parseInt(req.query.year as string);
-        shifts = await storage.getShiftsByMonth(month, year);
+        shifts = await storage.getShiftsByMonth(month, year, userStationId);
       } else {
-        shifts = await storage.getAllShifts();
+        shifts = await storage.getAllShifts(userStationId);
       }
       
       res.status(200).json(shifts);
@@ -605,10 +606,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Month and year are required" });
       }
       
-      console.log(`Deleting all shifts for ${month}/${year}`);
+      const userStationId = req.user?.stationId;
+      console.log(`Deleting all shifts for ${month}/${year} for station ${userStationId}`);
       
-      // Haal eerst alle shifts op voor deze maand/jaar
-      const shifts = await storage.getShiftsByMonth(parseInt(month), parseInt(year));
+      // Haal eerst alle shifts op voor deze maand/jaar en station
+      const shifts = await storage.getShiftsByMonth(parseInt(month), parseInt(year), userStationId);
       const totalShifts = shifts.length;
       
       console.log(`[0%] Begonnen met verwijderen van ${totalShifts} shifts...`);
@@ -649,9 +651,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/shifts/month/:month/:year", requireAuth, async (req, res) => {
     try {
       const { month, year } = req.params;
+      const userStationId = req.user?.stationId;
       const shifts = await storage.getShiftsByMonth(
         parseInt(month),
-        parseInt(year)
+        parseInt(year),
+        userStationId
       );
       res.json(shifts);
     } catch (error) {
