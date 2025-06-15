@@ -35,6 +35,8 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
   
   if (nightShifts.length === 0) return null;
 
+
+
   // Convert shifts to time coverage
   const timeSlots = Array.from({ length: 24 }, (_, hour) => {
     let staffCount = 0;
@@ -46,9 +48,9 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
       const startDate = shift.startTime instanceof Date ? shift.startTime : new Date(shift.startTime);
       const endDate = shift.endTime instanceof Date ? shift.endTime : new Date(shift.endTime);
       
-      // Get local hours using getHours() which accounts for timezone
-      const startHour = startDate.getHours();
-      const endHour = endDate.getHours();
+      // Use UTC hours directly since the times are stored in UTC but represent local time
+      const startHour = startDate.getUTCHours();
+      const endHour = endDate.getUTCHours();
 
       // Handle overnight shifts (endTime is next day)
       if (endDate.getDate() !== startDate.getDate()) {
@@ -68,7 +70,6 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
   });
 
 
-
   // Find gaps where we have less than 2 people for night coverage (19:00-07:00)
   const suggestions: any[] = [];
   
@@ -79,6 +80,11 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
   for (let i = 0; i < nightHours.length; i++) {
     const hour = nightHours[i];
     const staffCount = timeSlots[hour];
+    
+    // Debug for a specific date to ensure detection works
+    if (date.toDateString() === 'Tue Jul 01 2025') {
+      console.log(`Hour ${hour}: ${staffCount} staff (need 2)`);
+    }
     
     if (staffCount < 2) {
       if (gapStart === -1) {
@@ -122,6 +128,11 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
     };
     
     suggestions.push(gapSuggestion);
+  }
+  
+  // Debug output for July 1st
+  if (date.toDateString() === 'Tue Jul 01 2025') {
+    console.log(`Detected gaps:`, suggestions);
   }
 
   if (suggestions.length === 0) return null;
