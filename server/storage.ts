@@ -695,6 +695,7 @@ export class DatabaseStorage implements IStorage {
               startTime: new Date(year, month - 1, day, 7, 0, 0),
               endTime: new Date(year, month - 1, day, 19, 0, 0),
               status: "planned" as const,
+              stationId: stationId || 1,
               month,
               year,
               isSplitShift: false
@@ -728,6 +729,7 @@ export class DatabaseStorage implements IStorage {
               startTime: new Date(year, month - 1, day, 7, 0, 0),
               endTime: new Date(year, month - 1, day, 19, 0, 0),
               status: "planned" as const,
+              stationId: stationId || 1,
               month,
               year,
               isSplitShift: false
@@ -761,6 +763,7 @@ export class DatabaseStorage implements IStorage {
                   startTime: new Date(year, month - 1, day, 7, 0, 0),
                   endTime: new Date(year, month - 1, day, 13, 0, 0), // Tot 13:00
                   status: "planned" as const,
+                  stationId: stationId || 1,
                   month,
                   year,
                   isSplitShift: true,
@@ -799,6 +802,7 @@ export class DatabaseStorage implements IStorage {
                   startTime: new Date(year, month - 1, day, 13, 0, 0), // Vanaf 13:00
                   endTime: new Date(year, month - 1, day, 19, 0, 0), // Tot 19:00
                   status: "planned" as const,
+                  stationId: stationId || 1,
                   month,
                   year,
                   isSplitShift: true,

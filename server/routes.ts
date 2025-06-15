@@ -397,6 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Creëer de beschikbaarheidsvoorkeur
             await storage.createShiftPreference({
               userId: user.id,
+              stationId: user.stationId,
               date: currentDate,
               type: shiftType,
               startTime: startTime,
@@ -667,9 +668,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/shifts/generate/:month/:year", requireAdmin, async (req, res) => {
     try {
       const { month, year } = req.params;
+      const userStationId = req.user?.stationId;
       const generatedShifts = await storage.generateMonthlySchedule(
         parseInt(month),
-        parseInt(year)
+        parseInt(year),
+        userStationId
       );
       res.status(200).json(generatedShifts);
     } catch (error) {
@@ -681,18 +684,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // New API endpoint for schedule generation
   // TIJDELIJKE AANPASSING: veranderd van requireAdmin naar publiek toegankelijk
   // zodat we de functionaliteit kunnen demonstreren
-  app.post("/api/schedule/generate", async (req, res) => {
+  app.post("/api/schedule/generate", requireAuth, async (req, res) => {
     try {
       const { month, year } = req.body;
-      console.log(`[0%] Planning generatie gestart voor ${month}/${year}`);
+      const userStationId = req.user?.stationId;
+      console.log(`[0%] Planning generatie gestart voor ${month}/${year} voor station ${userStationId}`);
       
       // Initialize progress tracking
       generateProgress = { percentage: 0, message: "Planning generatie gestart...", isActive: true };
       
-      const generatedShifts = await storage.generateMonthlySchedule(month, year, (percentage, message) => {
-        generateProgress.percentage = percentage;
-        generateProgress.message = message;
-      });
+      const generatedShifts = await storage.generateMonthlySchedule(month, year, userStationId);
       
       // Complete progress tracking
       generateProgress = { percentage: 100, message: "Planning voltooid!", isActive: false };
