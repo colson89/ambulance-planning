@@ -25,10 +25,7 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
   
   if (nightShifts.length === 0) return null;
 
-  // Debug: log the shifts for July 1st
-  if (format(date, 'yyyy-MM-dd') === '2025-07-01') {
-    console.log('1 juli shifts:', nightShifts);
-  }
+
 
   // Check coverage voor hele nachtshift periode (19:00-07:00)
   const timeSlots = Array(12).fill(0); // 19:00-07:00 = 12 uur slots
@@ -68,11 +65,7 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
     }
   });
 
-  // Debug: log timeSlots for July 1st
-  if (format(date, 'yyyy-MM-dd') === '2025-07-01') {
-    console.log('1 juli timeSlots:', timeSlots);
-    console.log('TimeSlots mapping: 19=0, 20=1, 21=2, 22=3, 23=4, 0=5, 1=6, 2=7, 3=8, 4=9, 5=10, 6=11');
-  }
+
 
   // Find understaffed slots and generate smart suggestions
   const suggestions = [];
@@ -102,13 +95,17 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
     const startHour = period.start < 5 ? period.start + 19 : period.start - 5;
     const endHour = period.end < 5 ? period.end + 19 : (period.end === 12 ? 7 : period.end - 5);
     
+    // Calculate current staff for this period
+    const periodSlots = timeSlots.slice(period.start, period.end === 12 ? 12 : period.end);
+    const currentStaff = Math.min(...periodSlots);
+    
     // Always suggest the exact gap period
     const gapSuggestion = {
       start: startHour,
       end: endHour,
       startFormatted: `${startHour.toString().padStart(2, '0')}:00`,
       endFormatted: endHour === 7 ? "07:00" : `${endHour.toString().padStart(2, '0')}:00`,
-      currentStaff: Math.min(...timeSlots.slice(period.start, period.end === 12 ? 12 : period.end)),
+      currentStaff: currentStaff,
       neededStaff: 2,
       type: 'gap'
     };
