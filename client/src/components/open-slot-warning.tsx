@@ -11,7 +11,7 @@ interface OpenSlotWarningProps {
 }
 
 export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningProps) {
-  // Alleen detecteren voor nachtshifts met split shifts
+  // Alleen detecteren voor nachtshifts
   const nightShifts = shifts.filter(s => 
     s.type === 'night' && 
     s.startTime && 
@@ -19,35 +19,71 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
     s.status !== 'open'
   );
   
-  if (nightShifts.length < 2) return null; // Alleen waarschuwen als er meerdere shifts zijn die mogelijk een gat hebben
+  if (nightShifts.length === 0) return null;
 
-  // Sorteer shifts op starttijd
-  const sortedShifts = nightShifts.sort((a, b) => 
-    new Date(a.startTime!).getTime() - new Date(b.startTime!).getTime()
-  );
-
-  const openSlots = [];
+  // Check coverage voor hele nachtshift periode (19:00-07:00)
+  const timeSlots = Array(12).fill(0); // 19:00-07:00 = 12 uur slots
   
-  // Check of er gaten zijn tussen opeenvolgende shifts
-  for (let i = 0; i < sortedShifts.length - 1; i++) {
-    const currentShift = sortedShifts[i];
-    const nextShift = sortedShifts[i + 1];
+  nightShifts.forEach(shift => {
+    const startTime = new Date(shift.startTime!);
+    const endTime = new Date(shift.endTime!);
     
-    const currentEnd = new Date(currentShift.endTime!);
-    const nextStart = new Date(nextShift.startTime!);
+    const startHour = startTime.getUTCHours();
+    const endHour = endTime.getUTCHours();
     
-    // Als er een gat is van meer dan 5 minuten tussen shifts
-    if (nextStart.getTime() - currentEnd.getTime() > 5 * 60 * 1000) {
-      const endHour = currentEnd.getUTCHours();
-      const startHour = nextStart.getUTCHours();
-      
-      openSlots.push({
-        start: endHour,
-        end: startHour,
-        startFormatted: `${endHour.toString().padStart(2, '0')}:00`,
-        endFormatted: `${startHour.toString().padStart(2, '0')}:00`
-      });
+    // Map hours to slots (19=0, 20=1, ..., 23=4, 0=5, 1=6, ..., 7=12)
+    let startSlot = startHour >= 19 ? startHour - 19 : startHour + 5;
+    let endSlot = endHour >= 19 ? endHour - 19 : endHour + 5;
+    
+    // Handle wraparound shifts (cross midnight)
+    if (startSlot <= endSlot) {
+      for (let i = startSlot; i < endSlot && i < 12; i++) {
+        timeSlots[i]++;
+      }
+    } else {
+      // Shift crosses midnight
+      for (let i = startSlot; i < 12; i++) {
+        timeSlots[i]++;
+      }
+      for (let i = 0; i < endSlot && i < 12; i++) {
+        timeSlots[i]++;
+      }
     }
+  });
+
+  // Find uncovered slots
+  const openSlots = [];
+  let gapStart = -1;
+  
+  for (let i = 0; i < 12; i++) {
+    if (timeSlots[i] === 0) {
+      if (gapStart === -1) gapStart = i;
+    } else {
+      if (gapStart !== -1) {
+        // Found a gap from gapStart to i
+        const startHour = gapStart < 5 ? gapStart + 19 : gapStart - 5;
+        const endHour = i < 5 ? i + 19 : i - 5;
+        
+        openSlots.push({
+          start: startHour,
+          end: endHour,
+          startFormatted: `${startHour.toString().padStart(2, '0')}:00`,
+          endFormatted: `${endHour.toString().padStart(2, '0')}:00`
+        });
+        gapStart = -1;
+      }
+    }
+  }
+  
+  // Check final gap
+  if (gapStart !== -1) {
+    const startHour = gapStart < 5 ? gapStart + 19 : gapStart - 5;
+    openSlots.push({
+      start: startHour,
+      end: 7,
+      startFormatted: `${startHour.toString().padStart(2, '0')}:00`,
+      endFormatted: "07:00"
+    });
   }
 
   if (openSlots.length === 0) return null;
