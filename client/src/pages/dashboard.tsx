@@ -2,12 +2,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2 } from "lucide-react";
+import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Shift, ShiftPreference, User as UserType } from "@shared/schema";
 import { useLocation } from "wouter";
-import { format, addMonths, parse, setMonth, setYear, getMonth, getYear, isEqual, parseISO, isWeekend } from "date-fns";
+import { format, addMonths, parse, setMonth, setYear, getMonth, getYear, isEqual, parseISO, isWeekend, addDays } from "date-fns";
 import { nl } from "date-fns/locale";
 import { useState, useMemo } from "react";
 import {
@@ -56,6 +57,45 @@ export default function Dashboard() {
   });
 
   const isLoading = shiftsLoading || usersLoading || preferencesLoading || stationsLoading;
+
+  // Mutation om handmatig shifts toe te voegen voor open slots
+  const addManualShiftMutation = useMutation({
+    mutationFn: async ({ date, startTime, endTime }: { date: Date, startTime: string, endTime: string }) => {
+      const shiftData = {
+        date: format(date, 'yyyy-MM-dd'),
+        type: 'night',
+        startTime: `${format(date, 'yyyy-MM-dd')}T${startTime}:00.000Z`,
+        endTime: startTime > endTime ? 
+          `${format(addDays(date, 1), 'yyyy-MM-dd')}T${endTime}:00.000Z` : 
+          `${format(date, 'yyyy-MM-dd')}T${endTime}:00.000Z`,
+        status: 'open',
+        isSplitShift: true,
+        stationId: user?.stationId
+      };
+      
+      const response = await apiRequest("POST", "/api/shifts", shiftData);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+      toast({
+        title: "Shift toegevoegd",
+        description: "Open tijdslot is toegevoegd als beschikbare shift",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout bij toevoegen shift",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handler voor handmatig toevoegen van shifts
+  const handleAddShift = (date: Date, startTime: string, endTime: string) => {
+    addManualShiftMutation.mutate({ date, startTime, endTime });
+  };
   
   // Functie om beschikbare medewerkers te tonen op basis van voorkeuren
   const getUsersAvailableForDate = (date: Date | null, shiftType: "day" | "night") => {
