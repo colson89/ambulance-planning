@@ -613,6 +613,29 @@ export default function Dashboard() {
               </Table>
             </div>
           )}
+          
+          {/* Open slot warnings voor datums met gaten in nachtshift coverage */}
+          {filteredShifts.length > 0 && (
+            <div className="mt-6 space-y-4">
+              {Array.from(new Set(filteredShifts.map(s => format(new Date(s.date), 'yyyy-MM-dd'))))
+                .sort()
+                .map(dateStr => {
+                  const date = new Date(dateStr);
+                  const shiftsForDate = filteredShifts.filter(s => 
+                    format(new Date(s.date), 'yyyy-MM-dd') === dateStr
+                  );
+                  
+                  return (
+                    <OpenSlotWarning
+                      key={dateStr}
+                      date={date}
+                      shifts={shiftsForDate}
+                      onAddShift={handleAddShift}
+                    />
+                  );
+                })}
+            </div>
+          )}
         </CardContent>
       </Card>
       
