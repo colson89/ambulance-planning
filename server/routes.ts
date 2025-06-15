@@ -609,6 +609,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         userId: req.body.userId || 0, // Default to unassigned
         stationId: req.body.stationId || req.user?.stationId,
+        date: new Date(req.body.date),
+        startTime: new Date(req.body.startTime),
+        endTime: new Date(req.body.endTime),
         month: new Date(req.body.date).getMonth() + 1,
         year: new Date(req.body.date).getFullYear()
       };
