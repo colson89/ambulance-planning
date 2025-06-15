@@ -67,9 +67,7 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
     return staffCount;
   });
 
-  if (date.toDateString() === 'Tue Jul 01 2025') {
-    console.log(`[DEBUG] Time slots coverage:`, timeSlots.map((count, hour) => `${hour}:00=${count}`).join(', '));
-  }
+
 
   // Find gaps where we have less than 2 people for night coverage (19:00-07:00)
   const suggestions: any[] = [];
