@@ -1184,6 +1184,37 @@ export default function ScheduleGenerator() {
               </AlertDescription>
             </Alert>
           )}
+          
+          {/* Open slot warnings voor datums met gaten in nachtshift coverage */}
+          {shifts.filter(shift => {
+              const shiftDate = new Date(shift.date);
+              return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
+            }).length > 0 && (
+            <div className="mt-6 space-y-4">
+              {Array.from(new Set(shifts
+                .filter(shift => {
+                  const shiftDate = new Date(shift.date);
+                  return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
+                })
+                .map(s => format(new Date(s.date), 'yyyy-MM-dd'))))
+                .sort()
+                .map(dateStr => {
+                  const date = new Date(dateStr);
+                  const shiftsForDate = shifts.filter(s => 
+                    format(new Date(s.date), 'yyyy-MM-dd') === dateStr
+                  );
+                  
+                  return (
+                    <OpenSlotWarning
+                      key={dateStr}
+                      date={date}
+                      shifts={shiftsForDate}
+                      onAddShift={handleAddShift}
+                    />
+                  );
+                })}
+            </div>
+          )}
         </CardContent>
       </Card>
       
