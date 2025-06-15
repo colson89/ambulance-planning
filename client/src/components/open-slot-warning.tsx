@@ -64,27 +64,31 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
 
   // Find gaps where we have less than 2 people for night coverage (19:00-07:00)
   const suggestions: any[] = [];
+  
+  // Check the night period specifically
+  const nightHours = [19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6];
   let gapStart = -1;
-
-  for (let hour = 19; hour <= 30; hour++) {
-    const actualHour = hour >= 24 ? hour - 24 : hour;
-    const staffCount = timeSlots[actualHour];
-
+  
+  for (let i = 0; i < nightHours.length; i++) {
+    const hour = nightHours[i];
+    const staffCount = timeSlots[hour];
+    
     if (staffCount < 2) {
       if (gapStart === -1) {
-        gapStart = hour;
+        gapStart = i; // Store index in nightHours array
       }
     } else {
       if (gapStart !== -1) {
-        const startHour = gapStart >= 24 ? gapStart - 24 : gapStart;
-        const endHour = hour >= 24 ? hour - 24 : hour;
+        // Found end of gap
+        const startHour = nightHours[gapStart];
+        const endHour = nightHours[i];
         
         const gapSuggestion = {
           start: startHour,
           end: endHour,
           startFormatted: String(startHour).padStart(2, '0') + ':00',
           endFormatted: String(endHour).padStart(2, '0') + ':00',
-          currentStaff: Math.min(...timeSlots.slice(Math.min(startHour, endHour), Math.max(startHour, endHour) || 24)),
+          currentStaff: Math.min(...nightHours.slice(gapStart, i).map(h => timeSlots[h])),
           neededStaff: 2,
           type: 'gap'
         };
@@ -94,10 +98,10 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
       }
     }
   }
-
-  // Handle case where gap extends to the end
+  
+  // Handle case where gap extends to the end of night shift
   if (gapStart !== -1) {
-    const startHour = gapStart >= 24 ? gapStart - 24 : gapStart;
+    const startHour = nightHours[gapStart];
     const endHour = 7; // End of night shift
     
     const gapSuggestion = {
@@ -105,7 +109,7 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
       end: endHour,
       startFormatted: String(startHour).padStart(2, '0') + ':00',
       endFormatted: String(endHour).padStart(2, '0') + ':00',
-      currentStaff: Math.min(...timeSlots.slice(startHour, 7)),
+      currentStaff: Math.min(...nightHours.slice(gapStart).map(h => timeSlots[h])),
       neededStaff: 2,
       type: 'gap'
     };
