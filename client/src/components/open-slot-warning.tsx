@@ -2,18 +2,26 @@ import { AlertTriangle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import type { Shift } from "@shared/schema";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
+import { useState } from "react";
 
 interface OpenSlotWarningProps {
   date: Date;
   shifts: Shift[];
-  onAddShift?: (date: Date, startTime: string, endTime: string) => void;
+  onAddShift?: (date: Date, startTime: string, endTime: string, userId?: number) => void;
   showAddButton?: boolean;
+  users?: Array<{id: number, firstName: string, lastName: string}>;
 }
 
-export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = false }: OpenSlotWarningProps) {
+export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = false, users = [] }: OpenSlotWarningProps) {
+  const [showDialog, setShowDialog] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>("0");
+  const [pendingShift, setPendingShift] = useState<{startTime: string, endTime: string} | null>(null);
   // Alleen detecteren voor nachtshifts
   const nightShifts = shifts.filter(s => 
     s.type === 'night' && 
@@ -142,7 +150,14 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => onAddShift(date, suggestion.startFormatted, suggestion.endFormatted)}
+                  onClick={() => {
+                    setPendingShift({
+                      startTime: suggestion.startFormatted,
+                      endTime: suggestion.endFormatted
+                    });
+                    setSelectedUserId("0");
+                    setShowDialog(true);
+                  }}
                   className="text-orange-700 border-orange-300 hover:bg-orange-100"
                 >
                   <Plus className="h-4 w-4 mr-1" />
@@ -154,5 +169,70 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
         </div>
       </CardContent>
     </Card>
-  );
+    
+    {/* Dialog for user selection */}
+    {showDialog && (
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Shift Toevoegen</DialogTitle>
+          </DialogHeader>
+          
+          {pendingShift && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="date">Datum</Label>
+                <div className="p-2 border rounded-md bg-gray-50">
+                  {format(date, "dd MMMM yyyy", { locale: nl })}
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="time">Tijd</Label>
+                <div className="p-2 border rounded-md bg-gray-50">
+                  {pendingShift.startTime} - {pendingShift.endTime}
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="ambulancier">Ambulancier</Label>
+                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecteer ambulancier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">-- Open shift (niemand toegewezen) --</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id.toString()}>
+                        {`${user.firstName} ${user.lastName}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>
+              Annuleren
+            </Button>
+            <Button 
+              onClick={() => {
+                if (pendingShift && onAddShift) {
+                  const userId = selectedUserId === "0" ? undefined : parseInt(selectedUserId);
+                  onAddShift(date, pendingShift.startTime, pendingShift.endTime, userId);
+                  setShowDialog(false);
+                  setPendingShift(null);
+                }
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Shift Toevoegen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )}
+  </>;
 }
