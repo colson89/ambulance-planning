@@ -222,7 +222,9 @@ export default function ScheduleGenerator() {
         title: "Succes",
         description: data.message || `Shifts succesvol verwijderd voor ${format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}`,
       });
-      // Vernieuw de shifts na een update
+      // Vernieuw alle shift-gerelateerde cache entries
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+      queryClient.removeQueries({ queryKey: ["/api/shifts"] });
       refetchShifts();
       setLastGeneratedDate(null);
     },
