@@ -63,46 +63,64 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
     }
   });
 
-  // Find understaffed slots (need 2 people, currently have < 2)
-  const openSlots = [];
-  let gapStart = -1;
+  // Find understaffed slots and generate smart suggestions
+  const suggestions = [];
+  
+  // Find continuous understaffed periods
+  const understaffedPeriods = [];
+  let periodStart = -1;
   
   for (let i = 0; i < 12; i++) {
-    if (timeSlots[i] < 2) { // Need at least 2 people
-      if (gapStart === -1) gapStart = i;
+    if (timeSlots[i] < 2) {
+      if (periodStart === -1) periodStart = i;
     } else {
-      if (gapStart !== -1) {
-        // Found an understaffed period from gapStart to i
-        const startHour = gapStart < 5 ? gapStart + 19 : gapStart - 5;
-        const endHour = i < 5 ? i + 19 : i - 5;
-        
-        openSlots.push({
-          start: startHour,
-          end: endHour,
-          startFormatted: `${startHour.toString().padStart(2, '0')}:00`,
-          endFormatted: `${endHour.toString().padStart(2, '0')}:00`,
-          currentStaff: Math.min(...timeSlots.slice(gapStart, i)),
-          neededStaff: 2
-        });
-        gapStart = -1;
+      if (periodStart !== -1) {
+        understaffedPeriods.push({ start: periodStart, end: i });
+        periodStart = -1;
       }
     }
   }
   
-  // Check final gap at end of night period
-  if (gapStart !== -1) {
-    const startHour = gapStart < 5 ? gapStart + 19 : gapStart - 5;
-    openSlots.push({
-      start: startHour,
-      end: 7,
-      startFormatted: `${startHour.toString().padStart(2, '0')}:00`,
-      endFormatted: "07:00",
-      currentStaff: Math.min(...timeSlots.slice(gapStart)),
-      neededStaff: 2
-    });
+  // Check final period
+  if (periodStart !== -1) {
+    understaffedPeriods.push({ start: periodStart, end: 12 });
   }
+  
+  // Generate smart suggestions for each understaffed period
+  understaffedPeriods.forEach(period => {
+    const startHour = period.start < 5 ? period.start + 19 : period.start - 5;
+    const endHour = period.end < 5 ? period.end + 19 : (period.end === 12 ? 7 : period.end - 5);
+    
+    // Always suggest the exact gap period
+    const gapSuggestion = {
+      start: startHour,
+      end: endHour,
+      startFormatted: `${startHour.toString().padStart(2, '0')}:00`,
+      endFormatted: endHour === 7 ? "07:00" : `${endHour.toString().padStart(2, '0')}:00`,
+      currentStaff: Math.min(...timeSlots.slice(period.start, period.end === 12 ? 12 : period.end)),
+      neededStaff: 2,
+      type: 'gap'
+    };
+    
+    suggestions.push(gapSuggestion);
+    
+    // If the gap doesn't start at 19:00, also suggest full night coverage
+    if (startHour !== 19) {
+      const fullNightSuggestion = {
+        start: 19,
+        end: 7,
+        startFormatted: "19:00",
+        endFormatted: "07:00",
+        currentStaff: Math.min(...timeSlots),
+        neededStaff: 2,
+        type: 'full'
+      };
+      
+      suggestions.push(fullNightSuggestion);
+    }
+  });
 
-  if (openSlots.length === 0) return null;
+  if (suggestions.length === 0) return null;
 
   return (
     <Card className="border-orange-200 bg-orange-50">
@@ -115,21 +133,26 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
         </div>
         
         <div className="space-y-2">
-          {openSlots.map((slot, index) => (
+          {suggestions.map((suggestion, index) => (
             <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-orange-700 border-orange-300">
-                  {slot.startFormatted} - {slot.endFormatted}
+                  {suggestion.startFormatted} - {suggestion.endFormatted}
                 </Badge>
                 <span className="text-sm text-gray-600">
-                  {slot.currentStaff === 0 ? 'Geen dekking' : `${slot.currentStaff}/2 personen`}
+                  {suggestion.currentStaff === 0 ? 'Geen dekking' : `${suggestion.currentStaff}/2 personen`}
                 </span>
+                {suggestion.type === 'full' && (
+                  <Badge variant="secondary" className="text-xs">
+                    Hele nacht
+                  </Badge>
+                )}
               </div>
               
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => onAddShift(date, slot.startFormatted, slot.endFormatted)}
+                onClick={() => onAddShift(date, suggestion.startFormatted, suggestion.endFormatted)}
                 className="text-orange-700 border-orange-300 hover:bg-orange-100"
               >
                 <Plus className="h-4 w-4 mr-1" />
