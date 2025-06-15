@@ -224,17 +224,22 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
-  async generateMonthlySchedule(month: number, year: number, updateProgress?: (percentage: number, message: string) => void): Promise<Shift[]> {
-    // Verwijder bestaande shifts voor deze maand
-    await db.delete(shifts)
-      .where(and(
-        eq(shifts.month, month),
-        eq(shifts.year, year)
-      ));
+  async generateMonthlySchedule(month: number, year: number, stationId?: number): Promise<Shift[]> {
+    // Verwijder bestaande shifts voor deze maand en station
+    const deleteConditions = [
+      eq(shifts.month, month),
+      eq(shifts.year, year)
+    ];
+    if (stationId) {
+      deleteConditions.push(eq(shifts.stationId, stationId));
+    }
+    
+    await db.delete(shifts).where(and(...deleteConditions));
 
-    // Haal alle gebruikers op die uren willen werken
+    // Haal alle gebruikers op van dit station die uren willen werken
     const allUsers = await this.getAllUsers();
-    const activeUsers = allUsers.filter(user => user.hours > 0);
+    const stationUsers = stationId ? allUsers.filter(user => user.stationId === stationId) : allUsers;
+    const activeUsers = stationUsers.filter(user => user.hours > 0);
     
     // Maak eerst een kalender voor de maand
     const daysInMonth = new Date(year, month, 0).getDate();
@@ -541,6 +546,7 @@ export class DatabaseStorage implements IStorage {
               startTime: new Date(year, month - 1, day, 19, 0, 0),
               endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
               status: "planned" as const,
+              stationId: stationId || 1,
               month,
               year,
               isSplitShift: false
@@ -575,6 +581,7 @@ export class DatabaseStorage implements IStorage {
               startTime: new Date(year, month - 1, day, 19, 0, 0),
               endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
               status: "planned" as const,
+              stationId: stationId || 1,
               month,
               year,
               isSplitShift: false
@@ -604,6 +611,7 @@ export class DatabaseStorage implements IStorage {
                   startTime: new Date(year, month - 1, day, 19, 0, 0),
                   endTime: new Date(year, month - 1, day, 23, 0, 0), // Tot 23:00
                   status: "planned" as const,
+                  stationId: stationId || 1,
                   month,
                   year,
                   isSplitShift: true,
@@ -636,6 +644,7 @@ export class DatabaseStorage implements IStorage {
                   startTime: new Date(year, month - 1, day, 23, 0, 0), // Vanaf 23:00
                   endTime: new Date(year, month - 1, day + 1, 7, 0, 0), // Tot 7:00 volgende dag
                   status: "planned" as const,
+                  stationId: stationId || 1,
                   month,
                   year,
                   isSplitShift: true,
