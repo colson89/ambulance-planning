@@ -21,10 +21,7 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
     s.status !== 'open'
   );
   
-  // Debug: log the shifts for this date
-  if (format(date, 'yyyy-MM-dd') === '2025-07-15') {
-    console.log('15 juli shifts:', nightShifts);
-  }
+
   
   if (nightShifts.length === 0) return null;
 
@@ -66,16 +63,16 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
     }
   });
 
-  // Find uncovered slots
+  // Find understaffed slots (need 2 people, currently have < 2)
   const openSlots = [];
   let gapStart = -1;
   
   for (let i = 0; i < 12; i++) {
-    if (timeSlots[i] === 0) {
+    if (timeSlots[i] < 2) { // Need at least 2 people
       if (gapStart === -1) gapStart = i;
     } else {
       if (gapStart !== -1) {
-        // Found a gap from gapStart to i
+        // Found an understaffed period from gapStart to i
         const startHour = gapStart < 5 ? gapStart + 19 : gapStart - 5;
         const endHour = i < 5 ? i + 19 : i - 5;
         
@@ -83,7 +80,9 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
           start: startHour,
           end: endHour,
           startFormatted: `${startHour.toString().padStart(2, '0')}:00`,
-          endFormatted: `${endHour.toString().padStart(2, '0')}:00`
+          endFormatted: `${endHour.toString().padStart(2, '0')}:00`,
+          currentStaff: Math.min(...timeSlots.slice(gapStart, i)),
+          neededStaff: 2
         });
         gapStart = -1;
       }
@@ -97,7 +96,9 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
       start: startHour,
       end: 7,
       startFormatted: `${startHour.toString().padStart(2, '0')}:00`,
-      endFormatted: "07:00"
+      endFormatted: "07:00",
+      currentStaff: Math.min(...timeSlots.slice(gapStart)),
+      neededStaff: 2
     });
   }
 
@@ -120,7 +121,9 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
                 <Badge variant="outline" className="text-orange-700 border-orange-300">
                   {slot.startFormatted} - {slot.endFormatted}
                 </Badge>
-                <span className="text-sm text-gray-600">Geen dekking</span>
+                <span className="text-sm text-gray-600">
+                  {slot.currentStaff === 0 ? 'Geen dekking' : `${slot.currentStaff}/2 personen`}
+                </span>
               </div>
               
               <Button
