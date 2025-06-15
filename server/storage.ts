@@ -1032,31 +1032,20 @@ export class DatabaseStorage implements IStorage {
     };
 
     // FASE 1: Plan alle weekend shiften eerst (voor eerlijke verdeling)
-    if (updateProgress) {
-      updateProgress(0, "Planning weekend shiften eerst...");
-    }
+    console.log("Planning weekend shiften eerst...");
     
     for (const dayInfo of weekendDays) {
       processedDays++;
-      if (updateProgress) {
-        const percentage = Math.round((processedDays / totalDays) * 100);
-        updateProgress(percentage, `Planning weekend dag ${dayInfo.day}/${daysInMonth}`);
-      }
+      console.log(`Planning weekend dag ${dayInfo.day}/${daysInMonth}`);
       await planDayShifts(dayInfo, true);
     }
 
     // FASE 2: Plan weekdag shiften
-    if (updateProgress) {
-      const weekendPercentage = Math.round((weekendDays.length / totalDays) * 100);
-      updateProgress(weekendPercentage, "Planning weekdag shiften...");
-    }
+    console.log("Planning weekdag shiften...");
     
     for (const dayInfo of weekDays) {
       processedDays++;
-      if (updateProgress) {
-        const percentage = Math.round((processedDays / totalDays) * 100);
-        updateProgress(percentage, `Planning weekdag ${dayInfo.day}/${daysInMonth}`);
-      }
+      console.log(`Planning weekdag ${dayInfo.day}/${daysInMonth}`);
       await planDayShifts(dayInfo, false);
     }
     
@@ -1072,10 +1061,7 @@ export class DatabaseStorage implements IStorage {
     }
     
     console.log(`Schedule generation complete: ${generatedShifts.length} shifts created`);
-    
-    if (updateProgress) {
-      updateProgress(100, "Planning generatie voltooid!");
-    }
+    console.log("Planning generatie voltooid!");
     
     return generatedShifts;
   }
