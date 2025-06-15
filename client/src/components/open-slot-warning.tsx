@@ -9,10 +9,11 @@ import { nl } from "date-fns/locale";
 interface OpenSlotWarningProps {
   date: Date;
   shifts: Shift[];
-  onAddShift: (date: Date, startTime: string, endTime: string) => void;
+  onAddShift?: (date: Date, startTime: string, endTime: string) => void;
+  showAddButton?: boolean;
 }
 
-export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningProps) {
+export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = false }: OpenSlotWarningProps) {
   // Alleen detecteren voor nachtshifts
   const nightShifts = shifts.filter(s => 
     s.type === 'night' && 
@@ -157,15 +158,17 @@ export function OpenSlotWarning({ date, shifts, onAddShift }: OpenSlotWarningPro
                 )}
               </div>
               
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onAddShift(date, suggestion.startFormatted, suggestion.endFormatted)}
-                className="text-orange-700 border-orange-300 hover:bg-orange-100"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Shift toevoegen
-              </Button>
+              {showAddButton && onAddShift && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onAddShift(date, suggestion.startFormatted, suggestion.endFormatted)}
+                  className="text-orange-700 border-orange-300 hover:bg-orange-100"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Shift toevoegen
+                </Button>
+              )}
             </div>
           ))}
         </div>

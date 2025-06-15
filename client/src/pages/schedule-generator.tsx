@@ -1203,6 +1203,7 @@ export default function ScheduleGenerator() {
                                 date={new Date(shift.date)}
                                 shifts={shiftsForDate}
                                 onAddShift={handleAddShift}
+                                showAddButton={true}
                               />
                             </TableCell>
                           </TableRow>

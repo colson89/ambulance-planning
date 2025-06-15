@@ -616,7 +616,7 @@ export default function Dashboard() {
                               <OpenSlotWarning
                                 date={new Date(shift.date)}
                                 shifts={filteredShifts.filter(s => format(new Date(s.date), 'yyyy-MM-dd') === format(new Date(shift.date), 'yyyy-MM-dd'))}
-                                onAddShift={handleAddShift}
+                                showAddButton={false}
                               />
                             </TableCell>
                           </TableRow>
