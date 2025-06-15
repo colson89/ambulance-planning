@@ -84,6 +84,7 @@ export default function Dashboard() {
       });
     },
     onError: (error: Error) => {
+      console.error('Add shift error:', error);
       toast({
         title: "Fout bij toevoegen shift",
         description: error.message,

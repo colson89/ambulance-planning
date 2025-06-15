@@ -599,6 +599,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get shifts" });
     }
   });
+
+  // Create a new shift
+  app.post("/api/shifts", requireAdmin, async (req, res) => {
+    try {
+      console.log('Creating shift with data:', req.body);
+      
+      const shiftData = {
+        ...req.body,
+        userId: req.body.userId || 0, // Default to unassigned
+        stationId: req.body.stationId || req.user?.stationId,
+        month: new Date(req.body.date).getMonth() + 1,
+        year: new Date(req.body.date).getFullYear()
+      };
+      
+      const shift = await storage.createShift(shiftData);
+      console.log('Shift created successfully:', shift);
+      
+      res.status(201).json(shift);
+    } catch (error) {
+      console.error("Error creating shift:", error);
+      res.status(500).json({ message: "Failed to create shift" });
+    }
+  });
   
   // Delete all shifts for a specific month/year
   app.delete("/api/shifts/month", requireAdmin, async (req, res) => {
