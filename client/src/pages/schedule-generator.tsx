@@ -523,7 +523,7 @@ export default function ScheduleGenerator() {
 
   // Mutation om handmatig shifts toe te voegen voor open slots
   const addManualShiftMutation = useMutation({
-    mutationFn: async ({ date, startTime, endTime }: { date: Date, startTime: string, endTime: string }) => {
+    mutationFn: async ({ date, startTime, endTime, userId }: { date: Date, startTime: string, endTime: string, userId?: number }) => {
       const shiftData = {
         date: format(date, 'yyyy-MM-dd'),
         type: 'night',
@@ -531,7 +531,8 @@ export default function ScheduleGenerator() {
         endTime: startTime > endTime ? 
           `${format(addDays(date, 1), 'yyyy-MM-dd')}T${endTime}:00.000Z` : 
           `${format(date, 'yyyy-MM-dd')}T${endTime}:00.000Z`,
-        status: 'open',
+        status: userId ? 'planned' : 'open',
+        userId: userId || 0,
         isSplitShift: true,
         stationId: user?.stationId
       };
@@ -557,8 +558,8 @@ export default function ScheduleGenerator() {
   });
 
   // Handler voor handmatig toevoegen van shifts
-  const handleAddShift = (date: Date, startTime: string, endTime: string) => {
-    addManualShiftMutation.mutate({ date, startTime, endTime });
+  const handleAddShift = (date: Date, startTime: string, endTime: string, userId?: number) => {
+    addManualShiftMutation.mutate({ date, startTime, endTime, userId });
   };
   
   // Open edit dialog
@@ -1204,6 +1205,11 @@ export default function ScheduleGenerator() {
                                 shifts={shiftsForDate}
                                 onAddShift={handleAddShift}
                                 showAddButton={true}
+                                users={users.filter(u => u.role === "ambulancier").map(u => ({
+                                  id: u.id,
+                                  firstName: u.firstName,
+                                  lastName: u.lastName
+                                }))}
                               />
                             </TableCell>
                           </TableRow>
