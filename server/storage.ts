@@ -73,6 +73,29 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  // Station management methods
+  async getAllStations(): Promise<Station[]> {
+    return await db.select().from(stations).orderBy(asc(stations.name));
+  }
+
+  async getStation(id: number): Promise<Station | undefined> {
+    const [station] = await db.select().from(stations).where(eq(stations.id, id));
+    return station || undefined;
+  }
+
+  async getStationByCode(code: string): Promise<Station | undefined> {
+    const [station] = await db.select().from(stations).where(eq(stations.code, code));
+    return station || undefined;
+  }
+
+  async createStation(stationData: InsertStation): Promise<Station> {
+    const [station] = await db
+      .insert(stations)
+      .values(stationData)
+      .returning();
+    return station;
+  }
+
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
