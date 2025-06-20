@@ -437,9 +437,14 @@ export default function Statistics() {
                           }
                           
                           return (
-                            <Badge variant="outline" className={badgeClass}>
-                              {percentage}%
-                            </Badge>
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-xs text-muted-foreground">
+                                {user.totalPreferenceHours}/{user.maxHours || 0}
+                              </span>
+                              <Badge variant="outline" className={badgeClass}>
+                                {percentage}%
+                              </Badge>
+                            </div>
                           );
                         })()}
                       </TableCell>
