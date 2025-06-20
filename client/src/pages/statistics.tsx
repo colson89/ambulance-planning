@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, BarChart3, ArrowLeft, Calendar, Users, Clock, TrendingUp } from "lucide-react";
+import { Loader2, BarChart3, ArrowLeft, Calendar, Users, Clock, TrendingUp, Search } from "lucide-react";
 import { useLocation } from "wouter";
 import {
   Table,
@@ -16,6 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
 
 type ShiftStatistics = {
   userId: number;
@@ -64,6 +66,7 @@ const QUARTERS = [
 ];
 
 export default function Statistics() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   
@@ -71,6 +74,7 @@ export default function Statistics() {
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
   const [selectedMonth, setSelectedMonth] = useState(CURRENT_MONTH);
   const [selectedQuarter, setSelectedQuarter] = useState(Math.ceil(CURRENT_MONTH / 3));
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data: statistics, isLoading, error } = useQuery<ShiftStatistics[]>({
     queryKey: ["/api/statistics/shifts", periodType, selectedYear, selectedMonth, selectedQuarter],
@@ -360,7 +364,7 @@ export default function Statistics() {
                   <p className="text-muted-foreground">Geen medewerkers gevonden voor "{searchTerm}"</p>
                 </div>
               ) : (
-            <Table>
+                <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead rowSpan={2} className="align-middle">Medewerker</TableHead>
@@ -444,7 +448,7 @@ export default function Statistics() {
                     </TableRow>
                   ))}
               </TableBody>
-            </Table>
+                </Table>
               )}
             </>
           )}
