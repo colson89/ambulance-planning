@@ -201,23 +201,25 @@ export default function WeekdaySettings() {
         <CardContent>
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <Label htmlFor="deadline-days">Dagen van tevoren</Label>
+              <Label htmlFor="deadline-days">Dagen van tevoren (1-60)</Label>
               <Input
                 id="deadline-days"
                 type="number"
                 min="1"
-                max="30"
+                max="60"
                 value={deadlineDays}
                 onChange={(e) => setDeadlineDays(parseInt(e.target.value) || 1)}
                 className="w-32"
               />
               <p className="text-sm text-muted-foreground mt-1">
                 Planning moet {deadlineDays} dag(en) voor de 1e van de volgende maand om 23:00 worden ingediend
+                <br />
+                <span className="text-xs text-gray-500">(Minimum: 1 dag, Maximum: 60 dagen)</span>
               </p>
             </div>
             <Button
               onClick={() => updateDeadlineMutation.mutate(deadlineDays)}
-              disabled={updateDeadlineMutation.isPending || deadlineDays < 1 || deadlineDays > 30}
+              disabled={updateDeadlineMutation.isPending || deadlineDays < 1 || deadlineDays > 60}
               className="flex items-center gap-2"
             >
               {updateDeadlineMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}

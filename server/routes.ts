@@ -1544,8 +1544,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { days } = req.body;
       
-      if (!days || days < 1 || days > 30) {
-        return res.status(400).json({ message: "Dagen moet tussen 1 en 30 zijn" });
+      if (!days || days < 1 || days > 60) {
+        return res.status(400).json({ message: "Dagen moet tussen 1 en 60 zijn" });
       }
       
       await storage.setSystemSetting("preference_deadline_days", days.toString());

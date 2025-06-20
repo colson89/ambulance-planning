@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS stations (
 -- 2. Insert default stations
 INSERT INTO stations (name, code, display_name) VALUES 
   ('westerlo', 'westerlo', 'ZW Westerlo'),
-  ('mol', 'mol', 'ZW Mol')
-ON CONFLICT (code) DO NOTHING;
+  ('mol', 'mol', 'PIT Mol')
+ON CONFLICT (code) DO UPDATE SET display_name = EXCLUDED.display_name;
 
 -- 3. Add stationId column to existing tables
 ALTER TABLE users ADD COLUMN IF NOT EXISTS station_id INTEGER DEFAULT 1;
