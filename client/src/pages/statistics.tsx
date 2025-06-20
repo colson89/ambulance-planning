@@ -324,7 +324,7 @@ export default function Statistics() {
                   <TableHead className="text-center text-xs">Dag Week (u)</TableHead>
                   <TableHead className="text-center text-xs">Nacht Week (u)</TableHead>
                   <TableHead className="text-center text-xs">Dag Weekend (u)</TableHead>
-                  <TableHead className="text-center text-xs">Nacht Weekend (u)</TableHead>
+                  <TableHead className="text-center text-xs border-r-2 border-gray-300">Nacht Weekend (u)</TableHead>
                   <TableHead className="text-center text-xs">Dag Week (u)</TableHead>
                   <TableHead className="text-center text-xs">Nacht Week (u)</TableHead>
                   <TableHead className="text-center text-xs">Dag Weekend (u)</TableHead>
@@ -358,7 +358,7 @@ export default function Statistics() {
                           {user.dayShiftWeekendHours}u
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center border-r-2 border-gray-300">
                         <Badge variant="outline" className="text-orange-700 border-orange-300">
                           {user.nightShiftWeekendHours}u
                         </Badge>
