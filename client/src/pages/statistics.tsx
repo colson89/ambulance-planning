@@ -379,7 +379,7 @@ export default function Statistics() {
                   <TableHead className="text-center text-xs">Dag Weekend (u)</TableHead>
                   <TableHead className="text-center text-xs">Nacht Weekend (u)</TableHead>
                   <TableHead className="text-center text-xs">Totaal (u)</TableHead>
-                  <TableHead className="text-center text-xs border-r-2 border-gray-300">Totaal/Max</TableHead>
+                  <TableHead className="text-center text-xs border-r-2 border-gray-300">Percentage</TableHead>
                   <TableHead className="text-center text-xs">Dag Week (u)</TableHead>
                   <TableHead className="text-center text-xs">Nacht Week (u)</TableHead>
                   <TableHead className="text-center text-xs">Dag Weekend (u)</TableHead>
@@ -423,7 +423,10 @@ export default function Statistics() {
                       </TableCell>
                       <TableCell className="text-center border-r-2 border-gray-300">
                         <Badge variant="outline" className="text-slate-700 border-slate-300">
-                          {user.totalPreferenceHours}/{user.maxHours || 0}u
+                          {user.maxHours > 0 
+                            ? `${Math.round((user.totalPreferenceHours / user.maxHours) * 100)}%`
+                            : '0%'
+                          }
                         </Badge>
                       </TableCell>
                       {/* Werkelijke shifts */}
