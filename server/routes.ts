@@ -81,10 +81,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all users (admin only)
+  // Get all users (admin only, filtered by station)
   app.get("/api/users", requireAdmin, async (req, res) => {
-    const users = await storage.getAllUsers();
-    res.json(users);
+    try {
+      const allUsers = await storage.getAllUsers();
+      // Filter users by the requesting user's station
+      const users = allUsers.filter(user => user.stationId === (req.user as any).stationId);
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to get users" });
+    }
   });
 
   // Create new user (admin only)
@@ -1239,27 +1246,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Invalid type. Must be month, quarter, or year" });
       }
       
-      // Get all users
-      const users = await storage.getAllUsers();
+      // Get users filtered by station
+      const allUsers = await storage.getAllUsers();
+      const users = allUsers.filter(user => user.stationId === (req.user as any).stationId);
       
-      // Get shift preferences for the period
+      // Get shift preferences for the period (filtered by station)
       const preferences = await db.select()
         .from(shiftPreferences)
         .where(
           and(
             gte(shiftPreferences.date, startDate),
-            lte(shiftPreferences.date, endDate)
+            lte(shiftPreferences.date, endDate),
+            eq(shiftPreferences.stationId, (req.user as any).stationId)
           )
         );
       
-      // Get actual shifts for the period
+      // Get actual shifts for the period (filtered by station)
       const actualShifts = await db.select()
         .from(shifts)
         .where(
           and(
             gte(shifts.date, startDate),
             lte(shifts.date, endDate),
-            ne(shifts.userId, 0) // Exclude open shifts
+            ne(shifts.userId, 0), // Exclude open shifts
+            eq(shifts.stationId, (req.user as any).stationId)
           )
         );
       
