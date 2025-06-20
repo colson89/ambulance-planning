@@ -290,74 +290,7 @@ export default function Statistics() {
         </CardContent>
       </Card>
 
-      {/* Summary cards */}
-      {totalStats && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Voorkeuren Totaal</CardTitle>
-                <CardDescription>Totaal aantal uren aan voorkeuren opgegeven</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Dagshift Week</p>
-                    <p className="text-xl font-bold text-blue-600">{totalStats.dayShiftWeekHours}h</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Nachtshift Week</p>
-                    <p className="text-xl font-bold text-purple-600">{totalStats.nightShiftWeekHours}h</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Dagshift Weekend</p>
-                    <p className="text-xl font-bold text-green-600">{totalStats.dayShiftWeekendHours}h</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Nachtshift Weekend</p>
-                    <p className="text-xl font-bold text-orange-600">{totalStats.nightShiftWeekendHours}h</p>
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t text-center">
-                  <p className="text-sm text-muted-foreground">Totaal Voorkeur Uren</p>
-                  <p className="text-2xl font-bold">{totalStats.totalPreferenceHours}h</p>
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Werkelijke Shifts</CardTitle>
-                <CardDescription>Totaal aantal uren daadwerkelijk gewerkt</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Dagshift Week</p>
-                    <p className="text-xl font-bold text-blue-600">{totalStats.actualDayShiftWeekHours}h</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Nachtshift Week</p>
-                    <p className="text-xl font-bold text-purple-600">{totalStats.actualNightShiftWeekHours}h</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Dagshift Weekend</p>
-                    <p className="text-xl font-bold text-green-600">{totalStats.actualDayShiftWeekendHours}h</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Nachtshift Weekend</p>
-                    <p className="text-xl font-bold text-orange-600">{totalStats.actualNightShiftWeekendHours}h</p>
-                  </div>
-                </div>
-                <div className="mt-4 pt-4 border-t text-center">
-                  <p className="text-sm text-muted-foreground">Totaal Shifts</p>
-                  <p className="text-2xl font-bold">{totalStats.totalActualShifts}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </>
-      )}
 
       {/* Main statistics table */}
       <Card>
