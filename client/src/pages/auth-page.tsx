@@ -131,7 +131,7 @@ export default function AuthPage() {
           <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Welkom bij {selectedStation?.displayName || 'Brandweerzone'} Planning Systeem
           </h1>
-          <p className="text-lg text-muted-foreground font-medium">
+          <p className="text-lg text-gray-800 font-semibold">
             Beheer efficiënt diensten en personeelsplanning met ons intuïtieve planningssysteem.
           </p>
         </div>
