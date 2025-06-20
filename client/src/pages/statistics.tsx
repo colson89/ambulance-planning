@@ -317,14 +317,16 @@ export default function Statistics() {
               <TableHeader>
                 <TableRow>
                   <TableHead rowSpan={2} className="align-middle">Medewerker</TableHead>
-                  <TableHead colSpan={4} className="text-center">Voorkeuren</TableHead>
+                  <TableHead colSpan={6} className="text-center">Voorkeuren</TableHead>
                   <TableHead colSpan={4} className="text-center">Werkelijke Shifts</TableHead>
                 </TableRow>
                 <TableRow>
                   <TableHead className="text-center text-xs">Dag Week (u)</TableHead>
                   <TableHead className="text-center text-xs">Nacht Week (u)</TableHead>
                   <TableHead className="text-center text-xs">Dag Weekend (u)</TableHead>
-                  <TableHead className="text-center text-xs border-r-2 border-gray-300">Nacht Weekend (u)</TableHead>
+                  <TableHead className="text-center text-xs">Nacht Weekend (u)</TableHead>
+                  <TableHead className="text-center text-xs">Totaal (u)</TableHead>
+                  <TableHead className="text-center text-xs border-r-2 border-gray-300">Totaal/Max</TableHead>
                   <TableHead className="text-center text-xs">Dag Week (u)</TableHead>
                   <TableHead className="text-center text-xs">Nacht Week (u)</TableHead>
                   <TableHead className="text-center text-xs">Dag Weekend (u)</TableHead>
@@ -358,9 +360,19 @@ export default function Statistics() {
                           {user.dayShiftWeekendHours}u
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-center border-r-2 border-gray-300">
+                      <TableCell className="text-center">
                         <Badge variant="outline" className="text-orange-700 border-orange-300">
                           {user.nightShiftWeekendHours}u
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="text-gray-700 border-gray-300 font-semibold">
+                          {user.totalPreferenceHours}u
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center border-r-2 border-gray-300">
+                        <Badge variant="outline" className="text-slate-700 border-slate-300">
+                          {user.totalPreferenceHours}/{Math.max(user.totalPreferenceHours, user.totalActualHours)}u
                         </Badge>
                       </TableCell>
                       {/* Werkelijke shifts */}
