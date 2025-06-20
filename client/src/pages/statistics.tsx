@@ -422,12 +422,26 @@ export default function Statistics() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center border-r-2 border-gray-300">
-                        <Badge variant="outline" className="text-slate-700 border-slate-300">
-                          {user.maxHours > 0 
-                            ? `${Math.round((user.totalPreferenceHours / user.maxHours) * 100)}%`
-                            : '0%'
+                        {(() => {
+                          const percentage = user.maxHours > 0 
+                            ? Math.round((user.totalPreferenceHours / user.maxHours) * 100)
+                            : 0;
+                          
+                          let badgeClass = "";
+                          if (percentage >= 200) {
+                            badgeClass = "bg-green-100 text-green-800 border-green-300";
+                          } else if (percentage >= 100) {
+                            badgeClass = "bg-orange-100 text-orange-800 border-orange-300";
+                          } else {
+                            badgeClass = "bg-red-100 text-red-800 border-red-300";
                           }
-                        </Badge>
+                          
+                          return (
+                            <Badge variant="outline" className={badgeClass}>
+                              {percentage}%
+                            </Badge>
+                          );
+                        })()}
                       </TableCell>
                       {/* Werkelijke shifts */}
                       <TableCell className="text-center">
