@@ -943,7 +943,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startTime: firstHalfStart,
         endTime: firstHalfEnd,
         userId: 0,
-        status: "open"
+        status: "open",
+        splitGroup: shiftId
       });
       
       // Create a second half shift
@@ -955,12 +956,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: 0,
         status: "open",
         isSplitShift: true,
-        splitGroup: shiftId // Link to the original shift
-      });
-      
-      // Update the original shift with the split group reference
-      await storage.updateShift(shiftId, {
-        splitGroup: shiftId
+        splitGroup: shiftId,
+        stationId: existingShift.stationId,
+        month: existingShift.month,
+        year: existingShift.year
       });
       
       res.status(200).json({ 
