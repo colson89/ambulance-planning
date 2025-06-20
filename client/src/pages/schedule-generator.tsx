@@ -1115,7 +1115,15 @@ export default function ScheduleGenerator() {
                           <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
                           <TableCell>
                             {shift.startTime && shift.endTime ? (
-                              `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
+                              (() => {
+                                const startHour = new Date(shift.startTime).getUTCHours();
+                                const startMinute = new Date(shift.startTime).getUTCMinutes();
+                                const endHour = new Date(shift.endTime).getUTCHours();
+                                const endMinute = new Date(shift.endTime).getUTCMinutes();
+                                const startTime = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
+                                const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+                                return `${startTime} - ${endTime}`;
+                              })()
                             ) : (
                               shift.type === "night" ? "19:00 - 07:00" : "07:00 - 19:00"
                             )}
