@@ -42,9 +42,7 @@ export default function StationSelect() {
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Ambulance Planning Systeem</h1>
-          <p className="text-lg text-gray-600">
-            Selecteer uw brandweerpost om door te gaan
-          </p>
+          <p className="text-lg text-gray-600">Selecteer uw Ziekenwagen om door te gaan</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
