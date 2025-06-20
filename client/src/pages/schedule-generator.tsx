@@ -440,14 +440,8 @@ export default function ScheduleGenerator() {
     // Tel de uren voor elke shift gebaseerd op daadwerkelijke tijden
     let totalHours = 0;
     userShifts.forEach(shift => {
-      if (shift.isSplitShift && shift.splitStartTime && shift.splitEndTime) {
-        // Bereken uren voor gesplitste shift
-        const startTime = new Date(shift.splitStartTime);
-        const endTime = new Date(shift.splitEndTime);
-        const hours = Math.abs(endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
-        totalHours += hours;
-      } else if (shift.startTime && shift.endTime) {
-        // Bereken uren voor volledige shift
+      if (shift.startTime && shift.endTime) {
+        // Bereken uren voor shift
         const startTime = new Date(shift.startTime);
         const endTime = new Date(shift.endTime);
         const hours = Math.abs(endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
