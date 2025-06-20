@@ -1121,25 +1121,14 @@ export default function ScheduleGenerator() {
                           <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
                           <TableCell>
                             {shift.startTime && shift.endTime ? (
-                              shift.type === "night" ? (
-                                shift.isSplitShift ? (
-                                  format(new Date(shift.startTime), "HH") === "19" && format(new Date(shift.endTime), "HH") === "23" ? 
-                                  "19:00 - 23:00" : 
-                                  "23:00 - 07:00"
-                                ) : (
-                                  "19:00 - 07:00"
-                                )
-                              ) : (
-                                shift.isSplitShift ? (
-                                  format(new Date(shift.startTime), "HH") === "7" && format(new Date(shift.endTime), "HH") === "13" ? 
-                                  "07:00 - 13:00" : 
-                                  "13:00 - 19:00"
-                                ) : (
-                                  "07:00 - 19:00"
-                                )
-                              )
+                              `${format(new Date(shift.startTime), "HH:mm")} - ${format(new Date(shift.endTime), "HH:mm")}`
                             ) : (
-                              "-"
+                              shift.type === "night" ? "19:00 - 07:00" : "07:00 - 19:00"
+                            )}
+                            {shift.isSplitShift && (
+                              <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                Gesplitst
+                              </span>
                             )}
                           </TableCell>
                           <TableCell>
