@@ -36,6 +36,8 @@ type ShiftStatistics = {
   actualDayShiftWeekendHours: number;
   actualNightShiftWeekendHours: number;
   totalActualHours: number;
+  // Maximum hours willing to work
+  maxHours: number;
 };
 
 type PeriodType = "month" | "quarter" | "year";
@@ -421,7 +423,7 @@ export default function Statistics() {
                       </TableCell>
                       <TableCell className="text-center border-r-2 border-gray-300">
                         <Badge variant="outline" className="text-slate-700 border-slate-300">
-                          {user.totalPreferenceHours}/{Math.max(user.totalPreferenceHours, user.totalActualHours)}u
+                          {user.totalPreferenceHours}/{user.maxHours || 0}u
                         </Badge>
                       </TableCell>
                       {/* Werkelijke shifts */}

@@ -1327,7 +1327,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           actualNightShiftWeekHours: actualStats.nightWeek,
           actualDayShiftWeekendHours: actualStats.dayWeekend,
           actualNightShiftWeekendHours: actualStats.nightWeekend,
-          totalActualHours: actualStats.dayWeek + actualStats.nightWeek + actualStats.dayWeekend + actualStats.nightWeekend
+          totalActualHours: actualStats.dayWeek + actualStats.nightWeek + actualStats.dayWeekend + actualStats.nightWeekend,
+          // Maximum hours willing to work
+          maxHours: user.hours || 0
         };
       });
       
