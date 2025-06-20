@@ -39,7 +39,7 @@ export interface IStorage {
   updateShiftPreference(id: number, updateData: Partial<ShiftPreference>): Promise<ShiftPreference>;
   deleteShiftPreference(id: number): Promise<void>;
   getOpenShiftsForPlanning(month: number, year: number): Promise<Shift[]>;
-  generateMonthlySchedule(month: number, year: number, stationId?: number): Promise<Shift[]>;
+  generateMonthlySchedule(month: number, year: number, stationId?: number, progressCallback?: (percentage: number, message: string) => void): Promise<Shift[]>;
   sessionStore: session.Store;
   getShiftPreference(id: number): Promise<ShiftPreference | undefined>;
   getShift(id: number): Promise<Shift | undefined>;
@@ -224,7 +224,7 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
-  async generateMonthlySchedule(month: number, year: number, stationId?: number): Promise<Shift[]> {
+  async generateMonthlySchedule(month: number, year: number, stationId?: number, progressCallback?: (percentage: number, message: string) => void): Promise<Shift[]> {
     // Verwijder bestaande shifts voor deze maand en station
     const deleteConditions = [
       eq(shifts.month, month),
@@ -254,6 +254,11 @@ export class DatabaseStorage implements IStorage {
     });
     
     console.log(`Generating schedule for ${month}/${year} with ${activeUsers.length} actieve gebruikers`);
+    
+    // Progress tracking
+    if (progressCallback) {
+      progressCallback(5, `Voorbereidingen afgerond. ${activeUsers.length} actieve gebruikers gevonden.`);
+    }
     
     // Helper functie om weekend werk geschiedenis te berekenen (jaarbasis)
     const getWeekendShiftHistory = async (userId: number): Promise<number> => {
@@ -450,10 +455,22 @@ export class DatabaseStorage implements IStorage {
 
     const totalDays = allDays.length;
     let processedDays = 0;
+    
+    // Progress tracking
+    if (progressCallback) {
+      progressCallback(10, `Planning ${weekendDays.length} weekend dagen en ${weekDays.length} weekdagen...`);
+    }
 
     // Helper functie om shifts voor een specifieke dag te plannen
     const planDayShifts = async (dayInfo: {day: number, date: Date, isWeekend: boolean}, isWeekend: boolean): Promise<void> => {
       const { day, date: currentDate } = dayInfo;
+      
+      // Update progress
+      processedDays++;
+      const progressPercentage = Math.round(15 + (processedDays / totalDays) * 75);
+      if (progressCallback) {
+        progressCallback(progressPercentage, `Planning dag ${day}/${daysInMonth} (${isWeekend ? 'weekend' : 'weekdag'})...`);
+      }
       
       // Verzamel beschikbare gebruikers voor deze specifieke dag
       const availableForDay: number[] = [];
@@ -1062,6 +1079,10 @@ export class DatabaseStorage implements IStorage {
     
     console.log(`Schedule generation complete: ${generatedShifts.length} shifts created`);
     console.log("Planning generatie voltooid!");
+    
+    if (progressCallback) {
+      progressCallback(95, `Planning voltooid! ${generatedShifts.length} shifts aangemaakt.`);
+    }
     
     return generatedShifts;
   }
