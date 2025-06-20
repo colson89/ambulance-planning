@@ -133,6 +133,29 @@ export default function Statistics() {
     });
   };
 
+  // Filter and sort statistics
+  const filteredAndSortedStatistics = useMemo(() => {
+    if (!statistics) return [];
+    
+    // Filter based on search term
+    let filtered = statistics.filter(user => {
+      const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+      const username = user.username.toLowerCase();
+      const search = searchTerm.toLowerCase();
+      
+      return fullName.includes(search) || username.includes(search);
+    });
+    
+    // Sort alphabetically by last name, then first name
+    return filtered.sort((a, b) => {
+      const lastNameComparison = a.lastName.localeCompare(b.lastName);
+      if (lastNameComparison !== 0) {
+        return lastNameComparison;
+      }
+      return a.firstName.localeCompare(b.firstName);
+    });
+  }, [statistics, searchTerm]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -313,6 +336,30 @@ export default function Statistics() {
               <p className="text-muted-foreground">Geen statistieken beschikbaar voor deze periode</p>
             </div>
           ) : (
+            <>
+              {/* Search bar */}
+              <div className="mb-4">
+                <div className="relative w-full max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Zoek medewerker..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                {searchTerm && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {filteredAndSortedStatistics.length} van {statistics.length} medewerkers gevonden
+                  </p>
+                )}
+              </div>
+              
+              {filteredAndSortedStatistics.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">Geen medewerkers gevonden voor "{searchTerm}"</p>
+                </div>
+              ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -334,9 +381,7 @@ export default function Statistics() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {statistics
-                  .sort((a, b) => b.totalActualHours - a.totalActualHours)
-                  .map((user) => (
+                {filteredAndSortedStatistics.map((user) => (
                     <TableRow key={user.userId}>
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
@@ -400,6 +445,8 @@ export default function Statistics() {
                   ))}
               </TableBody>
             </Table>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
