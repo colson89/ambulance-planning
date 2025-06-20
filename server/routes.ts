@@ -1126,7 +1126,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admins/contact", requireAuth, async (req, res) => {
     try {
       const users = await storage.getAllUsers();
-      const admins = users.filter(user => user.role === 'admin');
+      const userStationId = req.user?.stationId;
+      
+      // Filter administrators by the same station as the requesting user
+      const admins = users.filter(user => 
+        user.role === 'admin' && user.stationId === userStationId
+      );
       
       // Return only the contact information, not sensitive data
       const adminContacts = admins.map(admin => ({
@@ -1134,7 +1139,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username: admin.username,
         firstName: admin.firstName,
         lastName: admin.lastName,
-        role: admin.role
+        role: admin.role,
+        stationId: admin.stationId
       }));
       
       res.json(adminContacts);
