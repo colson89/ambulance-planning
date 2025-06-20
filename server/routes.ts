@@ -7,7 +7,7 @@ import { z } from "zod";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
 import { db } from "./db";
-import { and, gte, lte, asc, ne } from "drizzle-orm";
+import { and, gte, lte, asc, ne, eq } from "drizzle-orm";
 import * as XLSX from 'xlsx';
 
 export async function registerRoutes(app: Express): Promise<Server> {
