@@ -1311,6 +1311,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           nightWeekend: 0
         });
         
+        // Calculate max hours based on period type
+        let periodMultiplier = 1;
+        switch (type) {
+          case "month":
+            periodMultiplier = 1;
+            break;
+          case "quarter":
+            periodMultiplier = 3;
+            break;
+          case "year":
+            periodMultiplier = 12;
+            break;
+        }
+        
         return {
           userId: user.id,
           username: user.username,
@@ -1328,8 +1342,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           actualDayShiftWeekendHours: actualStats.dayWeekend,
           actualNightShiftWeekendHours: actualStats.nightWeekend,
           totalActualHours: actualStats.dayWeek + actualStats.nightWeek + actualStats.dayWeekend + actualStats.nightWeekend,
-          // Maximum hours willing to work
-          maxHours: user.hours || 0
+          // Maximum hours willing to work (adjusted for period)
+          maxHours: (user.hours || 0) * periodMultiplier
         };
       });
       
