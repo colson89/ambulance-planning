@@ -120,12 +120,18 @@ export default function AuthPage() {
         </Card>
       </div>
 
-      <div className="hidden md:block bg-primary/10 p-8">
-        <div className="h-full flex flex-col justify-center max-w-lg mx-auto">
+      <div className="hidden md:block bg-primary/10 p-8 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent z-10"></div>
+        <img 
+          src="/ambulance-hero.jpg" 
+          alt="Ambulance voertuig" 
+          className="absolute inset-0 w-full h-full object-cover opacity-30"
+        />
+        <div className="relative z-20 h-full flex flex-col justify-center max-w-lg mx-auto">
           <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Welkom bij {selectedStation?.displayName || 'Brandweerzone'} Planning Systeem
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-muted-foreground font-medium">
             Beheer efficiënt diensten en personeelsplanning met ons intuïtieve planningssysteem.
           </p>
         </div>
