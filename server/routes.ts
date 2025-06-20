@@ -1268,13 +1268,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userPreferences = preferences.filter(p => p.userId === user.id);
         const userActualShifts = actualShifts.filter(s => s.userId === user.id);
         
-        // Count preferences by type and weekend/weekday
+        // Calculate preference hours by type and weekend/weekday
         const prefStats = userPreferences.reduce((acc, pref) => {
           const isWeekend = pref.date.getDay() === 0 || pref.date.getDay() === 6;
           const key = `${pref.type}${isWeekend ? 'Weekend' : 'Week'}` as keyof typeof acc;
           // Only count approved or pending preferences (not unavailable)
           if (pref.type !== 'unavailable') {
-            acc[key]++;
+            // Standard hours: day = 12h, night = 12h
+            const hours = pref.type === 'day' ? 12 : 12;
+            acc[key] += hours;
           }
           return acc;
         }, {
@@ -1284,11 +1286,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           nightWeekend: 0
         });
         
-        // Count actual shifts by type and weekend/weekday
+        // Calculate actual shift hours by type and weekend/weekday
         const actualStats = userActualShifts.reduce((acc, shift) => {
           const isWeekend = shift.date.getDay() === 0 || shift.date.getDay() === 6;
           const key = `${shift.type}${isWeekend ? 'Weekend' : 'Week'}` as keyof typeof acc;
-          acc[key]++;
+          
+          // Calculate actual hours from start/end times
+          let hours = 0;
+          if (shift.startTime && shift.endTime) {
+            const startTime = new Date(shift.startTime);
+            const endTime = new Date(shift.endTime);
+            hours = Math.abs(endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+          } else {
+            // Fallback to standard hours if times not available
+            hours = shift.type === 'day' ? 12 : 12;
+          }
+          
+          acc[key] += Math.round(hours);
           return acc;
         }, {
           dayWeek: 0,
@@ -1302,18 +1316,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           username: user.username,
           firstName: user.firstName,
           lastName: user.lastName,
-          // Preferences
-          dayShiftWeek: prefStats.dayWeek,
-          nightShiftWeek: prefStats.nightWeek,
-          dayShiftWeekend: prefStats.dayWeekend,
-          nightShiftWeekend: prefStats.nightWeekend,
-          totalPreferences: prefStats.dayWeek + prefStats.nightWeek + prefStats.dayWeekend + prefStats.nightWeekend,
-          // Actual shifts
-          actualDayShiftWeek: actualStats.dayWeek,
-          actualNightShiftWeek: actualStats.nightWeek,
-          actualDayShiftWeekend: actualStats.dayWeekend,
-          actualNightShiftWeekend: actualStats.nightWeekend,
-          totalActualShifts: actualStats.dayWeek + actualStats.nightWeek + actualStats.dayWeekend + actualStats.nightWeekend
+          // Preferences (in hours)
+          dayShiftWeekHours: prefStats.dayWeek,
+          nightShiftWeekHours: prefStats.nightWeek,
+          dayShiftWeekendHours: prefStats.dayWeekend,
+          nightShiftWeekendHours: prefStats.nightWeekend,
+          totalPreferenceHours: prefStats.dayWeek + prefStats.nightWeek + prefStats.dayWeekend + prefStats.nightWeekend,
+          // Actual shifts (in hours)
+          actualDayShiftWeekHours: actualStats.dayWeek,
+          actualNightShiftWeekHours: actualStats.nightWeek,
+          actualDayShiftWeekendHours: actualStats.dayWeekend,
+          actualNightShiftWeekendHours: actualStats.nightWeekend,
+          totalActualHours: actualStats.dayWeek + actualStats.nightWeek + actualStats.dayWeekend + actualStats.nightWeekend
         };
       });
       

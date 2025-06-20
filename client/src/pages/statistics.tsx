@@ -297,7 +297,7 @@ export default function Statistics() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Voorkeuren Totaal</CardTitle>
-                <CardDescription>Aantal ingediende voorkeuren</CardDescription>
+                <CardDescription>Totaal aantal uren aan voorkeuren opgegeven</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
@@ -328,7 +328,7 @@ export default function Statistics() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Werkelijke Shifts</CardTitle>
-                <CardDescription>Aantal daadwerkelijk uitgevoerde shifts</CardDescription>
+                <CardDescription>Totaal aantal uren daadwerkelijk gewerkt</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
