@@ -22,18 +22,18 @@ type ShiftStatistics = {
   username: string;
   firstName: string;
   lastName: string;
-  // Preferences
-  dayShiftWeek: number;
-  nightShiftWeek: number;
-  dayShiftWeekend: number;
-  nightShiftWeekend: number;
-  totalPreferences: number;
-  // Actual shifts
-  actualDayShiftWeek: number;
-  actualNightShiftWeek: number;
-  actualDayShiftWeekend: number;
-  actualNightShiftWeekend: number;
-  totalActualShifts: number;
+  // Preferences (in hours)
+  dayShiftWeekHours: number;
+  nightShiftWeekHours: number;
+  dayShiftWeekendHours: number;
+  nightShiftWeekendHours: number;
+  totalPreferenceHours: number;
+  // Actual shifts (in hours)
+  actualDayShiftWeekHours: number;
+  actualNightShiftWeekHours: number;
+  actualDayShiftWeekendHours: number;
+  actualNightShiftWeekendHours: number;
+  totalActualHours: number;
 };
 
 type PeriodType = "month" | "quarter" | "year";
@@ -303,24 +303,24 @@ export default function Statistics() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Dagshift Week</p>
-                    <p className="text-xl font-bold text-blue-600">{totalStats.dayShiftWeek}</p>
+                    <p className="text-xl font-bold text-blue-600">{totalStats.dayShiftWeekHours}h</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Nachtshift Week</p>
-                    <p className="text-xl font-bold text-purple-600">{totalStats.nightShiftWeek}</p>
+                    <p className="text-xl font-bold text-purple-600">{totalStats.nightShiftWeekHours}h</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Dagshift Weekend</p>
-                    <p className="text-xl font-bold text-green-600">{totalStats.dayShiftWeekend}</p>
+                    <p className="text-xl font-bold text-green-600">{totalStats.dayShiftWeekendHours}h</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Nachtshift Weekend</p>
-                    <p className="text-xl font-bold text-orange-600">{totalStats.nightShiftWeekend}</p>
+                    <p className="text-xl font-bold text-orange-600">{totalStats.nightShiftWeekendHours}h</p>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t text-center">
-                  <p className="text-sm text-muted-foreground">Totaal Voorkeuren</p>
-                  <p className="text-2xl font-bold">{totalStats.totalPreferences}</p>
+                  <p className="text-sm text-muted-foreground">Totaal Voorkeur Uren</p>
+                  <p className="text-2xl font-bold">{totalStats.totalPreferenceHours}h</p>
                 </div>
               </CardContent>
             </Card>
@@ -334,19 +334,19 @@ export default function Statistics() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Dagshift Week</p>
-                    <p className="text-xl font-bold text-blue-600">{totalStats.actualDayShiftWeek}</p>
+                    <p className="text-xl font-bold text-blue-600">{totalStats.actualDayShiftWeekHours}h</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Nachtshift Week</p>
-                    <p className="text-xl font-bold text-purple-600">{totalStats.actualNightShiftWeek}</p>
+                    <p className="text-xl font-bold text-purple-600">{totalStats.actualNightShiftWeekHours}h</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Dagshift Weekend</p>
-                    <p className="text-xl font-bold text-green-600">{totalStats.actualDayShiftWeekend}</p>
+                    <p className="text-xl font-bold text-green-600">{totalStats.actualDayShiftWeekendHours}h</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground">Nachtshift Weekend</p>
-                    <p className="text-xl font-bold text-orange-600">{totalStats.actualNightShiftWeekend}</p>
+                    <p className="text-xl font-bold text-orange-600">{totalStats.actualNightShiftWeekendHours}h</p>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t text-center">
@@ -388,19 +388,19 @@ export default function Statistics() {
                   <TableHead colSpan={4} className="text-center">Werkelijke Shifts</TableHead>
                 </TableRow>
                 <TableRow>
-                  <TableHead className="text-center text-xs">Dag Week</TableHead>
-                  <TableHead className="text-center text-xs">Nacht Week</TableHead>
-                  <TableHead className="text-center text-xs">Dag Weekend</TableHead>
-                  <TableHead className="text-center text-xs">Nacht Weekend</TableHead>
-                  <TableHead className="text-center text-xs">Dag Week</TableHead>
-                  <TableHead className="text-center text-xs">Nacht Week</TableHead>
-                  <TableHead className="text-center text-xs">Dag Weekend</TableHead>
-                  <TableHead className="text-center text-xs">Nacht Weekend</TableHead>
+                  <TableHead className="text-center text-xs">Dag Week (u)</TableHead>
+                  <TableHead className="text-center text-xs">Nacht Week (u)</TableHead>
+                  <TableHead className="text-center text-xs">Dag Weekend (u)</TableHead>
+                  <TableHead className="text-center text-xs">Nacht Weekend (u)</TableHead>
+                  <TableHead className="text-center text-xs">Dag Week (u)</TableHead>
+                  <TableHead className="text-center text-xs">Nacht Week (u)</TableHead>
+                  <TableHead className="text-center text-xs">Dag Weekend (u)</TableHead>
+                  <TableHead className="text-center text-xs">Nacht Weekend (u)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {statistics
-                  .sort((a, b) => b.totalActualShifts - a.totalActualShifts)
+                  .sort((a, b) => b.totalActualHours - a.totalActualHours)
                   .map((user) => (
                     <TableRow key={user.userId}>
                       <TableCell className="font-medium">
@@ -412,43 +412,43 @@ export default function Statistics() {
                       {/* Voorkeuren */}
                       <TableCell className="text-center">
                         <Badge variant="outline" className="text-blue-700 border-blue-300">
-                          {user.dayShiftWeek}
+                          {user.dayShiftWeekHours}u
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline" className="text-purple-700 border-purple-300">
-                          {user.nightShiftWeek}
+                          {user.nightShiftWeekHours}u
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline" className="text-green-700 border-green-300">
-                          {user.dayShiftWeekend}
+                          {user.dayShiftWeekendHours}u
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline" className="text-orange-700 border-orange-300">
-                          {user.nightShiftWeekend}
+                          {user.nightShiftWeekendHours}u
                         </Badge>
                       </TableCell>
                       {/* Werkelijke shifts */}
                       <TableCell className="text-center">
                         <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                          {user.actualDayShiftWeek}
+                          {user.actualDayShiftWeekHours}u
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-                          {user.actualNightShiftWeek}
+                          {user.actualNightShiftWeekHours}u
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="secondary" className="bg-green-100 text-green-800">
-                          {user.actualDayShiftWeekend}
+                          {user.actualDayShiftWeekendHours}u
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                          {user.actualNightShiftWeekend}
+                          {user.actualNightShiftWeekendHours}u
                         </Badge>
                       </TableCell>
                     </TableRow>
