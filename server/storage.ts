@@ -1055,6 +1055,12 @@ export class DatabaseStorage implements IStorage {
       processedDays++;
       console.log(`Planning weekend dag ${dayInfo.day}/${daysInMonth}`);
       await planDayShifts(dayInfo, true);
+      
+      // Progress tracking - ensure we don't exceed 100%
+      if (progressCallback) {
+        const progressPercentage = Math.min(95, Math.round(10 + (processedDays / totalDays) * 85));
+        progressCallback(progressPercentage, `Weekend dag ${dayInfo.day} gepland (${processedDays}/${totalDays} dagen)`);
+      }
     }
 
     // FASE 2: Plan weekdag shiften
@@ -1064,6 +1070,12 @@ export class DatabaseStorage implements IStorage {
       processedDays++;
       console.log(`Planning weekdag ${dayInfo.day}/${daysInMonth}`);
       await planDayShifts(dayInfo, false);
+      
+      // Progress tracking - ensure we don't exceed 100%
+      if (progressCallback) {
+        const progressPercentage = Math.min(95, Math.round(10 + (processedDays / totalDays) * 85));
+        progressCallback(progressPercentage, `Weekdag ${dayInfo.day} gepland (${processedDays}/${totalDays} dagen)`);
+      }
     }
     
     // Log de uiteindelijke uren per gebruiker
