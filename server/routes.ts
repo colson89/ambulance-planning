@@ -1572,7 +1572,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current deadline setting (days before month)
   app.get("/api/system/deadline-days", requireAuth, async (req, res) => {
     try {
-      const setting = await storage.getSystemSetting("preference_deadline_days");
+      const userStationId = (req.user as any).stationId;
+      const settingKey = `preference_deadline_days_station_${userStationId}`;
+      const setting = await storage.getSystemSetting(settingKey);
       // Default to 1 day if not set
       const days = setting ? parseInt(setting) : 1;
       res.json({ days });
@@ -1586,12 +1588,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/system/deadline-days", requireAdmin, async (req, res) => {
     try {
       const { days } = req.body;
+      const userStationId = (req.user as any).stationId;
       
       if (!days || days < 1 || days > 60) {
         return res.status(400).json({ message: "Dagen moet tussen 1 en 60 zijn" });
       }
       
-      await storage.setSystemSetting("preference_deadline_days", days.toString());
+      const settingKey = `preference_deadline_days_station_${userStationId}`;
+      await storage.setSystemSetting(settingKey, days.toString());
       res.json({ days, message: "Deadline instelling bijgewerkt" });
     } catch (error) {
       console.error("Error updating deadline setting:", error);
