@@ -1154,18 +1154,44 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getWeekdayConfigs(): Promise<WeekdayConfig[]> {
+  async getWeekdayConfigs(stationId?: number): Promise<WeekdayConfig[]> {
+    if (stationId) {
+      return await db.select().from(weekdayConfigs)
+        .where(eq(weekdayConfigs.stationId, stationId))
+        .orderBy(asc(weekdayConfigs.dayOfWeek));
+    }
     return await db.select().from(weekdayConfigs).orderBy(asc(weekdayConfigs.dayOfWeek));
   }
 
-  async getWeekdayConfig(dayOfWeek: number): Promise<WeekdayConfig | null> {
+  async getWeekdayConfig(dayOfWeek: number, stationId?: number): Promise<WeekdayConfig | null> {
+    if (stationId) {
+      const [config] = await db.select()
+        .from(weekdayConfigs)
+        .where(and(
+          eq(weekdayConfigs.dayOfWeek, dayOfWeek),
+          eq(weekdayConfigs.stationId, stationId)
+        ));
+      return config || null;
+    }
+    
     const [config] = await db.select()
       .from(weekdayConfigs)
       .where(eq(weekdayConfigs.dayOfWeek, dayOfWeek));
     return config || null;
   }
 
-  async updateWeekdayConfig(dayOfWeek: number, configData: Partial<WeekdayConfig>): Promise<WeekdayConfig> {
+  async updateWeekdayConfig(dayOfWeek: number, configData: Partial<WeekdayConfig>, stationId?: number): Promise<WeekdayConfig> {
+    if (stationId) {
+      const [config] = await db.update(weekdayConfigs)
+        .set({ ...configData, updatedAt: new Date() })
+        .where(and(
+          eq(weekdayConfigs.dayOfWeek, dayOfWeek),
+          eq(weekdayConfigs.stationId, stationId)
+        ))
+        .returning();
+      return config;
+    }
+    
     const [config] = await db.update(weekdayConfigs)
       .set({ ...configData, updatedAt: new Date() })
       .where(eq(weekdayConfigs.dayOfWeek, dayOfWeek))

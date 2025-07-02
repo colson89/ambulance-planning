@@ -1159,7 +1159,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Weekday configuration routes
   app.get("/api/weekday-configs", requireAdmin, async (req, res) => {
     try {
-      const configs = await storage.getWeekdayConfigs();
+      const userStationId = (req.user as any).stationId;
+      const configs = await storage.getWeekdayConfigs(userStationId);
       res.json(configs);
     } catch (error) {
       console.error("Error getting weekday configs:", error);
@@ -1170,7 +1171,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/weekday-configs/:dayOfWeek", requireAdmin, async (req, res) => {
     try {
       const dayOfWeek = parseInt(req.params.dayOfWeek);
-      const config = await storage.getWeekdayConfig(dayOfWeek);
+      const userStationId = (req.user as any).stationId;
+      const config = await storage.getWeekdayConfig(dayOfWeek, userStationId);
       if (!config) {
         return res.status(404).json({ message: "Configuration not found" });
       }
@@ -1184,9 +1186,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/weekday-configs/:dayOfWeek", requireAdmin, async (req, res) => {
     try {
       const dayOfWeek = parseInt(req.params.dayOfWeek);
+      const userStationId = (req.user as any).stationId;
       const updateData = req.body;
       
-      const updatedConfig = await storage.updateWeekdayConfig(dayOfWeek, updateData);
+      const updatedConfig = await storage.updateWeekdayConfig(dayOfWeek, updateData, userStationId);
       res.json(updatedConfig);
     } catch (error) {
       console.error("Error updating weekday config:", error);
@@ -1196,8 +1199,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/weekday-configs/initialize", requireAdmin, async (req, res) => {
     try {
-      await storage.initializeDefaultWeekdayConfigs();
-      const configs = await storage.getWeekdayConfigs();
+      const userStationId = (req.user as any).stationId;
+      await storage.initializeDefaultWeekdayConfigs(userStationId);
+      const configs = await storage.getWeekdayConfigs(userStationId);
       res.json(configs);
     } catch (error) {
       console.error("Error initializing weekday configs:", error);
