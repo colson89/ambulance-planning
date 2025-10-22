@@ -17,7 +17,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+
+interface Station {
+  id: number;
+  name: string;
+  code: string;
+  displayName: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 type ShiftStatistics = {
   userId: number;
@@ -77,9 +87,23 @@ export default function Statistics() {
   const [selectedMonth, setSelectedMonth] = useState(CURRENT_MONTH);
   const [selectedQuarter, setSelectedQuarter] = useState(Math.ceil(CURRENT_MONTH / 3));
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Station selector state voor supervisors
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(
+    user?.role === 'supervisor' ? null : user?.stationId || null
+  );
+
+  // Query voor stations (alleen voor supervisors)
+  const { data: stations } = useQuery<Station[]>({
+    queryKey: ["/api/user/stations"],
+    enabled: user?.role === 'supervisor',
+  });
+
+  // Effectieve station ID - voor supervisors is dit de geselecteerde station, anders hun eigen station
+  const effectiveStationId = user?.role === 'supervisor' ? selectedStationId : user?.stationId;
 
   const { data: statistics, isLoading, error } = useQuery<ShiftStatistics[]>({
-    queryKey: ["/api/statistics/shifts", periodType, selectedYear, selectedMonth, selectedQuarter],
+    queryKey: ["/api/statistics/shifts", periodType, selectedYear, selectedMonth, selectedQuarter, effectiveStationId],
     queryFn: async () => {
       let params = new URLSearchParams({
         type: periodType,
@@ -92,10 +116,16 @@ export default function Statistics() {
         params.append("quarter", selectedQuarter.toString());
       }
 
+      // Voeg stationId toe voor supervisors
+      if (user?.role === 'supervisor' && effectiveStationId) {
+        params.append("stationId", effectiveStationId.toString());
+      }
+
       const res = await fetch(`/api/statistics/shifts?${params}`);
       if (!res.ok) throw new Error("Failed to fetch statistics");
       return res.json();
     },
+    enabled: !!effectiveStationId,
   });
 
   const getPeriodLabel = () => {
@@ -115,27 +145,27 @@ export default function Statistics() {
     if (!statistics || statistics.length === 0) return null;
 
     return statistics.reduce((acc, user) => ({
-      dayShiftWeek: acc.dayShiftWeek + user.dayShiftWeek,
-      nightShiftWeek: acc.nightShiftWeek + user.nightShiftWeek,
-      dayShiftWeekend: acc.dayShiftWeekend + user.dayShiftWeekend,
-      nightShiftWeekend: acc.nightShiftWeekend + user.nightShiftWeekend,
-      totalPreferences: acc.totalPreferences + user.totalPreferences,
-      actualDayShiftWeek: acc.actualDayShiftWeek + user.actualDayShiftWeek,
-      actualNightShiftWeek: acc.actualNightShiftWeek + user.actualNightShiftWeek,
-      actualDayShiftWeekend: acc.actualDayShiftWeekend + user.actualDayShiftWeekend,
-      actualNightShiftWeekend: acc.actualNightShiftWeekend + user.actualNightShiftWeekend,
-      totalActualShifts: acc.totalActualShifts + user.totalActualShifts,
+      dayShiftWeekHours: acc.dayShiftWeekHours + user.dayShiftWeekHours,
+      nightShiftWeekHours: acc.nightShiftWeekHours + user.nightShiftWeekHours,
+      dayShiftWeekendHours: acc.dayShiftWeekendHours + user.dayShiftWeekendHours,
+      nightShiftWeekendHours: acc.nightShiftWeekendHours + user.nightShiftWeekendHours,
+      totalPreferenceHours: acc.totalPreferenceHours + user.totalPreferenceHours,
+      actualDayShiftWeekHours: acc.actualDayShiftWeekHours + user.actualDayShiftWeekHours,
+      actualNightShiftWeekHours: acc.actualNightShiftWeekHours + user.actualNightShiftWeekHours,
+      actualDayShiftWeekendHours: acc.actualDayShiftWeekendHours + user.actualDayShiftWeekendHours,
+      actualNightShiftWeekendHours: acc.actualNightShiftWeekendHours + user.actualNightShiftWeekendHours,
+      totalActualHours: acc.totalActualHours + user.totalActualHours,
     }), {
-      dayShiftWeek: 0,
-      nightShiftWeek: 0,
-      dayShiftWeekend: 0,
-      nightShiftWeekend: 0,
-      totalPreferences: 0,
-      actualDayShiftWeek: 0,
-      actualNightShiftWeek: 0,
-      actualDayShiftWeekend: 0,
-      actualNightShiftWeekend: 0,
-      totalActualShifts: 0,
+      dayShiftWeekHours: 0,
+      nightShiftWeekHours: 0,
+      dayShiftWeekendHours: 0,
+      nightShiftWeekendHours: 0,
+      totalPreferenceHours: 0,
+      actualDayShiftWeekHours: 0,
+      actualNightShiftWeekHours: 0,
+      actualDayShiftWeekendHours: 0,
+      actualNightShiftWeekendHours: 0,
+      totalActualHours: 0,
     });
   };
 
@@ -161,6 +191,68 @@ export default function Statistics() {
       return a.firstName.localeCompare(b.firstName);
     });
   }, [statistics, searchTerm]);
+
+  // Guard voor supervisors: vereist station selectie
+  if (user?.role === 'supervisor' && !selectedStationId) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center gap-4 mb-8">
+          <Button 
+            variant="outline"
+            onClick={() => setLocation("/dashboard")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Terug naar Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <BarChart3 className="h-8 w-8" />
+              Shift Statistieken
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Bekijk statistieken voor alle stations
+            </p>
+            
+            <div className="mt-4">
+              <Label htmlFor="station-select" className="text-sm font-medium">
+                Station
+              </Label>
+              <Select 
+                value={selectedStationId?.toString() || ""} 
+                onValueChange={(value) => setSelectedStationId(parseInt(value))}
+              >
+                <SelectTrigger className="w-[200px] mt-1" data-testid="select-station">
+                  <SelectValue placeholder="Kies station..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {(stations as Station[])
+                    ?.filter(station => station.code !== 'supervisor') // Filter supervisor station
+                    ?.map((station) => (
+                      <SelectItem key={station.id} value={station.id.toString()}>
+                        {station.displayName}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">Kies een station om verder te gaan</h3>
+              <p className="text-muted-foreground">
+                Selecteer eerst een station om statistieken te bekijken.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -191,6 +283,32 @@ export default function Statistics() {
           <p className="text-muted-foreground mt-2">
             Overzicht van shift voorkeuren per medewerker
           </p>
+          
+          {/* Station selector voor supervisors */}
+          {user?.role === 'supervisor' && (
+            <div className="mt-4">
+              <Label htmlFor="station-select" className="text-sm font-medium">
+                Station
+              </Label>
+              <Select 
+                value={selectedStationId?.toString() || ""} 
+                onValueChange={(value) => setSelectedStationId(parseInt(value))}
+              >
+                <SelectTrigger className="w-[200px] mt-1" data-testid="select-station">
+                  <SelectValue placeholder="Kies station..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {(stations as Station[])
+                    ?.filter(station => station.code !== 'supervisor') // Filter supervisor station
+                    ?.map((station) => (
+                      <SelectItem key={station.id} value={station.id.toString()}>
+                        {station.displayName}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
+            </div>
+          )}
         </div>
       </div>
 

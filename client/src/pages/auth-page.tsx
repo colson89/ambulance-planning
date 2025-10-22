@@ -6,13 +6,17 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
-import { Home, Building2, ArrowLeft } from "lucide-react";
+import { Home, Building2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import type { Station } from "@shared/schema";
+
+const logoUrl = "/logo.png";
 
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordTimer, setPasswordTimer] = useState<number | null>(null);
 
   useEffect(() => {
     // Check if station was selected
@@ -34,6 +38,37 @@ export default function AuthPage() {
     defaultValues: { username: "", password: "" }
   });
 
+  const togglePasswordVisibility = () => {
+    if (!showPassword) {
+      // Wachtwoord zichtbaar maken
+      setShowPassword(true);
+      
+      // Timer starten voor automatisch verbergen na 5 seconden
+      const timer = window.setTimeout(() => {
+        setShowPassword(false);
+        setPasswordTimer(null);
+      }, 5000);
+      
+      setPasswordTimer(timer);
+    } else {
+      // Wachtwoord direct verbergen
+      setShowPassword(false);
+      if (passwordTimer) {
+        clearTimeout(passwordTimer);
+        setPasswordTimer(null);
+      }
+    }
+  };
+
+  // Cleanup timer bij unmount
+  useEffect(() => {
+    return () => {
+      if (passwordTimer) {
+        clearTimeout(passwordTimer);
+      }
+    };
+  }, [passwordTimer]);
+
   if (user) {
     return null;
   }
@@ -53,6 +88,13 @@ export default function AuthPage() {
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Andere post
               </Button>
+            </div>
+            <div className="flex justify-center mb-6">
+              <img 
+                src={logoUrl} 
+                alt="Brandweer Zone Kempen" 
+                className="h-24 w-24 object-contain"
+              />
             </div>
             {selectedStation && (
               <div className="text-center mb-4">
@@ -90,13 +132,35 @@ export default function AuthPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Input
-                      type="password"
-                      placeholder="Wachtwoord"
-                      {...loginForm.register("password")}
-                      className={loginMutation.isError ? "border-destructive" : ""}
-                      disabled={loginMutation.isPending}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Wachtwoord"
+                        {...loginForm.register("password")}
+                        className={`pr-10 ${loginMutation.isError ? "border-destructive" : ""}`}
+                        disabled={loginMutation.isPending}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={togglePasswordVisibility}
+                        disabled={loginMutation.isPending}
+                        title={showPassword ? "Wachtwoord verbergen" : "Wachtwoord 5 sec. tonen"}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                    {showPassword && (
+                      <p className="text-xs text-muted-foreground">
+                        Wachtwoord wordt automatisch verborgen na 5 seconden
+                      </p>
+                    )}
                   </div>
                   <Button 
                     type="submit"

@@ -22,12 +22,17 @@ import {
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { StationSwitcher } from "@/components/station-switcher";
 
 export default function Dashboard() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  
+  // VERSION MARKER - If you see this in console, the new code is loaded!
+  console.log("🚀 DASHBOARD VERSION 2.0 - REQUIREDSTAFF FIX LOADED");
+  
   
   // Staat voor maand/jaar selectie
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
@@ -56,7 +61,18 @@ export default function Dashboard() {
     queryKey: ["/api/stations"],
   });
 
-  const isLoading = shiftsLoading || usersLoading || preferencesLoading || stationsLoading;
+  const { data: weekdayConfigs = [], isLoading: configsLoading } = useQuery<any[]>({
+    queryKey: ["/api/weekday-configs", user?.stationId],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/weekday-configs");
+      if (!res.ok) throw new Error("Failed to fetch weekday configs");
+      const data = await res.json();
+      console.log("📊 Weekday configs loaded for stationId:", user?.stationId, data);
+      return data;
+    },
+  });
+
+  const isLoading = shiftsLoading || usersLoading || preferencesLoading || stationsLoading || configsLoading;
 
   // Mutation om handmatig shifts toe te voegen voor open slots
   const addManualShiftMutation = useMutation({
@@ -312,8 +328,23 @@ export default function Dashboard() {
     let currentHour = nightStart;
     
     for (const shift of nightShifts) {
-      const shiftStart = new Date(shift.startTime).getHours() + (new Date(shift.startTime).getDate() > new Date(shift.date).getDate() ? 24 : 0);
-      const shiftEnd = new Date(shift.endTime).getHours() + (new Date(shift.endTime).getDate() > new Date(shift.date).getDate() ? 24 : 0);
+      const shiftStartDate = new Date(shift.startTime);
+      const shiftEndDate = new Date(shift.endTime);
+      const shiftDate = new Date(shift.date);
+      
+      const startHourStr = shiftStartDate.toLocaleTimeString('nl-NL', { 
+        hour: '2-digit',
+        timeZone: 'Europe/Brussels',
+        hour12: false 
+      }).split(':')[0];
+      const endHourStr = shiftEndDate.toLocaleTimeString('nl-NL', { 
+        hour: '2-digit',
+        timeZone: 'Europe/Brussels',
+        hour12: false 
+      }).split(':')[0];
+      
+      const shiftStart = parseInt(startHourStr) + (shiftStartDate.getDate() > shiftDate.getDate() ? 24 : 0);
+      const shiftEnd = parseInt(endHourStr) + (shiftEndDate.getDate() > shiftDate.getDate() ? 24 : 0);
       
       // Als er een gat is tussen current hour en shift start
       if (currentHour < shiftStart) {
@@ -389,14 +420,28 @@ export default function Dashboard() {
           )}
         </div>
         <div className="flex gap-2">
-          {user?.role === "admin" && (
+          {(user?.role === 'admin' || user?.role === 'supervisor') && (
             <>
+              <Button 
+                variant="outline"
+                onClick={() => setLocation("/holidays")}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Feestdagen
+              </Button>
               <Button 
                 variant="outline"
                 onClick={() => setLocation("/users")}
               >
                 <UserCog className="h-4 w-4 mr-2" />
                 Gebruikersbeheer
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setLocation("/statistics")}
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Statistieken
               </Button>
               <Button 
                 variant="outline"
@@ -412,13 +457,6 @@ export default function Dashboard() {
                 <Settings className="h-4 w-4 mr-2" />
                 Weekdag Instellingen
               </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setLocation("/statistics")}
-              >
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Statistieken
-              </Button>
             </>
           )}
           {/* Shift Planner knop verwijderd, alleen "Voorkeuren Opgeven" behouden */}
@@ -429,6 +467,7 @@ export default function Dashboard() {
             <UserIcon className="h-4 w-4 mr-2" />
             Profiel
           </Button>
+          <StationSwitcher />
           <Button 
             variant="outline" 
             onClick={() => logoutMutation.mutate()}
@@ -478,7 +517,11 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{user?.role === 'admin' ? "Administrator" : "Ambulancier"}</div>
+            <div className="text-2xl font-bold">
+              {user?.role === 'admin' ? "Administrator" : 
+               user?.role === 'supervisor' ? "Supervisor" : 
+               "Ambulancier"}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -610,6 +653,34 @@ export default function Dashboard() {
                       
                       // Add open slot warning row if needed
                       if (hasOpenSlots) {
+                        // Get the weekday config for this date
+                        const shiftDate = new Date(shift.date);
+                        const dayOfWeek = shiftDate.getDay();
+                        
+                        // EXTENSIVE DEBUG LOGGING
+                        console.log("=== OPEN SLOT DEBUG START ===");
+                        console.log("User StationId:", user?.stationId);
+                        console.log("Shift Date:", format(shiftDate, 'dd-MM-yyyy'));
+                        console.log("Day of Week:", dayOfWeek, "(" + ["Zondag","Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag"][dayOfWeek] + ")");
+                        console.log("Shift Type:", shift.type);
+                        console.log("All weekdayConfigs:", weekdayConfigs);
+                        console.log("Looking for config with dayOfWeek:", dayOfWeek);
+                        
+                        const config = weekdayConfigs.find(c => c.dayOfWeek === dayOfWeek);
+                        console.log("Found config:", config);
+                        
+                        const requiredStaff = shift.type === 'night' 
+                          ? (config?.nightShiftCount || 2) 
+                          : (config?.dayShiftCount || 2);
+                        
+                        console.log("Required Staff:", requiredStaff);
+                        console.log("=== OPEN SLOT DEBUG END ===");
+                        
+                        // Show alert for first open slot to get user's attention
+                        if (shift.id === filteredShifts.find(s => s.type === 'night' && hasOpenSlots)?.id) {
+                          alert(`DEBUG INFO:\nStation: ${user?.stationId}\nDag: ${["Zo","Ma","Di","Wo","Do","Vr","Za"][dayOfWeek]}\nConfig gevonden: ${config ? 'JA' : 'NEE'}\nNightShiftCount: ${config?.nightShiftCount || 'NIET GEVONDEN'}\nRequired Staff: ${requiredStaff}`);
+                        }
+                        
                         results.push(
                           <TableRow key={`${shift.id}-warning`} className="bg-orange-50 border-l-4 border-l-orange-500">
                             <TableCell colSpan={5} className="p-0">
@@ -617,6 +688,7 @@ export default function Dashboard() {
                                 date={new Date(shift.date)}
                                 shifts={filteredShifts.filter(s => format(new Date(s.date), 'yyyy-MM-dd') === format(new Date(shift.date), 'yyyy-MM-dd'))}
                                 showAddButton={false}
+                                requiredStaff={requiredStaff}
                               />
                             </TableCell>
                           </TableRow>

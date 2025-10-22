@@ -1,0 +1,140 @@
+
+C:\Windows\system32>echo START 
+START
+
+C:\Windows\system32>echo wo 08/10/2025 15:02:06,49 
+wo 08/10/2025 15:02:06,49
+
+C:\Windows\system32>cd /d "C:\ambulance-planning" 
+
+C:\ambulance-planning>set NODE_ENV=production 
+
+C:\ambulance-planning>set PATH=C:\Python313\Scripts\;C:\Python313\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Users\Administrator\AppData\Roaming\npm;C:\Users\Administrator\AppData\Roaming\npm 
+
+C:\ambulance-planning>pm2 resurrect 
+[PM2] Resurrecting
+[PM2] Restoring processes located in C:\etc\.pm2\dump.pm2
+[PM2] Restoring processes located in C:\etc\.pm2\dump.pm2.bak
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+C:\Windows\system32>START
+
+C:\Windows\system32>wo 08/10/2025 15:07:48,54 
+
+C:\Windows\system32>cd /d "C:\ambulance-planning" 
+
+C:\ambulance-planning>set NODE_ENV=production 
+
+C:\ambulance-planning>set PATH=C:\Python313\Scripts\;C:\Python313\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Users\Administrator\AppData\Roaming\npm;C:\Users\Administrator\AppData\Roaming\npm 
+
+C:\ambulance-planning>pm2 resurrect 
+[PM2] Resurrecting
+[PM2] Restoring processes located in C:\etc\.pm2\dump.pm2
+[PM2] Restoring processes located in C:\etc\.pm2\dump.pm2.bak
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+C:\Windows\system32>wo 08/10/2025 15:19:44,52 
+
+C:\Windows\system32>cd /d "C:\ambulance-planning" 
+
+C:\ambulance-planning>set NODE_ENV=production 
+
+C:\ambulance-planning>set PATH=C:\Python313\Scripts\;C:\Python313\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Users\Administrator\AppData\Roaming\npm;C:\Users\Administrator\AppData\Roaming\npm 
+
+C:\ambulance-planning>pm2 resurrect 
+[PM2] Resurrecting
+[PM2] Restoring processes located in C:\Users\Administrator\.pm2\dump.pm2
+[PM2] Process C:\ambulance-planning\dist\index.js restored
+┌────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning    │ default     │ 1.0.0   │ fork    │ 9024     │ 1s     │ 0    │ online    │ 65.7%    │ 84.7mb   │ Adminis… │ disabled │
+└────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+C:\Windows\system32>wo 08/10/2025 15:25:32,55 
+
+C:\Windows\system32>cd /d "C:\ambulance-planning" 
+
+C:\ambulance-planning>set NODE_ENV=production 
+
+C:\ambulance-planning>set PATH=C:\Python313\Scripts\;C:\Python313\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Users\Administrator\AppData\Roaming\npm;C:\Users\Administrator\AppData\Roaming\npm 
+
+C:\ambulance-planning>pm2 resurrect 
+[PM2] Resurrecting
+[PM2] Restoring processes located in C:\etc\.pm2\dump.pm2
+[PM2] Restoring processes located in C:\etc\.pm2\dump.pm2.bak
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+C:\Windows\system32>wo 08/10/2025 15:30:13,92 
+
+C:\Windows\system32>cd /d "C:\ambulance-planning" 
+
+C:\ambulance-planning>set NODE_ENV=production 
+
+C:\ambulance-planning>set PATH=C:\Python313\Scripts\;C:\Python313\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Users\Administrator\AppData\Roaming\npm;C:\Users\Administrator\AppData\Roaming\npm 
+
+C:\ambulance-planning>pm2 resurrect 
+[PM2] Resurrecting
+[PM2] Restoring processes located in C:\etc\.pm2\dump.pm2
+[PM2] Restoring processes located in C:\etc\.pm2\dump.pm2.bak
+┌────┬───────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name      │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+└────┴───────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+C:\Windows\system32>wo 08/10/2025 15:32:55,35 
+
+C:\Windows\system32>cd /d "C:\ambulance-planning" 
+
+C:\ambulance-planning>set NODE_ENV=production 
+
+C:\ambulance-planning>set PATH=C:\Python313\Scripts\;C:\Python313\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Users\Administrator\AppData\Roaming\npm;C:\Users\Administrator\AppData\Roaming\npm 
+
+C:\ambulance-planning>pm2 resurrect 
+[PM2] Resurrecting
+[PM2] Restoring processes located in C:\Users\Administrator\.pm2\dump.pm2
+[PM2] Process C:\ambulance-planning\dist\index.js restored
+┌────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning    │ default     │ 1.0.0   │ fork    │ 8916     │ 1s     │ 0    │ online    │ 107.9%   │ 135.6mb  │ Adminis… │ disabled │
+└────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+C:\Windows\system32>do 09/10/2025  9:37:20,32 
+
+C:\Windows\system32>cd /d "C:\ambulance-planning" 
+
+C:\ambulance-planning>set NODE_ENV=production 
+
+C:\ambulance-planning>set PATH=C:\Python313\Scripts\;C:\Python313\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Users\Administrator\AppData\Roaming\npm;C:\Users\Administrator\AppData\Roaming\npm 
+
+C:\ambulance-planning>pm2 resurrect 
+[PM2] Resurrecting
+[PM2] Restoring processes located in C:\etc\.pm2\dump.pm2
+┌────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning    │ default     │ 1.0.0   │ fork    │ 5624     │ 56s    │ 0    │ online    │ 0%       │ 98.5mb   │ Adminis… │ disabled │
+└────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+C:\Windows\system32>do 09/10/2025 14:06:08,55 
+
+C:\Windows\system32>cd /d "C:\ambulance-planning" 
+
+C:\ambulance-planning>set NODE_ENV=production 
+
+C:\ambulance-planning>set PATH=C:\Python313\Scripts\;C:\Python313\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\Users\Administrator\AppData\Local\Microsoft\WindowsApps;C:\Users\Administrator\AppData\Roaming\npm;C:\Users\Administrator\AppData\Roaming\npm 
+
+C:\ambulance-planning>pm2 resurrect 
+[PM2] Resurrecting
+[PM2] Restoring processes located in C:\etc\.pm2\dump.pm2
+┌────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning    │ default     │ 1.0.0   │ fork    │ 2588     │ 79s    │ 0    │ online    │ 0%       │ 99.3mb   │ Adminis… │ disabled │
+└────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘

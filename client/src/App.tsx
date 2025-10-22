@@ -13,6 +13,7 @@ import UserManagement from "@/pages/user-management";
 import ScheduleGenerator from "@/pages/schedule-generator";
 import WeekdaySettings from "@/pages/weekday-settings";
 import Statistics from "@/pages/statistics";
+import HolidaysManagement from "@/pages/holidays-management";
 import StationSelect from "@/pages/station-select";
 
 function Router() {
@@ -24,8 +25,10 @@ function Router() {
       <ProtectedRoute path="/profile" component={Profile} />
       <ProtectedRoute path="/users" component={UserManagement} />
       <ProtectedRoute path="/schedule" component={ScheduleGenerator} />
+      <ProtectedRoute path="/shift-planner" component={ScheduleGenerator} />
       <ProtectedRoute path="/settings" component={WeekdaySettings} />
       <ProtectedRoute path="/statistics" component={Statistics} />
+      <ProtectedRoute path="/holidays" component={HolidaysManagement} />
       <Route path="/station-select" component={StationSelect} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />

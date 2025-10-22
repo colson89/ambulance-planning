@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { WeekdayConfig } from "@shared/schema";
+import { WeekdayConfig, Station } from "@shared/schema";
 import { Loader2, Save, Calendar, Settings, Home, ArrowLeft } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLocation } from "wouter";
@@ -21,19 +23,44 @@ const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Monday to Sunday order
 export default function WeekdaySettings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  
-  const { data: configs, isLoading, error } = useQuery<WeekdayConfig[]>({
-    queryKey: ["/api/weekday-configs"],
+  const { user } = useAuth();
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(null);
+
+  // Get effective station ID - use selected station for supervisors, user station for others
+  const effectiveStationId = user?.role === 'supervisor' ? selectedStationId : user?.stationId;
+
+  // Get available stations for supervisors
+  const { data: stations } = useQuery<Station[]>({
+    queryKey: ["/api/user/stations"],
+    enabled: user?.role === 'supervisor',
   });
+
+  const { data: configs, isLoading, error } = useQuery<WeekdayConfig[]>({
+    queryKey: ["/api/weekday-configs", effectiveStationId],
+    queryFn: async () => {
+      const params = effectiveStationId && user?.role === 'supervisor' 
+        ? `?stationId=${effectiveStationId}` 
+        : '';
+      const res = await apiRequest("GET", `/api/weekday-configs${params}`);
+      if (!res.ok) throw new Error("Failed to fetch weekday configs");
+      return res.json();
+    },
+    enabled: !!effectiveStationId,
+  });
+
 
   // Haal deadline configuratie op
   const { data: deadlineConfig } = useQuery({
-    queryKey: ["/api/system/deadline-days"],
+    queryKey: ["/api/system/deadline-days", effectiveStationId],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/system/deadline-days");
+      const params = effectiveStationId && user?.role === 'supervisor' 
+        ? `?stationId=${effectiveStationId}` 
+        : '';
+      const res = await apiRequest("GET", `/api/system/deadline-days${params}`);
       if (!res.ok) throw new Error("Kon deadline instelling niet ophalen");
       return res.json();
     },
+    enabled: !!effectiveStationId,
   });
 
   const [deadlineDays, setDeadlineDays] = useState<number>(1);
@@ -47,12 +74,15 @@ export default function WeekdaySettings() {
 
   const updateDeadlineMutation = useMutation({
     mutationFn: async (days: number) => {
-      const res = await apiRequest("POST", "/api/system/deadline-days", { days });
+      const body = user?.role === 'supervisor' && effectiveStationId 
+        ? { days, stationId: effectiveStationId }
+        : { days };
+      const res = await apiRequest("POST", "/api/system/deadline-days", body);
       if (!res.ok) throw new Error("Kon deadline niet bijwerken");
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/system/deadline-days"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/system/deadline-days", effectiveStationId] });
       toast({
         title: "Deadline bijgewerkt",
         description: `Planning moet nu ${deadlineDays} dag(en) van tevoren worden ingediend`,
@@ -69,11 +99,14 @@ export default function WeekdaySettings() {
 
   const initializeMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/weekday-configs/initialize");
+      const body = user?.role === 'supervisor' && effectiveStationId 
+        ? { stationId: effectiveStationId }
+        : {};
+      const res = await apiRequest("POST", "/api/weekday-configs/initialize", body);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/weekday-configs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/weekday-configs", effectiveStationId] });
       toast({
         title: "Configuratie geïnitialiseerd",
         description: "Standaard weekdag configuraties zijn ingesteld",
@@ -90,11 +123,14 @@ export default function WeekdaySettings() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ dayOfWeek, config }: { dayOfWeek: number; config: Partial<WeekdayConfig> }) => {
-      const res = await apiRequest("PUT", `/api/weekday-configs/${dayOfWeek}`, config);
+      const requestBody = user?.role === 'supervisor' && effectiveStationId 
+        ? { ...config, stationId: effectiveStationId }
+        : config;
+      const res = await apiRequest("PUT", `/api/weekday-configs/${dayOfWeek}`, requestBody);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/weekday-configs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/weekday-configs", effectiveStationId] });
       toast({
         title: "Configuratie opgeslagen",
         description: "Weekdag instellingen zijn bijgewerkt",
@@ -121,7 +157,7 @@ export default function WeekdaySettings() {
     );
   }
 
-  if (error || !configs) {
+  if (error || !configs || configs.length === 0) {
     return (
       <div className="container mx-auto p-6">
         <div className="flex items-center gap-4 mb-8">
@@ -144,23 +180,51 @@ export default function WeekdaySettings() {
           </div>
         </div>
 
-        <Alert>
-          <Calendar className="h-4 w-4" />
-          <AlertDescription>
-            Er zijn nog geen weekdag configuraties ingesteld. Klik op "Initialiseren" om de standaard instellingen aan te maken.
-          </AlertDescription>
-        </Alert>
+        {/* Station selector for supervisors */}
+        {user?.role === 'supervisor' && (
+          <div className="mb-6">
+            <Label className="text-base font-medium">Selecteer Station</Label>
+            <Select 
+              value={selectedStationId?.toString() || ""} 
+              onValueChange={(value) => setSelectedStationId(parseInt(value))}
+            >
+              <SelectTrigger className="w-[300px] mt-2">
+                <SelectValue placeholder="Kies een station om instellingen te beheren..." />
+              </SelectTrigger>
+              <SelectContent>
+                {(stations as Station[])
+                  ?.filter(station => station.id !== 8) // Exclude supervisor station
+                  ?.map((station) => (
+                    <SelectItem key={station.id} value={station.id.toString()}>
+                      {station.displayName}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
-        <Button 
-          onClick={() => initializeMutation.mutate()} 
-          disabled={initializeMutation.isPending}
-          className="mt-6"
-          size="lg"
-        >
-          {initializeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          <Settings className="mr-2 h-4 w-4" />
-          Standaard Configuraties Initialiseren
-        </Button>
+        {effectiveStationId && (
+          <>
+            <Alert>
+              <Calendar className="h-4 w-4" />
+              <AlertDescription>
+                Er zijn nog geen weekdag configuraties ingesteld. Klik op "Initialiseren" om de standaard instellingen aan te maken.
+              </AlertDescription>
+            </Alert>
+
+            <Button 
+              onClick={() => initializeMutation.mutate()} 
+              disabled={initializeMutation.isPending}
+              className="mt-6"
+              size="lg"
+            >
+              {initializeMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Settings className="mr-2 h-4 w-4" />
+              Standaard Configuraties Initialiseren
+            </Button>
+          </>
+        )}
       </div>
     );
   }
@@ -186,6 +250,30 @@ export default function WeekdaySettings() {
           </p>
         </div>
       </div>
+
+      {/* Station selector for supervisors */}
+      {user?.role === 'supervisor' && (
+        <div className="mb-6">
+          <Label className="text-base font-medium">Selecteer Station</Label>
+          <Select 
+            value={selectedStationId?.toString() || ""} 
+            onValueChange={(value) => setSelectedStationId(parseInt(value))}
+          >
+            <SelectTrigger className="w-[300px] mt-2">
+              <SelectValue placeholder="Kies een station om instellingen te beheren..." />
+            </SelectTrigger>
+            <SelectContent>
+              {(stations as Station[])
+                ?.filter(station => station.id !== 8) // Exclude supervisor station
+                ?.map((station) => (
+                  <SelectItem key={station.id} value={station.id.toString()}>
+                    {station.displayName}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Deadline Configuration Section */}
       <Card className="mb-6">
@@ -226,6 +314,87 @@ export default function WeekdaySettings() {
               <Save className="h-4 w-4" />
               Opslaan
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Split Shifts Configuration Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Beschikbaarheids Opties
+          </CardTitle>
+          <CardDescription>
+            Kies welke opties gebruikers hebben bij het aangeven van hun beschikbaarheid
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-base font-medium">Beschikbaarheids modus</Label>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="simple-mode"
+                    checked={!configs[0]?.allowSplitShifts}
+                    onCheckedChange={(checked) => {
+                      // Update all weekday configs for this station
+                      configs.forEach(config => {
+                        handleConfigUpdate(config.dayOfWeek, { allowSplitShifts: !checked });
+                      });
+                    }}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="simple-mode"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Eenvoudig systeem
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Alleen "Volledig beschikbaar" en "Niet beschikbaar"
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="advanced-mode"
+                    checked={!!configs[0]?.allowSplitShifts}
+                    onCheckedChange={(checked) => {
+                      // Update all weekday configs for this station
+                      configs.forEach(config => {
+                        handleConfigUpdate(config.dayOfWeek, { allowSplitShifts: checked });
+                      });
+                    }}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="advanced-mode"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Uitgebreid systeem
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      "Volledig beschikbaar", "Niet beschikbaar", "Eerste deel", "Tweede deel"
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="pt-3 border-t">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className={`w-2 h-2 rounded-full ${
+                  configs[0]?.allowSplitShifts 
+                    ? 'bg-blue-500' 
+                    : 'bg-green-500'
+                }`} />
+                {configs[0]?.allowSplitShifts 
+                  ? 'Uitgebreid systeem actief - gebruikers kunnen gedeeltelijke beschikbaarheid aangeven'
+                  : 'Eenvoudig systeem actief - alleen volledig beschikbaar of niet beschikbaar'
+                }
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -12,7 +12,7 @@ import { Home, Loader2, Moon, Sun } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import type { ShiftPreference } from "@shared/schema";
+import type { ShiftPreference, WeekdayConfig, Holiday } from "@shared/schema";
 
 type PreferenceType = "full" | "first" | "second" | "unavailable" | "none";
 type ShiftType = "day" | "night";
@@ -63,6 +63,8 @@ export default function ShiftPlanner() {
       return res.json();
     },
     enabled: !!user,
+    staleTime: 10 * 1000, // 10 seconden - zeer verse data voor kritieke voorkeuren
+    refetchOnWindowFocus: true,
   });
 
   const { data: userComment } = useQuery({
@@ -74,6 +76,117 @@ export default function ShiftPlanner() {
     },
     enabled: !!user,
   });
+
+  // Haal user's stations op om multi-station detectie mogelijk te maken
+  const { data: userStations = [] } = useQuery<any[]>({
+    queryKey: ["/api/user/stations"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/user/stations");
+      if (!res.ok) throw new Error("Kon stations niet ophalen");
+      return res.json();
+    },
+    enabled: !!user,
+    staleTime: 30 * 1000, // 30 seconden - stations wijzigen niet vaak
+  });
+
+  // Detecteer of user multi-station is (werkt bij meerdere stations)
+  const isMultiStation = userStations.length > 1;
+
+  // Haal weekdag configuraties op om te controleren of split shifts zijn toegestaan
+  const { data: weekdayConfigs = [] } = useQuery<WeekdayConfig[]>({
+    queryKey: ["/api/weekday-configs"],
+    enabled: !!user,
+    staleTime: 10 * 1000, // 10 seconden - zeer verse data voor kritieke configuratie
+    refetchOnWindowFocus: true,
+  });
+
+  // Haal feestdagen op voor het geselecteerde jaar
+  const { data: holidays = [] } = useQuery<Holiday[]>({
+    queryKey: ["/api/holidays", selectedMonth.getFullYear()],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/holidays?year=${selectedMonth.getFullYear()}`);
+      if (!res.ok) throw new Error("Kon feestdagen niet ophalen");
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
+  // Helper functie om te checken of een datum een weekend of feestdag is
+  const isWeekendOrHoliday = (date: Date) => {
+    // Check regulier weekend
+    if (isWeekend(date)) return true;
+    
+    // Check feestdagen
+    const dateString = format(date, 'yyyy-MM-dd');
+    return holidays.some(holiday => 
+      holiday.date === dateString && holiday.isActive
+    );
+  };
+
+  // Helper functie om de effective weekday config te bepalen (feestdagen = zondag)
+  const getEffectiveWeekdayConfig = (date: Date | undefined, stationId?: number): WeekdayConfig | undefined => {
+    if (!date) return undefined;
+    
+    // Check of het een feestdag is
+    const dateString = format(date, 'yyyy-MM-dd');
+    const isHoliday = holidays.some(holiday => 
+      holiday.date === dateString && holiday.isActive
+    );
+    
+    // Gebruik zondag config (dayOfWeek = 0) voor feestdagen, anders normale dag
+    const effectiveDayOfWeek = isHoliday ? 0 : date.getDay();
+    
+    // Gebruik de opgegeven stationId, of fallback naar user's stationId
+    const targetStationId = stationId ?? user?.stationId;
+    
+    // Vind de config voor deze effectieve dag EN dit station
+    return weekdayConfigs.find(config => 
+      config.dayOfWeek === effectiveDayOfWeek && config.stationId === targetStationId
+    );
+  };
+
+  // Check of split shifts zijn toegestaan voor de geselecteerde datum
+  // Voor multi-station users: alleen als ALLE stations het ondersteunen
+  const allowSplitShifts = (() => {
+    if (!selectedDate) return false;
+    
+    if (isMultiStation) {
+      // Voor multi-station: check of ALLE stations split shifts toestaan
+      const userStationIds = userStations.map((s: any) => s.id);
+      return userStationIds.every((stationId: number) => {
+        const config = getEffectiveWeekdayConfig(selectedDate, stationId);
+        return config?.allowSplitShifts ?? false;
+      });
+    } else {
+      // Voor single-station: gebruik de config van het primaire station
+      return getEffectiveWeekdayConfig(selectedDate)?.allowSplitShifts ?? false;
+    }
+  })();
+
+  // Helper functie om te checken of shift forms getoond moeten worden
+  const shouldShowDayShift = (date: Date | undefined): boolean => {
+    if (!date) return false;
+    
+    if (isMultiStation) {
+      // Multi-station: altijd dagshift tonen (kan bij elk station nodig zijn)
+      return true;
+    } else {
+      // Single-station: alleen tonen als enabled in weekday config
+      return getEffectiveWeekdayConfig(date)?.enableDayShifts ?? true;
+    }
+  };
+
+  const shouldShowNightShift = (date: Date | undefined): boolean => {
+    if (!date) return false;
+    
+    if (isMultiStation) {
+      // Multi-station: altijd nachtshift tonen (kan bij elk station nodig zijn)
+      return true;
+    } else {
+      // Single-station: alleen tonen als enabled in weekday config
+      return getEffectiveWeekdayConfig(date)?.enableNightShifts ?? true;
+    }
+  };
 
   // Update lokale selecties wanneer een datum wordt geselecteerd
   useEffect(() => {
@@ -106,6 +219,17 @@ export default function ShiftPlanner() {
     onSuccess: () => {
       console.log("Voorkeur succesvol opgeslagen");
       queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
+      
+      // Sync states na succesvolle save
+      setTimeout(() => {
+        if (selectedDate) {
+          const dayPref = getPreferenceForDate(selectedDate, "day");
+          const nightPref = getPreferenceForDate(selectedDate, "night");
+          setCurrentDaySelection(dayPref);
+          setCurrentNightSelection(nightPref);
+        }
+      }, 100); // Kleine delay om cache invalidation te laten settelen
+      
       toast({
         title: "Succes",
         description: "Voorkeur opgeslagen",
@@ -256,7 +380,7 @@ export default function ShiftPlanner() {
       
       const testData = {
         date: selectedDate,
-        type: preferenceType === "unavailable" ? "unavailable" : shiftType,
+        type: shiftType, // Altijd day of night gebruiken, NOOIT "unavailable"
         startTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(),
           startTimeHour, 0, 0
         ),
@@ -291,7 +415,7 @@ export default function ShiftPlanner() {
   };
   
   const getWeekendPreferences = (date: Date) => {
-    if (!isWeekend(date)) return { hasDay: false, hasNight: false, bothUnavailable: false };
+    if (!isWeekendOrHoliday(date)) return { hasDay: false, hasNight: false, bothUnavailable: false };
     
     const prefs = getDayPreferences(date);
     const dayPref = prefs.find(p => p.type === "day");
@@ -344,24 +468,78 @@ export default function ShiftPlanner() {
                 onMonthChange={setSelectedMonth}
                 disabled={(date) => date.getMonth() !== selectedMonth.getMonth()}
                 modifiers={{
-                  // Groen voor dagen waar voorkeuren zijn opgegeven (niet unavailable)
-                  hasPreference: (date) => {
-                    const prefs = getDayPreferences(date);
-                    return prefs.length > 0 && prefs.some(p => p.type !== "unavailable");
-                  },
-                  // Rood voor expliciet onbeschikbare dagen
+                  // EERSTE PRIORITEIT: Rood - ALLE shifts zijn onbeschikbaar
                   unavailable: (date) => {
                     const prefs = getDayPreferences(date);
-                    return prefs.length > 0 && prefs.every(p => p.type === "unavailable");
+                    if (prefs.length === 0) return false;
+                    
+                    const isUnavailable = (p: ShiftPreference) => p.notes === 'Niet beschikbaar' || (p.startTime === null && p.endTime === null);
+                    // Rood alleen als ALLE preferences onbeschikbaar zijn
+                    return prefs.every(isUnavailable);
                   },
-                  // Geen kleur (wit) voor dagen zonder voorkeuren
+                  // TWEEDE PRIORITEIT: Groen - alle zichtbare shifts beschikbaar, geen onbeschikbare
+                  fullAvailable: (date) => {
+                    const prefs = getDayPreferences(date);
+                    if (prefs.length === 0) return false;
+                    
+                    const isUnavailable = (p: ShiftPreference) => p.notes === 'Niet beschikbaar' || (p.startTime === null && p.endTime === null);
+                    const hasDayAvailable = prefs.some((p: ShiftPreference) => p.type === "day" && !isUnavailable(p));
+                    const hasNightAvailable = prefs.some((p: ShiftPreference) => p.type === "night" && !isUnavailable(p));
+                    const hasAnyUnavailable = prefs.some(isUnavailable);
+                    
+                    if (isMultiStation) {
+                      // Multi-station: groen als beide shifts beschikbaar zijn EN geen unavailable
+                      return hasDayAvailable && hasNightAvailable && !hasAnyUnavailable;
+                    } else {
+                      // Single-station: check welke shifts enabled zijn voor dit station
+                      const config = getEffectiveWeekdayConfig(date);
+                      const dayEnabled = config?.enableDayShifts ?? false;
+                      const nightEnabled = config?.enableNightShifts ?? false;
+                      
+                      // Groen als alle ENABLED shifts beschikbaar zijn EN geen unavailable shifts
+                      const dayOk = !dayEnabled || hasDayAvailable;
+                      const nightOk = !nightEnabled || hasNightAvailable;
+                      
+                      return dayOk && nightOk && !hasAnyUnavailable && (hasDayAvailable || hasNightAvailable);
+                    }
+                  },
+                  // DERDE PRIORITEIT: Oranje - mix van beschikbaar en onbeschikbaar, OF niet alle zichtbare shifts hebben voorkeur
+                  partialAvailable: (date) => {
+                    const prefs = getDayPreferences(date);
+                    if (prefs.length === 0) return false;
+                    
+                    const isUnavailable = (p: ShiftPreference) => p.notes === 'Niet beschikbaar' || (p.startTime === null && p.endTime === null);
+                    const hasDayAvailable = prefs.some((p: ShiftPreference) => p.type === "day" && !isUnavailable(p));
+                    const hasNightAvailable = prefs.some((p: ShiftPreference) => p.type === "night" && !isUnavailable(p));
+                    const hasAnyUnavailable = prefs.some(isUnavailable);
+                    const hasAnyAvailable = hasDayAvailable || hasNightAvailable;
+                    
+                    if (isMultiStation) {
+                      // Multi-station: oranje als niet beide shifts beschikbaar OF mix van available/unavailable
+                      const bothAvailable = hasDayAvailable && hasNightAvailable;
+                      return hasAnyAvailable && (!bothAvailable || hasAnyUnavailable);
+                    } else {
+                      // Single-station: check welke shifts enabled zijn
+                      const config = getEffectiveWeekdayConfig(date);
+                      const dayEnabled = config?.enableDayShifts ?? false;
+                      const nightEnabled = config?.enableNightShifts ?? false;
+                      
+                      // Oranje als: (mix van available/unavailable) OF (niet alle enabled shifts hebben voorkeur)
+                      const dayMissing = dayEnabled && !hasDayAvailable;
+                      const nightMissing = nightEnabled && !hasNightAvailable;
+                      
+                      return hasAnyAvailable && (hasAnyUnavailable || dayMissing || nightMissing);
+                    }
+                  },
+                  // LAATSTE PRIORITEIT: Wit voor geen voorkeur opgegeven
                   noPreference: (date) => {
                     const prefs = getDayPreferences(date);
                     return prefs.length === 0;
                   }
                 }}
                 modifiersClassNames={{
-                  hasPreference: "!bg-green-100 hover:!bg-green-200",
+                  fullAvailable: "!bg-green-100 hover:!bg-green-200",
+                  partialAvailable: "!bg-orange-100 hover:!bg-orange-200",
                   unavailable: "!bg-red-100 hover:!bg-red-200",
                   noPreference: "!bg-white hover:!bg-gray-50"
                 }}
@@ -378,7 +556,11 @@ export default function ShiftPlanner() {
                 <h3 className="font-medium mb-2">Legenda:</h3>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-green-100 rounded"></div>
-                  <span className="text-sm">Voorkeur opgegeven</span>
+                  <span className="text-sm">Zowel dag als nacht beschikbaar</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-orange-100 rounded"></div>
+                  <span className="text-sm">Dag OF nacht beschikbaar</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 bg-red-100 rounded"></div>
@@ -400,7 +582,7 @@ export default function ShiftPlanner() {
           <CardContent>
             {selectedDate && (
               <div className="space-y-6">
-                {isWeekend(selectedDate) && (
+                {shouldShowDayShift(selectedDate) && (
                   <form onSubmit={(e) => handleSubmit(e, "day")} className="space-y-4">
                     <h3 className="font-medium">Dag Shift (7:00 - 19:00)</h3>
                     <div className="space-y-2">
@@ -414,26 +596,30 @@ export default function ShiftPlanner() {
                         />
                         <span>Volledige shift (7:00-19:00)</span>
                       </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="dayShift"
-                          value="first"
-                          checked={currentDaySelection === "first"}
-                          onChange={(e) => handleTypeChange(e, selectedDate, "day")}
-                        />
-                        <span>Eerste deel (7:00-13:00)</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="dayShift"
-                          value="second"
-                          checked={currentDaySelection === "second"}
-                          onChange={(e) => handleTypeChange(e, selectedDate, "day")}
-                        />
-                        <span>Tweede deel (13:00-19:00)</span>
-                      </label>
+                      {allowSplitShifts && (
+                        <>
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              name="dayShift"
+                              value="first"
+                              checked={currentDaySelection === "first"}
+                              onChange={(e) => handleTypeChange(e, selectedDate, "day")}
+                            />
+                            <span>Eerste deel (7:00-13:00)</span>
+                          </label>
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              name="dayShift"
+                              value="second"
+                              checked={currentDaySelection === "second"}
+                              onChange={(e) => handleTypeChange(e, selectedDate, "day")}
+                            />
+                            <span>Tweede deel (13:00-19:00)</span>
+                          </label>
+                        </>
+                      )}
                       <label className="flex items-center space-x-2">
                         <input
                           type="radio"
@@ -462,8 +648,9 @@ export default function ShiftPlanner() {
                   </form>
                 )}
 
-                <form onSubmit={(e) => handleSubmit(e, "night")} className="space-y-4">
-                  <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
+                {shouldShowNightShift(selectedDate) && (
+                  <form onSubmit={(e) => handleSubmit(e, "night")} className="space-y-4">
+                    <h3 className="font-medium">Nacht Shift (19:00 - 7:00)</h3>
                   <div className="space-y-2">
                     <label className="flex items-center space-x-2">
                       <input
@@ -474,26 +661,6 @@ export default function ShiftPlanner() {
                         onChange={(e) => handleTypeChange(e, selectedDate, "night")}
                       />
                       <span>Volledige shift (19:00-7:00)</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="nightShift"
-                        value="first"
-                        checked={currentNightSelection === "first"}
-                        onChange={(e) => handleTypeChange(e, selectedDate, "night")}
-                      />
-                      <span>Eerste deel (19:00-23:00)</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name="nightShift"
-                        value="second"
-                        checked={currentNightSelection === "second"}
-                        onChange={(e) => handleTypeChange(e, selectedDate, "night")}
-                      />
-                      <span>Tweede deel (23:00-7:00)</span>
                     </label>
                     <label className="flex items-center space-x-2">
                       <input
@@ -520,7 +687,8 @@ export default function ShiftPlanner() {
                       "Nacht Shift Voorkeur Opslaan"
                     )}
                   </Button>
-                </form>
+                  </form>
+                )}
               </div>
             )}
           </CardContent>

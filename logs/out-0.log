@@ -1,0 +1,29 @@
+2025-07-09T14:30:21: 2:30:21 PM [express] serving on port 5000
+2025-07-09T14:37:45: 2:37:45 PM [express] serving on port 5000
+2025-07-09T14:38:32: 2:38:32 PM [express] GET /api/user 401 in 3ms
+2025-07-09T14:38:32: 2:38:32 PM [express] GET /api/stations 500 in 101ms :: {"message":"Failed to get stations"}
+2025-07-09T14:48:47: 2:48:47 PM [express] GET /api/user 401 in 1ms
+2025-07-09T14:48:47: 2:48:47 PM [express] GET /api/stations 500 in 5ms :: {"message":"Failed to get stations"}
+2025-07-09T14:50:33: 2:50:33 PM [express] GET /api/user 401 in 2ms
+2025-07-09T14:50:33: 2:50:33 PM [express] GET /api/stations 500 in 6ms :: {"message":"Failed to get stations"}
+2025-07-09T14:50:33: 2:50:33 PM [express] GET /api/user 401 in 1ms
+2025-07-09T14:50:33: 2:50:33 PM [express] GET /api/stations 500 in 4ms :: {"message":"Failed to get stations"}
+2025-07-09T14:50:36: 2:50:36 PM [express] GET /api/user 401 in 1ms
+2025-07-09T14:50:36: 2:50:36 PM [express] GET /api/stations 500 in 4ms :: {"message":"Failed to get stations"}
+2025-07-09T14:53:30: 2:53:30 PM [express] GET /api/user 401 in 1ms
+2025-07-09T14:53:30: 2:53:30 PM [express] GET /api/stations 500 in 6ms :: {"message":"Failed to get stations"}
+2025-07-09T14:54:57: 2:54:57 PM [express] GET /api/user 401 in 1ms
+2025-07-09T14:54:57: 2:54:57 PM [express] GET /api/stations 500 in 5ms :: {"message":"Failed to get stations"}
+2025-07-09T14:56:39: 2:56:39 PM [express] GET /api/user 401 in 0ms
+2025-07-09T14:56:39: 2:56:39 PM [express] GET /api/stations 500 in 6ms :: {"message":"Failed to get stations"}
+2025-07-09T16:04:09: 4:04:09 PM [express] GET /api/user 401 in 1ms
+2025-07-09T16:04:09: 4:04:09 PM [express] GET /api/stations 500 in 7ms :: {"message":"Failed to get stations"}
+2025-07-09T16:04:19: 4:04:19 PM [express] GET /api/user 401 in 1ms
+2025-07-09T16:04:19: 4:04:19 PM [express] GET /api/stations 500 in 4ms :: {"message":"Failed to get stations"}
+2025-07-09T16:09:54: 4:09:54 PM [express] GET /api/stations 500 in 5ms :: {"message":"Failed to get stations"}
+2025-07-09T16:11:03: 4:11:03 PM [express] serving on port 5000
+2025-07-09T16:31:33: 4:31:33 PM [express] serving on port 5000
+2025-07-09T16:31:57: 4:31:57 PM [express] GET /api/stations 500 in 57ms :: {"message":"Failed to get stations"}
+2025-07-09T16:37:14: 4:37:14 PM [express] serving on port 5000
+2025-07-09T16:39:44: 4:39:44 PM [express] serving on port 5000
+2025-07-09T16:44:22: 4:44:21 PM [express] serving on port 5000

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword, comparePasswords } from "./auth";
-import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shiftPreferences, shifts, insertWeekdayConfigSchema, insertUserCommentSchema } from "@shared/schema";
+import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shiftPreferences, shifts, insertWeekdayConfigSchema, insertUserCommentSchema, insertHolidaySchema, userStations, users } from "../shared/schema";
 import { z } from "zod";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
@@ -13,9 +13,14 @@ import * as XLSX from 'xlsx';
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
-  // Admin middleware
+  // Admin middleware (includes supervisors)
   const requireAdmin = (req: any, res: any, next: any) => {
-    if (!req.isAuthenticated() || !req.user.isAdmin) {
+    if (!req.isAuthenticated() || (req.user.role !== 'admin' && req.user.role !== 'supervisor')) {
+      console.log("Admin access denied:", {
+        isAuthenticated: req.isAuthenticated(),
+        userRole: req.user?.role,
+        userId: req.user?.id
+      });
       return res.sendStatus(403);
     }
     next();
@@ -23,6 +28,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Authenticatie middleware
   const requireAuth = (req: any, res: any, next: any) => {
+    console.log("=== REQUIRE AUTH DEBUG ===");
+    console.log("isAuthenticated:", req.isAuthenticated());
+    console.log("session:", req.session);
+    console.log("user:", req.user);
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
     }
@@ -56,6 +65,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Speciale route voor noodgeval login (ALLEEN VOOR ONTWIKKELING)
   app.post("/api/dev-login", async (req, res) => {
+    // SECURITY: Only allow in development environment
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ message: "Not found" });
+    }
+    
     try {
       const { username } = req.body;
       console.log(`Development login request for ${username}`);
@@ -81,12 +95,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all users (admin only, filtered by station)
+  // Get ALL users for cross-team management (supervisors only)
+  app.get("/api/users/all", requireAdmin, async (req, res) => {
+    try {
+      console.log("Getting all users for cross-team management");
+      
+      // Only supervisors can get all users for cross-team management
+      if (!req.user || req.user.role !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen supervisors kunnen alle gebruikers ophalen" });
+      }
+      
+      const allUsers = await storage.getAllUsers();
+      console.log(`Found ${allUsers.length} total users for cross-team management`);
+      
+      // SECURITY: Remove password fields from all user objects before sending
+      const users = allUsers.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
+      
+      res.json(users);
+    } catch (error) {
+      console.error("Error getting all users:", error);
+      res.status(500).json({ message: "Failed to get all users" });
+    }
+  });
+
+  // Get all users (admin only, filtered by station - supervisors see all stations)
   app.get("/api/users", requireAdmin, async (req, res) => {
     try {
+      console.log("=== GET /api/users DEBUG ===");
+      console.log("Admin user object:", JSON.stringify(req.user, null, 2));
+      console.log("Admin stationId:", (req.user as any).stationId);
+      console.log("Admin role:", (req.user as any).role);
+      
       const allUsers = await storage.getAllUsers();
-      // Filter users by the requesting user's station
-      const users = allUsers.filter(user => user.stationId === (req.user as any).stationId);
+      console.log("All users from database:", allUsers.length);
+      console.log("Users station IDs:", allUsers.map(u => `${u.username}:${u.stationId}`));
+      
+      let filteredUsers;
+      
+      // Supervisors see all users (including supervisor station for read-only), regular admins see only their station
+      if ((req.user as any).role === 'supervisor') {
+        const requestedStationId = req.query.stationId ? parseInt(req.query.stationId as string) : null;
+        
+        if (requestedStationId) {
+          // Supervisor requested specific station (including supervisor station for read-only viewing)
+          filteredUsers = allUsers.filter(user => user.stationId === requestedStationId);
+          console.log(`Supervisor requested station ${requestedStationId}, returning ${filteredUsers.length} users`);
+        } else {
+          // Return all users including supervisor station for viewing
+          filteredUsers = allUsers;
+          console.log(`Supervisor gets all users including station 8: ${filteredUsers.length} users`);
+        }
+      } else {
+        // Regular admin - only their station (including cross-station users)
+        const adminStationId = (req.user as any).stationId;
+        filteredUsers = await storage.getUsersByStation(adminStationId);
+        console.log(`Admin gets users for station ${adminStationId}: ${filteredUsers.length} users (including cross-station)`);
+      }
+      
+      // SECURITY FIX: Remove password fields from all user objects before sending
+      const users = filteredUsers.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
+      
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -97,10 +165,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new user (admin only)
   app.post("/api/users", requireAdmin, async (req, res) => {
     try {
+      console.log("=== POST /api/users DEBUG ===");
+      console.log("Admin user object:", JSON.stringify(req.user, null, 2));
+      console.log("Admin stationId:", (req.user as any).stationId);
+      console.log("Admin role:", (req.user as any).role);
+      
       const userData = insertUserSchema.parse(req.body);
+      console.log("Original userData:", JSON.stringify(userData, null, 2));
+      
+      // SECURITY: Only supervisors can create other supervisors
+      if (userData.role === 'supervisor' && (req.user as any).role !== 'supervisor') {
+        return res.status(403).json({ message: "Only supervisors can create other supervisors" });
+      }
+      
+      // SECURITY: Supervisors always go to supervisor station (ID 8)
+      if (userData.role === 'supervisor') {
+        userData.stationId = 8;
+        console.log(`Supervisor automatically assigned to supervisor station (ID 8)`);
+      }
+      
+      // SECURITY: Station assignment logic based on role (only for non-supervisors)
+      if ((req.user as any).role === 'supervisor' && userData.role !== 'supervisor') {
+        // Supervisors can assign to any station except supervisor station (8)
+        if (!userData.stationId) {
+          return res.status(400).json({ message: "Supervisors must specify a stationId" });
+        }
+        if (userData.stationId === 8) {
+          return res.status(400).json({ message: "Cannot assign users to supervisor station" });
+        }
+        
+        // Validate station exists and is not supervisor station
+        const targetStation = await storage.getStation(userData.stationId);
+        if (!targetStation || targetStation.id === 8) {
+          return res.status(400).json({ message: "Invalid station selected" });
+        }
+        console.log(`Supervisor creating user for station ${userData.stationId}`);
+      } else {
+        // Regular admins: Force to their station only
+        const adminStationId = (req.user as any).stationId;
+        userData.stationId = adminStationId;
+        console.log(`Admin forced stationId to: ${adminStationId}`);
+      }
+      
+      // SECURITY FIX: Hash the password before storing
+      if (userData.password) {
+        userData.password = await hashPassword(userData.password);
+        console.log("Password hashed successfully");
+      }
+      
+      console.log("Final userData (password masked):", { ...userData, password: "[HASHED]" });
+      
       const user = await storage.createUser(userData);
-      res.status(201).json(user);
+      
+      // SECURITY FIX: Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      console.log("Created user (password removed):", JSON.stringify(userWithoutPassword, null, 2));
+      
+      res.status(201).json(userWithoutPassword);
     } catch (error) {
+      console.error("USER CREATION ERROR:", error);
       if (error instanceof z.ZodError) {
         res.status(400).json(error.errors);
       } else {
@@ -112,16 +235,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user (admin only)
   app.patch("/api/users/:id", requireAdmin, async (req, res) => {
     try {
+      // SECURITY: Check if user belongs to admin's station OR admin is supervisor
+      const targetUser = await storage.getUser(parseInt(req.params.id));
+      const adminRole = (req.user as any).role;
+      const adminStationId = (req.user as any).stationId;
+      
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Supervisors can update users in any station except supervisor station (8)
+      if (adminRole === 'supervisor') {
+        if (targetUser.stationId === 8) {
+          return res.status(403).json({ message: "Cannot modify supervisor station users" });
+        }
+      } else {
+        // Regular admins - only their station
+        if (targetUser.stationId !== adminStationId) {
+          return res.status(404).json({ message: "User not found" });
+        }
+      }
+
       const updateSchema = z.object({
         firstName: z.string().min(1).optional(),
         lastName: z.string().min(1).optional(),
-        role: z.enum(["admin", "ambulancier"]).optional(),
+        email: z.string().email("Ongeldig email adres").optional().or(z.literal("")),
+        role: z.enum(["admin", "ambulancier", "supervisor"]).optional(),
         hours: z.number().min(0).max(168).optional(),
+        stationId: z.number().optional(),
+        isProfessional: z.boolean().optional(),
       });
 
       const updateData = updateSchema.parse(req.body);
+      
+      // SECURITY: Only supervisors can promote users to supervisor role
+      if (updateData.role === 'supervisor' && (req.user as any).role !== 'supervisor') {
+        return res.status(403).json({ message: "Only supervisors can promote users to supervisor role" });
+      }
+      
+      // SECURITY: When promoting to supervisor, force station assignment to supervisor station (ID 8)
+      if (updateData.role === 'supervisor') {
+        updateData.stationId = 8;
+        console.log(`User promoted to supervisor, automatically assigned to supervisor station (ID 8)`);
+      }
+      
       const user = await storage.updateUser(parseInt(req.params.id), updateData);
-      res.json(user);
+      
+      // SECURITY FIX: Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json(error.errors);
@@ -131,15 +293,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update user password (admin or self)
+  // Update user password (admin, supervisor, or self)
   app.patch("/api/users/:id/password", requireAuth, async (req, res) => {
     try {
-      // Check if user is admin or updating their own password
-      if (!req.user?.isAdmin && req.user?.id !== parseInt(req.params.id)) {
+      const adminRole = (req.user as any).role;
+      const currentUserId = (req.user as any).id;
+      const targetUserId = parseInt(req.params.id);
+      
+      // Check if user is admin/supervisor or updating their own password
+      if (adminRole !== 'admin' && adminRole !== 'supervisor' && currentUserId !== targetUserId) {
         return res.sendStatus(403);
       }
+      
+      // SECURITY: Supervisors can manage all users across all stations, including other supervisors
+      if (adminRole === 'supervisor' && currentUserId !== targetUserId) {
+        const targetUser = await storage.getUser(targetUserId);
+        if (!targetUser) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        // Supervisors have full system access - no restrictions on managing other supervisors
+      }
 
-      const data = (req.user?.isAdmin
+      const data = (adminRole === 'admin' || adminRole === 'supervisor'
         ? z.object({ password: z.string().min(6) })
         : z.object({
           currentPassword: z.string().min(1),
@@ -147,21 +322,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       ).parse(req.body);
 
-      // Als niet admin, verifieer huidig wachtwoord
-      if (!req.user?.isAdmin) {
+      // Als niet admin/supervisor, verifieer huidig wachtwoord
+      if (adminRole !== 'admin' && adminRole !== 'supervisor') {
         const user = await storage.getUser(parseInt(req.params.id));
-        if (!user || !(await comparePasswords(data.currentPassword, user.password))) {
+        const currentPassword = 'currentPassword' in data ? data.currentPassword : '';
+        if (!user || !(await comparePasswords(currentPassword, user.password))) {
           return res.status(400).json({ message: "Huidig wachtwoord is incorrect" });
         }
       }
 
       const user = await storage.updateUserPassword(
-        parseInt(req.params.id),
-        // Als admin, gebruik direct het nieuwe wachtwoord, anders gebruik newPassword
+        targetUserId,
+        // Als admin/supervisor, gebruik direct het nieuwe wachtwoord, anders gebruik newPassword
         'password' in data ? data.password : data.newPassword
       );
 
-      res.json(user);
+      // SECURITY FIX: Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json(error.errors);
@@ -174,10 +352,543 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete user (admin only)
   app.delete("/api/users/:id", requireAdmin, async (req, res) => {
     try {
-      await storage.deleteUser(parseInt(req.params.id));
+      const targetUserId = parseInt(req.params.id);
+      const currentUserId = (req.user as any).id;
+      const adminRole = (req.user as any).role;
+      const adminStationId = (req.user as any).stationId;
+      
+      // SECURITY: Prevent self-deletion
+      if (targetUserId === currentUserId) {
+        return res.status(400).json({ message: "Je kunt jezelf niet verwijderen" });
+      }
+      
+      // SECURITY: Check if user belongs to admin's station OR admin is supervisor
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Supervisors can delete users in any station except supervisor station (8)
+      if (adminRole === 'supervisor') {
+        if (targetUser.stationId === 8) {
+          return res.status(403).json({ message: "Cannot access supervisor station users" });
+        }
+      } else {
+        // Regular admins - only their station
+        if (targetUser.stationId !== adminStationId) {
+          return res.status(404).json({ message: "User not found" });
+        }
+      }
+
+      await storage.deleteUser(targetUserId);
       res.sendStatus(200);
     } catch (error) {
       res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Multi-station management routes
+  
+  // Get accessible stations for current user
+  app.get("/api/user/stations", requireAuth, async (req, res) => {
+    try {
+      const includeSupervision = req.query.includeSupervisor === 'true';
+      const stations = await storage.getUserAccessibleStations(req.user!.id, includeSupervision);
+      res.json(stations);
+    } catch (error) {
+      console.error("Error fetching user stations:", error);
+      res.status(500).json({ message: "Failed to get accessible stations" });
+    }
+  });
+
+  // Station switching (server-side, works without JavaScript)
+  app.post("/switch-station", requireAuth, async (req: any, res) => {
+    try {
+      const { stationId } = req.body;
+      console.log("🔄 Station switch requested:", { userId: req.user.id, stationId });
+      
+      // Verify user has access to this station
+      const accessibleStations = await storage.getUserAccessibleStations(req.user.id);
+      const hasAccess = accessibleStations.some(station => station.id === parseInt(stationId));
+      
+      if (!hasAccess) {
+        console.log("❌ Access denied to station:", stationId);
+        return res.status(403).send("No access to this station");
+      }
+      
+      // Update user's current station in session
+      req.user.stationId = parseInt(stationId);
+      
+      // Update session
+      req.login(req.user, (err: any) => {
+        if (err) {
+          console.error("Session update error:", err);
+          return res.status(500).send("Failed to switch station");
+        }
+        
+        console.log("✅ Station switched successfully to:", stationId);
+        res.redirect("/dashboard");
+      });
+      
+    } catch (error) {
+      console.error("Error switching station:", error);
+      res.status(500).send("Failed to switch station");
+    }
+  });
+
+  // Add user to station (admin only)
+  app.post("/api/users/:userId/stations/:stationId", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const stationId = parseInt(req.params.stationId);
+      
+      // Verify user exists and admin has access to the user's primary station
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser || targetUser.stationId !== (req.user as any).stationId) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify the station exists
+      const station = await storage.getStation(stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station not found" });
+      }
+      
+      await storage.addUserToStation(userId, stationId);
+      res.json({ message: "User toegevoegd aan station" });
+    } catch (error) {
+      console.error("Error adding user to station:", error);
+      res.status(500).json({ message: "Failed to add user to station" });
+    }
+  });
+
+  // Remove user from station (admin only)
+  app.delete("/api/users/:userId/stations/:stationId", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const stationId = parseInt(req.params.stationId);
+      
+      // Verify user exists and admin has access to the user's primary station
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser || targetUser.stationId !== (req.user as any).stationId) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Don't allow removing user from their primary station
+      if (targetUser.stationId === stationId) {
+        return res.status(400).json({ message: "Cannot remove user from their primary station" });
+      }
+      
+      await storage.removeUserFromStation(userId, stationId);
+      res.json({ message: "User verwijderd van station" });
+    } catch (error) {
+      console.error("Error removing user from station:", error);
+      res.status(500).json({ message: "Failed to remove user from station" });
+    }
+  });
+
+  // ===== CROSS-TEAM API ROUTES =====
+
+  // Get user's cross-team station assignments with hour limits
+  app.get("/api/users/:userId/station-assignments", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Input validation
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Ongeldige gebruiker ID" });
+      }
+      
+      // Verify user exists
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Authorization: Supervisors have access to all users for cross-team management
+      const currentUser = req.user;
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Only supervisors can access station assignments (for cross-team management)
+      if (currentUser.role !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen supervisors kunnen station toewijzingen bekijken" });
+      }
+      
+      // Get all station assignments for this user
+      const assignments = await storage.getUserStationAssignments(userId);
+      
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error getting user station assignments:", error);
+      res.status(500).json({ message: "Failed to get station assignments" });
+    }
+  });
+
+  // Add user to station with hour limits (supervisor only)
+  app.post("/api/users/:userId/station-assignments", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { stationId, maxHours } = req.body;
+      
+      // Input validation
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Ongeldige gebruiker ID" });
+      }
+      
+      // Validate body input
+      const schema = z.object({
+        stationId: z.number().min(1),
+        maxHours: z.number().min(1).max(160) // Max 160 hours per month
+      });
+      
+      const validatedData = schema.parse({ stationId, maxHours });
+      
+      // Authorization: Only supervisors can assign users to stations
+      const currentUser = req.user;
+      if (!currentUser || currentUser.role !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen supervisors kunnen gebruikers toewijzen aan stations" });
+      }
+      
+      // Verify user exists
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify station exists
+      const station = await storage.getStation(validatedData.stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station not found" });
+      }
+      
+      // Check if supervisor has access to target station
+      const accessibleStations = await storage.getUserAccessibleStations(currentUser.id);
+      const hasStationAccess = accessibleStations.some(s => s.id === validatedData.stationId);
+      
+      if (!hasStationAccess) {
+        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      }
+      
+      await storage.addUserToStation(userId, validatedData.stationId, validatedData.maxHours);
+      
+      res.json({ 
+        message: `${targetUser.firstName} ${targetUser.lastName} toegevoegd aan ${station.displayName} met ${validatedData.maxHours} uur limiet`
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Ongeldige gegevens", errors: error.errors });
+      }
+      console.error("Error adding user to station with hours:", error);
+      res.status(500).json({ message: "Failed to add user to station" });
+    }
+  });
+
+  // Update user's hour limit for a specific station
+  app.put("/api/users/:userId/stations/:stationId/hours", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const stationId = parseInt(req.params.stationId);
+      const { maxHours } = req.body;
+      
+      // Input validation
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Ongeldige gebruiker ID" });
+      }
+      if (isNaN(stationId)) {
+        return res.status(400).json({ message: "Ongeldig station ID" });
+      }
+      
+      // Validate body input
+      const schema = z.object({
+        maxHours: z.number().min(1).max(160)
+      });
+      
+      const validatedData = schema.parse({ maxHours });
+      
+      // Authorization: Only supervisors can update station hours
+      const currentUser = req.user;
+      if (!currentUser || currentUser.role !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen supervisors kunnen uren limieten aanpassen" });
+      }
+      
+      // Verify user exists
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify station exists
+      const station = await storage.getStation(stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station not found" });
+      }
+      
+      // Check if supervisor has access to target station
+      const accessibleStations = await storage.getUserAccessibleStations(currentUser.id);
+      const hasStationAccess = accessibleStations.some(s => s.id === stationId);
+      
+      if (!hasStationAccess) {
+        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      }
+      
+      await storage.updateUserStationHours(userId, stationId, validatedData.maxHours);
+      
+      res.json({ 
+        message: `Uur limiet voor ${targetUser.firstName} ${targetUser.lastName} bij ${station.displayName} bijgewerkt naar ${validatedData.maxHours} uur`
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Ongeldige gegevens", errors: error.errors });
+      }
+      console.error("Error updating user station hours:", error);
+      res.status(500).json({ message: "Failed to update station hours" });
+    }
+  });
+
+  // Get cross-team users for a specific station
+  app.get("/api/stations/:stationId/cross-team-users", requireAdmin, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      
+      // Verify station exists
+      const station = await storage.getStation(stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station not found" });
+      }
+      
+      // Get cross-team users for this station
+      const crossTeamUsers = await storage.getCrossTeamUsersForStation(stationId);
+      
+      res.json(crossTeamUsers);
+    } catch (error) {
+      console.error("Error getting cross-team users:", error);
+      res.status(500).json({ message: "Failed to get cross-team users" });
+    }
+  });
+
+  // Validate cross-team schedule for conflicts
+  app.post("/api/validate-cross-team-schedule", requireAuth, async (req, res) => {
+    try {
+      const { shifts } = req.body;
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Validate input
+      const schema = z.object({
+        shifts: z.array(z.object({
+          date: z.coerce.date(),
+          startTime: z.coerce.date(),
+          endTime: z.coerce.date(),
+          stationId: z.number()
+        }))
+      });
+      
+      const validatedData = schema.parse({ shifts });
+      
+      // Validate the schedule for conflicts
+      const validation = await storage.validateCrossTeamSchedule(userId, validatedData.shifts);
+      
+      res.json(validation);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Ongeldige gegevens", errors: error.errors });
+      }
+      console.error("Error validating cross-team schedule:", error);
+      res.status(500).json({ message: "Failed to validate schedule" });
+    }
+  });
+
+  // ===== UNIFIED PREFERENCES API ROUTES =====
+
+  // Get unified preferences (cross-team) for authenticated user  
+  app.get("/api/unified-preferences", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const { month, year } = req.query;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Default to current month/year if not provided
+      const targetMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
+      const targetYear = year ? parseInt(year as string) : new Date().getFullYear();
+
+      const preferences = await storage.getUnifiedUserShiftPreferences(userId, targetMonth, targetYear);
+      
+      res.json(preferences);
+    } catch (error) {
+      console.error("Error getting unified preferences:", error);
+      res.status(500).json({ message: "Failed to get unified preferences" });
+    }
+  });
+
+  // Sync user preferences to all assigned stations
+  app.post("/api/sync-preferences", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const { month, year } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Validate input
+      const schema = z.object({
+        month: z.number().min(1).max(12),
+        year: z.number().min(2020).max(2050)
+      });
+
+      const validatedData = schema.parse({ month, year });
+
+      // Sync preferences from primary station to all assigned stations
+      await storage.syncUserPreferencesToAllStations(userId, validatedData.month, validatedData.year);
+
+      res.json({ 
+        message: `Voorkeuren gesynchroniseerd voor ${validatedData.month}/${validatedData.year} naar alle toegewezen stations`
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Ongeldige gegevens", errors: error.errors });
+      }
+      console.error("Error syncing preferences:", error);
+      res.status(500).json({ message: "Failed to sync preferences" });
+    }
+  });
+
+  // Delete unified preferences for authenticated user (all stations)
+  app.delete("/api/unified-preferences/:month/:year", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const month = parseInt(req.params.month);
+      const year = parseInt(req.params.year);
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Validate parameters
+      if (isNaN(month) || month < 1 || month > 12) {
+        return res.status(400).json({ message: "Ongeldige maand" });
+      }
+      if (isNaN(year) || year < 2020 || year > 2050) {
+        return res.status(400).json({ message: "Ongeldig jaar" });
+      }
+
+      await storage.deleteUnifiedPreferencesForUser(userId, month, year);
+
+      res.json({ message: `Alle voorkeuren voor ${month}/${year} zijn verwijderd van alle stations` });
+    } catch (error) {
+      console.error("Error deleting unified preferences:", error);
+      res.status(500).json({ message: "Failed to delete unified preferences" });
+    }
+  });
+
+  // Auto-sync preferences when creating/updating preferences
+  app.post("/api/preferences-with-sync", requireAuth, async (req, res) => {
+    try {
+      console.log('Received preference data with sync:', req.body);
+
+      const preferenceData = {
+        ...req.body,
+        userId: req.user!.id,
+        stationId: req.user!.stationId, 
+        date: new Date(req.body.date),
+        startTime: req.body.startTime ? new Date(req.body.startTime) : null,
+        endTime: req.body.endTime ? new Date(req.body.endTime) : null,
+        status: "pending"
+      };
+
+      console.log('Processing preference with sync:', preferenceData);
+
+      // Check if there's already a preference for this date
+      const existingPreferences = await storage.getUserShiftPreferences(
+        req.user!.id,
+        preferenceData.month,
+        preferenceData.year
+      );
+
+      const existingPreference = existingPreferences.find(pref => 
+        format(new Date(pref.date), "yyyy-MM-dd") === format(new Date(preferenceData.date), "yyyy-MM-dd") &&
+        pref.type === preferenceData.type
+      );
+
+      let preference;
+      if (existingPreference) {
+        // Update existing preference
+        preference = await storage.updateShiftPreference(existingPreference.id, preferenceData);
+        console.log('Updated existing preference:', preference);
+      } else {
+        // Create new preference
+        preference = await storage.createShiftPreference(preferenceData);
+        console.log('Created new preference:', preference);
+      }
+
+      // Auto-sync to all assigned stations
+      await storage.syncUserPreferencesToAllStations(req.user!.id, preferenceData.month, preferenceData.year);
+      console.log('Preferences synced to all stations');
+
+      res.status(201).json(preference);
+    } catch (error) {
+      console.error('Error processing preference with sync:', error);
+      res.status(500).json({
+        message: "Er is een fout opgetreden bij het opslaan en synchroniseren van de voorkeur"
+      });
+    }
+  });
+
+  // ===== CROSS-TEAM STATISTICS API ROUTES =====
+
+  // Get cross-team shift statistics 
+  app.get("/api/statistics/cross-team-shifts", requireAdmin, async (req, res) => {
+    try {
+      const { type, year, month, quarter } = req.query;
+      
+      // Validate required parameters
+      if (!type || !year) {
+        return res.status(400).json({ message: "Type en jaar zijn verplicht" });
+      }
+      
+      const periodType = type as "month" | "quarter" | "year";
+      const targetYear = parseInt(year as string);
+      
+      // Validate type
+      if (!["month", "quarter", "year"].includes(periodType)) {
+        return res.status(400).json({ message: "Type moet 'month', 'quarter' of 'year' zijn" });
+      }
+      
+      // Validate month for monthly stats
+      if (periodType === "month" && !month) {
+        return res.status(400).json({ message: "Maand is verplicht voor maandelijkse statistieken" });
+      }
+      
+      // Validate quarter for quarterly stats  
+      if (periodType === "quarter" && !quarter) {
+        return res.status(400).json({ message: "Kwartaal is verplicht voor kwartaalstatistieken" });
+      }
+      
+      const targetMonth = month ? parseInt(month as string) : undefined;
+      const targetQuarter = quarter ? parseInt(quarter as string) : undefined;
+      
+      console.log(`Fetching cross-team statistics: ${periodType} ${targetYear}${targetMonth ? `/${targetMonth}` : ''}${targetQuarter ? ` Q${targetQuarter}` : ''}`);
+      
+      const statistics = await storage.getCrossTeamShiftStatistics(
+        periodType,
+        targetYear,
+        targetMonth,
+        targetQuarter
+      );
+      
+      console.log(`Found ${statistics.length} cross-team users with statistics`);
+      res.json(statistics);
+    } catch (error) {
+      console.error("Error fetching cross-team shift statistics:", error);
+      res.status(500).json({ message: "Failed to get cross-team shift statistics" });
     }
   });
 
@@ -204,6 +915,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/preferences/:userId/:month/:year", requireAdmin, async (req, res) => {
     try {
       const { userId, month, year } = req.params;
+      
+      // SECURITY: Check if user belongs to admin's station
+      const targetUser = await storage.getUser(parseInt(userId));
+      if (!targetUser || targetUser.stationId !== (req.user as any).stationId) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
       const preferences = await storage.getUserShiftPreferences(
         parseInt(userId),
         parseInt(month),
@@ -220,6 +938,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/preferences/clearMonth/:userId/:month/:year", requireAdmin, async (req, res) => {
     try {
       const { userId, month, year } = req.params;
+      
+      // SECURITY: Check if user belongs to admin's station
+      const targetUser = await storage.getUser(parseInt(userId));
+      if (!targetUser || targetUser.stationId !== (req.user as any).stationId) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
       const userPrefs = await storage.getUserShiftPreferences(
         parseInt(userId),
         parseInt(month),
@@ -526,6 +1251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const preferenceData = {
         ...req.body,
         userId: req.user!.id,
+        stationId: req.user!.stationId, // BUGFIX: Add missing stationId
         date: new Date(req.body.date),
         startTime: req.body.startTime ? new Date(req.body.startTime) : null,
         endTime: req.body.endTime ? new Date(req.body.endTime) : null,
@@ -542,7 +1268,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       const existingPreference = existingPreferences.find(pref => 
-        format(new Date(pref.date), "yyyy-MM-dd") === format(new Date(preferenceData.date), "yyyy-MM-dd")
+        format(new Date(pref.date), "yyyy-MM-dd") === format(new Date(preferenceData.date), "yyyy-MM-dd") &&
+        pref.type === preferenceData.type
       );
 
       let preference;
@@ -588,6 +1315,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get all shifts - optionally filter by month/year
   app.get("/api/shifts", requireAuth, async (req, res) => {
+    // Disable caching for dynamic shift data
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     try {
       let shifts;
       const userStationId = req.user?.stationId;
@@ -622,6 +1354,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         month: new Date(req.body.date).getMonth() + 1,
         year: new Date(req.body.date).getFullYear()
       };
+
+      // BUSINESS RULE VALIDATION: Check if cross-team user can receive split shift in simple system
+      if (shiftData.userId && shiftData.userId > 0 && shiftData.isSplitShift) {
+        const canReceiveSplit = await storage.canUserReceiveSplitShift(shiftData.userId, shiftData.stationId);
+        if (!canReceiveSplit) {
+          console.log(`❌ BUSINESS RULE VIOLATION: Cannot assign split shift to cross-team user ${shiftData.userId} in simple system (station ${shiftData.stationId})`);
+          return res.status(400).json({ 
+            message: "Cross-team gebruikers kunnen geen gesplitste shifts krijgen in eenvoudige systemen. Wijs een volledige shift toe of kies een andere gebruiker.",
+            errorCode: "SPLIT_SHIFT_NOT_ALLOWED_FOR_CROSS_TEAM_USER"
+          });
+        }
+      }
       
       const shift = await storage.createShift(shiftData);
       console.log('Shift created successfully:', shift);
@@ -684,6 +1428,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get shifts by month
   app.get("/api/shifts/month/:month/:year", requireAuth, async (req, res) => {
+    // Disable caching for dynamic shift data
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     try {
       const { month, year } = req.params;
       const userStationId = req.user?.stationId;
@@ -722,6 +1471,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { month, year } = req.body;
       const userStationId = req.user?.stationId;
+      
+      
+      // Controleer of gebruiker ingelogd is en stationId heeft
+      if (!req.user || !userStationId) {
+        console.error("Geen geldige gebruiker of stationId:", { 
+          user: req.user?.username, 
+          stationId: userStationId,
+          fullUser: req.user 
+        });
+        return res.status(401).json({ message: "Geen geldige sessie of station informatie. Log opnieuw in." });
+      }
+      
       console.log(`[0%] Planning generatie gestart voor ${month}/${year} voor station ${userStationId}`);
       
       // Initialize progress tracking
@@ -735,6 +1496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const generatedShifts = await storage.generateMonthlySchedule(month, year, userStationId, progressCallback);
       
+      
       // Complete progress tracking
       generateProgress = { percentage: 100, message: "Planning voltooid!", isActive: false };
       console.log(`[100%] Planning generatie voltooid voor ${month}/${year}`);
@@ -745,134 +1507,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const key = `last_schedule_generated_${month}_${year}`;
       await storage.setSystemSetting(key, timestamp);
       
-      // Log gebruikers uren voor verificatie
-      console.log("Gebruikers uren na planning generatie:");
-      const users = await storage.getAllUsers();
-      const ambulanciers = users.filter(user => user.role === 'ambulancier');
-      
-      // Shifts tellen per gebruiker
-      const userShiftHours = new Map();
-      ambulanciers.forEach(user => {
-        const userShifts = generatedShifts.filter(s => s.userId === user.id);
-        const hours = userShifts.length * 12; // Elke shift is 12 uur
-        userShiftHours.set(user.id, hours);
-        console.log(`- ${user.username}: ${hours} uren gepland, opgegeven: ${user.hours}`);
-      });
       
       res.status(200).json(generatedShifts);
     } catch (error) {
       console.error("Error generating schedule:", error);
-      res.status(500).json({ message: "Failed to generate schedule", error: error.message });
+      res.status(500).json({ message: "Failed to generate schedule", error: String(error) });
     }
   });
   
-  // Route om alle shift tijden te corrigeren naar de nieuwe tijden
-  app.post("/api/shifts/fix-times", requireAuth, async (req, res) => {
-    try {
-      console.log("Corrigeren van shift tijden naar de correcte waarden...");
-      
-      // Haal alle shifts op
-      const allShifts = await storage.getAllShifts();
-      let updatedCount = 0;
-      
-      for (const shift of allShifts) {
-        let startHour, endHour, needsUpdate = false;
-        
-        // Bepaal de juiste tijden op basis van type shift
-        if (shift.type === "day") {
-          // Dagshift: 07:00 - 19:00
-          startHour = 7;
-          endHour = 19;
-          
-          // Controleer of de huidige tijden niet al correct zijn
-          const currentStartHour = new Date(shift.startTime).getHours();
-          const currentEndHour = new Date(shift.endTime).getHours();
-          
-          if (currentStartHour !== startHour || currentEndHour !== endHour) {
-            needsUpdate = true;
-          }
-        } else if (shift.type === "night") {
-          // Nachtshift: 19:00 - 07:00 (volgende dag)
-          startHour = 19;
-          endHour = 7;
-          
-          // Controleer of de huidige tijden niet al correct zijn
-          const currentStartHour = new Date(shift.startTime).getHours();
-          const currentEndHour = new Date(shift.endTime).getHours();
-          
-          if (currentStartHour !== startHour || currentEndHour !== endHour) {
-            needsUpdate = true;
-          }
-        }
-        
-        if (needsUpdate) {
-          // Bereken de juiste datums voor de start- en eindtijd
-          const shiftDate = new Date(shift.date);
-          const startTime = new Date(shiftDate);
-          startTime.setHours(startHour, 0, 0, 0);
-          
-          const endTime = new Date(shiftDate);
-          if (shift.type === "night") {
-            // Voor nachtshift: eindtijd is de volgende dag
-            endTime.setDate(endTime.getDate() + 1);
-          }
-          endTime.setHours(endHour, 0, 0, 0);
-          
-          // Update de shift
-          await storage.updateShift(shift.id, {
-            startTime,
-            endTime
-          });
-          
-          // Update ook split tijden indien van toepassing
-          if (shift.isSplitShift) {
-            if (shift.type === "day") {
-              if (new Date(shift.splitEndTime).getHours() === 13) {
-                // Eerste helft van dag: 07:00 - 13:00
-                const splitStartTime = new Date(shiftDate);
-                splitStartTime.setHours(7, 0, 0, 0);
-                
-                const splitEndTime = new Date(shiftDate);
-                splitEndTime.setHours(13, 0, 0, 0);
-                
-                await storage.updateShift(shift.id, {
-                  splitStartTime,
-                  splitEndTime
-                });
-              } else {
-                // Tweede helft van dag: 13:00 - 19:00
-                const splitStartTime = new Date(shiftDate);
-                splitStartTime.setHours(13, 0, 0, 0);
-                
-                const splitEndTime = new Date(shiftDate);
-                splitEndTime.setHours(19, 0, 0, 0);
-                
-                await storage.updateShift(shift.id, {
-                  splitStartTime,
-                  splitEndTime
-                });
-              }
-            } else if (shift.type === "night") {
-              // Verwerk splitshifts voor nacht indien nodig
-              // Huidige implementatie heeft geen gesplitste nachtshifts
-            }
-          }
-          
-          updatedCount++;
-        }
-      }
-      
-      console.log(`${updatedCount} shifts bijgewerkt met de correcte tijden.`);
-      res.status(200).json({ message: `${updatedCount} shifts bijgewerkt met de correcte tijden.` });
-      
-    } catch (error) {
-      console.error("Fout bij corrigeren van shift tijden:", error);
-      res.status(500).json({ message: "Fout bij corrigeren van shift tijden", error: error.message });
-    }
-  });
   
   // Get a specific shift by id
   app.get("/api/shifts/:id", requireAuth, async (req, res) => {
+    // Disable caching for dynamic shift data
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     try {
       const shift = await storage.getShift(parseInt(req.params.id));
       if (!shift) {
@@ -897,6 +1547,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Shift not found" });
       }
       
+      // BUSINESS RULE VALIDATION: Check if updating to split shift for cross-team user in simple system
+      if (updateData.userId && updateData.userId > 0 && (updateData.isSplitShift || existingShift.isSplitShift)) {
+        const targetStationId = updateData.stationId || existingShift.stationId;
+        const canReceiveSplit = await storage.canUserReceiveSplitShift(updateData.userId, targetStationId);
+        if (!canReceiveSplit) {
+          console.log(`❌ BUSINESS RULE VIOLATION: Cannot update shift to assign split shift to cross-team user ${updateData.userId} in simple system (station ${targetStationId})`);
+          return res.status(400).json({ 
+            message: "Cross-team gebruikers kunnen geen gesplitste shifts krijgen in eenvoudige systemen. Wijs een volledige shift toe of kies een andere gebruiker.",
+            errorCode: "SPLIT_SHIFT_NOT_ALLOWED_FOR_CROSS_TEAM_USER"
+          });
+        }
+      }
+      
       // Update the shift
       const updatedShift = await storage.updateShift(shiftId, updateData);
       res.status(200).json(updatedShift);
@@ -907,7 +1570,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Split a night shift into two half shifts
-  app.post("/api/shifts/:id/split", requireAdmin, async (req, res) => {
+  app.post("/api/shifts/:id/split", requireAuth, async (req, res) => {
     try {
       const shiftId = parseInt(req.params.id);
       
@@ -981,7 +1644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Merge split shifts back into one full night shift
-  app.post("/api/shifts/:id/merge", requireAdmin, async (req, res) => {
+  app.post("/api/shifts/:id/merge", requireAuth, async (req, res) => {
     try {
       const shiftId = parseInt(req.params.id);
       
@@ -1157,10 +1820,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Weekday configuration routes
-  app.get("/api/weekday-configs", requireAdmin, async (req, res) => {
+  app.get("/api/weekday-configs", requireAuth, async (req, res) => {
     try {
+      const userRole = (req.user as any).role;
       const userStationId = (req.user as any).stationId;
-      const configs = await storage.getWeekdayConfigs(userStationId);
+      
+      // For supervisors, allow them to specify stationId via query parameter
+      let targetStationId = userStationId;
+      if (userRole === 'supervisor' && req.query.stationId) {
+        targetStationId = parseInt(req.query.stationId as string);
+      }
+      
+      const configs = await storage.getWeekdayConfigs(targetStationId);
       res.json(configs);
     } catch (error) {
       console.error("Error getting weekday configs:", error);
@@ -1168,11 +1839,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/weekday-configs/:dayOfWeek", requireAdmin, async (req, res) => {
+  app.get("/api/weekday-configs/:dayOfWeek", requireAuth, async (req, res) => {
     try {
       const dayOfWeek = parseInt(req.params.dayOfWeek);
+      const userRole = (req.user as any).role;
       const userStationId = (req.user as any).stationId;
-      const config = await storage.getWeekdayConfig(dayOfWeek, userStationId);
+      
+      // For supervisors, allow them to specify stationId via query parameter
+      let targetStationId = userStationId;
+      if (userRole === 'supervisor' && req.query.stationId) {
+        targetStationId = parseInt(req.query.stationId as string);
+      }
+      
+      const config = await storage.getWeekdayConfig(dayOfWeek, targetStationId);
       if (!config) {
         return res.status(404).json({ message: "Configuration not found" });
       }
@@ -1186,10 +1865,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/weekday-configs/:dayOfWeek", requireAdmin, async (req, res) => {
     try {
       const dayOfWeek = parseInt(req.params.dayOfWeek);
+      const userRole = (req.user as any).role;
       const userStationId = (req.user as any).stationId;
       const updateData = req.body;
       
-      const updatedConfig = await storage.updateWeekdayConfig(dayOfWeek, updateData, userStationId);
+      // For supervisors, allow them to specify stationId in request body
+      let targetStationId = userStationId;
+      if (userRole === 'supervisor' && updateData.stationId) {
+        targetStationId = updateData.stationId;
+        // Remove stationId from updateData as it's not part of the config update
+        delete updateData.stationId;
+      }
+      
+      const updatedConfig = await storage.updateWeekdayConfig(dayOfWeek, updateData, targetStationId);
       res.json(updatedConfig);
     } catch (error) {
       console.error("Error updating weekday config:", error);
@@ -1199,9 +1887,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/weekday-configs/initialize", requireAdmin, async (req, res) => {
     try {
+      const userRole = (req.user as any).role;
       const userStationId = (req.user as any).stationId;
-      await storage.initializeDefaultWeekdayConfigs(userStationId);
-      const configs = await storage.getWeekdayConfigs(userStationId);
+      
+      // For supervisors, allow them to specify stationId in request body
+      let targetStationId = userStationId;
+      if (userRole === 'supervisor' && req.body.stationId) {
+        targetStationId = req.body.stationId;
+      }
+      
+      await storage.initializeDefaultWeekdayConfigs(targetStationId);
+      const configs = await storage.getWeekdayConfigs(targetStationId);
       res.json(configs);
     } catch (error) {
       console.error("Error initializing weekday configs:", error);
@@ -1212,12 +1908,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Statistics routes
   app.get("/api/statistics/shifts", requireAdmin, async (req, res) => {
     try {
-      const { type, year, month, quarter } = req.query;
+      const { type, year, month, quarter, stationId } = req.query;
+      const user = req.user as any;
       
       if (!type || !year) {
         return res.status(400).json({ message: "Type and year are required" });
       }
-      
+
+      // Voor supervisors: gebruik stationId parameter als die er is, anders hun eigen stationId
+      const targetStationId = user.role === 'supervisor' && stationId 
+        ? parseInt(stationId as string)
+        : user.stationId;
+
       const targetYear = parseInt(year as string);
       let startDate: Date, endDate: Date;
       
@@ -1252,7 +1954,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get users filtered by station
       const allUsers = await storage.getAllUsers();
-      const users = allUsers.filter(user => user.stationId === (req.user as any).stationId);
+      const users = allUsers.filter(user => user.stationId === targetStationId);
       
       // Get shift preferences for the period (filtered by station)
       const preferences = await db.select()
@@ -1261,24 +1963,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
           and(
             gte(shiftPreferences.date, startDate),
             lte(shiftPreferences.date, endDate),
-            eq(shiftPreferences.stationId, (req.user as any).stationId)
+            eq(shiftPreferences.stationId, targetStationId)
           )
         );
       
-      // Get actual shifts for the period (filtered by station)
+      // Get actual shifts for the period from ALL stations (for cross-station users)
       const actualShifts = await db.select()
         .from(shifts)
         .where(
           and(
             gte(shifts.date, startDate),
             lte(shifts.date, endDate),
-            ne(shifts.userId, 0), // Exclude open shifts
-            eq(shifts.stationId, (req.user as any).stationId)
+            ne(shifts.userId, 0) // Exclude open shifts
+            // Removed stationId filter to get shifts from all stations
           )
         );
       
+      // Get cross-station hours for users - need to check all users that have access to current station
+      const allUsersWithCrossAccess = await storage.getUsersByStation(targetStationId);
+      
+      // Get ALL cross-station access data for calculating total max hours for all users
+      console.log("=== CROSS-STATION DEBUG v3 ===");
+      console.log("Target stationId:", targetStationId);
+      
+      // Get ALL cross-station access data (not filtered by station) to calculate total user capacity
+      const allCrossStationAccess = await db.select()
+        .from(userStations);
+      
+      console.log("All cross-station access data:", allCrossStationAccess);
+      
       // Calculate statistics for each user
-      const statistics = users.map(user => {
+      const statistics = allUsersWithCrossAccess.map(user => {
         const userPreferences = preferences.filter(p => p.userId === user.id);
         const userActualShifts = actualShifts.filter(s => s.userId === user.id);
         
@@ -1339,6 +2054,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
         }
         
+        // Calculate total available hours including cross-station access
+        let totalHours = user.hours || 0;
+        
+        // Add ALL cross-station hours for this user (from all stations they have access to)
+        const userCrossStationHours = allCrossStationAccess
+          .filter(access => access.userId === user.id)
+          .reduce((sum, access) => sum + (access.maxHours || 0), 0);
+        
+        console.log(`User ${user.username} (${user.id}):`, {
+          baseHours: user.hours || 0,
+          crossStationHours: userCrossStationHours,
+          totalCalculated: (user.hours || 0) + userCrossStationHours
+        });
+        
+        totalHours += userCrossStationHours;
+        
         return {
           userId: user.id,
           username: user.username,
@@ -1356,8 +2087,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           actualDayShiftWeekendHours: actualStats.dayWeekend,
           actualNightShiftWeekendHours: actualStats.nightWeekend,
           totalActualHours: actualStats.dayWeek + actualStats.nightWeek + actualStats.dayWeekend + actualStats.nightWeekend,
-          // Maximum hours willing to work (adjusted for period)
-          maxHours: (user.hours || 0) * periodMultiplier
+          // Maximum hours willing to work (adjusted for period) - now includes cross-station hours
+          maxHours: totalHours * periodMultiplier
         };
       });
       
@@ -1380,11 +2111,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const targetMonth = parseInt(month as string);
       const targetYear = parseInt(year as string);
       
-      // Get shifts for the month
-      const shifts = await storage.getShiftsByMonth(targetMonth, targetYear);
+      // Get the station ID from the logged-in user
+      const stationId = req.user?.stationId;
       
-      // Get all users to map names
-      const users = await storage.getAllUsers();
+      // Get shifts for the month (filtered by station)
+      const shifts = await storage.getShiftsByMonth(targetMonth, targetYear, stationId);
+      
+      // Get users from the current station to map names
+      const users = await storage.getUsersByStation(stationId!);
       const userMap = new Map(users.map(u => [u.id, u]));
       
       // Sort shifts by date
@@ -1402,8 +2136,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const date = new Date(shift.date);
         const dayName = date.toLocaleDateString('nl-NL', { weekday: 'long' });
         const dateStr = date.toLocaleDateString('nl-NL');
-        const startTime = new Date(shift.startTime).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
-        const endTime = new Date(shift.endTime).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+        
+        // Hard-coded tijden op basis van shift type en split info
+        let startTime = '';
+        let endTime = '';
+        if (shift.type === 'day') {
+          if (shift.isSplitShift && shift.startTime && shift.endTime) {
+            const startHour = new Date(shift.startTime).getUTCHours();
+            if (startHour === 7) { startTime = '07:00'; endTime = '13:00'; }
+            else if (startHour === 13) { startTime = '13:00'; endTime = '19:00'; }
+          } else {
+            startTime = '07:00';
+            endTime = '19:00';
+          }
+        } else {
+          // Nachtshift is altijd volledig
+          startTime = '19:00';
+          endTime = '07:00';
+        }
         
         const firstName = user ? user.firstName : 'Open';
         const lastName = user ? user.lastName : 'Shift';
@@ -1465,12 +2215,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/comments/:month/:year", requireAuth, async (req, res) => {
     try {
       const { month, year } = req.params;
-      const userId = req.user.id;
+      const userId = req.user?.id;
+      if (!userId) return res.sendStatus(401);
       
       const comment = await storage.getUserComment(
         userId,
         parseInt(month),
-        parseInt(year)
+        parseInt(year),
+        req.user?.stationId
       );
       
       res.json(comment);
@@ -1485,14 +2237,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertUserCommentSchema.parse({
         ...req.body,
-        userId: req.user.id
+        userId: req.user?.id,
+        stationId: req.user?.stationId
       });
 
       // Check if comment already exists
       const existingComment = await storage.getUserComment(
         validatedData.userId,
         validatedData.month,
-        validatedData.year
+        validatedData.year,
+        validatedData.stationId
       );
 
       let savedComment;
@@ -1519,8 +2273,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const commentId = parseInt(req.params.id);
       
-      // Verify ownership (users can only delete their own comments)
-      const comment = await storage.getUserComment(req.user.id, 0, 0); // We'll need to modify this
+      // Verify ownership (users can only delete their own comments)  
+      const userId = req.user?.id;
+      if (!userId) return res.sendStatus(401);
       // For now, allow deletion if user is admin or owns the comment
       
       await storage.deleteUserComment(commentId);
@@ -1531,20 +2286,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all comments for month/year (admin only)
+  // Get all comments for month/year (admin only) - station-filtered
   app.get("/api/comments/all/:month/:year", requireAdmin, async (req, res) => {
     try {
       const { month, year } = req.params;
-      console.log(`Fetching comments for month: ${month}, year: ${year}`);
+      const user = req.user as any;
+      const { stationId } = req.query;
+      
+      // Determine target station ID: supervisor can choose, admin gets own station
+      let targetStationId = user.stationId; // Default to user's own station
+      
+      if (user.role === 'supervisor' && stationId) {
+        const parsedStationId = Number(stationId);
+        // Only allow valid positive integers, otherwise fall back to user's station
+        if (Number.isInteger(parsedStationId) && parsedStationId > 0) {
+          targetStationId = parsedStationId;
+        }
+      }
+      
+      console.log(`Fetching comments for month: ${month}, year: ${year}, station: ${targetStationId}`);
       
       const comments = await storage.getAllUserComments(
         parseInt(month),
-        parseInt(year)
+        parseInt(year),
+        targetStationId // 🔒 Station filtering added!
       );
       
-      console.log(`Found ${comments.length} comments:`, comments);
+      console.log(`Found ${comments.length} comments for station ${targetStationId}:`, comments);
       
-      // Get user details for each comment
+      // Get user details for each comment (all users, will filter by station in mapping)
       const users = await storage.getAllUsers();
       const commentsWithUsers = comments.map(comment => {
         const user = users.find(u => u.id === comment.userId);
@@ -1559,7 +2329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       });
       
-      console.log(`Returning ${commentsWithUsers.length} comments with user details`);
+      console.log(`Returning ${commentsWithUsers.length} comments with user details for station ${targetStationId}`);
       res.json(commentsWithUsers);
     } catch (error) {
       console.error("Error getting all comments:", error);
@@ -1572,8 +2342,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current deadline setting (days before month)
   app.get("/api/system/deadline-days", requireAuth, async (req, res) => {
     try {
-      const userStationId = (req.user as any).stationId;
-      const settingKey = `preference_deadline_days_station_${userStationId}`;
+      const user = req.user as any;
+      const { stationId } = req.query;
+      
+      const targetStationId = user.role === 'supervisor' && stationId 
+        ? parseInt(stationId as string)
+        : user.stationId;
+      
+      const settingKey = `preference_deadline_days_station_${targetStationId}`;
       const setting = await storage.getSystemSetting(settingKey);
       // Default to 1 day if not set
       const days = setting ? parseInt(setting) : 1;
@@ -1587,19 +2363,427 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update deadline setting (admin only)
   app.post("/api/system/deadline-days", requireAdmin, async (req, res) => {
     try {
-      const { days } = req.body;
-      const userStationId = (req.user as any).stationId;
+      const { days, stationId } = req.body;
+      const user = req.user as any;
       
       if (!days || days < 1 || days > 60) {
         return res.status(400).json({ message: "Dagen moet tussen 1 en 60 zijn" });
       }
       
-      const settingKey = `preference_deadline_days_station_${userStationId}`;
+      const targetStationId = user.role === 'supervisor' && stationId 
+        ? parseInt(stationId)
+        : user.stationId;
+      
+      const settingKey = `preference_deadline_days_station_${targetStationId}`;
       await storage.setSystemSetting(settingKey, days.toString());
       res.json({ days, message: "Deadline instelling bijgewerkt" });
     } catch (error) {
       console.error("Error updating deadline setting:", error);
       res.status(500).json({ message: "Failed to update deadline setting" });
+    }
+  });
+
+  // WORKAROUND: Station switcher zonder JavaScript
+  app.get("/station-switcher", requireAuth, async (req: any, res) => {
+    try {
+      const accessibleStations = await storage.getUserAccessibleStations(req.user.id);
+      const currentStationName = accessibleStations.find(s => s.id === req.user.stationId)?.displayName || "Onbekend";
+      
+      res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Station Switcher</title>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f8fafc; }
+    .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .station-option { margin: 15px 0; padding: 15px; border: 2px solid #e5e7eb; border-radius: 6px; }
+    .current-station { background: #dcfce7; border-color: #16a34a; }
+    .other-station { background: #f8fafc; }
+    button { background: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    button:hover { background: #2563eb; }
+    .back-link { display: inline-block; margin-top: 20px; color: #3b82f6; text-decoration: none; padding: 10px 20px; border: 1px solid #3b82f6; border-radius: 4px; }
+    .back-link:hover { background: #3b82f6; color: white; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏥 Station Switcher</h1>
+    <h2>Welkom ${req.user.firstName} ${req.user.lastName} (${req.user.username})</h2>
+    
+    <p><strong>Huidig actieve station:</strong> ${currentStationName}</p>
+    <p>Je hebt toegang tot ${accessibleStations.length} stations:</p>
+    
+    ${accessibleStations.map(station => `
+      <div class="station-option ${station.id === req.user.stationId ? 'current-station' : 'other-station'}">
+        <h3>${station.displayName}</h3>
+        <p><strong>Code:</strong> ${station.code}</p>
+        ${station.id === req.user.stationId 
+          ? '<p><strong>✅ Momenteel actief</strong></p>' 
+          : `<form method="POST" action="/switch-station" style="margin-top: 10px;">
+               <input type="hidden" name="stationId" value="${station.id}">
+               <button type="submit">🔄 Wissel naar ${station.displayName}</button>
+             </form>`
+        }
+      </div>
+    `).join('')}
+    
+    <a href="/dashboard" class="back-link">← Terug naar Dashboard</a>
+    
+    <details style="margin-top: 30px; padding: 15px; background: #f1f5f9; border-radius: 6px;">
+      <summary style="cursor: pointer; font-weight: bold;">Debug Info</summary>
+      <pre style="margin-top: 10px; font-size: 12px;">
+User ID: ${req.user.id}
+Username: ${req.user.username}  
+Current Station ID: ${req.user.stationId}
+Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
+      </pre>
+    </details>
+  </div>
+</body>
+</html>
+      `);
+    } catch (error) {
+      console.error("Error rendering station switcher:", error);
+      res.status(500).send("Error loading station switcher");
+    }
+  });
+
+  // Feestdagen routes
+  
+  // Get all holidays for a year (optionally filtered by station)
+  app.get("/api/holidays", requireAuth, async (req, res) => {
+    try {
+      const { year, stationId } = req.query;
+      const user = req.user as any;
+      
+      if (!year) {
+        return res.status(400).json({ message: "Year parameter is required" });
+      }
+      
+      // Voor supervisors: gebruik stationId parameter als die er is, anders hun eigen stationId
+      const targetStationId = user.role === 'supervisor' && stationId 
+        ? parseInt(stationId as string)
+        : user.stationId;
+      
+      const holidays = await storage.getAllHolidays(parseInt(year as string), targetStationId);
+      res.json(holidays);
+    } catch (error) {
+      console.error("Error getting holidays:", error);
+      res.status(500).json({ message: "Failed to get holidays" });
+    }
+  });
+  
+  // Get specific holiday
+  app.get("/api/holidays/:id", requireAuth, async (req, res) => {
+    try {
+      const holidayId = parseInt(req.params.id);
+      const holiday = await storage.getHoliday(holidayId);
+      
+      if (!holiday) {
+        return res.status(404).json({ message: "Holiday not found" });
+      }
+      
+      res.json(holiday);
+    } catch (error) {
+      console.error("Error getting holiday:", error);
+      res.status(500).json({ message: "Failed to get holiday" });
+    }
+  });
+  
+  // Create new holiday (admin only)
+  app.post("/api/holidays", requireAdmin, async (req, res) => {
+    try {
+      const userStationId = (req.user as any).stationId;
+      
+      console.log("=== CREATE HOLIDAY DEBUG ===");
+      console.log("Raw req.body:", req.body);
+      console.log("req.body.date value:", req.body.date);
+      console.log("req.body.date type:", typeof req.body.date);
+      console.log("new Date(req.body.date):", new Date(req.body.date));
+      console.log("isNaN(new Date(req.body.date)):", isNaN(new Date(req.body.date).getTime()));
+      
+      // Prepare data for validation (include year BEFORE validation)
+      const rawData = {
+        ...req.body,
+        year: new Date(req.body.date).getFullYear(), // Calculate year from date string
+        stationId: req.body.stationId || userStationId,
+        category: req.body.category || (req.body.stationId ? "regional" : "national"),
+        isFixed: true // Default value for custom holidays
+      };
+      
+      console.log("Raw data before validation:", rawData);
+      
+      // Validate using Zod schema (automatically coerces string to Date)
+      const holidayData = insertHolidaySchema.parse(rawData);
+      
+      console.log("Final validated holidayData:", holidayData);
+      
+      const holiday = await storage.createHoliday(holidayData);
+      res.status(201).json(holiday);
+    } catch (error) {
+      console.error("Error creating holiday:", error);
+      res.status(500).json({ message: "Failed to create holiday" });
+    }
+  });
+  
+  // Update holiday (admin only)
+  app.patch("/api/holidays/:id", requireAdmin, async (req, res) => {
+    try {
+      const holidayId = parseInt(req.params.id);
+      const updateData = {
+        ...req.body,
+        updatedAt: new Date()
+      };
+      
+      if (req.body.date) {
+        updateData.date = new Date(req.body.date);
+        updateData.year = new Date(req.body.date).getFullYear();
+      }
+      
+      const holiday = await storage.updateHoliday(holidayId, updateData);
+      res.json(holiday);
+    } catch (error) {
+      console.error("Error updating holiday:", error);
+      res.status(500).json({ message: "Failed to update holiday" });
+    }
+  });
+  
+  // Delete holiday (admin only)
+  app.delete("/api/holidays/:id", requireAdmin, async (req, res) => {
+    try {
+      const holidayId = parseInt(req.params.id);
+      
+      // Check if holiday exists
+      const holiday = await storage.getHoliday(holidayId);
+      if (!holiday) {
+        return res.status(404).json({ message: "Holiday not found" });
+      }
+      
+      await storage.deleteHoliday(holidayId);
+      res.status(200).json({ message: "Holiday deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting holiday:", error);
+      res.status(500).json({ message: "Failed to delete holiday" });
+    }
+  });
+  
+  // Generate Belgian holidays for a specific year (admin only)
+  app.post("/api/holidays/generate-belgian/:year", requireAuth, async (req, res) => {
+    try {
+      const year = parseInt(req.params.year);
+      const user = req.user as any;
+      
+      // Voor supervisors, gebruik stationId uit query parameter, anders gebruik user's stationId
+      const targetStationId = user.role === 'supervisor' && req.query.stationId 
+        ? parseInt(req.query.stationId as string)
+        : user.stationId;
+      
+      if (year < 2020 || year > 2050) {
+        return res.status(400).json({ message: "Year must be between 2020 and 2050" });
+      }
+      
+      // Voor nu vertrouwen we erop dat supervisors toegang hebben tot alle stations
+      // In de toekomst kunnen we hier een check toevoegen voor specifieke station toegang
+      
+      const generatedHolidays = await storage.generateBelgianHolidays(year, targetStationId);
+      
+      res.status(201).json({
+        message: `Generated ${generatedHolidays.length} Belgian holidays for ${year}`,
+        holidays: generatedHolidays
+      });
+    } catch (error) {
+      console.error("Error generating Belgian holidays:", error);
+      res.status(500).json({ message: "Failed to generate Belgian holidays" });
+    }
+  });
+  
+  // Check if a specific date is a holiday
+  app.get("/api/holidays/check/:date", requireAuth, async (req, res) => {
+    try {
+      const dateParam = req.params.date;
+      const userStationId = (req.user as any).stationId;
+      
+      const checkDate = new Date(dateParam);
+      if (isNaN(checkDate.getTime())) {
+        return res.status(400).json({ message: "Invalid date format" });
+      }
+      
+      const isHolidayDay = await storage.isHoliday(checkDate, userStationId);
+      const holidays = await storage.getHolidaysForDate(checkDate, userStationId);
+      
+      res.json({
+        date: checkDate.toISOString(),
+        isHoliday: isHolidayDay,
+        holidays: holidays
+      });
+    } catch (error) {
+      console.error("Error checking holiday:", error);
+      res.status(500).json({ message: "Failed to check holiday" });
+    }
+  });
+
+  // Calendar token routes
+  
+  // Get or create calendar token for current user
+  app.get("/api/calendar/token", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      
+      let token = await storage.getCalendarToken(userId);
+      
+      if (!token) {
+        // Token bestaat nog niet, maak een nieuwe aan
+        token = await storage.createCalendarToken(userId);
+      }
+      
+      // Gebruik PUBLIC_URL environment variabele voor externe toegang, of fallback naar request URL
+      const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+      
+      res.json({
+        token: token.token,
+        url: `${baseUrl}/api/calendar/feed/${token.token}.ics`
+      });
+    } catch (error) {
+      console.error("Error getting calendar token:", error);
+      res.status(500).json({ message: "Failed to get calendar token" });
+    }
+  });
+  
+  // Regenerate calendar token for current user
+  app.post("/api/calendar/token/regenerate", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      
+      const newToken = await storage.regenerateCalendarToken(userId);
+      
+      // Gebruik PUBLIC_URL environment variabele voor externe toegang, of fallback naar request URL
+      const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+      
+      res.json({
+        token: newToken.token,
+        url: `${baseUrl}/api/calendar/feed/${newToken.token}.ics`
+      });
+    } catch (error) {
+      console.error("Error regenerating calendar token:", error);
+      res.status(500).json({ message: "Failed to regenerate calendar token" });
+    }
+  });
+  
+  // Public ICS feed route (authenticatie via token)
+  app.get("/api/calendar/feed/:token.ics", async (req, res) => {
+    try {
+      const token = req.params.token;
+      
+      // Zoek de token op
+      const calendarToken = await storage.getCalendarTokenByToken(token);
+      if (!calendarToken) {
+        return res.status(404).send("Calendar feed not found");
+      }
+      
+      // Haal de gebruiker op
+      const user = await storage.getUser(calendarToken.userId);
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+      
+      // Haal alle shifts van de gebruiker op (huidige maand + 2 maanden vooruit)
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // 1-12
+      const currentYear = now.getFullYear();
+      
+      const allShifts = [];
+      for (let i = 0; i < 3; i++) {
+        const date = addMonths(now, i);
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        const monthShifts = await storage.getShiftsByMonth(month, year, user.stationId);
+        allShifts.push(...monthShifts);
+      }
+      
+      // Filter alleen shifts van deze gebruiker
+      const userShifts = allShifts.filter(shift => shift.userId === user.id);
+      
+      // Genereer ICS bestand volgens RFC 5545
+      const icsLines = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//DGH Planning//Ambulance Planning//NL',
+        'CALSCALE:GREGORIAN',
+        'X-WR-CALNAME:Mijn Ambulance Shifts',
+        'X-WR-TIMEZONE:Europe/Brussels',
+        'X-WR-CALDESC:Persoonlijke shift planning'
+      ];
+      
+      for (const shift of userShifts) {
+        const shiftDate = new Date(shift.date);
+        const startTime = new Date(shift.startTime);
+        const endTime = new Date(shift.endTime);
+        
+        // Hard-coded tijden op basis van shift type
+        let summary = '';
+        let description = '';
+        
+        if (shift.type === 'day') {
+          if (shift.isSplitShift) {
+            const startHour = startTime.getUTCHours();
+            if (startHour === 7) {
+              summary = 'Dagshift (07:00-13:00)';
+              description = 'Ambulance dagshift - eerste helft';
+            } else {
+              summary = 'Dagshift (13:00-19:00)';
+              description = 'Ambulance dagshift - tweede helft';
+            }
+          } else {
+            summary = 'Dagshift (07:00-19:00)';
+            description = 'Ambulance dagshift - volledig';
+          }
+        } else {
+          summary = 'Nachtshift (19:00-07:00)';
+          description = 'Ambulance nachtshift';
+        }
+        
+        // Format datetime voor ICS (UTC format: YYYYMMDDTHHmmssZ)
+        const formatICSDate = (date: Date) => {
+          return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+        
+        const uid = `shift-${shift.id}@dgh-planning.be`;
+        const dtstamp = formatICSDate(new Date());
+        const dtstart = formatICSDate(startTime);
+        const dtend = formatICSDate(endTime);
+        
+        icsLines.push(
+          'BEGIN:VEVENT',
+          `UID:${uid}`,
+          `DTSTAMP:${dtstamp}`,
+          `DTSTART:${dtstart}`,
+          `DTEND:${dtend}`,
+          `SUMMARY:${summary}`,
+          `DESCRIPTION:${description}`,
+          'STATUS:CONFIRMED',
+          'TRANSP:OPAQUE',
+          'END:VEVENT'
+        );
+      }
+      
+      icsLines.push('END:VCALENDAR');
+      
+      // Stuur ICS bestand terug met CORS en Cache headers voor externe kalender apps
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline; filename="shifts.ics"');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.send(icsLines.join('\r\n'));
+      
+    } catch (error) {
+      console.error("Error generating calendar feed:", error);
+      res.status(500).send("Failed to generate calendar feed");
     }
   });
 

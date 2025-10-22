@@ -8,12 +8,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { insertUserSchema, type User, type ShiftPreference } from "@shared/schema";
+import { insertUserSchema, type User, type ShiftPreference, type Station } from "@shared/schema";
 import { z } from "zod";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, UserPlus, KeyRound, Home } from "lucide-react";
+import { Pencil, Trash2, UserPlus, KeyRound, Home, Users, Settings, Plus, Minus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,12 +21,15 @@ import { Eye } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const updateUserSchema = z.object({
   firstName: z.string().min(1, "Voornaam is verplicht"),
   lastName: z.string().min(1, "Achternaam is verplicht"),
-  role: z.enum(["admin", "ambulancier"]),
+  email: z.string().email("Ongeldig email adres").optional().or(z.literal("")),
+  role: z.enum(["admin", "ambulancier", "supervisor"]),
   hours: z.number().min(0).max(168),
+  isProfessional: z.boolean().optional(),
 });
 
 type UpdateUserData = z.infer<typeof updateUserSchema>;
@@ -42,7 +45,47 @@ export default function UserManagement() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(null);
   
+  // Cross-team management state
+  const [crossTeamSearchTerm, setCrossTeamSearchTerm] = useState("");
+  const [selectedUserForCrossTeam, setSelectedUserForCrossTeam] = useState<User | null>(null);
+  const [selectedCrossTeamStation, setSelectedCrossTeamStation] = useState<number | null>(null);
+  const [crossTeamHourLimit, setCrossTeamHourLimit] = useState<number>(24);
+  
+  // Query om stations op te halen (voor supervisors)
+  const { data: stations = [] } = useQuery({
+    queryKey: ["/api/user/stations", "includeSupervisor"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/user/stations?includeSupervisor=true");
+      if (!res.ok) throw new Error("Kon stations niet laden");
+      return res.json();
+    },
+    enabled: user?.role === 'supervisor'
+  });
+  
+  // Cross-team queries
+  const { data: allUsersForCrossTeam = [], isLoading: isLoadingCrossTeamUsers } = useQuery<User[]>({
+    queryKey: ["/api/users/all"],
+    queryFn: async () => {
+      const res = await fetch("/api/users/all");
+      if (!res.ok) throw new Error("Kon alle gebruikers niet laden");
+      return res.json();
+    },
+    enabled: user?.role === 'supervisor'
+  });
+
+  const { data: userStationAssignments, isLoading: isLoadingAssignments, refetch: refetchAssignments } = useQuery({
+    queryKey: ["/api/users", selectedUserForCrossTeam?.id, "station-assignments"],
+    queryFn: async () => {
+      if (!selectedUserForCrossTeam?.id) return [];
+      const res = await fetch(`/api/users/${selectedUserForCrossTeam.id}/station-assignments`);
+      if (!res.ok) throw new Error("Kon station toewijzingen niet laden");
+      return res.json();
+    },
+    enabled: !!selectedUserForCrossTeam?.id && user?.role === 'supervisor'
+  });
+
   // Query om alle beschikbaarheden te krijgen voor een bepaalde gebruiker
   const { data: userPreferences, isLoading: isLoadingPreferences } = useQuery({
     queryKey: ["/api/preferences", viewPreferencesForUserId, selectedMonth, selectedYear],
@@ -56,7 +99,94 @@ export default function UserManagement() {
   });
 
   const { data: users, isLoading } = useQuery<User[]>({
-    queryKey: ["/api/users"],
+    queryKey: user?.role === 'supervisor' 
+      ? ["/api/users", selectedStationId] 
+      : ["/api/users", user?.stationId],
+    queryFn: async () => {
+      const url = user?.role === 'supervisor' && selectedStationId 
+        ? `/api/users?stationId=${selectedStationId}`
+        : '/api/users';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Kon gebruikers niet laden");
+      return res.json();
+    },
+    enabled: user?.role === 'supervisor' ? selectedStationId !== null : !!user?.stationId,
+  });
+
+  // Cross-team mutations
+  const addUserToStationMutation = useMutation({
+    mutationFn: async (data: { userId: number; stationId: number; maxHours: number }) => {
+      const res = await apiRequest("POST", `/api/users/${data.userId}/station-assignments`, {
+        stationId: data.stationId,
+        maxHours: data.maxHours
+      });
+      if (!res.ok) throw new Error("Kon gebruiker niet aan station koppelen");
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchAssignments();
+      toast({
+        title: "Succes",
+        description: "Gebruiker succesvol gekoppeld aan station",
+      });
+      setSelectedCrossTeamStation(null);
+      setCrossTeamHourLimit(24);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserStationHoursMutation = useMutation({
+    mutationFn: async (data: { userId: number; stationId: number; maxHours: number }) => {
+      const res = await apiRequest("PUT", `/api/users/${data.userId}/stations/${data.stationId}/hours`, {
+        maxHours: data.maxHours
+      });
+      if (!res.ok) throw new Error("Kon uur limiet niet bijwerken");
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchAssignments();
+      toast({
+        title: "Succes",
+        description: "Uur limiet bijgewerkt",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePrimaryStationHoursMutation = useMutation({
+    mutationFn: async (data: { userId: number; maxHours: number }) => {
+      const res = await apiRequest("PATCH", `/api/users/${data.userId}`, {
+        hours: data.maxHours
+      });
+      if (!res.ok) throw new Error("Kon primaire station uren niet bijwerken");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users/all'] });
+      toast({
+        title: "Succes",
+        description: "Primaire station uren bijgewerkt",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const createUserForm = useForm({
@@ -66,9 +196,12 @@ export default function UserManagement() {
       password: "",
       firstName: "",
       lastName: "",
-      role: "ambulancier" as "admin" | "ambulancier",
+      email: "",
+      role: "ambulancier" as "admin" | "ambulancier" | "supervisor",
       isAdmin: false,
-      hours: 24
+      isProfessional: false,
+      hours: 24,
+      stationId: 8  // Supervisors always use station 8, backend will handle this
     }
   });
 
@@ -91,7 +224,11 @@ export default function UserManagement() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      if (user?.role === 'supervisor') {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
+      }
       toast({
         title: "Succes",
         description: "Gebruiker aangemaakt",
@@ -113,7 +250,11 @@ export default function UserManagement() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      if (user?.role === 'supervisor') {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
+      }
       toast({
         title: "Succes",
         description: "Gebruiker bijgewerkt",
@@ -158,7 +299,11 @@ export default function UserManagement() {
       await apiRequest("DELETE", `/api/users/${userId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      if (user?.role === 'supervisor') {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
+      }
       toast({
         title: "Succes",
         description: "Gebruiker verwijderd",
@@ -173,7 +318,7 @@ export default function UserManagement() {
     },
   });
 
-  if (!user?.isAdmin) {
+  if (user?.role !== 'admin' && user?.role !== 'supervisor') {
     return (
       <div className="container mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6">Geen toegang</h1>
@@ -186,38 +331,85 @@ export default function UserManagement() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Gebruikersbeheer</h1>
-        
-        <div className="flex items-center gap-4 flex-1 max-w-md mx-4">
-          <Input
-            type="search"
-            placeholder="Zoek op naam of gebruikersnaam..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-        
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setLocation("/dashboard")}
-          >
-            <Home className="h-4 w-4 mr-2" />
-            Home
-          </Button>
-          <Dialog>
+        <Button
+          variant="outline"
+          onClick={() => setLocation("/dashboard")}
+        >
+          <Home className="h-4 w-4 mr-2" />
+          Home
+        </Button>
+      </div>
+
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="users">Gebruiker Beheer</TabsTrigger>
+          <TabsTrigger value="crossteam" disabled={user?.role !== 'supervisor'}>
+            Cross-team Beheer
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4 flex-1">
+              {user?.role === 'supervisor' && (
+                <Select 
+                  value={selectedStationId?.toString() || ""} 
+                  onValueChange={(value) => setSelectedStationId(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[200px]" data-testid="select-station">
+                    <SelectValue placeholder="Kies station..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(stations as Station[])
+                      ?.map((station) => (
+                        <SelectItem key={station.id} value={station.id.toString()}>
+                          {station.displayName}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Input
+                type="search"
+                placeholder="Zoek op naam of gebruikersnaam..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
+                data-testid="input-search-users"
+              />
+            </div>
+            
+            <Dialog>
             <DialogTrigger asChild>
-              <Button>
+              <Button 
+                disabled={user?.role === 'supervisor' && !selectedStationId}
+                data-testid="button-new-user"
+              >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Nieuwe Gebruiker
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Nieuwe Gebruiker Aanmaken</DialogTitle>
               </DialogHeader>
               <Form {...createUserForm}>
-                <form onSubmit={createUserForm.handleSubmit((data) => createUserMutation.mutate(data))} className="space-y-4">
+                <form onSubmit={createUserForm.handleSubmit((data) => {
+                  // For supervisors, set the selected station ID
+                  if (user?.role === 'supervisor' && selectedStationId) {
+                    data.stationId = selectedStationId;
+                  }
+                  // Validation: Check if supervisor has selected a station
+                  if (user?.role === 'supervisor' && !selectedStationId) {
+                    toast({
+                      title: "Fout",
+                      description: "Selecteer eerst een station",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  createUserMutation.mutate(data);
+                })} className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Gebruikersnaam</label>
                     <p className="text-sm text-muted-foreground">De unieke login naam voor deze gebruiker</p>
@@ -255,15 +447,32 @@ export default function UserManagement() {
                   </div>
 
                   <div className="space-y-2">
+                    <label className="text-sm font-medium">Email (optioneel)</label>
+                    <p className="text-sm text-muted-foreground">Voor email notificaties</p>
+                    <Input
+                      type="email"
+                      placeholder="jan.smit@voorbeeld.be"
+                      data-testid="input-email"
+                      {...createUserForm.register("email")}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
                     <label className="text-sm font-medium">Rol</label>
                     <p className="text-sm text-muted-foreground">Bepaalt de rechten en toegang van de gebruiker</p>
-                    <Select onValueChange={(value) => createUserForm.setValue("role", value as "admin" | "ambulancier")}>
+                    <Select 
+                      value={createUserForm.watch("role")}
+                      onValueChange={(value) => createUserForm.setValue("role", value as "admin" | "ambulancier" | "supervisor")}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecteer rol" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ambulancier">Ambulancier</SelectItem>
                         <SelectItem value="admin">Administrator</SelectItem>
+                        {user?.role === 'supervisor' && (
+                          <SelectItem value="supervisor">Supervisor</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -278,6 +487,25 @@ export default function UserManagement() {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="isProfessional-create"
+                        checked={createUserForm.watch("isProfessional")}
+                        onCheckedChange={(checked) => createUserForm.setValue("isProfessional", !!checked)}
+                        data-testid="checkbox-professional-create"
+                      />
+                      <div className="space-y-1">
+                        <label htmlFor="isProfessional-create" className="text-sm font-medium cursor-pointer">
+                          Beroepspersoneel
+                        </label>
+                        <p className="text-sm text-muted-foreground">
+                          Beroepspersoneel wordt automatisch beperkt tot maximaal 1 shift per week
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <Button 
                     type="submit"
                     className="w-full"
@@ -290,7 +518,6 @@ export default function UserManagement() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
       <div className="grid gap-4">
         {users
@@ -314,6 +541,7 @@ export default function UserManagement() {
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     {u.username} - {u.role}
+                    {u.isProfessional && " • Beroepspersoneel"}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Uren: {u.hours}
@@ -406,24 +634,47 @@ export default function UserManagement() {
                                   const dayOfWeek = date.getDay();
                                   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 = zondag, 6 = zaterdag
                                   
-                                  // Bepaal beschikbaarheid - eerst checken of de gebruiker expliciet "niet beschikbaar" heeft aangegeven
-                                  const isUnavailable = datePrefs && datePrefs.some(p => p.type === 'unavailable');
-                                  // Alleen als niet expliciet onbeschikbaar, dan kijken of gebruiker beschikbaar is
-                                  // Als datePrefs er zijn maar leeg, dan is er geen voorkeur ingesteld (neutrale kleur)
-                                  // Als datePrefs[].type is 'day' of 'night', dan is beschikbaar
-                                  const hasPreferences = datePrefs && datePrefs.length > 0;
-                                  const isAvailable = !isUnavailable && hasPreferences && datePrefs.some(p => p.type === 'day' || p.type === 'night');
+                                  // 🎨 KLEUR LOGICA (zelfde als shift planner)
+                                  // Helper functie om unavailable te detecteren (net zoals in shift-planner)
+                                  const isUnavailablePref = (p: ShiftPreference) => 
+                                    p.notes === 'Niet beschikbaar' || (p.startTime === null && p.endTime === null);
+                                  
+                                  // Check voorkeuren
+                                  const hasDayAvailable = datePrefs && datePrefs.some((p: ShiftPreference) => p.type === "day" && !isUnavailablePref(p));
+                                  const hasNightAvailable = datePrefs && datePrefs.some((p: ShiftPreference) => p.type === "night" && !isUnavailablePref(p));
+                                  const hasAnyUnavailable = datePrefs && datePrefs.some(isUnavailablePref);
+                                  const hasAnyAvailable = hasDayAvailable || hasNightAvailable;
+                                  
+                                  // Bepaal kleur prioriteit (van hoog naar laag):
+                                  // 1. Rood - ALLE shifts onbeschikbaar
+                                  const isFullyUnavailable = datePrefs && datePrefs.length > 0 && datePrefs.every(isUnavailablePref);
+                                  // 2. Groen - alle shifts beschikbaar (dag EN nacht), geen onbeschikbare
+                                  const isFullyAvailable = hasDayAvailable && hasNightAvailable && !hasAnyUnavailable;
+                                  // 3. Oranje - mix van available/unavailable OF slechts een type available
+                                  const isPartialAvailable = hasAnyAvailable && (hasAnyUnavailable || (hasDayAvailable !== hasNightAvailable));
+                                  // 4. Wit - geen voorkeur
+                                  const hasNoPreference = !datePrefs || datePrefs.length === 0;
                                   
                                   // Bepaal shift details voor tooltip/modal
                                   const shiftDetails = datePrefs && datePrefs
-                                    .filter(p => p.type !== 'unavailable')
-                                    .map(p => {
+                                    .filter((p: ShiftPreference) => p.type !== 'unavailable')
+                                    .map((p: ShiftPreference) => {
                                       let shiftType = p.type === 'day' ? 'Dag' : 'Nacht';
                                       let shiftTime = '';
                                       
                                       if (p.startTime && p.endTime) {
-                                        const startHour = new Date(p.startTime).getHours();
-                                        const endHour = new Date(p.endTime).getHours();
+                                        const startDate = new Date(p.startTime);
+                                        const endDate = new Date(p.endTime);
+                                        const startHour = parseInt(startDate.toLocaleTimeString('nl-NL', { 
+                                          hour: '2-digit',
+                                          timeZone: 'Europe/Brussels',
+                                          hour12: false 
+                                        }).split(':')[0]);
+                                        const endHour = parseInt(endDate.toLocaleTimeString('nl-NL', { 
+                                          hour: '2-digit',
+                                          timeZone: 'Europe/Brussels',
+                                          hour12: false 
+                                        }).split(':')[0]);
                                         
                                         if (p.type === 'day') {
                                           if (startHour === 7 && endHour === 19) shiftTime = '(7-19u, volledig)';
@@ -448,9 +699,10 @@ export default function UserManagement() {
                                         <div 
                                           key={day}
                                           className={`p-2 rounded-md border cursor-pointer hover:border-gray-400 ${
-                                            isUnavailable ? 'bg-red-100 border-red-400' : 
-                                            isAvailable ? 'bg-green-100 border-green-400' : 
-                                            'bg-gray-50 border-gray-200' // Neutrale voorkeuren blijven neutraal in weergave
+                                            isFullyUnavailable ? 'bg-red-100 border-red-400' : 
+                                            isFullyAvailable ? 'bg-green-100 border-green-400' : 
+                                            isPartialAvailable ? 'bg-orange-100 border-orange-400' :
+                                            'bg-white border-gray-200' // Wit voor geen voorkeur
                                           }`}
                                         >
                                           <div className="flex justify-between items-center">
@@ -481,26 +733,36 @@ export default function UserManagement() {
                                         </DialogHeader>
                                         
                                         <div className="py-4">
-                                          {isUnavailable ? (
+                                          {isFullyUnavailable ? (
                                             <div className="flex items-center text-red-600 font-medium mb-2">
                                               <span className="h-3 w-3 bg-red-500 rounded-full mr-2"></span>
                                               Niet beschikbaar op deze dag
                                             </div>
-                                          ) : !datePrefs || datePrefs.length === 0 ? (
+                                          ) : hasNoPreference ? (
                                             <div className="text-gray-500">
                                               Geen voorkeuren ingesteld voor deze dag
                                             </div>
                                           ) : (
                                             <div className="space-y-3">
-                                              {datePrefs.map((pref: ShiftPreference, index) => {
+                                              {datePrefs.map((pref: ShiftPreference, index: number) => {
                                                 if (pref.type === 'unavailable') return null;
                                                 
                                                 let timeSlot = '-';
                                                 let shiftPart = '';
                                                 
                                                 if (pref.startTime && pref.endTime) {
-                                                  const startHour = new Date(pref.startTime).getHours();
-                                                  const endHour = new Date(pref.endTime).getHours();
+                                                  const startDate = new Date(pref.startTime);
+                                                  const endDate = new Date(pref.endTime);
+                                                  const startHour = parseInt(startDate.toLocaleTimeString('nl-NL', { 
+                                                    hour: '2-digit',
+                                                    timeZone: 'Europe/Brussels',
+                                                    hour12: false 
+                                                  }).split(':')[0]);
+                                                  const endHour = parseInt(endDate.toLocaleTimeString('nl-NL', { 
+                                                    hour: '2-digit',
+                                                    timeZone: 'Europe/Brussels',
+                                                    hour12: false 
+                                                  }).split(':')[0]);
                                                   
                                                   // Standaardiseer hier de tijden in plaats van de daadwerkelijke uren te tonen
                                                   if (pref.type === 'day') {
@@ -596,8 +858,10 @@ export default function UserManagement() {
                       updateUserForm.reset({
                         firstName: u.firstName,
                         lastName: u.lastName,
-                        role: u.role as "admin" | "ambulancier",
-                        hours: u.hours
+                        email: u.email || "",
+                        role: u.role as "admin" | "ambulancier" | "supervisor",
+                        hours: u.hours,
+                        isProfessional: u.isProfessional || false
                       });
                     }
                   }}>
@@ -617,7 +881,7 @@ export default function UserManagement() {
                               userId: u.id, 
                               data: {
                                 ...data,
-                                role: data.role as "admin" | "ambulancier"
+                                role: data.role as "admin" | "ambulancier" | "supervisor"
                               }
                             });
                           })} 
@@ -641,11 +905,22 @@ export default function UserManagement() {
                           </div>
 
                           <div className="space-y-2">
+                            <label className="text-sm font-medium">Email (optioneel)</label>
+                            <p className="text-sm text-muted-foreground">Voor email notificaties</p>
+                            <Input
+                              type="email"
+                              placeholder="jan.smit@voorbeeld.be"
+                              data-testid="input-email-update"
+                              {...updateUserForm.register("email")}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
                             <label className="text-sm font-medium">Rol</label>
                             <p className="text-sm text-muted-foreground">Bepaalt de rechten en toegang van de gebruiker</p>
                             <Select 
                               value={updateUserForm.watch("role")}
-                              onValueChange={(value) => updateUserForm.setValue("role", value as "admin" | "ambulancier")}
+                              onValueChange={(value) => updateUserForm.setValue("role", value as "admin" | "ambulancier" | "supervisor")}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecteer rol" />
@@ -653,6 +928,9 @@ export default function UserManagement() {
                               <SelectContent>
                                 <SelectItem value="ambulancier">Ambulancier</SelectItem>
                                 <SelectItem value="admin">Administrator</SelectItem>
+                                {user?.role === 'supervisor' && (
+                                  <SelectItem value="supervisor">Supervisor</SelectItem>
+                                )}
                               </SelectContent>
                             </Select>
                           </div>
@@ -665,6 +943,25 @@ export default function UserManagement() {
                               placeholder="24"
                               {...updateUserForm.register("hours", { valueAsNumber: true })}
                             />
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="isProfessional-edit"
+                                checked={updateUserForm.watch("isProfessional")}
+                                onCheckedChange={(checked) => updateUserForm.setValue("isProfessional", !!checked)}
+                                data-testid="checkbox-professional-edit"
+                              />
+                              <div className="space-y-1">
+                                <label htmlFor="isProfessional-edit" className="text-sm font-medium cursor-pointer">
+                                  Beroepspersoneel
+                                </label>
+                                <p className="text-sm text-muted-foreground">
+                                  Beroepspersoneel wordt automatisch beperkt tot maximaal 1 shift per week
+                                </p>
+                              </div>
+                            </div>
                           </div>
 
                           <Button 
@@ -734,36 +1031,271 @@ export default function UserManagement() {
                     </DialogContent>
                   </Dialog>
 
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="icon">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Gebruiker Verwijderen</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Weet u zeker dat u {u.firstName} {u.lastName} wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteUserMutation.mutate(u.id)}
-                          disabled={deleteUserMutation.isPending}
-                        >
-                          Verwijderen
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  {/* Verberg delete knop voor de huidige gebruiker (voorkom self-deletion) */}
+                  {user?.id !== u.id && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="icon">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Gebruiker Verwijderen</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Weet u zeker dat u {u.firstName} {u.lastName} wilt verwijderen? Dit kan niet ongedaan worden gemaakt.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteUserMutation.mutate(u.id)}
+                            disabled={deleteUserMutation.isPending}
+                          >
+                            Verwijderen
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+        </TabsContent>
+
+        {/* Cross-team Beheer Tab - Alleen voor supervisors */}
+        <TabsContent value="crossteam" className="space-y-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            
+            {/* Gebruiker Selectie Paneel */}
+            <Card className="flex-1">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">Gebruiker Selecteren</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <Input
+                    type="search"
+                    placeholder="Zoek gebruiker op naam..."
+                    value={crossTeamSearchTerm}
+                    onChange={(e) => setCrossTeamSearchTerm(e.target.value)}
+                    className="w-full"
+                    data-testid="input-cross-team-search"
+                  />
+                  
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {allUsersForCrossTeam
+                      ?.filter(u => {
+                        const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+                        const username = u.username.toLowerCase();
+                        const search = crossTeamSearchTerm.toLowerCase();
+                        return fullName.includes(search) || username.includes(search);
+                      })
+                      .map(user => (
+                        <div
+                          key={user.id}
+                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedUserForCrossTeam?.id === user.id
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'hover:bg-accent'
+                          }`}
+                          onClick={() => setSelectedUserForCrossTeam(user)}
+                          data-testid={`user-card-${user.id}`}
+                        >
+                          <div className="font-medium">{user.firstName} {user.lastName}</div>
+                          <div className="text-sm opacity-70">{user.username} • {user.role}</div>
+                        </div>
+                      ))}
+                  </div>
+                  
+                  {isLoadingCrossTeamUsers && (
+                    <div className="text-center py-4 text-muted-foreground">
+                      Laden...
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Station Toewijzing Paneel */}
+            <Card className="flex-1">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Settings className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">Station Toewijzingen</h3>
+                </div>
+                
+                {selectedUserForCrossTeam ? (
+                  <div className="space-y-6">
+                    {/* Huidige toewijzingen */}
+                    <div>
+                      <h4 className="font-medium mb-3">Huidige Toewijzingen</h4>
+                      <div className="space-y-2">
+                        {isLoadingAssignments ? (
+                          <div className="text-center py-4 text-muted-foreground">Laden...</div>
+                        ) : (
+                          <>
+                            {/* Toon altijd het primaire station */}
+                            {(() => {
+                              const primaryStation = (stations as Station[])?.find(s => s.id === selectedUserForCrossTeam.stationId);
+                              return primaryStation ? (
+                                <div key={`primary-${primaryStation.id}`} className="flex items-center justify-between p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="font-medium">{primaryStation.displayName}</div>
+                                      <div className="px-2 py-1 bg-primary text-primary-foreground text-xs rounded-full">
+                                        Primair Station
+                                      </div>
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">{selectedUserForCrossTeam.hours || 0} uur per maand</div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      max="160"
+                                      defaultValue={selectedUserForCrossTeam.hours || 0}
+                                      className="w-16 h-8 text-center"
+                                      onBlur={(e) => {
+                                        const newHours = parseInt(e.target.value) || 0;
+                                        if (newHours !== (selectedUserForCrossTeam.hours || 0) && newHours >= 0 && newHours <= 160) {
+                                          updatePrimaryStationHoursMutation.mutate({
+                                            userId: selectedUserForCrossTeam.id,
+                                            maxHours: newHours
+                                          });
+                                        }
+                                      }}
+                                    />
+                                    <span className="text-sm text-muted-foreground">u</span>
+                                  </div>
+                                </div>
+                              ) : null;
+                            })()}
+                            
+                            {/* Toon cross-team assignments */}
+                            {userStationAssignments?.length > 0 ? (
+                              userStationAssignments.map((assignment: any) => (
+                                <div key={assignment.station.id} className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="font-medium">{assignment.station.displayName}</div>
+                                      <div className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">
+                                        Cross-team
+                                      </div>
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">{assignment.maxHours} uur per maand</div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      max="160"
+                                      defaultValue={assignment.maxHours}
+                                      className="w-16 h-8 text-center"
+                                      onBlur={(e) => {
+                                        const newHours = parseInt(e.target.value);
+                                        if (newHours !== assignment.maxHours && newHours >= 1 && newHours <= 160) {
+                                          updateUserStationHoursMutation.mutate({
+                                            userId: selectedUserForCrossTeam.id,
+                                            stationId: assignment.station.id,
+                                            maxHours: newHours
+                                          });
+                                        }
+                                      }}
+                                    />
+                                    <span className="text-sm text-muted-foreground">u</span>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="text-center py-2 text-sm text-muted-foreground">
+                                Geen extra cross-team toewijzingen
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Nieuwe toewijzing toevoegen */}
+                    <div className="border-t pt-6">
+                      <h4 className="font-medium mb-3">Nieuwe Toewijzing Toevoegen</h4>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Station</label>
+                            <Select 
+                              value={selectedCrossTeamStation?.toString() || ""} 
+                              onValueChange={(value) => setSelectedCrossTeamStation(parseInt(value))}
+                            >
+                              <SelectTrigger data-testid="select-cross-team-station">
+                                <SelectValue placeholder="Kies station..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(stations as Station[])
+                                  ?.filter(station => {
+                                    // Filter uit stations waar de user al toegang toe heeft
+                                    if (station.id === selectedUserForCrossTeam.stationId) return false;
+                                    return !userStationAssignments?.some((a: any) => a.station.id === station.id);
+                                  })
+                                  ?.map((station) => (
+                                    <SelectItem key={station.id} value={station.id.toString()}>
+                                      {station.displayName}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium mb-2 block">Max Uren per Maand</label>
+                            <Input
+                              type="number"
+                              min="1"
+                              max="160"
+                              value={crossTeamHourLimit}
+                              onChange={(e) => setCrossTeamHourLimit(parseInt(e.target.value) || 24)}
+                              data-testid="input-cross-team-hours"
+                            />
+                          </div>
+                        </div>
+                        
+                        <Button
+                          onClick={() => {
+                            if (selectedCrossTeamStation && selectedUserForCrossTeam) {
+                              addUserToStationMutation.mutate({
+                                userId: selectedUserForCrossTeam.id,
+                                stationId: selectedCrossTeamStation,
+                                maxHours: crossTeamHourLimit
+                              });
+                            }
+                          }}
+                          disabled={!selectedCrossTeamStation || addUserToStationMutation.isPending}
+                          className="w-full"
+                          data-testid="button-add-cross-team-assignment"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          {addUserToStationMutation.isPending ? "Toevoegen..." : "Station Toewijzing Toevoegen"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    Selecteer eerst een gebruiker om station toewijzingen te beheren
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

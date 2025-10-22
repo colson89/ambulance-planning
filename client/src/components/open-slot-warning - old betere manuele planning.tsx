@@ -2,10 +2,9 @@ import { AlertTriangle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import type { Shift } from "@shared/schema";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -24,13 +23,6 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
   const [showDialog, setShowDialog] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("0");
   const [pendingShift, setPendingShift] = useState<{startTime: string, endTime: string} | null>(null);
-  
-  // Add Shift Dialog extended state
-  const [addShiftType, setAddShiftType] = useState<"day" | "night">("night");
-  const [addShiftTimeMode, setAddShiftTimeMode] = useState<"standard" | "custom">("custom");
-  const [addShiftStandardDayType, setAddShiftStandardDayType] = useState<"full" | "morning" | "afternoon">("full");
-  const [addShiftCustomStartTime, setAddShiftCustomStartTime] = useState("19:00");
-  const [addShiftCustomEndTime, setAddShiftCustomEndTime] = useState("07:00");
 
   // Alleen detecteren voor nachtshifts
   const nightShifts = shifts.filter(s => 
@@ -199,11 +191,6 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
                           startTime: suggestion.startFormatted,
                           endTime: suggestion.endFormatted
                         });
-                        // Reset dialog state
-                        setAddShiftType("night"); // Default to night for open slots
-                        setAddShiftTimeMode("custom"); // Start with custom, pre-filled with suggestion
-                        setAddShiftCustomStartTime(suggestion.startFormatted);
-                        setAddShiftCustomEndTime(suggestion.endFormatted);
                         setSelectedUserId("0");
                         setShowDialog(true);
                       }}
@@ -220,123 +207,47 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
         </CardContent>
       </Card>
       
-      {/* Extended Add Shift Dialog */}
+      {/* Dialog for user selection */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Shift Toevoegen</DialogTitle>
-            <DialogDescription>
-              Voeg een nieuwe shift toe voor {format(date, "dd MMMM yyyy", { locale: nl })}
-            </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
-            {/* Shift Type Selectie */}
-            <div className="grid gap-2">
-              <Label>Shift Type</Label>
-              <Select value={addShiftType} onValueChange={(value: "day" | "night") => setAddShiftType(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="day">Dagshift</SelectItem>
-                  <SelectItem value="night">Nachtshift</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Tijd Mode Selectie */}
-            <div className="grid gap-2">
-              <Label>Tijden</Label>
-              <Select value={addShiftTimeMode} onValueChange={(value: "standard" | "custom") => setAddShiftTimeMode(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Standaard tijden</SelectItem>
-                  <SelectItem value="custom">Custom tijden (noodgeval)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Standaard Dag Type (alleen voor dagshift met standaard tijden) */}
-            {addShiftTimeMode === "standard" && addShiftType === "day" && (
+          {pendingShift && (
+            <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label>Dagshift Variatie</Label>
-                <Select value={addShiftStandardDayType} onValueChange={(value: "full" | "morning" | "afternoon") => setAddShiftStandardDayType(value)}>
+                <Label htmlFor="date">Datum</Label>
+                <div className="p-2 border rounded-md bg-gray-50">
+                  {format(date, "dd MMMM yyyy", { locale: nl })}
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="time">Tijd</Label>
+                <div className="p-2 border rounded-md bg-gray-50">
+                  {pendingShift.startTime} - {pendingShift.endTime}
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="ambulancier">Ambulancier</Label>
+                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecteer ambulancier" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="full">Volledige dag (07:00 - 19:00)</SelectItem>
-                    <SelectItem value="morning">Voormiddag (07:00 - 13:00)</SelectItem>
-                    <SelectItem value="afternoon">Namiddag (13:00 - 19:00)</SelectItem>
+                    <SelectItem value="0">-- Open shift (niemand toegewezen) --</SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id.toString()}>
+                        {`${user.firstName} ${user.lastName}`}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-            )}
-            
-            {/* Standaard Tijden Preview */}
-            {addShiftTimeMode === "standard" && (
-              <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
-                <p className="text-sm font-medium text-blue-900">
-                  {addShiftType === "night" && "Nachtshift: 19:00 - 07:00"}
-                  {addShiftType === "day" && addShiftStandardDayType === "full" && "Dagshift: 07:00 - 19:00"}
-                  {addShiftType === "day" && addShiftStandardDayType === "morning" && "Voormiddag: 07:00 - 13:00"}
-                  {addShiftType === "day" && addShiftStandardDayType === "afternoon" && "Namiddag: 13:00 - 19:00"}
-                </p>
-              </div>
-            )}
-            
-            {/* Custom Tijd Pickers */}
-            {addShiftTimeMode === "custom" && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="start-time">Start Tijd</Label>
-                    <Input
-                      id="start-time"
-                      type="time"
-                      value={addShiftCustomStartTime}
-                      onChange={(e) => setAddShiftCustomStartTime(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="end-time">Eind Tijd</Label>
-                    <Input
-                      id="end-time"
-                      type="time"
-                      value={addShiftCustomEndTime}
-                      onChange={(e) => setAddShiftCustomEndTime(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="p-3 bg-amber-50 rounded-md border border-amber-200">
-                  <p className="text-sm text-amber-900">
-                    <strong>Let op:</strong> Custom tijden zijn bedoeld voor noodgevallen. Voor reguliere shifts gebruik standaard tijden.
-                  </p>
-                </div>
-              </>
-            )}
-            
-            {/* Ambulancier Toewijzing */}
-            <div className="grid gap-2">
-              <Label>Toewijzing</Label>
-              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Open Shift (niet toegewezen)</SelectItem>
-                  {users.map((user) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
-                      {`${user.firstName} ${user.lastName}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
-          </div>
+          )}
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDialog(false)}>
@@ -344,36 +255,9 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
             </Button>
             <Button 
               onClick={() => {
-                if (onAddShift) {
-                  let startTime = "";
-                  let endTime = "";
-                  
-                  // Bepaal start en end tijd op basis van mode en type
-                  if (addShiftTimeMode === "standard") {
-                    if (addShiftType === "day") {
-                      if (addShiftStandardDayType === "full") {
-                        startTime = "07:00";
-                        endTime = "19:00";
-                      } else if (addShiftStandardDayType === "morning") {
-                        startTime = "07:00";
-                        endTime = "13:00";
-                      } else if (addShiftStandardDayType === "afternoon") {
-                        startTime = "13:00";
-                        endTime = "19:00";
-                      }
-                    } else {
-                      // night
-                      startTime = "19:00";
-                      endTime = "07:00";
-                    }
-                  } else {
-                    // custom
-                    startTime = addShiftCustomStartTime;
-                    endTime = addShiftCustomEndTime;
-                  }
-                  
+                if (pendingShift && onAddShift) {
                   const userId = selectedUserId === "0" ? undefined : parseInt(selectedUserId);
-                  onAddShift(date, startTime, endTime, userId);
+                  onAddShift(date, pendingShift.startTime, pendingShift.endTime, userId);
                   setShowDialog(false);
                   setPendingShift(null);
                 }

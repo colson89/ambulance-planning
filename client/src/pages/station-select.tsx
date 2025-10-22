@@ -3,10 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, ArrowRight, Loader2 } from "lucide-react";
+import { Building2, ArrowRight, Loader2, Shield } from "lucide-react";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import type { Station } from "@shared/schema";
+
+const logoUrl = "/logo.png";
 
 export default function StationSelect() {
   const [, setLocation] = useLocation();
@@ -29,6 +31,22 @@ export default function StationSelect() {
     setLocation("/auth");
   };
 
+  const handleSupervisorSelect = () => {
+    // Maak een supervisor station object
+    const supervisorStation: Station = {
+      id: 8,
+      name: "supervisor",
+      code: "supervisor", 
+      displayName: "Supervisor",
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    setSelectedStation(supervisorStation);
+    sessionStorage.setItem("selectedStation", JSON.stringify(supervisorStation));
+    setLocation("/auth");
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -41,12 +59,23 @@ export default function StationSelect() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-8">
+            <img 
+              src={logoUrl} 
+              alt="Brandweer Zone Kempen - Ambulance Planning" 
+              className="h-32 w-32 object-contain"
+            />
+          </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Ambulance Planning Systeem</h1>
           <p className="text-lg text-gray-600">Selecteer uw Ziekenwagen om door te gaan</p>
         </div>
 
+        <div className="text-center mb-6">
+          <p className="text-md text-gray-500">Selecteer uw ziekenwagen:</p>
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {stations?.map((station) => (
+          {stations?.filter(station => station.id !== 8).map((station) => (
             <Card 
               key={station.id} 
               className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
@@ -57,9 +86,10 @@ export default function StationSelect() {
                   <Building2 className="h-8 w-8 text-blue-600" />
                 </div>
                 <CardTitle className="text-xl">{station.displayName}</CardTitle>
-                <CardDescription>
-                  Code: <Badge variant="secondary">{station.code}</Badge>
+                <CardDescription className="mb-2">
+                  Code: {station.code}
                 </CardDescription>
+                <Badge variant="secondary" className="mx-auto">{station.code}</Badge>
               </CardHeader>
               <CardContent className="text-center">
                 <Button 
@@ -76,6 +106,32 @@ export default function StationSelect() {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Supervisor Login Section - Moved to Bottom */}
+        <div className="mt-8">
+          <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 p-3 bg-purple-100 rounded-full w-fit">
+                <Shield className="h-8 w-8 text-purple-600" />
+              </div>
+              <CardTitle className="text-xl text-purple-900">Supervisor Toegang</CardTitle>
+              <CardDescription className="text-purple-700">
+                Voor supervisors met toegang tot alle stations
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button 
+                onClick={handleSupervisorSelect}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                data-testid="button-supervisor-login"
+              >
+                <Shield className="mr-2 h-4 w-4" />
+                Inloggen als Supervisor
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         {(!stations || stations.length === 0) && (

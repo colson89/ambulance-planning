@@ -1708,13 +1708,12 @@ export class DatabaseStorage implements IStorage {
         
         // ALLEEN als we nog steeds shifts nodig hebben, probeer split shifts
         const stillNeedDayShifts = targetDayShifts - assignedFullDayShifts;
-        
-        // Track split shift assignments (buiten if block zodat open shift logica deze kan gebruiken)
-        let hasAssignedHalfShift1 = false;
-        let hasAssignedHalfShift2 = false;
-        
         if (stillNeedDayShifts > 0 && allowSplitShifts) {
           console.log(`Still need ${stillNeedDayShifts} day shifts for day ${day}, now trying split shifts (6h each)`);
+          
+          // Track split shift assignments
+          let hasAssignedHalfShift1 = false;
+          let hasAssignedHalfShift2 = false;
           
           // Eerste helft van de dag (7:00 - 13:00)
           const sortedDayFirstHalfUsers = getSortedUsersForAssignment(
@@ -1849,18 +1848,13 @@ export class DatabaseStorage implements IStorage {
               }
             }
           }
-        } // Einde van split shift blok
-        
-        // 🔧 BUGFIX: Create open shifts ALTIJD als er nog shifts nodig zijn
-        // Dit moet BUITEN de allowSplitShifts check, anders worden shifts "vergeten" in simpele systemen
-        if (stillNeedDayShifts > 0) {
+          
+          // Create open shifts for remaining unfilled day shift slots
           const totalDayShiftsNeeded = targetDayShifts;
           const totalDayShiftsAssigned = assignedFullDayShifts + (hasAssignedHalfShift1 ? 0.5 : 0) + (hasAssignedHalfShift2 ? 0.5 : 0);
           const remainingDayShifts = totalDayShiftsNeeded - totalDayShiftsAssigned;
           
           if (remainingDayShifts > 0) {
-            console.log(`📋 Creating ${remainingDayShifts} open day shift(s) for day ${day} (allowSplitShifts=${allowSplitShifts})`);
-            
             if (allowSplitShifts) {
               // Voor uitgebreid systeem: maak split shifts voor lege slots
               if (!hasAssignedHalfShift1) {
@@ -1881,7 +1875,6 @@ export class DatabaseStorage implements IStorage {
                 
                 const savedOpenHalfShift1 = await this.createShift(openDayHalfShift1);
                 generatedShifts.push(savedOpenHalfShift1);
-                console.log(`✅ Created open split day shift (7:00-13:00) for day ${day}`);
               }
               
               if (!hasAssignedHalfShift2) {
@@ -1902,7 +1895,6 @@ export class DatabaseStorage implements IStorage {
                 
                 const savedOpenHalfShift2 = await this.createShift(openDayHalfShift2);
                 generatedShifts.push(savedOpenHalfShift2);
-                console.log(`✅ Created open split day shift (13:00-19:00) for day ${day}`);
               }
             } else {
               // Voor eenvoudig systeem: maak volledige open shifts
@@ -1922,7 +1914,6 @@ export class DatabaseStorage implements IStorage {
                 
                 const savedOpenFullDayShift = await this.createShift(openFullDayShift);
                 generatedShifts.push(savedOpenFullDayShift);
-                console.log(`✅ Created open full day shift (7:00-19:00) for day ${day}`);
               }
             }
           }

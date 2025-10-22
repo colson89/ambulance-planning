@@ -61,6 +61,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: (user: SelectUser) => {
+      // Clear entire cache to prevent cross-user contamination
+      queryClient.clear();
+      
+      // Force clear any persisted cache/localStorage (safety measure)
+      try {
+        localStorage.removeItem('__REACT_QUERY_STATE__');
+        localStorage.removeItem('react-query-state');
+      } catch (e) { /* ignore */ }
+      
+      // Explicitly remove all shift-related queries
+      queryClient.removeQueries({ queryKey: ['/api/shifts'] });
+      queryClient.removeQueries({ queryKey: ['/api/preferences'] });
+      
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "Ingelogd",
@@ -100,6 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      // Clear shift-related cache data to prevent stale data between different users
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
     },
     onError: (error: Error) => {
       toast({

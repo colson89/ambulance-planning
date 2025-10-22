@@ -65,10 +65,16 @@ export async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || "ambulance-secret-key-2024",
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true, // Changed to true to create sessions
     store: storage.sessionStore,
+    cookie: {
+      secure: false, // Set to true in production with HTTPS
+      httpOnly: false, // Temporarily set to false for debugging
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax' // Added for better cookie handling
+    }
   };
 
   app.set("trust proxy", 1);
@@ -128,10 +134,52 @@ export function setupAuth(app: Express) {
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: number, done) => {
-    const user = await storage.getUser(id);
-    done(null, user);
+  passport.serializeUser((user, done) => {
+    console.log("=== SERIALIZE USER ===");
+    console.log("Serializing user:", { id: user.id, username: user.username, stationId: user.stationId });
+    // Store both user ID and stationId to preserve station switching
+    done(null, { id: user.id, stationId: user.stationId });
+  });
+  
+  passport.deserializeUser(async (sessionData: any, done) => {
+    try {
+      console.log("=== DESERIALIZE USER ===");
+      
+      // Handle both old format (just number) and new format (object with id and stationId)
+      let userId: number;
+      let sessionStationId: number | undefined;
+      
+      if (typeof sessionData === 'number') {
+        // Old format - just the user ID
+        userId = sessionData;
+        console.log("Deserializing user ID (old format):", userId);
+      } else if (sessionData && typeof sessionData === 'object') {
+        // New format - object with id and stationId
+        userId = sessionData.id;
+        sessionStationId = sessionData.stationId;
+        console.log("Deserializing user:", { id: userId, sessionStationId });
+      } else {
+        throw new Error("Invalid session data format");
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        console.log("User not found for ID:", userId);
+        return done(null, null);
+      }
+      
+      // Use the stationId from session if available, otherwise use the one from database
+      if (sessionStationId !== undefined) {
+        user.stationId = sessionStationId;
+        console.log("Using session stationId:", sessionStationId);
+      }
+      
+      console.log("Retrieved user:", { id: user.id, username: user.username, stationId: user.stationId, role: user.role });
+      done(null, user);
+    } catch (error) {
+      console.error("Error deserializing user:", error);
+      done(error, null);
+    }
   });
 
   app.post("/api/register", async (req, res, next) => {

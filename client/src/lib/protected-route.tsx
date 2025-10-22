@@ -23,7 +23,7 @@ export function ProtectedRoute({
         }
 
         if (!user) {
-          return <Redirect to="/auth" />;
+          return <Redirect to="/station-select" />;
         }
 
         return <Component />;
