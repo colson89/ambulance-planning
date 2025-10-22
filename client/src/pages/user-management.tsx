@@ -904,8 +904,9 @@ export default function UserManagement() {
                       <Form {...updateUserForm}>
                         <form 
                           onSubmit={updateUserForm.handleSubmit((data) => {
+                            if (!selectedUserId) return;
                             updateUserMutation.mutate({ 
-                              userId: u.id, 
+                              userId: selectedUserId, 
                               data: {
                                 ...data,
                                 role: data.role as "admin" | "ambulancier" | "supervisor"
