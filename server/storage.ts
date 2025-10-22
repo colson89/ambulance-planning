@@ -190,6 +190,8 @@ export class DatabaseStorage implements IStorage {
         email: users.email,
         role: users.role,
         isAdmin: users.isAdmin,
+        isProfessional: users.isProfessional,
+        hasDrivingLicenseC: users.hasDrivingLicenseC,
         hours: users.hours,
         stationId: users.stationId
       })
@@ -333,6 +335,8 @@ export class DatabaseStorage implements IStorage {
         email: users.email,
         role: users.role,
         isAdmin: users.isAdmin,
+        isProfessional: users.isProfessional,
+        hasDrivingLicenseC: users.hasDrivingLicenseC,
         hours: users.hours,
         stationId: users.stationId
       })
@@ -399,6 +403,8 @@ export class DatabaseStorage implements IStorage {
           email: users.email,
           role: users.role,
           isAdmin: users.isAdmin,
+          isProfessional: users.isProfessional,
+          hasDrivingLicenseC: users.hasDrivingLicenseC,
           hours: users.hours,
           stationId: users.stationId
         },
@@ -1125,6 +1131,35 @@ export class DatabaseStorage implements IStorage {
       return false; // Geen conflict gevonden
     };
 
+    // === RIJBEWIJS C VALIDATOR ===
+    // KRITIEKE VEILIGHEIDSCHECK: Zorg ervoor dat er minimaal 1 ambulancier met rijbewijs C per shift-team is
+    const needsDrivingLicenseC = (assignedUserIds: number[], targetShifts: number, candidateUserId: number): boolean => {
+      // Als er maar 1 shift nodig is (1 ambulance), dan is rijbewijs C niet kritiek
+      if (targetShifts <= 1) return false;
+      
+      // Als we de laatste positie invullen EN alle anderen hebben geen rijbewijs C, dan MOET deze wel
+      if (assignedUserIds.length === targetShifts - 1) {
+        // Check of alle reeds toegewezen users GEEN rijbewijs C hebben
+        const allLackLicense = assignedUserIds.every(userId => {
+          const user = activeUsers.find(u => u.id === userId);
+          return user && !user.hasDrivingLicenseC;
+        });
+        
+        if (allLackLicense) {
+          // Check of de candidate rijbewijs C heeft
+          const candidateUser = activeUsers.find(u => u.id === candidateUserId);
+          const candidateHasLicense = candidateUser?.hasDrivingLicenseC ?? true; // Default true voor backwards compatibility
+          
+          if (!candidateHasLicense) {
+            console.log(`🚗 DRIVING LICENSE CHECK: User ${candidateUserId} blocked - need driving license C (all ${assignedUserIds.length} assigned users lack it)`);
+            return true; // Blokkeer deze user
+          }
+        }
+      }
+      
+      return false; // Geen blokkade
+    };
+
     // CROSS-STATION FIX: Initialiseer station-specifieke hour limits voor alle gebruikers
     console.log('Initializing station-specific hour limits...');
     for (const user of activeUsers) {
@@ -1682,6 +1717,12 @@ export class DatabaseStorage implements IStorage {
               continue;
             }
 
+            // 🚗 RIJBEWIJS C SAFETY CHECK
+            if (needsDrivingLicenseC(assignedDayIds, targetDayShifts, userId)) {
+              console.log(`🚗 SAFETY BLOCK: Skipping day shift voor user ${userId} - driving license C required`);
+              continue;
+            }
+
             const dayShift = {
               userId: userId,
               date: currentDate,
@@ -1975,6 +2016,12 @@ export class DatabaseStorage implements IStorage {
             const consecutiveConflict = await hasConsecutiveShiftConflict(userId, currentDate, shiftStartTime, shiftEndTime);
             if (consecutiveConflict) {
               console.log(`🚨 SAFETY BLOCK: Skipping night shift voor user ${userId} - consecutive shift conflict`);
+              continue;
+            }
+
+            // 🚗 RIJBEWIJS C SAFETY CHECK
+            if (needsDrivingLicenseC(assignedNightIds, targetNightShifts, userId)) {
+              console.log(`🚗 SAFETY BLOCK: Skipping night shift voor user ${userId} - driving license C required`);
               continue;
             }
 

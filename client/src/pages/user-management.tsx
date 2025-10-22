@@ -30,6 +30,7 @@ const updateUserSchema = z.object({
   role: z.enum(["admin", "ambulancier", "supervisor"]),
   hours: z.number().min(0).max(168),
   isProfessional: z.boolean().optional(),
+  hasDrivingLicenseC: z.boolean().optional(),
 });
 
 type UpdateUserData = z.infer<typeof updateUserSchema>;
@@ -200,6 +201,7 @@ export default function UserManagement() {
       role: "ambulancier" as "admin" | "ambulancier" | "supervisor",
       isAdmin: false,
       isProfessional: false,
+      hasDrivingLicenseC: true,
       hours: 24,
       stationId: 8  // Supervisors always use station 8, backend will handle this
     }
@@ -506,6 +508,25 @@ export default function UserManagement() {
                     </div>
                   </div>
 
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="hasDrivingLicenseC-create"
+                        checked={createUserForm.watch("hasDrivingLicenseC")}
+                        onCheckedChange={(checked) => createUserForm.setValue("hasDrivingLicenseC", !!checked)}
+                        data-testid="checkbox-driving-license-create"
+                      />
+                      <div className="space-y-1">
+                        <label htmlFor="hasDrivingLicenseC-create" className="text-sm font-medium cursor-pointer">
+                          Rijbewijs C
+                        </label>
+                        <p className="text-sm text-muted-foreground">
+                          Minimaal 1 ambulancier met rijbewijs C vereist per shift
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <Button 
                     type="submit"
                     className="w-full"
@@ -542,6 +563,7 @@ export default function UserManagement() {
                   <p className="text-sm text-muted-foreground">
                     {u.username} - {u.role}
                     {u.isProfessional && " • Beroepspersoneel"}
+                    {!u.hasDrivingLicenseC && u.hasDrivingLicenseC !== undefined && " • Geen Rijbewijs C"}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Uren: {u.hours}
@@ -861,7 +883,8 @@ export default function UserManagement() {
                         email: u.email || "",
                         role: u.role as "admin" | "ambulancier" | "supervisor",
                         hours: u.hours,
-                        isProfessional: u.isProfessional || false
+                        isProfessional: u.isProfessional || false,
+                        hasDrivingLicenseC: u.hasDrivingLicenseC ?? true
                       });
                     }
                   }}>
@@ -959,6 +982,25 @@ export default function UserManagement() {
                                 </label>
                                 <p className="text-sm text-muted-foreground">
                                   Beroepspersoneel wordt automatisch beperkt tot maximaal 1 shift per week
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="hasDrivingLicenseC-edit"
+                                checked={updateUserForm.watch("hasDrivingLicenseC")}
+                                onCheckedChange={(checked) => updateUserForm.setValue("hasDrivingLicenseC", !!checked)}
+                                data-testid="checkbox-driving-license-edit"
+                              />
+                              <div className="space-y-1">
+                                <label htmlFor="hasDrivingLicenseC-edit" className="text-sm font-medium cursor-pointer">
+                                  Rijbewijs C
+                                </label>
+                                <p className="text-sm text-muted-foreground">
+                                  Minimaal 1 ambulancier met rijbewijs C vereist per shift
                                 </p>
                               </div>
                             </div>

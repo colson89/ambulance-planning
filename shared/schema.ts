@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["admin", "ambulancier", "supervisor"] }).notNull().default("ambulancier"),
   isAdmin: boolean("is_admin").notNull().default(false),
   isProfessional: boolean("is_professional").notNull().default(false), // Beroepspersoneel - max 1 shift per week
+  hasDrivingLicenseC: boolean("has_driving_license_c").notNull().default(true), // Rijbewijs C - minimaal 1 per shift vereist
   hours: integer("hours").notNull().default(24),
   stationId: integer("station_id").notNull().references(() => stations.id)
 });
@@ -72,6 +73,7 @@ export const insertUserSchema = createInsertSchema(users, {
   role: true,
   isAdmin: true,
   isProfessional: true,
+  hasDrivingLicenseC: true,
   hours: true,
   stationId: true
 });
