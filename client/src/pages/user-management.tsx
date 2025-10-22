@@ -40,6 +40,7 @@ export default function UserManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [viewPreferencesForUserId, setViewPreferencesForUserId] = useState<number | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -261,6 +262,7 @@ export default function UserManagement() {
         title: "Succes",
         description: "Gebruiker bijgewerkt",
       });
+      setEditDialogOpen(false);
       updateUserForm.reset();
     },
     onError: (error: Error) => {
@@ -875,8 +877,10 @@ export default function UserManagement() {
                   </Dialog>
                   
                   {/* Knop voor bewerken gebruiker */}
-                  <Dialog onOpenChange={(open) => {
+                  <Dialog open={editDialogOpen} onOpenChange={(open) => {
+                    setEditDialogOpen(open);
                     if (open) {
+                      setSelectedUserId(u.id);
                       updateUserForm.reset({
                         firstName: u.firstName,
                         lastName: u.lastName,
