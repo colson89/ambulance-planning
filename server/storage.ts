@@ -1691,6 +1691,22 @@ export class DatabaseStorage implements IStorage {
         for (const userId of dayUsersToUse) {
           if (assignedFullDayShifts >= targetDayShifts) break; // Dynamic target from weekday config
           
+          // 🔧 SPLIT SHIFT FIX: Skip gebruikers die expliciet ALLEEN voormiddag of namiddag willen
+          const key = `${userId}_${day}`;
+          const prefsForThisDay = preferencesIndex.get(key) || [];
+          const hasExplicitSplitPreference = prefsForThisDay.some(pref => {
+            if (pref.type === 'day') {
+              const splitInfo = pref.notes?.toLowerCase() || '';
+              return splitInfo.includes('first') || splitInfo.includes('second');
+            }
+            return false;
+          });
+          
+          if (hasExplicitSplitPreference) {
+            console.log(`⚠️ Skipping user ${userId} for FULL day shift - has explicit split preference (voormiddag/namiddag only)`);
+            continue;
+          }
+          
           if (await canAssignHours(userId, dayShiftHours, currentDate)) {
             // KRITIEKE CROSS-TEAM VALIDATIE: Check for conflicting shifts in andere stations
             const shiftStartTime = new Date(year, month - 1, day, 7, 0, 0);
