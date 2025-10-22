@@ -264,6 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hours: z.number().min(0).max(168).optional(),
         stationId: z.number().optional(),
         isProfessional: z.boolean().optional(),
+        hasDrivingLicenseC: z.boolean().optional(),
       });
 
       const updateData = updateSchema.parse(req.body);
