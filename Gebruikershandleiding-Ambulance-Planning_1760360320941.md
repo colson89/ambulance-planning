@@ -353,6 +353,7 @@ Als admin ziet u extra knoppen:
 - **Rol**: Ambulancier of Admin
 - **Werkuren**: Max aantal uren per maand dat je automatisch word ingepland (bijv. 24). Steeds met meervouden van 12h instellen
 - **Beroepspersoneel**: Aanvinken voor beroeps personeel (max 1 shift/week). Dit zorgt ervoor dat mensen met opt-out max 1 keer per week worden ingepland
+- **Heeft rijbewijs C** ⭐ NIEUW: Aanvinken als de ambulancier rijbewijs C heeft. Standaard staat dit **AAN**. Vink **UIT** voor ambulanciers zonder rijbewijs C.
 
 **Opslaan en Testen:**
 - Klik "Aanmaken"
@@ -370,6 +371,7 @@ Als admin ziet u extra knoppen:
 - Aantal werkuren aanpassen
 - Rol wijzigen (ambulancier ↔ admin)
 - Professional status wijzigen
+- Rijbewijs C status wijzigen ⭐ NIEUW
 
 **Wachtwoord Wijzigen:**
 - Klik sleutel icoon naast gebruiker
@@ -584,6 +586,49 @@ Woensdag 7:00-19:00 (Dag)
 
 - Maximum 1 shift per week
 - Systeem houdt automatisch rekening met deze beperking
+
+#### 🚗 Rijbewijs C Validatie ⭐ NIEUW
+
+**Veiligheidsregel:**
+
+- Elk shift-team moet **minimaal 1 ambulancier met rijbewijs C** bevatten
+- Systeem blokkeert automatisch combinaties waar beide teamleden geen rijbewijs C hebben
+
+**Hoe het werkt:**
+
+Bij het toewijzen van shifts controleert het systeem:
+
+1. Is dit het laatste teamlid dat wordt toegewezen voor deze shift?
+2. Hebben alle reeds toegewezen teamleden geen rijbewijs C?
+3. → Dan wordt deze kandidaat geblokkeerd als hij/zij ook geen rijbewijs C heeft
+
+*Voorbeeld Blokkering:*
+
+❌ **GEWEIGERD:**
+```
+Zaterdag Dagshift:
+- Anna (geen rijbewijs C) → al toegewezen
+- Bob (geen rijbewijs C) → wordt geblokkeerd!
+→ Team zou geen bestuurder hebben
+```
+
+✅ **TOEGESTAAN:**
+```
+Zaterdag Dagshift:
+- Anna (geen rijbewijs C) → al toegewezen
+- Chris (heeft rijbewijs C) → wordt toegewezen ✓
+→ Team heeft minimaal 1 bestuurder
+```
+
+**Handmatige Planning:**
+
+- Admins kunnen bewust afwijken van deze regel bij noodgevallen
+- Systeem toont wel een waarschuwing bij handmatige toewijzing
+
+**In Gebruikerslijst:**
+
+- Ambulanciers zonder rijbewijs C worden visueel gemarkeerd
+- Checkbox "Heeft rijbewijs C" is zichtbaar en bewerkbaar door admins
 
 ### 🔄 Multi-Pass Optimalisatie
 
@@ -943,6 +988,199 @@ pm2 logs
 - [ ] Applicatie is bereikbaar via browser
 - [ ] Login functionaliteit werkt
 - [ ] Database connectie is actief
+
+#### GitHub Synchronisatie Workflow
+
+Deze sectie beschrijft hoe updates tussen de Replit development omgeving en de Windows Server productie omgeving worden gesynchroniseerd via GitHub.
+
+**📋 Overzicht Workflow:**
+
+```
+Replit (Development) ←→ GitHub ←→ Windows Server (Production)
+```
+
+##### Van Replit naar Windows Server (Nieuwe Features/Fixes Deployen)
+
+**Stap 1: Wijzigingen Pushen naar GitHub (op Replit)**
+
+Controleer en commit wijzigingen voordat je pusht:
+
+```bash
+# Controleer status
+git status
+
+# Voeg wijzigingen toe (indien nodig)
+git add .
+
+# Commit wijzigingen (indien nodig)
+git commit -m "Beschrijving van wijziging"
+
+# Push naar GitHub
+git push origin main
+```
+
+**Note**: Replit maakt soms automatisch commits, maar controleer altijd met `git status` of alles gecommit is voordat je pusht.
+
+**Stap 2: Updates Ophalen op Windows Server**
+
+Open Command Prompt op de Windows Server en voer de volgende stappen uit:
+
+```batch
+# 1. Backup je .env file (BELANGRIJK!)
+cd C:\ambulance-planning
+copy .env .env.backup
+
+# 2. Haal updates op van GitHub
+git pull origin main
+
+# 3. Herstel je .env file (Replit versie is anders!)
+copy .env.backup .env
+
+# 4. Controleer .env settings
+notepad .env
+# Verifieer: NODE_ENV=production
+
+# 5. Installeer eventuele nieuwe dependencies
+npm install
+
+# 6. Database schema updaten (indien nodig)
+npm run db:push
+# BELANGRIJK: Bij waarschuwing over data verlies:
+# - Maak EERST een database backup via pgAdmin4
+# - Controleer of data verlies acceptabel is
+# - Dan pas: npm run db:push --force
+
+# 7. Rebuild applicatie
+npm run build
+
+# 8. Herstart PM2
+pm2 restart all
+
+# 9. Verificatie
+pm2 status
+pm2 logs --lines 50
+```
+
+**⚠️ Belangrijke Punten:**
+
+- **Altijd .env backuppen**: Replit gebruikt `NODE_ENV=development`, Windows Server heeft `NODE_ENV=production` nodig
+- **Database URL**: Windows Server heeft lokale PostgreSQL, Replit gebruikt Neon Database
+- **Bij schema wijzigingen**: Altijd `npm run db:push` uitvoeren
+
+##### Van Windows Server naar Replit (Testing/Debugging)
+
+Als je wijzigingen op Windows Server hebt gemaakt en deze wilt testen op Replit:
+
+```batch
+# Op Windows Server - push naar GitHub
+git add .
+git commit -m "Beschrijving van wijziging"
+git push origin main
+```
+
+```bash
+# Op Replit - haal updates op
+git pull origin main
+
+# Backup .env
+cp .env .env.backup
+
+# Na pull - herstel Replit .env
+cp .env.backup .env
+# Of verwijder .env en laat Replit het opnieuw aanmaken
+```
+
+##### Database Schema Updates
+
+**Situatie: "column does not exist" error**
+
+Dit betekent dat de database schema niet up-to-date is met de code.
+
+**Oplossing:**
+
+```batch
+# Op Windows Server
+cd C:\ambulance-planning
+npm run db:push
+```
+
+**Als je een waarschuwing krijgt over data verlies:**
+
+⚠️ **STOP EN CONTROLEER EERST:**
+
+1. Maak een database backup via pgAdmin4:
+   - Rechtermuisknop op database → Backup
+   - Bewaar backup bestand op veilige locatie
+
+2. Lees de waarschuwing zorgvuldig:
+   - Welke kolommen worden verwijderd/gewijzigd?
+   - Gaat er productiedata verloren?
+
+3. Alleen als je zeker bent:
+```batch
+npm run db:push --force
+```
+
+4. Herstart applicatie:
+```batch
+pm2 restart all
+```
+
+**Wat doet `npm run db:push`?**
+- Vergelijkt database schema met `shared/schema.ts`
+- Voegt ontbrekende kolommen toe
+- Update bestaande kolommen indien nodig
+- Maakt nieuwe tabellen aan
+
+**⚠️ Belangrijke Veiligheidsregels:**
+- Maak ALTIJD een backup voordat je `--force` gebruikt
+- Gebruik `--force` alleen na zorgvuldige controle
+- Bij twijfel: neem contact op met ontwikkelaar
+- Nooit handmatig SQL schrijven - gebruik altijd `npm run db:push`
+
+##### Git Configuratie
+
+**GitHub Credentials (eenmalig instellen):**
+
+```batch
+# Git gebruiker instellen
+git config --global user.name "Jouw Naam"
+git config --global user.email "jouw@email.com"
+
+# GitHub token instellen (indien nodig)
+# Gebruik Personal Access Token bij: 
+# Settings → Developer settings → Personal access tokens
+```
+
+##### Troubleshooting GitHub Sync
+
+**Probleem: Git push faalt met "Permission denied"**
+
+Oplossingen:
+1. Verifieer GitHub credentials
+2. Controleer of je toegang hebt tot de repository
+3. Gebruik Personal Access Token als wachtwoord
+
+**Probleem: Merge conflicts na git pull**
+
+Oplossingen:
+1. Check welke bestanden conflicteren: `git status`
+2. Voor .env conflicts: gebruik altijd de lokale versie (`git checkout --ours .env`)
+3. Voor code conflicts: los handmatig op of reset: `git reset --hard origin/main`
+
+**Probleem: .env file wordt overschreven na pull**
+
+Oplossing:
+```batch
+# Herstel uit backup
+copy .env.backup .env
+
+# Of voeg .env toe aan .gitignore (eenmalig)
+echo .env >> .gitignore
+git add .gitignore
+git commit -m "Ignore .env file"
+git push
+```
 
 #### Bestandslocaties
 
