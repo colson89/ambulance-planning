@@ -656,30 +656,9 @@ export default function Dashboard() {
                         // Get the weekday config for this date
                         const shiftDate = new Date(shift.date);
                         const dayOfWeek = shiftDate.getDay();
-                        
-                        // EXTENSIVE DEBUG LOGGING
-                        console.log("=== OPEN SLOT DEBUG START ===");
-                        console.log("User StationId:", user?.stationId);
-                        console.log("Shift Date:", format(shiftDate, 'dd-MM-yyyy'));
-                        console.log("Day of Week:", dayOfWeek, "(" + ["Zondag","Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag"][dayOfWeek] + ")");
-                        console.log("Shift Type:", shift.type);
-                        console.log("All weekdayConfigs:", weekdayConfigs);
-                        console.log("Looking for config with dayOfWeek:", dayOfWeek);
-                        
                         const config = weekdayConfigs.find(c => c.dayOfWeek === dayOfWeek);
-                        console.log("Found config:", config);
-                        
-                        const requiredStaff = shift.type === 'night' 
-                          ? (config?.nightShiftCount || 2) 
-                          : (config?.dayShiftCount || 2);
-                        
-                        console.log("Required Staff:", requiredStaff);
-                        console.log("=== OPEN SLOT DEBUG END ===");
-                        
-                        // Show alert for first open slot to get user's attention
-                        if (shift.id === filteredShifts.find(s => s.type === 'night' && hasOpenSlots)?.id) {
-                          alert(`DEBUG INFO:\nStation: ${user?.stationId}\nDag: ${["Zo","Ma","Di","Wo","Do","Vr","Za"][dayOfWeek]}\nConfig gevonden: ${config ? 'JA' : 'NEE'}\nNightShiftCount: ${config?.nightShiftCount || 'NIET GEVONDEN'}\nRequired Staff: ${requiredStaff}`);
-                        }
+                        const requiredNightStaff = config?.nightShiftCount || 2;
+                        const requiredDayStaff = config?.dayShiftCount || 2;
                         
                         results.push(
                           <TableRow key={`${shift.id}-warning`} className="bg-orange-50 border-l-4 border-l-orange-500">
@@ -688,7 +667,8 @@ export default function Dashboard() {
                                 date={new Date(shift.date)}
                                 shifts={filteredShifts.filter(s => format(new Date(s.date), 'yyyy-MM-dd') === format(new Date(shift.date), 'yyyy-MM-dd'))}
                                 showAddButton={false}
-                                requiredStaff={requiredStaff}
+                                requiredStaff={requiredNightStaff}
+                                requiredDayStaff={requiredDayStaff}
                               />
                             </TableCell>
                           </TableRow>

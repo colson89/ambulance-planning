@@ -1579,9 +1579,8 @@ export default function ScheduleGenerator() {
                         const shiftDate = new Date(shift.date);
                         const dayOfWeek = shiftDate.getDay();
                         const config = weekdayConfigs.find(c => c.dayOfWeek === dayOfWeek);
-                        const requiredStaff = shift.type === 'night' 
-                          ? (config?.nightShiftCount || 2) 
-                          : (config?.dayShiftCount || 2);
+                        const requiredNightStaff = config?.nightShiftCount || 2;
+                        const requiredDayStaff = config?.dayShiftCount || 2;
                         
                         results.push(
                           <TableRow key={`${shift.id}-warning`} className="bg-orange-50">
@@ -1596,7 +1595,8 @@ export default function ScheduleGenerator() {
                                   firstName: u.firstName,
                                   lastName: u.lastName
                                 }))}
-                                requiredStaff={requiredStaff}
+                                requiredStaff={requiredNightStaff}
+                                requiredDayStaff={requiredDayStaff}
                               />
                             </TableCell>
                           </TableRow>

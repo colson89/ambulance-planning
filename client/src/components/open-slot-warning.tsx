@@ -17,13 +17,22 @@ interface OpenSlotWarningProps {
   onAddShift?: (date: Date, startTime: string, endTime: string, userId?: number) => void;
   showAddButton?: boolean;
   users?: Array<{id: number, firstName: string, lastName: string}>;
-  requiredStaff?: number;
+  requiredStaff?: number; // Required for night shifts
+  requiredDayStaff?: number; // Required for day shifts (morning & afternoon)
 }
 
-export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = false, users = [], requiredStaff = 2 }: OpenSlotWarningProps) {
+export function OpenSlotWarning({ 
+  date, 
+  shifts, 
+  onAddShift, 
+  showAddButton = false, 
+  users = [], 
+  requiredStaff = 2,
+  requiredDayStaff = 2 
+}: OpenSlotWarningProps) {
   const [showDialog, setShowDialog] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("0");
-  const [pendingShift, setPendingShift] = useState<{startTime: string, endTime: string} | null>(null);
+  const [pendingShift, setPendingShift] = useState<{startTime: string, endTime: string, shiftType: "day" | "night"} | null>(null);
   
   // Add Shift Dialog extended state
   const [addShiftType, setAddShiftType] = useState<"day" | "night">("night");
@@ -32,7 +41,14 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
   const [addShiftCustomStartTime, setAddShiftCustomStartTime] = useState("19:00");
   const [addShiftCustomEndTime, setAddShiftCustomEndTime] = useState("07:00");
 
-  // Alleen detecteren voor nachtshifts
+  // Filter shifts for this date
+  const dayShifts = shifts.filter(s => 
+    s.type === 'day' && 
+    s.startTime && 
+    s.endTime &&
+    new Date(s.date).toDateString() === date.toDateString()
+  );
+
   const nightShifts = shifts.filter(s => 
     s.type === 'night' && 
     s.startTime && 
@@ -40,33 +56,65 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
     new Date(s.date).toDateString() === date.toDateString()
   );
 
-
-  
-  if (nightShifts.length === 0) return null;
-
-
-
   // Helper function to extract clock hour (timezone-agnostic)
   const getClockHour = (timeValue: string | Date): number => {
-    if (timeValue instanceof Date) return timeValue.getHours();
+    if (timeValue instanceof Date) return timeValue.getUTCHours();
     if (typeof timeValue === 'string') {
-      // If ISO with timezone (Z or +/-HH:MM), parse to Date to get local hour
+      // If ISO with timezone (Z or +/-HH:MM), parse to Date to get UTC hour
       if (/Z|[+\-]\d{2}:\d{2}/.test(timeValue)) {
         const d = new Date(timeValue);
-        if (!isNaN(d.getTime())) return d.getHours();
+        if (!isNaN(d.getTime())) return d.getUTCHours();
       }
       // Plain clock string HH:mm
       const m = timeValue.match(/^(\d{2}):(\d{2})/);
       if (m) return parseInt(m[1], 10);
       // Fallback
       const d2 = new Date(timeValue);
-      if (!isNaN(d2.getTime())) return d2.getHours();
+      if (!isNaN(d2.getTime())) return d2.getUTCHours();
     }
     return 0;
   };
 
-  // Convert shifts to time coverage
-  const timeSlots = Array.from({ length: 24 }, (_, hour) => {
+  // === DAY SHIFT COVERAGE ANALYSIS ===
+  // Calculate staff coverage for morning (7-13) and afternoon (13-19) periods
+  let morningStaff = 0;
+  let afternoonStaff = 0;
+
+  dayShifts.forEach(shift => {
+    if (!shift.startTime || !shift.endTime || shift.userId === 0) return;
+
+    const startHour = getClockHour(shift.startTime);
+    const endHour = getClockHour(shift.endTime);
+
+    // Full day shift (7-19): covers BOTH morning AND afternoon
+    if (startHour === 7 && endHour === 19) {
+      morningStaff++;
+      afternoonStaff++;
+    }
+    // Morning shift (7-13): covers only morning
+    else if (startHour === 7 && endHour === 13) {
+      morningStaff++;
+    }
+    // Afternoon shift (13-19): covers only afternoon
+    else if (startHour === 13 && endHour === 19) {
+      afternoonStaff++;
+    }
+    // Custom shifts - check overlap with periods
+    else {
+      // Check if shift overlaps with morning (7-13)
+      if (startHour < 13 && endHour > 7) {
+        morningStaff++;
+      }
+      // Check if shift overlaps with afternoon (13-19)
+      if (startHour < 19 && endHour > 13) {
+        afternoonStaff++;
+      }
+    }
+  });
+
+  // === NIGHT SHIFT COVERAGE ANALYSIS ===
+  // Convert night shifts to hourly time coverage
+  const nightTimeSlots = Array.from({ length: 24 }, (_, hour) => {
     let staffCount = 0;
 
     nightShifts.forEach(shift => {
@@ -96,71 +144,101 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
     return staffCount;
   });
 
-
-  // Find gaps where we have less than requiredStaff people for night coverage (19:00-07:00)
+  // === BUILD GAP SUGGESTIONS ===
   const suggestions: any[] = [];
-  
-  // Check the night period specifically
-  const nightHours = [19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6];
-  
-  // First check if there are ANY gaps at all - if all hours have requiredStaff+ staff, don't show warning
-  const hasAnyGaps = nightHours.some(hour => timeSlots[hour] < requiredStaff);
-  if (!hasAnyGaps) {
-    return null; // Perfect coverage - no warning needed
+
+  // 1. Check morning period (7:00-13:00)
+  if (dayShifts.length > 0 && morningStaff < requiredDayStaff) {
+    suggestions.push({
+      period: 'morning',
+      start: 7,
+      end: 13,
+      startFormatted: '07:00',
+      endFormatted: '13:00',
+      currentStaff: morningStaff,
+      neededStaff: requiredDayStaff,
+      type: 'gap',
+      shiftType: 'day' as const
+    });
   }
-  
-  // Build gap suggestions for periods with insufficient coverage
-  let gapStart = -1;
-  
-  for (let i = 0; i < nightHours.length; i++) {
-    const hour = nightHours[i];
-    const staffCount = timeSlots[hour];
+
+  // 2. Check afternoon period (13:00-19:00)
+  if (dayShifts.length > 0 && afternoonStaff < requiredDayStaff) {
+    suggestions.push({
+      period: 'afternoon',
+      start: 13,
+      end: 19,
+      startFormatted: '13:00',
+      endFormatted: '19:00',
+      currentStaff: afternoonStaff,
+      neededStaff: requiredDayStaff,
+      type: 'gap',
+      shiftType: 'day' as const
+    });
+  }
+
+  // 3. Check night period (19:00-07:00) - only if there are night shifts
+  if (nightShifts.length > 0) {
+    const nightHours = [19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6];
     
-    if (staffCount < requiredStaff) {
-      if (gapStart === -1) {
-        gapStart = i; // Store index in nightHours array
-      }
-    } else {
-      if (gapStart !== -1) {
-        // Found end of gap
-        const startHour = nightHours[gapStart];
-        const endHour = nightHours[i];
+    // Check if there are ANY gaps at all
+    const hasNightGaps = nightHours.some(hour => nightTimeSlots[hour] < requiredStaff);
+    
+    if (hasNightGaps) {
+      // Build gap suggestions for periods with insufficient coverage
+      let gapStart = -1;
+      
+      for (let i = 0; i < nightHours.length; i++) {
+        const hour = nightHours[i];
+        const staffCount = nightTimeSlots[hour];
         
-        const gapSuggestion = {
+        if (staffCount < requiredStaff) {
+          if (gapStart === -1) {
+            gapStart = i; // Store index in nightHours array
+          }
+        } else {
+          if (gapStart !== -1) {
+            // Found end of gap
+            const startHour = nightHours[gapStart];
+            const endHour = nightHours[i];
+            
+            suggestions.push({
+              period: 'night',
+              start: startHour,
+              end: endHour,
+              startFormatted: String(startHour).padStart(2, '0') + ':00',
+              endFormatted: String(endHour).padStart(2, '0') + ':00',
+              currentStaff: Math.min(...nightHours.slice(gapStart, i).map(h => nightTimeSlots[h])),
+              neededStaff: requiredStaff,
+              type: 'gap',
+              shiftType: 'night' as const
+            });
+            gapStart = -1;
+          }
+        }
+      }
+      
+      // Handle case where gap extends to the end of night shift
+      if (gapStart !== -1) {
+        const startHour = nightHours[gapStart];
+        const endHour = 7; // End of night shift
+        
+        suggestions.push({
+          period: 'night',
           start: startHour,
           end: endHour,
           startFormatted: String(startHour).padStart(2, '0') + ':00',
           endFormatted: String(endHour).padStart(2, '0') + ':00',
-          currentStaff: Math.min(...nightHours.slice(gapStart, i).map(h => timeSlots[h])),
+          currentStaff: Math.min(...nightHours.slice(gapStart).map(h => nightTimeSlots[h])),
           neededStaff: requiredStaff,
-          type: 'gap'
-        };
-        
-        suggestions.push(gapSuggestion);
-        gapStart = -1;
+          type: 'gap',
+          shiftType: 'night' as const
+        });
       }
     }
   }
-  
-  // Handle case where gap extends to the end of night shift
-  if (gapStart !== -1) {
-    const startHour = nightHours[gapStart];
-    const endHour = 7; // End of night shift
-    
-    const gapSuggestion = {
-      start: startHour,
-      end: endHour,
-      startFormatted: String(startHour).padStart(2, '0') + ':00',
-      endFormatted: String(endHour).padStart(2, '0') + ':00',
-      currentStaff: Math.min(...nightHours.slice(gapStart).map(h => timeSlots[h])),
-      neededStaff: requiredStaff,
-      type: 'gap'
-    };
-    
-    suggestions.push(gapSuggestion);
-  }
-  
 
+  // Don't show warning if no gaps detected
   if (suggestions.length === 0) return null;
 
   return (
@@ -185,8 +263,8 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
                     </Badge>
                     <span className="text-sm text-gray-600">
                       {suggestion.currentStaff === 0 
-                        ? `Geen dekking (${requiredStaff} ${requiredStaff === 1 ? 'persoon' : 'personen'} nodig)` 
-                        : `${suggestion.currentStaff}/${requiredStaff} ${requiredStaff === 1 ? 'persoon' : 'personen'}`}
+                        ? `Geen dekking (${suggestion.neededStaff} ${suggestion.neededStaff === 1 ? 'persoon' : 'personen'} nodig)` 
+                        : `${suggestion.currentStaff}/${suggestion.neededStaff} ${suggestion.neededStaff === 1 ? 'persoon' : 'personen'}`}
                     </span>
                   </div>
                   
@@ -197,11 +275,12 @@ export function OpenSlotWarning({ date, shifts, onAddShift, showAddButton = fals
                       onClick={() => {
                         setPendingShift({
                           startTime: suggestion.startFormatted,
-                          endTime: suggestion.endFormatted
+                          endTime: suggestion.endFormatted,
+                          shiftType: suggestion.shiftType
                         });
                         // Reset dialog state
-                        setAddShiftType("night"); // Default to night for open slots
-                        setAddShiftTimeMode("custom"); // Start with custom, pre-filled with suggestion
+                        setAddShiftType(suggestion.shiftType);
+                        setAddShiftTimeMode("custom");
                         setAddShiftCustomStartTime(suggestion.startFormatted);
                         setAddShiftCustomEndTime(suggestion.endFormatted);
                         setSelectedUserId("0");
