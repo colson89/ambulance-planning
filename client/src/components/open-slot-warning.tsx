@@ -56,21 +56,21 @@ export function OpenSlotWarning({
     new Date(s.date).toDateString() === date.toDateString()
   );
 
-  // Helper function to extract clock hour (timezone-agnostic)
+  // Helper function to extract clock hour (local time for coverage checks)
   const getClockHour = (timeValue: string | Date): number => {
-    if (timeValue instanceof Date) return timeValue.getUTCHours();
+    if (timeValue instanceof Date) return timeValue.getHours();
     if (typeof timeValue === 'string') {
-      // If ISO with timezone (Z or +/-HH:MM), parse to Date to get UTC hour
+      // If ISO with timezone (Z or +/-HH:MM), parse to Date to get local hour
       if (/Z|[+\-]\d{2}:\d{2}/.test(timeValue)) {
         const d = new Date(timeValue);
-        if (!isNaN(d.getTime())) return d.getUTCHours();
+        if (!isNaN(d.getTime())) return d.getHours();
       }
       // Plain clock string HH:mm
       const m = timeValue.match(/^(\d{2}):(\d{2})/);
       if (m) return parseInt(m[1], 10);
       // Fallback
       const d2 = new Date(timeValue);
-      if (!isNaN(d2.getTime())) return d2.getUTCHours();
+      if (!isNaN(d2.getTime())) return d2.getHours();
     }
     return 0;
   };
