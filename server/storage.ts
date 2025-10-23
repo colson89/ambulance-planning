@@ -1709,8 +1709,8 @@ export class DatabaseStorage implements IStorage {
           
           if (await canAssignHours(userId, dayShiftHours, currentDate)) {
             // KRITIEKE CROSS-TEAM VALIDATIE: Check for conflicting shifts in andere stations
-            const shiftStartTime = new Date(year, month - 1, day, 7, 0, 0);
-            const shiftEndTime = new Date(year, month - 1, day, 19, 0, 0);
+            const shiftStartTime = new Date(Date.UTC(year, month - 1, day, 7, 0, 0));
+            const shiftEndTime = new Date(Date.UTC(year, month - 1, day, 19, 0, 0));
             const hasConflict = await this.hasConflictingCrossTeamShift(
               userId, 
               currentDate, 
@@ -1743,8 +1743,8 @@ export class DatabaseStorage implements IStorage {
               userId: userId,
               date: currentDate,
               type: "day" as const,
-              startTime: new Date(year, month - 1, day, 7, 0, 0),
-              endTime: new Date(year, month - 1, day, 19, 0, 0),
+              startTime: new Date(Date.UTC(year, month - 1, day, 7, 0, 0)),
+              endTime: new Date(Date.UTC(year, month - 1, day, 19, 0, 0)),
               status: "planned" as const,
               stationId: stationId,
               month,
@@ -1801,8 +1801,8 @@ export class DatabaseStorage implements IStorage {
                 }
 
                 // KRITIEKE CROSS-TEAM VALIDATIE: Check for conflicting shifts in andere stations
-                const shiftStartTime = new Date(year, month - 1, day, 7, 0, 0);
-                const shiftEndTime = new Date(year, month - 1, day, 13, 0, 0);
+                const shiftStartTime = new Date(Date.UTC(year, month - 1, day, 7, 0, 0));
+                const shiftEndTime = new Date(Date.UTC(year, month - 1, day, 13, 0, 0));
                 const hasConflict = await this.hasConflictingCrossTeamShift(
                   userId, 
                   currentDate, 
@@ -1829,15 +1829,15 @@ export class DatabaseStorage implements IStorage {
                   userId: userId,
                   date: currentDate,
                   type: "day" as const,
-                  startTime: new Date(year, month - 1, day, 7, 0, 0),
-                  endTime: new Date(year, month - 1, day, 13, 0, 0),
+                  startTime: new Date(Date.UTC(year, month - 1, day, 7, 0, 0)),
+                  endTime: new Date(Date.UTC(year, month - 1, day, 13, 0, 0)),
                   status: "planned" as const,
                   stationId: stationId,
                   month,
                   year,
                   isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 7, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day, 13, 0, 0)
+                  splitStartTime: new Date(Date.UTC(year, month - 1, day, 7, 0, 0)),
+                  splitEndTime: new Date(Date.UTC(year, month - 1, day, 13, 0, 0))
                 };
                 
                 assignedDayIds.push(userId);
@@ -1876,8 +1876,8 @@ export class DatabaseStorage implements IStorage {
                 }
 
                 // KRITIEKE CROSS-TEAM VALIDATIE: Check for conflicting shifts in andere stations  
-                const shiftStartTime = new Date(year, month - 1, day, 13, 0, 0);
-                const shiftEndTime = new Date(year, month - 1, day, 19, 0, 0);
+                const shiftStartTime = new Date(Date.UTC(year, month - 1, day, 13, 0, 0));
+                const shiftEndTime = new Date(Date.UTC(year, month - 1, day, 19, 0, 0));
                 const hasConflict = await this.hasConflictingCrossTeamShift(
                   userId, 
                   currentDate, 
@@ -1904,15 +1904,15 @@ export class DatabaseStorage implements IStorage {
                   userId: userId,
                   date: currentDate,
                   type: "day" as const,
-                  startTime: new Date(year, month - 1, day, 13, 0, 0),
-                  endTime: new Date(year, month - 1, day, 19, 0, 0),
+                  startTime: new Date(Date.UTC(year, month - 1, day, 13, 0, 0)),
+                  endTime: new Date(Date.UTC(year, month - 1, day, 19, 0, 0)),
                   status: "planned" as const,
                   stationId: stationId,
                   month,
                   year,
                   isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 13, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day, 19, 0, 0)
+                  splitStartTime: new Date(Date.UTC(year, month - 1, day, 13, 0, 0)),
+                  splitEndTime: new Date(Date.UTC(year, month - 1, day, 19, 0, 0))
                 };
                 
                 assignedDayIds.push(userId);
@@ -1945,15 +1945,15 @@ export class DatabaseStorage implements IStorage {
                 userId: 0,
                 date: currentDate,
                 type: "day" as const,
-                startTime: new Date(year, month - 1, day, 7, 0, 0),
-                endTime: new Date(year, month - 1, day, 13, 0, 0),
+                startTime: new Date(Date.UTC(year, month - 1, day, 7, 0, 0)),
+                endTime: new Date(Date.UTC(year, month - 1, day, 13, 0, 0)),
                 status: "open" as const,
                 stationId: stationId,
                 month,
                 year,
                 isSplitShift: true,
-                splitStartTime: new Date(year, month - 1, day, 7, 0, 0),
-                splitEndTime: new Date(year, month - 1, day, 13, 0, 0)
+                splitStartTime: new Date(Date.UTC(year, month - 1, day, 7, 0, 0)),
+                splitEndTime: new Date(Date.UTC(year, month - 1, day, 13, 0, 0))
               };
               
               const savedOpenHalfShift1 = await this.createShift(openDayHalfShift1);
@@ -1967,15 +1967,15 @@ export class DatabaseStorage implements IStorage {
                 userId: 0,
                 date: currentDate,
                 type: "day" as const,
-                startTime: new Date(year, month - 1, day, 13, 0, 0),
-                endTime: new Date(year, month - 1, day, 19, 0, 0),
+                startTime: new Date(Date.UTC(year, month - 1, day, 13, 0, 0)),
+                endTime: new Date(Date.UTC(year, month - 1, day, 19, 0, 0)),
                 status: "open" as const,
                 stationId: stationId,
                 month,
                 year,
                 isSplitShift: true,
-                splitStartTime: new Date(year, month - 1, day, 13, 0, 0),
-                splitEndTime: new Date(year, month - 1, day, 19, 0, 0)
+                splitStartTime: new Date(Date.UTC(year, month - 1, day, 13, 0, 0)),
+                splitEndTime: new Date(Date.UTC(year, month - 1, day, 19, 0, 0))
               };
               
               const savedOpenHalfShift2 = await this.createShift(openDayHalfShift2);
@@ -1992,8 +1992,8 @@ export class DatabaseStorage implements IStorage {
                   userId: 0,
                   date: currentDate,
                   type: "day" as const,
-                  startTime: new Date(year, month - 1, day, 7, 0, 0),
-                  endTime: new Date(year, month - 1, day, 19, 0, 0),
+                  startTime: new Date(Date.UTC(year, month - 1, day, 7, 0, 0)),
+                  endTime: new Date(Date.UTC(year, month - 1, day, 19, 0, 0)),
                   status: "open" as const,
                   stationId: stationId,
                   month,
@@ -2034,8 +2034,8 @@ export class DatabaseStorage implements IStorage {
           
           if (await canAssignHours(userId, nightShiftHours, currentDate) && !assignedNightIds.includes(userId)) {
             // KRITIEKE CROSS-TEAM VALIDATIE: Check for conflicting shifts in andere stations
-            const shiftStartTime = new Date(year, month - 1, day, 19, 0, 0);
-            const shiftEndTime = new Date(year, month - 1, day + 1, 7, 0, 0);
+            const shiftStartTime = new Date(Date.UTC(year, month - 1, day, 19, 0, 0));
+            const shiftEndTime = new Date(Date.UTC(year, month - 1, day + 1, 7, 0, 0));
             const hasConflict = await this.hasConflictingCrossTeamShift(
               userId, 
               currentDate, 
@@ -2072,8 +2072,8 @@ export class DatabaseStorage implements IStorage {
               userId: userId,
               date: currentDate,
               type: "night" as const,
-              startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              startTime: new Date(Date.UTC(year, month - 1, day, 19, 0, 0)),
+              endTime: new Date(Date.UTC(year, month - 1, day + 1, 7, 0, 0)),
               status: "planned" as const,
               stationId: stationId,
               month,
@@ -2100,8 +2100,8 @@ export class DatabaseStorage implements IStorage {
               userId: 0,
               date: currentDate,
               type: "night" as const,
-              startTime: new Date(year, month - 1, day, 19, 0, 0),
-              endTime: new Date(year, month - 1, day + 1, 7, 0, 0),
+              startTime: new Date(Date.UTC(year, month - 1, day, 19, 0, 0)),
+              endTime: new Date(Date.UTC(year, month - 1, day + 1, 7, 0, 0)),
               status: "open" as const,
               stationId: stationId,
               month,
