@@ -56,93 +56,47 @@ export function OpenSlotWarning({
     new Date(s.date).toDateString() === date.toDateString()
   );
 
-  // Helper function to extract clock hour (local time for coverage checks)
-  const getClockHour = (timeValue: string | Date): number => {
-    if (timeValue instanceof Date) return timeValue.getHours();
-    if (typeof timeValue === 'string') {
-      // If ISO with timezone (Z or +/-HH:MM), parse to Date to get local hour
-      if (/Z|[+\-]\d{2}:\d{2}/.test(timeValue)) {
-        const d = new Date(timeValue);
-        if (!isNaN(d.getTime())) return d.getHours();
-      }
-      // Plain clock string HH:mm
-      const m = timeValue.match(/^(\d{2}):(\d{2})/);
-      if (m) return parseInt(m[1], 10);
-      // Fallback
-      const d2 = new Date(timeValue);
-      if (!isNaN(d2.getTime())) return d2.getHours();
-    }
-    return 0;
-  };
-
-  // === DAY SHIFT COVERAGE ANALYSIS ===
-  // Calculate staff coverage for morning (7-13) and afternoon (13-19) periods
+  // === DAY SHIFT COVERAGE ANALYSIS (Hardcoded) ===
+  // Use hardcoded shift types instead of timestamp parsing to avoid timezone issues
   let morningStaff = 0;
   let afternoonStaff = 0;
 
   dayShifts.forEach(shift => {
-    if (!shift.startTime || !shift.endTime || shift.userId === 0) return;
+    if (shift.userId === 0) return; // Skip open shifts
 
-    const startHour = getClockHour(shift.startTime);
-    const endHour = getClockHour(shift.endTime);
-
-    // Full day shift (7-19): covers BOTH morning AND afternoon
-    if (startHour === 7 && endHour === 19) {
+    // Full day shift (not split): covers BOTH morning AND afternoon
+    if (!shift.isSplitShift) {
       morningStaff++;
       afternoonStaff++;
     }
-    // Morning shift (7-13): covers only morning
-    else if (startHour === 7 && endHour === 13) {
-      morningStaff++;
-    }
-    // Afternoon shift (13-19): covers only afternoon
-    else if (startHour === 13 && endHour === 19) {
-      afternoonStaff++;
-    }
-    // Custom shifts - check overlap with periods
-    else {
-      // Check if shift overlaps with morning (7-13)
-      if (startHour < 13 && endHour > 7) {
+    // Split shift: determine which period based on startTime
+    else if (shift.isSplitShift && shift.startTime) {
+      // Extract hour directly from ISO timestamp string to avoid timezone conversion
+      // Example: "2025-11-08T07:00:00.000Z" -> extract "07"
+      let startHour = 0;
+      const timeString = shift.startTime.toString();
+      const hourMatch = timeString.match(/T(\d{2}):/);
+      if (hourMatch) {
+        startHour = parseInt(hourMatch[1], 10);
+      }
+
+      // Morning split: 07:00-13:00
+      // Brussels timezone: UTC+1 (winter) or UTC+2 (summer)
+      // 07:00 Brussels = 06:00 UTC (winter) or 05:00 UTC (summer)
+      if (startHour === 5 || startHour === 6 || startHour === 7) {
         morningStaff++;
       }
-      // Check if shift overlaps with afternoon (13-19)
-      if (startHour < 19 && endHour > 13) {
+      // Afternoon split: 13:00-19:00
+      // 13:00 Brussels = 12:00 UTC (winter) or 11:00 UTC (summer)
+      else if (startHour === 11 || startHour === 12 || startHour === 13) {
         afternoonStaff++;
       }
     }
   });
 
-  // === NIGHT SHIFT COVERAGE ANALYSIS ===
-  // Convert night shifts to hourly time coverage
-  const nightTimeSlots = Array.from({ length: 24 }, (_, hour) => {
-    let staffCount = 0;
-
-    nightShifts.forEach(shift => {
-      if (!shift.startTime || !shift.endTime || shift.userId === 0) return;
-
-      // Extract clock hours (timezone-agnostic)
-      const startHour = getClockHour(shift.startTime);
-      const endHour = getClockHour(shift.endTime);
-
-      // Determine if overnight shift by comparing hours only
-      const overnight = endHour <= startHour;
-      
-      // Coverage check based on overnight status
-      if (overnight) {
-        // Overnight shift: covers from start hour to 24:00, then 0:00 to end hour
-        if (hour >= startHour || hour < endHour) {
-          staffCount++;
-        }
-      } else {
-        // Same day shift
-        if (hour >= startHour && hour < endHour) {
-          staffCount++;
-        }
-      }
-    });
-
-    return staffCount;
-  });
+  // === NIGHT SHIFT COVERAGE ANALYSIS (Hardcoded) ===
+  // Simply count assigned night shifts (all night shifts are 19:00-07:00)
+  const nightStaffCount = nightShifts.filter(shift => shift.userId !== 0).length;
 
   // === BUILD GAP SUGGESTIONS ===
   const suggestions: any[] = [];
@@ -177,65 +131,19 @@ export function OpenSlotWarning({
     });
   }
 
-  // 3. Check night period (19:00-07:00) - only if there are night shifts
-  if (nightShifts.length > 0) {
-    const nightHours = [19, 20, 21, 22, 23, 0, 1, 2, 3, 4, 5, 6];
-    
-    // Check if there are ANY gaps at all
-    const hasNightGaps = nightHours.some(hour => nightTimeSlots[hour] < requiredStaff);
-    
-    if (hasNightGaps) {
-      // Build gap suggestions for periods with insufficient coverage
-      let gapStart = -1;
-      
-      for (let i = 0; i < nightHours.length; i++) {
-        const hour = nightHours[i];
-        const staffCount = nightTimeSlots[hour];
-        
-        if (staffCount < requiredStaff) {
-          if (gapStart === -1) {
-            gapStart = i; // Store index in nightHours array
-          }
-        } else {
-          if (gapStart !== -1) {
-            // Found end of gap
-            const startHour = nightHours[gapStart];
-            const endHour = nightHours[i];
-            
-            suggestions.push({
-              period: 'night',
-              start: startHour,
-              end: endHour,
-              startFormatted: String(startHour).padStart(2, '0') + ':00',
-              endFormatted: String(endHour).padStart(2, '0') + ':00',
-              currentStaff: Math.min(...nightHours.slice(gapStart, i).map(h => nightTimeSlots[h])),
-              neededStaff: requiredStaff,
-              type: 'gap',
-              shiftType: 'night' as const
-            });
-            gapStart = -1;
-          }
-        }
-      }
-      
-      // Handle case where gap extends to the end of night shift
-      if (gapStart !== -1) {
-        const startHour = nightHours[gapStart];
-        const endHour = 7; // End of night shift
-        
-        suggestions.push({
-          period: 'night',
-          start: startHour,
-          end: endHour,
-          startFormatted: String(startHour).padStart(2, '0') + ':00',
-          endFormatted: String(endHour).padStart(2, '0') + ':00',
-          currentStaff: Math.min(...nightHours.slice(gapStart).map(h => nightTimeSlots[h])),
-          neededStaff: requiredStaff,
-          type: 'gap',
-          shiftType: 'night' as const
-        });
-      }
-    }
+  // 3. Check night period (19:00-07:00) - all night shifts are full period
+  if (nightShifts.length > 0 && nightStaffCount < requiredStaff) {
+    suggestions.push({
+      period: 'night',
+      start: 19,
+      end: 7,
+      startFormatted: '19:00',
+      endFormatted: '07:00',
+      currentStaff: nightStaffCount,
+      neededStaff: requiredStaff,
+      type: 'gap',
+      shiftType: 'night' as const
+    });
   }
 
   // Don't show warning if no gaps detected
