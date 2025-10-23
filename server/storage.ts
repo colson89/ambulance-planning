@@ -1766,14 +1766,17 @@ export class DatabaseStorage implements IStorage {
         // ALLEEN als we nog steeds shifts nodig hebben, probeer split shifts
         const stillNeedDayShifts = targetDayShifts - assignedFullDayShifts;
         
-        // Track split shift assignments (buiten if block zodat open shift logica deze kan gebruiken)
-        let hasAssignedHalfShift1 = false;
-        let hasAssignedHalfShift2 = false;
+        // Track split shift assignments - aantal shifts per tijdslot
+        // CRITICAL: Volle dagshifts dekken BEIDE tijdslots, dus beginnen met assignedFullDayShifts!
+        let assignedMorningShifts = assignedFullDayShifts;
+        let assignedAfternoonShifts = assignedFullDayShifts;
         
         if (stillNeedDayShifts > 0 && allowSplitShifts) {
           console.log(`Still need ${stillNeedDayShifts} day shifts for day ${day}, now trying split shifts (6h each)`);
+          console.log(`🎯 Voor coverage van ${targetDayShifts} personen, hebben we nodig: ${targetDayShifts}x voormiddag + ${targetDayShifts}x namiddag`);
+          console.log(`📊 Current coverage: ${assignedFullDayShifts} full shifts (count for both AM/PM), need ${stillNeedDayShifts} more`);
           
-          // Eerste helft van de dag (7:00 - 13:00)
+          // Eerste helft van de dag (7:00 - 13:00) - blijf proberen tot we targetDayShifts personen hebben!
           const sortedDayFirstHalfUsers = getSortedUsersForAssignment(
             availableForDayFirstHalf.filter(id => !assignedDayIds.includes(id))
           );
@@ -1782,6 +1785,13 @@ export class DatabaseStorage implements IStorage {
             const halfShiftHours = 6;
             
             for (const userId of sortedDayFirstHalfUsers) {
+              // STOP als we genoeg voormiddag shifts hebben (volledige shifts tellen al mee!)
+              if (assignedMorningShifts >= targetDayShifts) {
+                console.log(`✅ Genoeg voormiddag shifts toegewezen (${assignedMorningShifts}/${targetDayShifts})`);
+                break;
+              }
+              
+
               if (await canAssignHours(userId, halfShiftHours, currentDate)) {
                 // BUSINESS RULE: Check if cross-team user can receive split shift in simple system
                 const canReceiveSplit = await this.canUserReceiveSplitShift(userId, stationId);
@@ -1834,13 +1844,14 @@ export class DatabaseStorage implements IStorage {
                 addAssignedHours(userId, halfShiftHours);
                 const savedHalfShift1 = await this.createShift(dayHalfShift1);
                 generatedShifts.push(savedHalfShift1);
-                hasAssignedHalfShift1 = true;
-                break;
+                assignedMorningShifts++;
+                console.log(`✅ Voormiddag shift ${assignedMorningShifts}/${targetDayShifts} toegewezen aan user ${userId}`);
+                // NIET STOPPEN - blijf proberen tot we targetDayShifts voormiddag shifts hebben!
               }
             }
           }
           
-          // Tweede helft van de dag (13:00 - 19:00)
+          // Tweede helft van de dag (13:00 - 19:00) - blijf proberen tot we targetDayShifts personen hebben!
           const sortedDaySecondHalfUsers = getSortedUsersForAssignment(
             availableForDaySecondHalf.filter(id => !assignedDayIds.includes(id))
           );
@@ -1849,6 +1860,13 @@ export class DatabaseStorage implements IStorage {
             const halfShiftHours = 6;
             
             for (const userId of sortedDaySecondHalfUsers) {
+              // STOP als we genoeg namiddag shifts hebben (volledige shifts tellen al mee!)
+              if (assignedAfternoonShifts >= targetDayShifts) {
+                console.log(`✅ Genoeg namiddag shifts toegewezen (${assignedAfternoonShifts}/${targetDayShifts})`);
+                break;
+              }
+              
+
               if (await canAssignHours(userId, halfShiftHours, currentDate)) {
                 // BUSINESS RULE: Check if cross-team user can receive split shift in simple system
                 const canReceiveSplit = await this.canUserReceiveSplitShift(userId, stationId);
@@ -1901,8 +1919,9 @@ export class DatabaseStorage implements IStorage {
                 addAssignedHours(userId, halfShiftHours);
                 const savedHalfShift2 = await this.createShift(dayHalfShift2);
                 generatedShifts.push(savedHalfShift2);
-                hasAssignedHalfShift2 = true;
-                break;
+                assignedAfternoonShifts++;
+                console.log(`✅ Namiddag shift ${assignedAfternoonShifts}/${targetDayShifts} toegewezen aan user ${userId}`);
+                // NIET STOPPEN - blijf proberen tot we targetDayShifts namiddag shifts hebben!
               }
             }
           }
@@ -1912,58 +1931,63 @@ export class DatabaseStorage implements IStorage {
         // Dit moet BUITEN de allowSplitShifts check, anders worden shifts "vergeten" in simpele systemen
         if (stillNeedDayShifts > 0) {
           const totalDayShiftsNeeded = targetDayShifts;
-          const totalDayShiftsAssigned = assignedFullDayShifts + (hasAssignedHalfShift1 ? 0.5 : 0) + (hasAssignedHalfShift2 ? 0.5 : 0);
-          const remainingDayShifts = totalDayShiftsNeeded - totalDayShiftsAssigned;
           
-          if (remainingDayShifts > 0) {
-            console.log(`📋 Creating ${remainingDayShifts} open day shift(s) for day ${day} (allowSplitShifts=${allowSplitShifts})`);
+          if (allowSplitShifts) {
+            // Bij split shifts: we hebben targetDayShifts personen nodig voor BEIDE tijdslots
+            const stillNeedMorningShifts = targetDayShifts - assignedMorningShifts;
+            const stillNeedAfternoonShifts = targetDayShifts - assignedAfternoonShifts;
             
-            if (allowSplitShifts) {
-              // Voor uitgebreid systeem: maak split shifts voor lege slots
-              if (!hasAssignedHalfShift1) {
-                const openDayHalfShift1 = {
-                  userId: 0,
-                  date: currentDate,
-                  type: "day" as const,
-                  startTime: new Date(year, month - 1, day, 7, 0, 0),
-                  endTime: new Date(year, month - 1, day, 13, 0, 0),
-                  status: "open" as const,
-                  stationId: stationId,
-                  month,
-                  year,
-                  isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 7, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day, 13, 0, 0)
-                };
-                
-                const savedOpenHalfShift1 = await this.createShift(openDayHalfShift1);
-                generatedShifts.push(savedOpenHalfShift1);
-                console.log(`✅ Created open split day shift (7:00-13:00) for day ${day}`);
-              }
+            console.log(`📋 Split shift analysis: Morning=${assignedMorningShifts}/${targetDayShifts}, Afternoon=${assignedAfternoonShifts}/${targetDayShifts}`);
+            
+            // Maak open shifts voor ontbrekende voormiddag slots
+            for (let i = 0; i < stillNeedMorningShifts; i++) {
+              const openDayHalfShift1 = {
+                userId: 0,
+                date: currentDate,
+                type: "day" as const,
+                startTime: new Date(year, month - 1, day, 7, 0, 0),
+                endTime: new Date(year, month - 1, day, 13, 0, 0),
+                status: "open" as const,
+                stationId: stationId,
+                month,
+                year,
+                isSplitShift: true,
+                splitStartTime: new Date(year, month - 1, day, 7, 0, 0),
+                splitEndTime: new Date(year, month - 1, day, 13, 0, 0)
+              };
               
-              if (!hasAssignedHalfShift2) {
-                const openDayHalfShift2 = {
-                  userId: 0,
-                  date: currentDate,
-                  type: "day" as const,
-                  startTime: new Date(year, month - 1, day, 13, 0, 0),
-                  endTime: new Date(year, month - 1, day, 19, 0, 0),
-                  status: "open" as const,
-                  stationId: stationId,
-                  month,
-                  year,
-                  isSplitShift: true,
-                  splitStartTime: new Date(year, month - 1, day, 13, 0, 0),
-                  splitEndTime: new Date(year, month - 1, day, 19, 0, 0)
-                };
-                
-                const savedOpenHalfShift2 = await this.createShift(openDayHalfShift2);
-                generatedShifts.push(savedOpenHalfShift2);
-                console.log(`✅ Created open split day shift (13:00-19:00) for day ${day}`);
-              }
-            } else {
-              // Voor eenvoudig systeem: maak volledige open shifts
-              for (let i = 0; i < Math.ceil(remainingDayShifts); i++) {
+              const savedOpenHalfShift1 = await this.createShift(openDayHalfShift1);
+              generatedShifts.push(savedOpenHalfShift1);
+              console.log(`✅ Created open split day shift (7:00-13:00) #${i+1} for day ${day}`);
+            }
+            
+            // Maak open shifts voor ontbrekende namiddag slots
+            for (let i = 0; i < stillNeedAfternoonShifts; i++) {
+              const openDayHalfShift2 = {
+                userId: 0,
+                date: currentDate,
+                type: "day" as const,
+                startTime: new Date(year, month - 1, day, 13, 0, 0),
+                endTime: new Date(year, month - 1, day, 19, 0, 0),
+                status: "open" as const,
+                stationId: stationId,
+                month,
+                year,
+                isSplitShift: true,
+                splitStartTime: new Date(year, month - 1, day, 13, 0, 0),
+                splitEndTime: new Date(year, month - 1, day, 19, 0, 0)
+              };
+              
+              const savedOpenHalfShift2 = await this.createShift(openDayHalfShift2);
+              generatedShifts.push(savedOpenHalfShift2);
+              console.log(`✅ Created open split day shift (13:00-19:00) #${i+1} for day ${day}`);
+            }
+          } else {
+            // Voor eenvoudig systeem: maak volledige open shifts
+            const totalDayShiftsAssigned = assignedFullDayShifts + (assignedMorningShifts + assignedAfternoonShifts) / 2;
+            const remainingDayShifts = totalDayShiftsNeeded - totalDayShiftsAssigned;
+            
+            for (let i = 0; i < Math.ceil(remainingDayShifts); i++) {
                 const openFullDayShift = {
                   userId: 0,
                   date: currentDate,
@@ -1980,7 +2004,6 @@ export class DatabaseStorage implements IStorage {
                 const savedOpenFullDayShift = await this.createShift(openFullDayShift);
                 generatedShifts.push(savedOpenFullDayShift);
                 console.log(`✅ Created open full day shift (7:00-19:00) for day ${day}`);
-              }
             }
           }
         }
