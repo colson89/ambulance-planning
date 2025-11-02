@@ -2,7 +2,7 @@
 
 ## Ambulance Planning Systeem
 
-**Versie 2025.3 - Oktober 2025**
+**Versie 2025.4 - November 2025**
 
 ---
 
@@ -18,6 +18,7 @@
   - [Profiel Beheren](#-profiel-beheren)
   - [Kalender Synchronisatie](#-kalender-synchronisatie) ⭐ NIEUW
 - [Handleiding voor Admins](#handleiding-voor-admins)
+  - [Verdi Integratie](#-verdi-integratie) ⭐ NIEUW
 - [Handleiding voor Supervisors](#handleiding-voor-supervisors)
 - [Handleiding voor IT Beheerders](#handleiding-voor-it-beheerders)
 - [Veelgestelde Vragen](#veelgestelde-vragen)
@@ -827,6 +828,182 @@ Instelbaar tussen 1 en 60 dagen
 - **Eenvoudig systeem**: → PIT diensten/ZW diensten die hier voor kiezen → Enkel volledige dag en nacht shiften
 - **Uitgebreid systeem**: → Enkel voor ZW diensten: volledige dagshiften/halve dagshiften + nachtshiften
 
+### 🔗 Verdi Integratie
+
+⭐ **NIEUW - Backend Volledig Operationeel**
+
+Het Ambulance Planning Systeem kan nu automatisch shifts synchroniseren met Verdi alarmsoftware. Hierdoor hoeft u shifts niet meer handmatig over te typen - één druk op de knop synchroniseert alles!
+
+#### 📋 Wat is Verdi Integratie?
+
+**Verdi** is een gespecialiseerde alarmsoftware voor hulpdiensten. Deze integratie zorgt ervoor dat:
+
+- **Automatische Synchronisatie**: Shifts worden direct vanuit planning naar Verdi gestuurd
+- **On-Demand**: U beslist wanneer u synchroniseert (geen automatische sync)
+- **Per Station**: Elke post heeft eigen Verdi configuratie
+- **Veilig**: Alle communicatie verloopt beveiligd via geauthenticeerde API
+
+**Belangrijke Opmerking:**
+- ✅ Backend systeem is volledig werkend
+- ⏳ Frontend admin interface wordt binnenkort toegevoegd
+- 🔑 Verdi Auth Secret is nog in aanvraag bij leverancier
+
+#### 🔧 Verdi Configuratie (Admin Only)
+
+**Vereiste Informatie Per Station:**
+
+1. **Verdi URL**: Het webadres van uw Verdi installatie
+   - Voorbeeld: `https://verdi.brandweerzonekempen.be`
+   - Wordt per station geconfigureerd
+
+2. **ShiftSheet GUID**: Unieke identificatie voor uw planning spreadsheet in Verdi
+   - Verkrijgbaar via Verdi beheerder
+   - Elke post heeft eigen GUID
+
+3. **Authenticatie Credentials**:
+   - Auth ID: `HVZ_Kempen-integration-planning-tool-9f7b86636fea44e4a6585ff137ee25a7-communications`
+   - Auth Secret: Wordt verstrekt door Verdi leverancier
+
+#### 👤 Gebruiker Mappings (GUID Koppeling)
+
+**Waarom Nodig?**
+
+Verdi identificeert personen via een uniek "Person GUID". Voor automatische synchronisatie moet elk teamlid worden gekoppeld:
+
+```
+Ambulance Planning Systeem ←→ Verdi Person GUID
+```
+
+**Cross-Station Gebruikers:**
+- Werkt u bij meerdere stations? U heeft **1 Person GUID** die geldt voor alle stations
+- Het systeem koppelt automatisch alle stations waar u werkt
+
+**GUID Import Methoden:**
+
+1. **CSV Upload** (aanbevolen voor bulk):
+   - Verdi kan lijst met GUIDs exporteren
+   - Upload deze CSV in het systeem
+   - Alle mappings worden automatisch aangemaakt
+
+2. **Handmatige Invoer**:
+   - Per gebruiker Person GUID invoeren
+   - Geschikt voor kleine wijzigingen
+
+#### 🚁 Positie Mappings
+
+**Functie Koppeling:**
+
+Elke teamlid positie in de ambulance moet worden gekoppeld aan een Verdi Position GUID:
+
+| Planning Positie | Verdi Functie |
+|-----------------|---------------|
+| Positie 1       | Position GUID 1 (bijv. "Bestuurder") |
+| Positie 2       | Position GUID 2 (bijv. "Verzorger") |
+
+**Per Station Configureren:**
+- Elke post heeft eigen positie mappings
+- GUIDs zijn station-specifiek
+
+#### 📤 Shifts Synchroniseren
+
+**Synchronisatie Proces:**
+
+**Stap 1: Planning Voltooien**
+- Genereer automatische planning of wijs shifts handmatig toe
+- Controleer of alle shifts correct zijn ingevuld
+
+**Stap 2: Verdi Sync Starten** (binnenkort beschikbaar in frontend)
+- Open Planning pagina
+- Selecteer maand en station
+- Klik "Sync naar Verdi"
+
+**Stap 3: Sync Opties Kiezen**
+- **Volledige Maand**: Alle shifts van de maand synchroniseren
+- **Alleen Wijzigingen**: Synchroniseer alleen nieuwe of aangepaste shifts
+- **Bevestiging Dialog**: Controleert hoeveel shifts worden gestuurd
+
+**Stap 4: Status Monitoring**
+- Elke shift krijgt een sync status:
+  - 🟢 **Groen**: Succesvol gesynchroniseerd
+  - ⚪ **Wit**: Nog niet gestuurd naar Verdi
+  - 🔴 **Rood**: Sync fout opgetreden
+
+**Verdi Feedback:**
+
+Na synchronisatie ontvangt u feedback van Verdi:
+- ✅ **Success**: Aantal succesvol gesynchroniseerde shifts
+- ⚠️ **Warnings**: Waarschuwingen (bijv. dubbele entries)
+- ❌ **Errors**: Fouten met gedetailleerde beschrijving
+
+#### 🔒 Veiligheid & Toegang
+
+**Wie Heeft Toegang?**
+- ✅ **Admins**: Volledige toegang tot Verdi configuratie en sync
+- ✅ **Supervisors**: Kunnen Verdi URL aanpassen per station
+- ❌ **Ambulanciers**: Geen toegang tot Verdi functionaliteit
+
+**Beveiliging:**
+- Alle Verdi communicatie verloopt via geauthenticeerde API
+- Auth credentials worden veilig opgeslagen in systeem
+- Alleen geautoriseerde gebruikers kunnen synchroniseren
+
+#### 📊 Sync Logging & Geschiedenis
+
+**Volledige Traceerbaarheid:**
+
+Het systeem houdt bij:
+- Wanneer elke shift werd gesynchroniseerd
+- Wie de synchronisatie startte
+- Welke shifts succesvol/gefaald zijn
+- Eventuele foutmeldingen van Verdi
+
+**Gebruik Cases:**
+
+1. **Controle**: Welke shifts zijn al gestuurd?
+2. **Troubleshooting**: Waarom faalde een sync?
+3. **Audit Trail**: Volledige geschiedenis van wijzigingen
+
+#### ❓ Veelgestelde Vragen Verdi
+
+**Q: Moet ik nog handmatig shifts invoeren in Verdi?**
+A: Nee! Na configuratie synchroniseert het systeem automatisch. U drukt alleen op de sync knop.
+
+**Q: Wat gebeurt er als ik een shift aanpas na synchronisatie?**
+A: Gebruik "Alleen Wijzigingen" sync optie - alleen gewijzigde shifts worden opnieuw gestuurd.
+
+**Q: Kan ik zien welke shifts al in Verdi staan?**
+A: Ja, de sync status indicator toont dit per shift (groen = gesynchroniseerd).
+
+**Q: Werkt dit voor alle stations tegelijk?**
+A: Nee, u synchroniseert per station. Elk station heeft eigen Verdi configuratie.
+
+**Q: Wat als een sync faalt?**
+A: Het systeem toont de foutmelding. U kunt de sync opnieuw proberen of contact opnemen met uw Verdi beheerder.
+
+**Q: Worden shifts automatisch gesynchroniseerd?**
+A: Nee, synchronisatie gebeurt alleen on-demand via de sync knop. U behoudt volledige controle.
+
+**Q: Kan ik een sync ongedaan maken?**
+A: Synchronisatie is eenrichtingsverkeer (planning → Verdi). Voor verwijdering moet u Verdi zelf gebruiken.
+
+#### 🚀 Aan de Slag Met Verdi
+
+**Checklist Voor Eerste Gebruik:**
+
+1. ✅ Verdi Auth Secret ontvangen van leverancier
+2. ✅ ShiftSheet GUID per station vastleggen
+3. ✅ Verdi URL configureren per station
+4. ✅ Person GUIDs importeren (CSV of handmatig)
+5. ✅ Position GUIDs koppelen per station
+6. ✅ Test synchronisatie met kleine maand
+7. ✅ Controleer resultaat in Verdi
+8. ✅ Bij succes: gebruik voor alle maanden
+
+**Hulp Nodig?**
+- Contact Verdi beheerder voor GUIDs en credentials
+- Contact systeembeheerder voor technische problemen
+- Check sync logs voor foutmeldingen
+
 ---
 
 ## 👑 Handleiding voor Supervisors
@@ -1404,7 +1581,24 @@ Oplossingen:
 
 Het systeem wordt regelmatig bijgewerkt met nieuwe functies en verbeteringen:
 
-### ⭐ Versie 2025.3 - Oktober 2025
+### ⭐ Versie 2025.4 - November 2025
+
+**Verdi Integratie (Backend Volledig):**
+- 🔗 **Verdi Synchronisatie Backend** - Volledige API integratie met Verdi alarmsoftware
+  - On-demand shift synchronisatie naar Verdi
+  - Station-specifieke configuratie (URL, ShiftSheet GUID)
+  - Person GUID mappings voor gebruikers (cross-station support)
+  - Position GUID mappings per station
+  - Comprehensive sync logging met status tracking (success/error/pending)
+  - Admin-only toegangscontrole voor alle Verdi functionaliteit
+  - ⏳ Frontend admin interface volgt binnenkort (wacht op Verdi Auth Secret)
+
+**Beveiliging:**
+- 🔒 **Enhanced Authorization** - Alle Verdi endpoints beveiligd met admin-only toegang
+  - Voorkomt ongeautoriseerde toegang tot configuratie
+  - Veilige opslag van Verdi credentials
+
+### Versie 2025.3 - Oktober 2025
 
 **Technische Verbeteringen:**
 - ⚡ **Cache Optimalisatie** - Snellere updates en betere browser prestaties
@@ -1451,8 +1645,8 @@ Het systeem wordt regelmatig bijgewerkt met nieuwe functies en verbeteringen:
 - 📱 Mobiele app ondersteuning
 - 📊 Uitgebreide rapportage mogelijkheden
 - 🔐 Twee-factor authenticatie (Azure-AD)
-- 🔗 Automatische koppeling met Verdi
+- 🖥️ Verdi Frontend Interface - Admin UI voor configuratie en synchronisatie
 
 ---
 
-Deze handleiding is bijgewerkt voor versie 2025.3 van het Ambulance Planning Systeem. Voor de meest recente informatie en updates, raadpleeg uw systeembeheerder.
+Deze handleiding is bijgewerkt voor versie 2025.4 van het Ambulance Planning Systeem. Voor de meest recente informatie en updates, raadpleeg uw systeembeheerder.
