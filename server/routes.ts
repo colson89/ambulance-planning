@@ -2788,6 +2788,305 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // =========================
+  // VERDI INTEGRATIE ENDPOINTS
+  // =========================
+  
+  // Get Verdi configuration voor station
+  app.get("/api/verdi/config/:stationId", requireAuth, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const config = await storage.getVerdiStationConfig(stationId);
+      
+      if (!config) {
+        return res.json({
+          stationId,
+          shiftSheetGuid: null,
+          enabled: false
+        });
+      }
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Error fetching Verdi config:", error);
+      res.status(500).json({ message: "Failed to fetch Verdi configuration" });
+    }
+  });
+
+  // Update Verdi configuration voor station
+  app.post("/api/verdi/config/:stationId", requireAuth, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const { shiftSheetGuid, enabled } = req.body;
+      
+      const config = await storage.upsertVerdiStationConfig(stationId, {
+        shiftSheetGuid,
+        enabled
+      });
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Error updating Verdi config:", error);
+      res.status(500).json({ message: "Failed to update Verdi configuration" });
+    }
+  });
+
+  // Get all Verdi station configs
+  app.get("/api/verdi/configs", requireAuth, async (req, res) => {
+    try {
+      const configs = await storage.getAllVerdiStationConfigs();
+      res.json(configs);
+    } catch (error) {
+      console.error("Error fetching Verdi configs:", error);
+      res.status(500).json({ message: "Failed to fetch Verdi configurations" });
+    }
+  });
+
+  // Get Verdi user mapping
+  app.get("/api/verdi/mapping/user/:userId", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const mapping = await storage.getVerdiUserMapping(userId);
+      res.json(mapping || null);
+    } catch (error) {
+      console.error("Error fetching Verdi user mapping:", error);
+      res.status(500).json({ message: "Failed to fetch Verdi user mapping" });
+    }
+  });
+
+  // Update Verdi user mapping
+  app.post("/api/verdi/mapping/user/:userId", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { personGuid } = req.body;
+      
+      if (!personGuid) {
+        return res.status(400).json({ message: "personGuid is required" });
+      }
+      
+      const mapping = await storage.upsertVerdiUserMapping(userId, personGuid);
+      res.json(mapping);
+    } catch (error) {
+      console.error("Error updating Verdi user mapping:", error);
+      res.status(500).json({ message: "Failed to update Verdi user mapping" });
+    }
+  });
+
+  // Get all Verdi user mappings
+  app.get("/api/verdi/mappings/users", requireAuth, async (req, res) => {
+    try {
+      const mappings = await storage.getAllVerdiUserMappings();
+      res.json(mappings);
+    } catch (error) {
+      console.error("Error fetching Verdi user mappings:", error);
+      res.status(500).json({ message: "Failed to fetch Verdi user mappings" });
+    }
+  });
+
+  // Get Verdi position mappings voor station
+  app.get("/api/verdi/mappings/positions/:stationId", requireAuth, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const mappings = await storage.getVerdiPositionMappings(stationId);
+      res.json(mappings);
+    } catch (error) {
+      console.error("Error fetching Verdi position mappings:", error);
+      res.status(500).json({ message: "Failed to fetch Verdi position mappings" });
+    }
+  });
+
+  // Update Verdi position mapping
+  app.post("/api/verdi/mappings/positions/:stationId/:positionIndex", requireAuth, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const positionIndex = parseInt(req.params.positionIndex);
+      const { positionGuid } = req.body;
+      
+      if (!positionGuid) {
+        return res.status(400).json({ message: "positionGuid is required" });
+      }
+      
+      const mapping = await storage.upsertVerdiPositionMapping(stationId, positionIndex, positionGuid);
+      res.json(mapping);
+    } catch (error) {
+      console.error("Error updating Verdi position mapping:", error);
+      res.status(500).json({ message: "Failed to update Verdi position mapping" });
+    }
+  });
+
+  // Get sync status for shifts in een maand
+  app.get("/api/verdi/sync-status/:month/:year", requireAuth, async (req, res) => {
+    try {
+      const month = parseInt(req.params.month);
+      const year = parseInt(req.params.year);
+      const stationId = req.query.stationId ? parseInt(req.query.stationId as string) : undefined;
+      
+      const syncLogs = await storage.getVerdiSyncLogsByMonth(month, year, stationId);
+      res.json(syncLogs);
+    } catch (error) {
+      console.error("Error fetching Verdi sync status:", error);
+      res.status(500).json({ message: "Failed to fetch Verdi sync status" });
+    }
+  });
+
+  // Sync shifts naar Verdi
+  app.post("/api/verdi/sync", requireAuth, async (req, res) => {
+    try {
+      const { month, year, stationId, changesOnly } = req.body;
+      
+      if (!month || !year || !stationId) {
+        return res.status(400).json({ message: "month, year, and stationId are required" });
+      }
+      
+      // Haal shifts op voor deze maand
+      const shifts = await storage.getShiftsByMonth(month, year, stationId);
+      const plannedShifts = shifts.filter(s => s.status === 'planned');
+      
+      if (plannedShifts.length === 0) {
+        return res.json({ 
+          success: true, 
+          message: "Geen geplande shifts gevonden om te synchroniseren",
+          synced: 0,
+          errors: 0
+        });
+      }
+      
+      // Haal config op
+      const config = await storage.getVerdiStationConfig(stationId);
+      if (!config || !config.enabled) {
+        return res.status(400).json({ message: "Verdi is niet geconfigureerd of niet ingeschakeld voor dit station" });
+      }
+      
+      // Filter op alleen wijzigingen indien gevraagd
+      let shiftsToSync = plannedShifts;
+      if (changesOnly) {
+        const syncLogs = await storage.getVerdiSyncLogsByMonth(month, year, stationId);
+        const syncLogMap = new Map(syncLogs.map(log => [log.shiftId, log]));
+        
+        shiftsToSync = plannedShifts.filter(shift => {
+          const log = syncLogMap.get(shift.id);
+          return !log || log.syncStatus === 'error' || log.syncStatus === 'pending';
+        });
+      }
+      
+      if (shiftsToSync.length === 0) {
+        return res.json({
+          success: true,
+          message: "Alle shifts zijn al gesynchroniseerd",
+          synced: 0,
+          errors: 0
+        });
+      }
+      
+      // Importeer Verdi client
+      const { verdiClient } = await import('./verdi-client');
+      
+      // Haal user en position mappings op
+      const allUserMappings = await storage.getAllVerdiUserMappings();
+      const userMappingMap = new Map(allUserMappings.map(m => [m.userId, m]));
+      
+      const positionMappings = await storage.getVerdiPositionMappings(stationId);
+      const positionMappingMap = new Map(positionMappings.map(m => [m.positionIndex, m]));
+      
+      let synced = 0;
+      let errors = 0;
+      const results = [];
+      
+      // Synchroniseer elke shift (1 per keer zoals Verdi aanraadt)
+      for (const shift of shiftsToSync) {
+        try {
+          // Haal bestaande sync log op
+          const existingLog = await storage.getVerdiSyncLog(shift.id);
+          
+          // Bepaal welke gebruikers toegewezen zijn (in praktijk moet dit uit de shifts tabel komen)
+          // Voor nu nemen we aan dat de shift.userId de primaire gebruiker is
+          const assignments = [shift.userId]; // TODO: Uitbreiden voor 2-3 personen per shift
+          
+          // Stuur naar Verdi
+          const response = await verdiClient.sendShiftToVerdi(
+            shift,
+            config,
+            userMappingMap,
+            positionMappingMap,
+            assignments,
+            existingLog?.verdiShiftGuid || undefined
+          );
+          
+          // Update sync log
+          const syncStatus = response.result === 'Success' ? 'success' : 'error';
+          const errorMessage = response.errorFeedback.length > 0 ? response.errorFeedback.join(', ') : null;
+          const warningMessages = response.warningFeedback.length > 0 ? JSON.stringify(response.warningFeedback) : null;
+          
+          if (existingLog) {
+            await storage.updateVerdiSyncLog(
+              shift.id,
+              syncStatus,
+              response.shift,
+              errorMessage || undefined,
+              warningMessages || undefined
+            );
+          } else {
+            await storage.createVerdiSyncLog(
+              shift.id,
+              shift.stationId,
+              syncStatus,
+              response.shift,
+              errorMessage || undefined,
+              warningMessages || undefined
+            );
+          }
+          
+          if (response.result === 'Success') {
+            synced++;
+          } else {
+            errors++;
+          }
+          
+          results.push({
+            shiftId: shift.id,
+            date: shift.date,
+            success: response.result === 'Success',
+            errors: response.errorFeedback,
+            warnings: response.warningFeedback
+          });
+          
+        } catch (error: any) {
+          console.error(`Error syncing shift ${shift.id}:`, error);
+          errors++;
+          
+          // Log error
+          const existingLog = await storage.getVerdiSyncLog(shift.id);
+          if (existingLog) {
+            await storage.updateVerdiSyncLog(shift.id, 'error', undefined, error.message);
+          } else {
+            await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, error.message);
+          }
+          
+          results.push({
+            shiftId: shift.id,
+            date: shift.date,
+            success: false,
+            errors: [error.message],
+            warnings: []
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: `Synchronisatie voltooid: ${synced} gelukt, ${errors} fouten`,
+        synced,
+        errors,
+        total: shiftsToSync.length,
+        results
+      });
+      
+    } catch (error) {
+      console.error("Error syncing to Verdi:", error);
+      res.status(500).json({ message: "Failed to sync shifts to Verdi" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
