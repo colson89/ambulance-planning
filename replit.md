@@ -43,7 +43,11 @@ Protected Files: Do not make changes to the `dist/` folder or the file `dist/pub
 - **Schedule Generation**: Intelligent multi-phase algorithm considering user preferences, availability, historical fairness, scarcity-based prioritization, and conflict detection.
 - **Calendar Integration**: iCal feed generation with personal tokens and CORS support for external calendar applications.
 - **Reporting & Statistics**: Shift statistics by user, station, and period, with Excel export and workload analysis.
-- **Verdi Integration** (Backend Complete): On-demand shift synchronization to Verdi alarm software via REST API. Station-scoped configuration with GUID mappings for users and positions. Comprehensive sync logging with status tracking. Admin-only access control for all Verdi management endpoints.
+- **Verdi Integration**: Full shift synchronization to Verdi alarm software via REST API. Station-scoped configuration stored in database (verdiStationConfig table) with URL, authentication credentials (authId/authSecret), and ShiftSheet GUID. Person GUID mappings are global (cross-station), position mappings are station-specific. Comprehensive sync logging with status tracking. Admin users can configure their station and map users; supervisors have full access to all stations and configurations.
+  - **Staging Environment**: `https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning` (free for testing)
+  - **Production Environment**: Implementation fee of €1,380 excl. BTW (one-time)
+  - **Security**: All credentials stored in database per station. Use UI configuration page only (never share credentials in chat/logs).
+  - **Future Enhancement**: Configuratie and Positie Mappings tabs should be restricted to supervisors only (currently open to admins for testing purposes). Gebruiker Mappings tab remains available to admins for their station users.
 
 ### Build & Deployment
 - **Pre-built Application**: Deployed as pre-compiled backend (`dist/index.js`) and static frontend assets (`dist/public/`).

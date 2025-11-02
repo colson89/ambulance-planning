@@ -830,7 +830,7 @@ Instelbaar tussen 1 en 60 dagen
 
 ### 🔗 Verdi Integratie
 
-⭐ **NIEUW - Backend Volledig Operationeel**
+⭐ **NIEUW - Volledig Operationeel**
 
 Het Ambulance Planning Systeem kan nu automatisch shifts synchroniseren met Verdi alarmsoftware. Hierdoor hoeft u shifts niet meer handmatig over te typen - één druk op de knop synchroniseert alles!
 
@@ -840,71 +840,121 @@ Het Ambulance Planning Systeem kan nu automatisch shifts synchroniseren met Verd
 
 - **Automatische Synchronisatie**: Shifts worden direct vanuit planning naar Verdi gestuurd
 - **On-Demand**: U beslist wanneer u synchroniseert (geen automatische sync)
-- **Per Station**: Elke post heeft eigen Verdi configuratie
+- **Per Station**: Elke post heeft eigen Verdi configuratie en credentials
 - **Veilig**: Alle communicatie verloopt beveiligd via geauthenticeerde API
 
-**Belangrijke Opmerking:**
-- ✅ Backend systeem is volledig werkend
-- ⏳ Frontend admin interface wordt binnenkort toegevoegd
-- 🔑 Verdi Auth Secret is nog in aanvraag bij leverancier
+**Test Omgeving:**
+- 🧪 **Staging URL**: `https://kempen-staging.verdi.cloud` (gratis voor testen)
+- 💰 **Productie**: Implementatie kost €1.380 excl. BTW (eenmalig)
 
-#### 🔧 Verdi Configuratie (Admin Only)
+**Status:**
+- ✅ Backend systeem volledig werkend
+- ✅ Admin interface beschikbaar voor configuratie
+- ✅ Veilige opslag van credentials in database
 
-**Vereiste Informatie Per Station:**
+#### 🔧 Verdi Configuratie
 
-1. **Verdi URL**: Het webadres van uw Verdi installatie
-   - Voorbeeld: `https://verdi.brandweerzonekempen.be`
-   - Wordt per station geconfigureerd
+**Toegang:**
+- ✅ **Admins**: Kunnen hun eigen station configureren
+- ✅ **Supervisors**: Kunnen alle stations configureren
 
-2. **ShiftSheet GUID**: Unieke identificatie voor uw planning spreadsheet in Verdi
-   - Verkrijgbaar via Verdi beheerder
+**Configuratiepagina Openen:**
+1. Klik op "Verdi Integratie" in het hoofdmenu
+2. U ziet drie tabbladen: Configuratie, Gebruiker Mappings, Positie Mappings
+
+**Tab 1: Station Configuratie**
+
+Vul de volgende velden in voor uw station:
+
+1. **Verdi URL**: Het webadres van uw Verdi server
+   - Voorbeeld staging: `https://kempen-staging.verdi.cloud`
+   - Voorbeeld productie: `https://verdi.brandweerzonekempen.be`
+
+2. **Verdi API Auth ID**: Gebruikersnaam voor API authenticatie
+   - Verkrijgbaar via uw Verdi beheerder
+   - Voorbeeld formaat: `HVZ_Kempen-integration-planning-tool-[guid]-communications`
+
+3. **Verdi API Auth Secret**: Wachtwoord voor API authenticatie
+   - Wordt beveiligd opgeslagen in database (niet zichtbaar na opslaan)
+   - Verkrijgbaar via uw Verdi beheerder
+
+4. **ShiftSheet GUID**: Unieke identificatie voor uw planning spreadsheet
    - Elke post heeft eigen GUID
+   - Verkrijgbaar via Verdi export
 
-3. **Authenticatie Credentials**:
-   - Auth ID: `HVZ_Kempen-integration-planning-tool-9f7b86636fea44e4a6585ff137ee25a7-communications`
-   - Auth Secret: Wordt verstrekt door Verdi leverancier
+5. **Verdi synchronisatie ingeschakeld**: Schakelaar om sync aan/uit te zetten
 
-#### 👤 Gebruiker Mappings (GUID Koppeling)
+**💾 Opslaan:**
+- Klik op "Configuratie Opslaan" onderaan
+- Credentials worden veilig opgeslagen per station
+
+#### 👤 Tab 2: Gebruiker Mappings (Person GUID Koppeling)
 
 **Waarom Nodig?**
 
 Verdi identificeert personen via een uniek "Person GUID". Voor automatische synchronisatie moet elk teamlid worden gekoppeld:
 
 ```
-Ambulance Planning Systeem ←→ Verdi Person GUID
+Planning Gebruiker ←→ Verdi Person GUID
 ```
 
+**Toegang:**
+- ✅ **Admins**: Zien alleen hun station users (inclusief cross-station users)
+- ✅ **Supervisors**: Zien alle 119 users van alle stations
+
 **Cross-Station Gebruikers:**
-- Werkt u bij meerdere stations? U heeft **1 Person GUID** die geldt voor alle stations
-- Het systeem koppelt automatisch alle stations waar u werkt
+- Person GUID is **globaal** (geldt voor alle stations)
+- Werkt u bij meerdere stations? U heeft **1 Person GUID** voor alle posts
+- Eénmaal ingevoerd, automatisch beschikbaar voor alle stations
 
-**GUID Import Methoden:**
+**Hoe Gebruiken:**
 
-1. **CSV Upload** (aanbevolen voor bulk):
-   - Verdi kan lijst met GUIDs exporteren
-   - Upload deze CSV in het systeem
-   - Alle mappings worden automatisch aangemaakt
+1. **Ga naar tab "Gebruiker Mappings"**
+2. **Zie lijst van alle teamleden** met kolommen:
+   - Gebruikersnaam
+   - Naam
+   - Person GUID (invoerveld)
+3. **Vul Person GUID in** voor elke gebruiker
+   - Verkrijgbaar via Verdi export
+   - Formaat: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+4. **Klik "Opslaan"** naast elke gebruiker
 
-2. **Handmatige Invoer**:
-   - Per gebruiker Person GUID invoeren
-   - Geschikt voor kleine wijzigingen
+**💡 Tip:** 
+- Bulk import functie volgt later
+- Momenteel: handmatige invoer per gebruiker
 
-#### 🚁 Positie Mappings
+#### 🚁 Tab 3: Positie Mappings (Position GUID Koppeling)
 
-**Functie Koppeling:**
+**Waarom Nodig?**
 
-Elke teamlid positie in de ambulance moet worden gekoppeld aan een Verdi Position GUID:
+Elke positie in de ambulance (chauffeur, verzorger) moet gekoppeld worden aan een Verdi Position GUID:
 
-| Planning Positie | Verdi Functie |
-|-----------------|---------------|
-| Positie 1       | Position GUID 1 (bijv. "Bestuurder") |
-| Positie 2       | Position GUID 2 (bijv. "Verzorger") |
+| Planning Positie | Verdi Functie | Voorbeeld |
+|-----------------|---------------|-----------|
+| Positie 1       | Position GUID 1 | Chauffeur |
+| Positie 2       | Position GUID 2 | Bijrijder/Verzorger |
 
-**Per Station Configureren:**
+**Toegang:**
+- ✅ **Admins**: Kunnen hun eigen station configureren
+- ✅ **Supervisors**: Kunnen alle stations configureren
+
+**Station-Specifiek:**
+- Position GUIDs zijn **per station** verschillend
 - Elke post heeft eigen positie mappings
-- GUIDs zijn station-specifiek
+- Configureer voor uw station
+
+**Hoe Gebruiken:**
+
+1. **Ga naar tab "Positie Mappings"**
+2. **Zie lijst van posities** (normaal 2-3 per shift):
+   - Positie 0, 1, 2
+3. **Vul Position GUID in** voor elke positie
+   - Verkrijgbaar via Verdi ShiftSheet export
+4. **Klik "Opslaan"**
 
 #### 📤 Shifts Synchroniseren
+
+**Let Op:** Configureer eerst alle drie de tabs (Configuratie, Gebruiker Mappings, Positie Mappings) voordat u shifts synchroniseert!
 
 **Synchronisatie Proces:**
 
@@ -912,28 +962,45 @@ Elke teamlid positie in de ambulance moet worden gekoppeld aan een Verdi Positio
 - Genereer automatische planning of wijs shifts handmatig toe
 - Controleer of alle shifts correct zijn ingevuld
 
-**Stap 2: Verdi Sync Starten** (binnenkort beschikbaar in frontend)
-- Open Planning pagina
-- Selecteer maand en station
-- Klik "Sync naar Verdi"
+**Stap 2: Verdi Sync Starten**
+- Open "Planning Genereren" pagina
+- Selecteer de juiste maand en station
+- Klik op "Sync naar Verdi" knop (alleen zichtbaar voor admins en supervisors)
 
 **Stap 3: Sync Opties Kiezen**
-- **Volledige Maand**: Alle shifts van de maand synchroniseren
-- **Alleen Wijzigingen**: Synchroniseer alleen nieuwe of aangepaste shifts
-- **Bevestiging Dialog**: Controleert hoeveel shifts worden gestuurd
+
+U ziet een bevestigingsvenster met twee opties:
+
+1. **"Alle shifts"**: 
+   - Synchroniseert alle shifts van de geselecteerde maand
+   - Gebruik dit voor een eerste sync of bij grote wijzigingen
+
+2. **"Alleen wijzigingen"**:
+   - Synchroniseert alleen nieuwe of aangepaste shifts
+   - Sneller voor kleine updates
+
+**Info in bevestigingsvenster:**
+- Aantal shifts dat gesynchroniseerd wordt
+- Laatste sync tijdstempel (indien beschikbaar)
 
 **Stap 4: Status Monitoring**
-- Elke shift krijgt een sync status:
-  - 🟢 **Groen**: Succesvol gesynchroniseerd
-  - ⚪ **Wit**: Nog niet gestuurd naar Verdi
-  - 🔴 **Rood**: Sync fout opgetreden
+
+Na synchronisatie ziet u naast elke shift een status badge:
+
+- 🟢 **Groen (Verdi sync OK)**: Succesvol gesynchroniseerd
+- 🟡 **Geel (Verdi sync pending)**: Synchronisatie wordt uitgevoerd
+- 🔴 **Rood (Verdi sync fout)**: Synchronisatie mislukt (hover voor foutmelding)
 
 **Verdi Feedback:**
 
-Na synchronisatie ontvangt u feedback van Verdi:
+Na synchronisatie ontvangt u feedback:
 - ✅ **Success**: Aantal succesvol gesynchroniseerde shifts
-- ⚠️ **Warnings**: Waarschuwingen (bijv. dubbele entries)
+- ⚠️ **Warnings**: Waarschuwingen van Verdi (bijv. dubbele entries)
 - ❌ **Errors**: Fouten met gedetailleerde beschrijving
+
+**Laatste Sync Tijdstempel:**
+- Zichtbaar in het sync dialoog
+- Toont datum en tijd van laatste succesvolle sync
 
 #### 🔒 Veiligheid & Toegang
 
