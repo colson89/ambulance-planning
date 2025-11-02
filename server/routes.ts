@@ -2947,6 +2947,21 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // Get laatste succesvolle sync timestamp voor station/maand/jaar
+  app.get("/api/verdi/last-sync/:stationId/:month/:year", requireAdmin, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const month = parseInt(req.params.month);
+      const year = parseInt(req.params.year);
+      
+      const lastSync = await storage.getLastSuccessfulVerdiSync(stationId, month, year);
+      res.json({ lastSync });
+    } catch (error) {
+      console.error("Error fetching last Verdi sync:", error);
+      res.status(500).json({ message: "Failed to fetch last Verdi sync" });
+    }
+  });
+
   // Sync shifts naar Verdi
   app.post("/api/verdi/sync", requireAdmin, async (req, res) => {
     try {

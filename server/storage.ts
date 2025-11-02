@@ -1,6 +1,6 @@
 import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog } from "../shared/schema";
 import { db } from "./db";
-import { eq, and, lt, gte, lte, ne, asc, inArray, isNull, or } from "drizzle-orm";
+import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { client, pool } from "./db";
@@ -123,6 +123,7 @@ export interface IStorage {
   createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<any>;
   updateVerdiSyncLog(shiftId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<any>;
   getVerdiSyncLogsByMonth(month: number, year: number, stationId?: number): Promise<any[]>;
+  getLastSuccessfulVerdiSync(stationId: number, month: number, year: number): Promise<Date | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3202,6 +3203,28 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await db.select().from(verdiSyncLog).where(inArray(verdiSyncLog.shiftId, shiftIds));
+  }
+
+  async getLastSuccessfulVerdiSync(stationId: number, month: number, year: number): Promise<Date | null> {
+    // Haal alle shifts op voor deze maand
+    const monthShifts = await this.getShiftsByMonth(month, year, stationId);
+    const shiftIds = monthShifts.map(s => s.id);
+    
+    if (shiftIds.length === 0) {
+      return null;
+    }
+    
+    // Haal de meest recente succesvolle sync op
+    const result = await db.select()
+      .from(verdiSyncLog)
+      .where(and(
+        inArray(verdiSyncLog.shiftId, shiftIds),
+        eq(verdiSyncLog.syncStatus, 'success')
+      ))
+      .orderBy(desc(verdiSyncLog.syncedAt))
+      .limit(1);
+    
+    return result[0]?.syncedAt || null;
   }
 }
 
