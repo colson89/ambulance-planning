@@ -3054,11 +3054,11 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           
           // Haal User objecten op zodat we hasDrivingLicenseC kunnen checken
           const assignedUsers = await Promise.all(
-            userIds.map(userId => storage.getUserById(userId))
+            userIds.map(userId => storage.getUser(userId))
           );
           
           // Filter out any null users (shouldn't happen but safety check)
-          const validUsers = assignedUsers.filter(u => u !== null);
+          const validUsers = assignedUsers.filter((u): u is User => u !== null && u !== undefined);
           if (validUsers.length === 0) {
             throw new Error(`Geen geldige gebruikers gevonden voor shift ${shift.id}`);
           }

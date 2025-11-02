@@ -42,9 +42,9 @@ export default function VerdiSettings() {
   });
 
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: ["/api/users/all"],
+    queryKey: ["/api/verdi/users"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/users/all");
+      const res = await apiRequest("GET", "/api/verdi/users");
       if (!res.ok) throw new Error("Kon gebruikers niet laden");
       return res.json();
     },
