@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2 } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon } from "lucide-react";
 import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -456,6 +456,13 @@ export default function Dashboard() {
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Weekdag Instellingen
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setLocation("/verdi")}
+              >
+                <LinkIcon className="h-4 w-4 mr-2" />
+                Verdi
               </Button>
             </>
           )}

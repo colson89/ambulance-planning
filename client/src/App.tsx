@@ -15,6 +15,7 @@ import WeekdaySettings from "@/pages/weekday-settings";
 import Statistics from "@/pages/statistics";
 import HolidaysManagement from "@/pages/holidays-management";
 import StationSelect from "@/pages/station-select";
+import VerdiSettings from "@/pages/verdi-settings";
 
 function Router() {
   return (
@@ -29,6 +30,7 @@ function Router() {
       <ProtectedRoute path="/settings" component={WeekdaySettings} />
       <ProtectedRoute path="/statistics" component={Statistics} />
       <ProtectedRoute path="/holidays" component={HolidaysManagement} />
+      <ProtectedRoute path="/verdi" component={VerdiSettings} />
       <Route path="/station-select" component={StationSelect} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
