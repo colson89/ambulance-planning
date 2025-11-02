@@ -83,6 +83,8 @@ export default function VerdiSettings() {
 
   const [configForm, setConfigForm] = useState({
     verdiUrl: "",
+    authId: "",
+    authSecret: "",
     shiftSheetGuid: "",
     enabled: false,
   });
@@ -94,12 +96,16 @@ export default function VerdiSettings() {
     if (verdiConfig) {
       setConfigForm({
         verdiUrl: verdiConfig.verdiUrl || "",
+        authId: verdiConfig.authId || "",
+        authSecret: verdiConfig.authSecret || "",
         shiftSheetGuid: verdiConfig.shiftSheetGuid || "",
         enabled: verdiConfig.enabled || false,
       });
     } else {
       setConfigForm({
         verdiUrl: "",
+        authId: "",
+        authSecret: "",
         shiftSheetGuid: "",
         enabled: false,
       });
@@ -290,7 +296,7 @@ export default function VerdiSettings() {
             <CardHeader>
               <CardTitle>Station Configuratie</CardTitle>
               <CardDescription>
-                Configureer Verdi URL en ShiftSheet GUID voor dit station
+                Configureer Verdi verbinding en authenticatie voor dit station
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -304,6 +310,33 @@ export default function VerdiSettings() {
                 />
                 <p className="text-sm text-muted-foreground">
                   Het webadres van uw Verdi installatie
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="authId">Verdi API Auth ID</Label>
+                <Input
+                  id="authId"
+                  placeholder="Gebruikersnaam of Auth ID"
+                  value={configForm.authId}
+                  onChange={(e) => setConfigForm({ ...configForm, authId: e.target.value })}
+                />
+                <p className="text-sm text-muted-foreground">
+                  De gebruikersnaam of ID voor authenticatie op de Verdi API
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="authSecret">Verdi API Auth Secret</Label>
+                <Input
+                  id="authSecret"
+                  type="password"
+                  placeholder="Wachtwoord of secret"
+                  value={configForm.authSecret}
+                  onChange={(e) => setConfigForm({ ...configForm, authSecret: e.target.value })}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Het wachtwoord of secret voor authenticatie op de Verdi API
                 </p>
               </div>
 

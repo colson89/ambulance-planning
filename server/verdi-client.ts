@@ -21,16 +21,8 @@ interface VerdiResponse {
 }
 
 export class VerdiClient {
-  private authId: string;
-  private authSecret: string;
-
-  constructor() {
-    this.authId = process.env.VERDI_AUTH_ID || "";
-    this.authSecret = process.env.VERDI_AUTH_SECRET || "";
-  }
-
-  private getBasicAuthHeader(): string {
-    const credentials = Buffer.from(`${this.authId}:${this.authSecret}`).toString('base64');
+  private getBasicAuthHeader(authId: string, authSecret: string): string {
+    const credentials = Buffer.from(`${authId}:${authSecret}`).toString('base64');
     return `Basic ${credentials}`;
   }
 
@@ -38,7 +30,7 @@ export class VerdiClient {
    * Stuurt een shift naar Verdi
    * @param shift De shift uit onze database
    * @param stationConfig De Verdi configuratie van het station
-   * @param userMappings Array van user mappings (userId -> personGuid)
+   * @param userMappings Map van user mappings (userId -> personGuid)
    * @param positionMappings Array van position mappings voor dit station
    * @param assignedUsers Array van User objecten die toegewezen zijn aan deze shift (max 3)
    * @param existingVerdiShiftGuid Optioneel: GUID van bestaande Verdi shift voor update
@@ -54,6 +46,14 @@ export class VerdiClient {
     // Validatie
     if (!stationConfig.verdiUrl) {
       throw new Error("Station heeft geen Verdi URL geconfigureerd");
+    }
+    
+    if (!stationConfig.authId) {
+      throw new Error("Station heeft geen Verdi Auth ID geconfigureerd");
+    }
+    
+    if (!stationConfig.authSecret) {
+      throw new Error("Station heeft geen Verdi Auth Secret geconfigureerd");
     }
     
     if (!stationConfig.shiftSheetGuid) {
@@ -118,7 +118,7 @@ export class VerdiClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': this.getBasicAuthHeader()
+          'Authorization': this.getBasicAuthHeader(stationConfig.authId, stationConfig.authSecret)
         },
         body: JSON.stringify(requestBody)
       });
