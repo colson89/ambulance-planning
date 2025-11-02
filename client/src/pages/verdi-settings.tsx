@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { type User, type Station } from "@shared/schema";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -90,15 +90,37 @@ export default function VerdiSettings() {
   const [userGuidInputs, setUserGuidInputs] = useState<{ [userId: number]: string }>({});
   const [positionGuidInputs, setPositionGuidInputs] = useState<{ [positionIndex: number]: string }>({});
 
-  useState(() => {
+  useEffect(() => {
     if (verdiConfig) {
       setConfigForm({
         verdiUrl: verdiConfig.verdiUrl || "",
         shiftSheetGuid: verdiConfig.shiftSheetGuid || "",
         enabled: verdiConfig.enabled || false,
       });
+    } else {
+      setConfigForm({
+        verdiUrl: "",
+        shiftSheetGuid: "",
+        enabled: false,
+      });
     }
-  });
+  }, [verdiConfig]);
+
+  useEffect(() => {
+    const mappings: { [userId: number]: string } = {};
+    userMappings.forEach((mapping: any) => {
+      mappings[mapping.userId] = mapping.personGuid;
+    });
+    setUserGuidInputs(mappings);
+  }, [userMappings]);
+
+  useEffect(() => {
+    const mappings: { [positionIndex: number]: string } = {};
+    positionMappings.forEach((mapping: any) => {
+      mappings[mapping.positionIndex] = mapping.positionGuid;
+    });
+    setPositionGuidInputs(mappings);
+  }, [positionMappings]);
 
   const updateConfigMutation = useMutation({
     mutationFn: async (data: typeof configForm) => {
@@ -107,7 +129,7 @@ export default function VerdiSettings() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/verdi/config"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/verdi/config", effectiveStationId] });
       toast({
         title: "Opgeslagen",
         description: "Verdi configuratie succesvol bijgewerkt",
@@ -151,7 +173,7 @@ export default function VerdiSettings() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/verdi/mappings/positions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/verdi/mappings/positions", effectiveStationId] });
       toast({
         title: "Opgeslagen",
         description: "Position GUID succesvol gekoppeld",
