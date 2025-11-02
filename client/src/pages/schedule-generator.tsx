@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO, addDays } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, RefreshCw, Calendar, Eye, Download } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon } from "lucide-react";
 import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -337,6 +337,40 @@ export default function ScheduleGenerator() {
       toast({
         title: "Fout",
         description: error.message || "Er is een fout opgetreden bij het verwijderen van shifts",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutatie om planning naar Verdi te synchroniseren
+  const syncToVerdiMutation = useMutation({
+    mutationFn: async (changesOnly: boolean) => {
+      const requestBody = {
+        month: selectedMonth + 1,
+        year: selectedYear,
+        stationId: effectiveStationId,
+        changesOnly
+      };
+      
+      const res = await apiRequest("POST", "/api/verdi/sync", requestBody);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Kon planning niet synchroniseren naar Verdi");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Synchronisatie Voltooid",
+        description: `${data.successful} shifts gesynchroniseerd, ${data.failed} fouten`,
+      });
+      // Vernieuw shift data om sync status bij te werken
+      refetchShifts();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Synchronisatie Fout",
+        description: error.message || "Er is een fout opgetreden bij het synchroniseren naar Verdi",
         variant: "destructive",
       });
     },
@@ -1424,6 +1458,52 @@ export default function ScheduleGenerator() {
                   <Download className="h-4 w-4 mr-2" />
                   Export Planning
                 </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!shifts || shifts.length === 0 || syncToVerdiMutation.isPending}
+                    >
+                      {syncToVerdiMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Synchroniseren...
+                        </>
+                      ) : (
+                        <>
+                          <LinkIcon className="h-4 w-4 mr-2" />
+                          Sync naar Verdi
+                        </>
+                      )}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Synchroniseren naar Verdi</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Wilt u de planning voor <strong>{format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}</strong> synchroniseren naar Verdi?
+                        <br /><br />
+                        <strong>Alle shifts</strong>: Synchroniseert alle shifts opnieuw
+                        <br />
+                        <strong>Alleen wijzigingen</strong>: Synchroniseert alleen nieuwe of aangepaste shifts
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => syncToVerdiMutation.mutate(false)}
+                      >
+                        Alle shifts
+                      </AlertDialogAction>
+                      <AlertDialogAction
+                        onClick={() => syncToVerdiMutation.mutate(true)}
+                      >
+                        Alleen wijzigingen
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
             
