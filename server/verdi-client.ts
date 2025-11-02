@@ -112,7 +112,7 @@ export class VerdiClient {
     console.log(`Sending shift to Verdi: ${url}`, {
       shiftId: shift.id,
       stationId: shift.stationId,
-      assignments: assignments.length,
+      assignments: assignedUsers.length,
       isUpdate: !!existingVerdiShiftGuid
     });
 
