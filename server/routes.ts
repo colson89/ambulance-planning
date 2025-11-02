@@ -2886,16 +2886,30 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
-  // Get all users voor Verdi mapping (minimal info: id, username, firstName, lastName)
+  // Get users voor Verdi mapping (minimal info: id, username, firstName, lastName)
+  // Supervisor: alle users, Admin: alleen station users (incl. cross-station)
   app.get("/api/verdi/users", requireAdmin, async (req, res) => {
     try {
-      const users = await storage.getAllUsers();
+      const user = req.user!;
+      let users;
+      
+      if (user.role === 'supervisor') {
+        // Supervisor ziet alle users
+        users = await storage.getAllUsers();
+      } else {
+        // Admin ziet alleen users van zijn station (inclusief cross-station assignments)
+        if (!user.stationId) {
+          return res.status(400).json({ message: "Admin user must have a stationId" });
+        }
+        users = await storage.getUsersByStation(user.stationId);
+      }
+      
       // Return alleen de velden die nodig zijn voor Verdi user mapping
-      const minimalUsers = users.map(user => ({
-        id: user.id,
-        username: user.username,
-        firstName: user.firstName,
-        lastName: user.lastName
+      const minimalUsers = users.map(u => ({
+        id: u.id,
+        username: u.username,
+        firstName: u.firstName,
+        lastName: u.lastName
       }));
       res.json(minimalUsers);
     } catch (error) {
