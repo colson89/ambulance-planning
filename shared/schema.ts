@@ -233,6 +233,7 @@ export const verdiPositionMappings = pgTable("verdi_position_mappings", {
   stationId: integer("station_id").notNull().references(() => stations.id),
   positionIndex: integer("position_index").notNull(), // 0, 1, 2 voor de 3 posities per shift
   positionGuid: text("position_guid").notNull(), // GuidShiftSheetGroupItem van Verdi export
+  requiresLicenseC: boolean("requires_license_c").notNull().default(true), // Of deze functie rijbewijs C vereist
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()
 });
