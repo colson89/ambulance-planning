@@ -43,6 +43,7 @@ Protected Files: Do not make changes to the `dist/` folder or the file `dist/pub
 - **Schedule Generation**: Intelligent multi-phase algorithm considering user preferences, availability, historical fairness, scarcity-based prioritization, and conflict detection.
 - **Calendar Integration**: iCal feed generation with personal tokens and CORS support for external calendar applications.
 - **Reporting & Statistics**: Shift statistics by user, station, and period, with Excel export and workload analysis.
+- **Verdi Integration** (Backend Complete): On-demand shift synchronization to Verdi alarm software via REST API. Station-scoped configuration with GUID mappings for users and positions. Comprehensive sync logging with status tracking. Admin-only access control for all Verdi management endpoints.
 
 ### Build & Deployment
 - **Pre-built Application**: Deployed as pre-compiled backend (`dist/index.js`) and static frontend assets (`dist/public/`).

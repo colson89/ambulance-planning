@@ -111,7 +111,7 @@ export interface IStorage {
   
   // Verdi integratie
   getVerdiStationConfig(stationId: number): Promise<any>;
-  upsertVerdiStationConfig(stationId: number, config: {shiftSheetGuid?: string, enabled?: boolean}): Promise<any>;
+  upsertVerdiStationConfig(stationId: number, config: {verdiUrl?: string, shiftSheetGuid?: string, enabled?: boolean}): Promise<any>;
   getAllVerdiStationConfigs(): Promise<any[]>;
   getVerdiUserMapping(userId: number): Promise<any>;
   upsertVerdiUserMapping(userId: number, personGuid: string): Promise<any>;
@@ -3060,12 +3060,13 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async upsertVerdiStationConfig(stationId: number, config: {shiftSheetGuid?: string, enabled?: boolean}): Promise<VerdiStationConfig> {
+  async upsertVerdiStationConfig(stationId: number, config: {verdiUrl?: string, shiftSheetGuid?: string, enabled?: boolean}): Promise<VerdiStationConfig> {
     const existing = await this.getVerdiStationConfig(stationId);
     
     if (existing) {
       const result = await db.update(verdiStationConfig)
         .set({
+          verdiUrl: config.verdiUrl ?? existing.verdiUrl,
           shiftSheetGuid: config.shiftSheetGuid ?? existing.shiftSheetGuid,
           enabled: config.enabled ?? existing.enabled,
           updatedAt: new Date()
@@ -3077,6 +3078,7 @@ export class DatabaseStorage implements IStorage {
       const result = await db.insert(verdiStationConfig)
         .values({
           stationId,
+          verdiUrl: config.verdiUrl || null,
           shiftSheetGuid: config.shiftSheetGuid || null,
           enabled: config.enabled ?? false
         })

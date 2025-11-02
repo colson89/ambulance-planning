@@ -2793,7 +2793,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   // =========================
   
   // Get Verdi configuration voor station
-  app.get("/api/verdi/config/:stationId", requireAuth, async (req, res) => {
+  app.get("/api/verdi/config/:stationId", requireAdmin, async (req, res) => {
     try {
       const stationId = parseInt(req.params.stationId);
       const config = await storage.getVerdiStationConfig(stationId);
@@ -2814,12 +2814,13 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Update Verdi configuration voor station
-  app.post("/api/verdi/config/:stationId", requireAuth, async (req, res) => {
+  app.post("/api/verdi/config/:stationId", requireAdmin, async (req, res) => {
     try {
       const stationId = parseInt(req.params.stationId);
-      const { shiftSheetGuid, enabled } = req.body;
+      const { verdiUrl, shiftSheetGuid, enabled } = req.body;
       
       const config = await storage.upsertVerdiStationConfig(stationId, {
+        verdiUrl,
         shiftSheetGuid,
         enabled
       });
@@ -2832,7 +2833,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Get all Verdi station configs
-  app.get("/api/verdi/configs", requireAuth, async (req, res) => {
+  app.get("/api/verdi/configs", requireAdmin, async (req, res) => {
     try {
       const configs = await storage.getAllVerdiStationConfigs();
       res.json(configs);
@@ -2843,7 +2844,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Get Verdi user mapping
-  app.get("/api/verdi/mapping/user/:userId", requireAuth, async (req, res) => {
+  app.get("/api/verdi/mapping/user/:userId", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
       const mapping = await storage.getVerdiUserMapping(userId);
@@ -2855,7 +2856,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Update Verdi user mapping
-  app.post("/api/verdi/mapping/user/:userId", requireAuth, async (req, res) => {
+  app.post("/api/verdi/mapping/user/:userId", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
       const { personGuid } = req.body;
@@ -2873,7 +2874,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Get all Verdi user mappings
-  app.get("/api/verdi/mappings/users", requireAuth, async (req, res) => {
+  app.get("/api/verdi/mappings/users", requireAdmin, async (req, res) => {
     try {
       const mappings = await storage.getAllVerdiUserMappings();
       res.json(mappings);
@@ -2884,7 +2885,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Get Verdi position mappings voor station
-  app.get("/api/verdi/mappings/positions/:stationId", requireAuth, async (req, res) => {
+  app.get("/api/verdi/mappings/positions/:stationId", requireAdmin, async (req, res) => {
     try {
       const stationId = parseInt(req.params.stationId);
       const mappings = await storage.getVerdiPositionMappings(stationId);
@@ -2896,7 +2897,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Update Verdi position mapping
-  app.post("/api/verdi/mappings/positions/:stationId/:positionIndex", requireAuth, async (req, res) => {
+  app.post("/api/verdi/mappings/positions/:stationId/:positionIndex", requireAdmin, async (req, res) => {
     try {
       const stationId = parseInt(req.params.stationId);
       const positionIndex = parseInt(req.params.positionIndex);
@@ -2915,7 +2916,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Get sync status for shifts in een maand
-  app.get("/api/verdi/sync-status/:month/:year", requireAuth, async (req, res) => {
+  app.get("/api/verdi/sync-status/:month/:year", requireAdmin, async (req, res) => {
     try {
       const month = parseInt(req.params.month);
       const year = parseInt(req.params.year);
@@ -2930,7 +2931,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Sync shifts naar Verdi
-  app.post("/api/verdi/sync", requireAuth, async (req, res) => {
+  app.post("/api/verdi/sync", requireAdmin, async (req, res) => {
     try {
       const { month, year, stationId, changesOnly } = req.body;
       

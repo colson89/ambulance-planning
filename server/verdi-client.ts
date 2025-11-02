@@ -21,12 +21,10 @@ interface VerdiResponse {
 }
 
 export class VerdiClient {
-  private baseUrl: string;
   private authId: string;
   private authSecret: string;
 
   constructor() {
-    this.baseUrl = process.env.VERDI_URL || "https://kempen-staging.verdi.cloud";
     this.authId = process.env.VERDI_AUTH_ID || "";
     this.authSecret = process.env.VERDI_AUTH_SECRET || "";
   }
@@ -54,6 +52,10 @@ export class VerdiClient {
     existingVerdiShiftGuid?: string
   ): Promise<VerdiResponse> {
     // Validatie
+    if (!stationConfig.verdiUrl) {
+      throw new Error("Station heeft geen Verdi URL geconfigureerd");
+    }
+    
     if (!stationConfig.shiftSheetGuid) {
       throw new Error("Station heeft geen shiftSheet GUID geconfigureerd");
     }
@@ -97,7 +99,7 @@ export class VerdiClient {
     }
 
     // Stuur request naar Verdi
-    const url = `${this.baseUrl}/comm-api/hooks/v1/ShiftPlanning`;
+    const url = `${stationConfig.verdiUrl}/comm-api/hooks/v1/ShiftPlanning`;
     
     console.log(`Sending shift to Verdi: ${url}`, {
       shiftId: shift.id,
@@ -134,45 +136,6 @@ export class VerdiClient {
     } catch (error) {
       console.error("Error sending shift to Verdi:", error);
       throw error;
-    }
-  }
-
-  /**
-   * Test de connectie met Verdi
-   */
-  async testConnection(): Promise<boolean> {
-    if (!this.authId || !this.authSecret) {
-      throw new Error("Verdi credentials zijn niet geconfigureerd");
-    }
-
-    try {
-      // Probeer een dummy request (dit zal waarschijnlijk falen met validation errors,
-      // maar als de auth werkt krijgen we een 200 response)
-      const url = `${this.baseUrl}/comm-api/hooks/v1/ShiftPlanning`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': this.getBasicAuthHeader()
-        },
-        body: JSON.stringify({
-          shiftSheet: "test",
-          start: new Date().toISOString(),
-          end: new Date().toISOString(),
-          assignments: []
-        })
-      });
-
-      // Als we een 200 krijgen (zelfs met errors in de body), dan werkt de auth
-      // Een 401/403 betekent dat de auth niet werkt
-      if (response.status === 401 || response.status === 403) {
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Verdi connection test failed:", error);
-      return false;
     }
   }
 }

@@ -213,6 +213,7 @@ export type InsertCalendarToken = z.infer<typeof insertCalendarTokenSchema>;
 export const verdiStationConfig = pgTable("verdi_station_config", {
   id: serial("id").primaryKey(),
   stationId: integer("station_id").notNull().references(() => stations.id),
+  verdiUrl: text("verdi_url"), // Verdi omgeving URL (bijv. https://kempen-staging.verdi.cloud)
   shiftSheetGuid: text("shift_sheet_guid"), // GuidShiftSheet van Verdi export
   enabled: boolean("enabled").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
