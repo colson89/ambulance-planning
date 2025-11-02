@@ -938,8 +938,8 @@ Na synchronisatie ontvangt u feedback van Verdi:
 #### 🔒 Veiligheid & Toegang
 
 **Wie Heeft Toegang?**
-- ✅ **Admins**: Volledige toegang tot Verdi configuratie en sync
-- ✅ **Supervisors**: Kunnen Verdi URL aanpassen per station
+- ✅ **Admins**: Volledige toegang tot alle Verdi functionaliteit
+- ✅ **Supervisors**: Volledige toegang tot alle Verdi functionaliteit
 - ❌ **Ambulanciers**: Geen toegang tot Verdi functionaliteit
 
 **Beveiliging:**
@@ -1590,12 +1590,13 @@ Het systeem wordt regelmatig bijgewerkt met nieuwe functies en verbeteringen:
   - Person GUID mappings voor gebruikers (cross-station support)
   - Position GUID mappings per station
   - Comprehensive sync logging met status tracking (success/error/pending)
-  - Admin-only toegangscontrole voor alle Verdi functionaliteit
+  - Toegangscontrole: Admins en Supervisors hebben volledige toegang
   - ⏳ Frontend admin interface volgt binnenkort (wacht op Verdi Auth Secret)
 
 **Beveiliging:**
-- 🔒 **Enhanced Authorization** - Alle Verdi endpoints beveiligd met admin-only toegang
-  - Voorkomt ongeautoriseerde toegang tot configuratie
+- 🔒 **Enhanced Authorization** - Alle Verdi endpoints beveiligd
+  - Toegankelijk voor admins en supervisors
+  - Voorkomt ongeautoriseerde toegang door ambulanciers
   - Veilige opslag van Verdi credentials
 
 ### Versie 2025.3 - Oktober 2025

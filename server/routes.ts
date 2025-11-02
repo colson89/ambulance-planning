@@ -2857,7 +2857,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Get Verdi user mapping
-  app.get("/api/verdi/mapping/user/:userId", requireStrictAdmin, async (req, res) => {
+  app.get("/api/verdi/mapping/user/:userId", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
       const mapping = await storage.getVerdiUserMapping(userId);
@@ -2869,7 +2869,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Update Verdi user mapping
-  app.post("/api/verdi/mapping/user/:userId", requireStrictAdmin, async (req, res) => {
+  app.post("/api/verdi/mapping/user/:userId", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
       const { personGuid } = req.body;
@@ -2887,7 +2887,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Get all Verdi user mappings
-  app.get("/api/verdi/mappings/users", requireStrictAdmin, async (req, res) => {
+  app.get("/api/verdi/mappings/users", requireAdmin, async (req, res) => {
     try {
       const mappings = await storage.getAllVerdiUserMappings();
       res.json(mappings);
@@ -2898,7 +2898,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Get Verdi position mappings voor station
-  app.get("/api/verdi/mappings/positions/:stationId", requireStrictAdmin, async (req, res) => {
+  app.get("/api/verdi/mappings/positions/:stationId", requireAdmin, async (req, res) => {
     try {
       const stationId = parseInt(req.params.stationId);
       const mappings = await storage.getVerdiPositionMappings(stationId);
@@ -2910,7 +2910,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Update Verdi position mapping
-  app.post("/api/verdi/mappings/positions/:stationId/:positionIndex", requireStrictAdmin, async (req, res) => {
+  app.post("/api/verdi/mappings/positions/:stationId/:positionIndex", requireAdmin, async (req, res) => {
     try {
       const stationId = parseInt(req.params.stationId);
       const positionIndex = parseInt(req.params.positionIndex);
@@ -2929,7 +2929,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Get sync status for shifts in een maand
-  app.get("/api/verdi/sync-status/:month/:year", requireStrictAdmin, async (req, res) => {
+  app.get("/api/verdi/sync-status/:month/:year", requireAdmin, async (req, res) => {
     try {
       const month = parseInt(req.params.month);
       const year = parseInt(req.params.year);
@@ -2944,7 +2944,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Sync shifts naar Verdi
-  app.post("/api/verdi/sync", requireStrictAdmin, async (req, res) => {
+  app.post("/api/verdi/sync", requireAdmin, async (req, res) => {
     try {
       const { month, year, stationId, changesOnly } = req.body;
       
