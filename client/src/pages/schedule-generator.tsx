@@ -268,6 +268,23 @@ export default function ScheduleGenerator() {
     enabled: !!user && ((user.role === "admin") || (user.role === "supervisor" && !!effectiveStationId)),
   });
 
+  // Haal Verdi sync status op voor shifts in deze maand
+  const { data: verdiSyncStatus = [] } = useQuery<any[]>({
+    queryKey: ["/api/verdi/sync-status", selectedMonth + 1, selectedYear, effectiveStationId],
+    queryFn: async () => {
+      let url = `/api/verdi/sync-status/${selectedMonth + 1}/${selectedYear}`;
+      
+      if (effectiveStationId) {
+        url += `?stationId=${effectiveStationId}`;
+      }
+      
+      const res = await apiRequest("GET", url);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
+  });
+
   // Mutatie om de planning te genereren
   const generateScheduleMutation = useMutation({
     mutationFn: async () => {
@@ -854,6 +871,12 @@ export default function ScheduleGenerator() {
         variant: "destructive",
       });
     }
+  };
+
+  // Helper functie om Verdi sync status voor een shift op te halen
+  const getVerdiSyncStatus = (shiftId: number) => {
+    const syncLog = verdiSyncStatus.find((log: any) => log.shiftId === shiftId);
+    return syncLog || null;
   };
 
   // Maanden voor de select box
@@ -1621,13 +1644,41 @@ export default function ScheduleGenerator() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                {shift.status === "planned" && !isUserDeleted ? (
-                                  <Check className="h-4 w-4 text-green-500 mr-1" />
-                                ) : (shift.status === "open" || isUserDeleted) ? (
-                                  <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
-                                ) : null}
-                                {shift.status === "open" ? "Open" : isUserDeleted ? "Herinplannen nodig" : "Ingepland"}
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center">
+                                  {shift.status === "planned" && !isUserDeleted ? (
+                                    <Check className="h-4 w-4 text-green-500 mr-1" />
+                                  ) : (shift.status === "open" || isUserDeleted) ? (
+                                    <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
+                                  ) : null}
+                                  {shift.status === "open" ? "Open" : isUserDeleted ? "Herinplannen nodig" : "Ingepland"}
+                                </div>
+                                {(() => {
+                                  const syncStatus = getVerdiSyncStatus(shift.id);
+                                  if (!syncStatus) return null;
+                                  
+                                  const statusColors = {
+                                    success: "bg-green-500",
+                                    error: "bg-red-500",
+                                    pending: "bg-gray-400"
+                                  };
+                                  
+                                  const statusLabels = {
+                                    success: "Verdi sync OK",
+                                    error: "Verdi sync fout",
+                                    pending: "Verdi sync pending"
+                                  };
+                                  
+                                  return (
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`${statusColors[syncStatus.syncStatus as keyof typeof statusColors]} text-white border-none text-xs`}
+                                      title={syncStatus.errorMessage || statusLabels[syncStatus.syncStatus as keyof typeof statusLabels]}
+                                    >
+                                      <LinkIcon className="h-3 w-3" />
+                                    </Badge>
+                                  );
+                                })()}
                               </div>
                               <Button 
                                 variant="outline" 
