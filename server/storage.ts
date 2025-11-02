@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -108,6 +108,21 @@ export interface IStorage {
   createCalendarToken(userId: number): Promise<CalendarToken>;
   regenerateCalendarToken(userId: number): Promise<CalendarToken>;
   getCalendarTokenByToken(token: string): Promise<CalendarToken | undefined>;
+  
+  // Verdi integratie
+  getVerdiStationConfig(stationId: number): Promise<any>;
+  upsertVerdiStationConfig(stationId: number, config: {shiftSheetGuid?: string, enabled?: boolean}): Promise<any>;
+  getAllVerdiStationConfigs(): Promise<any[]>;
+  getVerdiUserMapping(userId: number): Promise<any>;
+  upsertVerdiUserMapping(userId: number, personGuid: string): Promise<any>;
+  getAllVerdiUserMappings(): Promise<any[]>;
+  getVerdiPositionMappings(stationId: number): Promise<any[]>;
+  upsertVerdiPositionMapping(stationId: number, positionIndex: number, positionGuid: string): Promise<any>;
+  getAllVerdiPositionMappings(): Promise<any[]>;
+  getVerdiSyncLog(shiftId: number): Promise<any>;
+  createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<any>;
+  updateVerdiSyncLog(shiftId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<any>;
+  getVerdiSyncLogsByMonth(month: number, year: number, stationId?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3037,6 +3052,161 @@ export class DatabaseStorage implements IStorage {
   async getCalendarTokenByToken(token: string): Promise<CalendarToken | undefined> {
     const result = await db.select().from(calendarTokens).where(eq(calendarTokens.token, token));
     return result[0];
+  }
+
+  // Verdi integratie methods
+  async getVerdiStationConfig(stationId: number): Promise<VerdiStationConfig | undefined> {
+    const result = await db.select().from(verdiStationConfig).where(eq(verdiStationConfig.stationId, stationId));
+    return result[0];
+  }
+
+  async upsertVerdiStationConfig(stationId: number, config: {shiftSheetGuid?: string, enabled?: boolean}): Promise<VerdiStationConfig> {
+    const existing = await this.getVerdiStationConfig(stationId);
+    
+    if (existing) {
+      const result = await db.update(verdiStationConfig)
+        .set({
+          shiftSheetGuid: config.shiftSheetGuid ?? existing.shiftSheetGuid,
+          enabled: config.enabled ?? existing.enabled,
+          updatedAt: new Date()
+        })
+        .where(eq(verdiStationConfig.stationId, stationId))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(verdiStationConfig)
+        .values({
+          stationId,
+          shiftSheetGuid: config.shiftSheetGuid || null,
+          enabled: config.enabled ?? false
+        })
+        .returning();
+      return result[0];
+    }
+  }
+
+  async getAllVerdiStationConfigs(): Promise<VerdiStationConfig[]> {
+    return await db.select().from(verdiStationConfig);
+  }
+
+  async getVerdiUserMapping(userId: number): Promise<VerdiUserMapping | undefined> {
+    const result = await db.select().from(verdiUserMappings).where(eq(verdiUserMappings.userId, userId));
+    return result[0];
+  }
+
+  async upsertVerdiUserMapping(userId: number, personGuid: string): Promise<VerdiUserMapping> {
+    const existing = await this.getVerdiUserMapping(userId);
+    
+    if (existing) {
+      const result = await db.update(verdiUserMappings)
+        .set({
+          personGuid,
+          updatedAt: new Date()
+        })
+        .where(eq(verdiUserMappings.userId, userId))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(verdiUserMappings)
+        .values({
+          userId,
+          personGuid
+        })
+        .returning();
+      return result[0];
+    }
+  }
+
+  async getAllVerdiUserMappings(): Promise<VerdiUserMapping[]> {
+    return await db.select().from(verdiUserMappings);
+  }
+
+  async getVerdiPositionMappings(stationId: number): Promise<VerdiPositionMapping[]> {
+    return await db.select().from(verdiPositionMappings)
+      .where(eq(verdiPositionMappings.stationId, stationId))
+      .orderBy(asc(verdiPositionMappings.positionIndex));
+  }
+
+  async upsertVerdiPositionMapping(stationId: number, positionIndex: number, positionGuid: string): Promise<VerdiPositionMapping> {
+    const existing = await db.select().from(verdiPositionMappings)
+      .where(and(
+        eq(verdiPositionMappings.stationId, stationId),
+        eq(verdiPositionMappings.positionIndex, positionIndex)
+      ));
+    
+    if (existing[0]) {
+      const result = await db.update(verdiPositionMappings)
+        .set({
+          positionGuid,
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(verdiPositionMappings.stationId, stationId),
+          eq(verdiPositionMappings.positionIndex, positionIndex)
+        ))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(verdiPositionMappings)
+        .values({
+          stationId,
+          positionIndex,
+          positionGuid
+        })
+        .returning();
+      return result[0];
+    }
+  }
+
+  async getAllVerdiPositionMappings(): Promise<VerdiPositionMapping[]> {
+    return await db.select().from(verdiPositionMappings).orderBy(asc(verdiPositionMappings.stationId), asc(verdiPositionMappings.positionIndex));
+  }
+
+  async getVerdiSyncLog(shiftId: number): Promise<VerdiSyncLog | undefined> {
+    const result = await db.select().from(verdiSyncLog).where(eq(verdiSyncLog.shiftId, shiftId));
+    return result[0];
+  }
+
+  async createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<VerdiSyncLog> {
+    const result = await db.insert(verdiSyncLog)
+      .values({
+        shiftId,
+        stationId,
+        syncStatus: syncStatus as "pending" | "success" | "error",
+        verdiShiftGuid: verdiShiftGuid || null,
+        errorMessage: errorMessage || null,
+        warningMessages: warningMessages || null,
+        syncedAt: syncStatus === 'success' ? new Date() : null
+      })
+      .returning();
+    return result[0];
+  }
+
+  async updateVerdiSyncLog(shiftId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<VerdiSyncLog> {
+    const result = await db.update(verdiSyncLog)
+      .set({
+        syncStatus: syncStatus as "pending" | "success" | "error",
+        verdiShiftGuid: verdiShiftGuid || null,
+        errorMessage: errorMessage || null,
+        warningMessages: warningMessages || null,
+        syncedAt: syncStatus === 'success' ? new Date() : null,
+        updatedAt: new Date()
+      })
+      .where(eq(verdiSyncLog.shiftId, shiftId))
+      .returning();
+    return result[0];
+  }
+
+  async getVerdiSyncLogsByMonth(month: number, year: number, stationId?: number): Promise<VerdiSyncLog[]> {
+    // Haal alle shifts op voor deze maand
+    const monthShifts = await this.getShiftsByMonth(month, year, stationId);
+    const shiftIds = monthShifts.map(s => s.id);
+    
+    if (shiftIds.length === 0) {
+      return [];
+    }
+    
+    return await db.select().from(verdiSyncLog).where(inArray(verdiSyncLog.shiftId, shiftIds));
   }
 }
 
