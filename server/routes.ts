@@ -2886,6 +2886,24 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // Get all users voor Verdi mapping (minimal info: id, username, firstName, lastName)
+  app.get("/api/verdi/users", requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      // Return alleen de velden die nodig zijn voor Verdi user mapping
+      const minimalUsers = users.map(user => ({
+        id: user.id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }));
+      res.json(minimalUsers);
+    } catch (error) {
+      console.error("Error fetching users for Verdi:", error);
+      res.status(500).json({ message: "Failed to fetch users for Verdi mapping" });
+    }
+  });
+
   // Get all Verdi user mappings
   app.get("/api/verdi/mappings/users", requireAdmin, async (req, res) => {
     try {
