@@ -1,4 +1,4 @@
-import type { Shift, VerdiUserMapping, VerdiPositionMapping, VerdiStationConfig } from "../shared/schema";
+import type { Shift, VerdiUserMapping, VerdiPositionMapping, VerdiStationConfig, User } from "../shared/schema";
 
 interface VerdiShiftAssignment {
   position: string; // GUID van de position
@@ -39,16 +39,16 @@ export class VerdiClient {
    * @param shift De shift uit onze database
    * @param stationConfig De Verdi configuratie van het station
    * @param userMappings Array van user mappings (userId -> personGuid)
-   * @param positionMappings Array van position mappings (stationId + index -> positionGuid)
-   * @param assignments Array van userIds die toegewezen zijn aan deze shift (max 3)
+   * @param positionMappings Array van position mappings voor dit station
+   * @param assignedUsers Array van User objecten die toegewezen zijn aan deze shift (max 3)
    * @param existingVerdiShiftGuid Optioneel: GUID van bestaande Verdi shift voor update
    */
   async sendShiftToVerdi(
     shift: Shift,
     stationConfig: VerdiStationConfig,
     userMappings: Map<number, VerdiUserMapping>,
-    positionMappings: Map<number, VerdiPositionMapping>,
-    assignments: number[],
+    positionMappings: VerdiPositionMapping[],
+    assignedUsers: User[],
     existingVerdiShiftGuid?: string
   ): Promise<VerdiResponse> {
     // Validatie
@@ -60,23 +60,31 @@ export class VerdiClient {
       throw new Error("Station heeft geen shiftSheet GUID geconfigureerd");
     }
 
-    if (assignments.length === 0 || assignments.length > 3) {
-      throw new Error(`Ongeldige aantal assignments: ${assignments.length}. Moet tussen 1 en 3 zijn.`);
+    if (assignedUsers.length === 0 || assignedUsers.length > 3) {
+      throw new Error(`Ongeldige aantal assignments: ${assignedUsers.length}. Moet tussen 1 en 3 zijn.`);
     }
 
     // Bouw assignments array
     const verdiAssignments: VerdiShiftAssignment[] = [];
-    for (let i = 0; i < assignments.length; i++) {
-      const userId = assignments[i];
-      const userMapping = userMappings.get(userId);
-      const positionMapping = positionMappings.get(i);
+    for (let i = 0; i < assignedUsers.length; i++) {
+      const user = assignedUsers[i];
+      const userMapping = userMappings.get(user.id);
 
       if (!userMapping) {
-        throw new Error(`Gebruiker ${userId} heeft geen Verdi person GUID mapping`);
+        throw new Error(`Gebruiker ${user.id} (${user.firstName} ${user.lastName}) heeft geen Verdi person GUID mapping`);
       }
 
+      // Zoek de juiste position mapping op basis van de positie index EN rijbewijs C status
+      const positionMapping = positionMappings.find(pm => 
+        pm.positionIndex === i && pm.requiresLicenseC === user.hasDrivingLicenseC
+      );
+
       if (!positionMapping) {
-        throw new Error(`Positie ${i} voor station ${shift.stationId} heeft geen Verdi position GUID mapping`);
+        const licenseStatus = user.hasDrivingLicenseC ? 'met' : 'zonder';
+        throw new Error(
+          `Geen Verdi position mapping gevonden voor positie ${i + 1} ${licenseStatus} rijbewijs C. ` +
+          `Configureer eerst de position mappings in Verdi instellingen.`
+        );
       }
 
       verdiAssignments.push({

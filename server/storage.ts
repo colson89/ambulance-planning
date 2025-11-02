@@ -117,7 +117,7 @@ export interface IStorage {
   upsertVerdiUserMapping(userId: number, personGuid: string): Promise<any>;
   getAllVerdiUserMappings(): Promise<any[]>;
   getVerdiPositionMappings(stationId: number): Promise<any[]>;
-  upsertVerdiPositionMapping(stationId: number, positionIndex: number, positionGuid: string): Promise<any>;
+  upsertVerdiPositionMapping(stationId: number, positionIndex: number, positionGuid: string, requiresLicenseC: boolean): Promise<any>;
   getAllVerdiPositionMappings(): Promise<any[]>;
   getVerdiSyncLog(shiftId: number): Promise<any>;
   createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<any>;
@@ -3129,11 +3129,12 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(verdiPositionMappings.positionIndex));
   }
 
-  async upsertVerdiPositionMapping(stationId: number, positionIndex: number, positionGuid: string): Promise<VerdiPositionMapping> {
+  async upsertVerdiPositionMapping(stationId: number, positionIndex: number, positionGuid: string, requiresLicenseC: boolean): Promise<VerdiPositionMapping> {
     const existing = await db.select().from(verdiPositionMappings)
       .where(and(
         eq(verdiPositionMappings.stationId, stationId),
-        eq(verdiPositionMappings.positionIndex, positionIndex)
+        eq(verdiPositionMappings.positionIndex, positionIndex),
+        eq(verdiPositionMappings.requiresLicenseC, requiresLicenseC)
       ));
     
     if (existing[0]) {
@@ -3144,7 +3145,8 @@ export class DatabaseStorage implements IStorage {
         })
         .where(and(
           eq(verdiPositionMappings.stationId, stationId),
-          eq(verdiPositionMappings.positionIndex, positionIndex)
+          eq(verdiPositionMappings.positionIndex, positionIndex),
+          eq(verdiPositionMappings.requiresLicenseC, requiresLicenseC)
         ))
         .returning();
       return result[0];
@@ -3153,7 +3155,8 @@ export class DatabaseStorage implements IStorage {
         .values({
           stationId,
           positionIndex,
-          positionGuid
+          positionGuid,
+          requiresLicenseC
         })
         .returning();
       return result[0];

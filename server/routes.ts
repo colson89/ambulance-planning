@@ -2914,13 +2914,17 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     try {
       const stationId = parseInt(req.params.stationId);
       const positionIndex = parseInt(req.params.positionIndex);
-      const { positionGuid } = req.body;
+      const { positionGuid, requiresLicenseC } = req.body;
       
       if (!positionGuid) {
         return res.status(400).json({ message: "positionGuid is required" });
       }
       
-      const mapping = await storage.upsertVerdiPositionMapping(stationId, positionIndex, positionGuid);
+      if (typeof requiresLicenseC !== 'boolean') {
+        return res.status(400).json({ message: "requiresLicenseC is required and must be a boolean" });
+      }
+      
+      const mapping = await storage.upsertVerdiPositionMapping(stationId, positionIndex, positionGuid, requiresLicenseC);
       res.json(mapping);
     } catch (error) {
       console.error("Error updating Verdi position mapping:", error);
@@ -3000,7 +3004,6 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       const userMappingMap = new Map(allUserMappings.map(m => [m.userId, m]));
       
       const positionMappings = await storage.getVerdiPositionMappings(stationId);
-      const positionMappingMap = new Map(positionMappings.map(m => [m.positionIndex, m]));
       
       let synced = 0;
       let errors = 0;
@@ -3014,15 +3017,26 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           
           // Bepaal welke gebruikers toegewezen zijn (in praktijk moet dit uit de shifts tabel komen)
           // Voor nu nemen we aan dat de shift.userId de primaire gebruiker is
-          const assignments = [shift.userId]; // TODO: Uitbreiden voor 2-3 personen per shift
+          const userIds = [shift.userId]; // TODO: Uitbreiden voor 2-3 personen per shift
+          
+          // Haal User objecten op zodat we hasDrivingLicenseC kunnen checken
+          const assignedUsers = await Promise.all(
+            userIds.map(userId => storage.getUserById(userId))
+          );
+          
+          // Filter out any null users (shouldn't happen but safety check)
+          const validUsers = assignedUsers.filter(u => u !== null);
+          if (validUsers.length === 0) {
+            throw new Error(`Geen geldige gebruikers gevonden voor shift ${shift.id}`);
+          }
           
           // Stuur naar Verdi
           const response = await verdiClient.sendShiftToVerdi(
             shift,
             config,
             userMappingMap,
-            positionMappingMap,
-            assignments,
+            positionMappings,
+            validUsers,
             existingLog?.verdiShiftGuid || undefined
           );
           

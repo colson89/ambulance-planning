@@ -88,7 +88,7 @@ export default function VerdiSettings() {
   });
 
   const [userGuidInputs, setUserGuidInputs] = useState<{ [userId: number]: string }>({});
-  const [positionGuidInputs, setPositionGuidInputs] = useState<{ [positionIndex: number]: string }>({});
+  const [positionGuidInputs, setPositionGuidInputs] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (verdiConfig) {
@@ -115,9 +115,10 @@ export default function VerdiSettings() {
   }, [userMappings]);
 
   useEffect(() => {
-    const mappings: { [positionIndex: number]: string } = {};
+    const mappings: { [key: string]: string } = {};
     positionMappings.forEach((mapping: any) => {
-      mappings[mapping.positionIndex] = mapping.positionGuid;
+      const key = `${mapping.positionIndex}-${mapping.requiresLicenseC}`;
+      mappings[key] = mapping.positionGuid;
     });
     setPositionGuidInputs(mappings);
   }, [positionMappings]);
@@ -167,8 +168,8 @@ export default function VerdiSettings() {
   });
 
   const updatePositionMappingMutation = useMutation({
-    mutationFn: async ({ positionIndex, positionGuid }: { positionIndex: number; positionGuid: string }) => {
-      const res = await apiRequest("POST", `/api/verdi/mappings/positions/${effectiveStationId}/${positionIndex}`, { positionGuid });
+    mutationFn: async ({ positionIndex, positionGuid, requiresLicenseC }: { positionIndex: number; positionGuid: string; requiresLicenseC: boolean }) => {
+      const res = await apiRequest("POST", `/api/verdi/mappings/positions/${effectiveStationId}/${positionIndex}`, { positionGuid, requiresLicenseC });
       if (!res.ok) throw new Error("Kon positie mapping niet opslaan");
       return res.json();
     },
@@ -205,8 +206,9 @@ export default function VerdiSettings() {
     updateUserMappingMutation.mutate({ userId, personGuid });
   };
 
-  const handlePositionMappingSave = (positionIndex: number) => {
-    const positionGuid = positionGuidInputs[positionIndex];
+  const handlePositionMappingSave = (positionIndex: number, requiresLicenseC: boolean) => {
+    const key = `${positionIndex}-${requiresLicenseC}`;
+    const positionGuid = positionGuidInputs[key];
     if (!positionGuid) {
       toast({
         title: "Fout",
@@ -215,7 +217,7 @@ export default function VerdiSettings() {
       });
       return;
     }
-    updatePositionMappingMutation.mutate({ positionIndex, positionGuid });
+    updatePositionMappingMutation.mutate({ positionIndex, positionGuid, requiresLicenseC });
   };
 
   if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
@@ -395,32 +397,88 @@ export default function VerdiSettings() {
                 Koppel elke shift positie aan een Verdi Position GUID voor {currentStation?.displayName}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {[1, 2].map((positionIndex) => {
-                const existingMapping = positionMappings.find((m: any) => m.positionIndex === positionIndex);
-                return (
-                  <div key={positionIndex} className="flex items-end gap-4">
-                    <div className="flex-1 space-y-2">
-                      <Label htmlFor={`position-${positionIndex}`}>
-                        Positie {positionIndex}
-                      </Label>
-                      <Input
-                        id={`position-${positionIndex}`}
-                        placeholder="Position GUID"
-                        defaultValue={existingMapping?.positionGuid || ""}
-                        onChange={(e) => setPositionGuidInputs({ ...positionGuidInputs, [positionIndex]: e.target.value })}
-                      />
-                    </div>
-                    <Button
-                      onClick={() => handlePositionMappingSave(positionIndex)}
-                      disabled={updatePositionMappingMutation.isPending}
-                    >
-                      <Save className="mr-2 h-4 w-4" />
-                      Opslaan
-                    </Button>
+            <CardContent className="space-y-6">
+              {/* Positie 1 - altijd met rijbewijs C */}
+              <div className="border-l-4 border-blue-500 pl-4 space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg">Positie 1 (Chauffeur)</h3>
+                  <p className="text-sm text-muted-foreground">Ambulancier met rijbewijs C - verplicht</p>
+                </div>
+                <div className="flex items-end gap-4">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="position-0-with-license">
+                      Position GUID (met rijbewijs C)
+                    </Label>
+                    <Input
+                      id="position-0-with-license"
+                      placeholder="Position GUID voor chauffeur"
+                      value={positionGuidInputs['0-true'] || ""}
+                      onChange={(e) => setPositionGuidInputs({ ...positionGuidInputs, '0-true': e.target.value })}
+                    />
                   </div>
-                );
-              })}
+                  <Button
+                    onClick={() => handlePositionMappingSave(0, true)}
+                    disabled={updatePositionMappingMutation.isPending}
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    Opslaan
+                  </Button>
+                </div>
+              </div>
+
+              {/* Positie 2 - met of zonder rijbewijs C */}
+              <div className="border-l-4 border-green-500 pl-4 space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg">Positie 2 (Bijrijder)</h3>
+                  <p className="text-sm text-muted-foreground">Ambulancier met of zonder rijbewijs C</p>
+                </div>
+                
+                {/* Met rijbewijs C */}
+                <div className="flex items-end gap-4">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="position-1-with-license" className="flex items-center gap-2">
+                      <span className="text-green-600">✓</span>
+                      Position GUID (met rijbewijs C)
+                    </Label>
+                    <Input
+                      id="position-1-with-license"
+                      placeholder="Position GUID voor bijrijder met rijbewijs C"
+                      value={positionGuidInputs['1-true'] || ""}
+                      onChange={(e) => setPositionGuidInputs({ ...positionGuidInputs, '1-true': e.target.value })}
+                    />
+                  </div>
+                  <Button
+                    onClick={() => handlePositionMappingSave(1, true)}
+                    disabled={updatePositionMappingMutation.isPending}
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    Opslaan
+                  </Button>
+                </div>
+
+                {/* Zonder rijbewijs C */}
+                <div className="flex items-end gap-4">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="position-1-without-license" className="flex items-center gap-2">
+                      <span className="text-amber-600">○</span>
+                      Position GUID (zonder rijbewijs C)
+                    </Label>
+                    <Input
+                      id="position-1-without-license"
+                      placeholder="Position GUID voor bijrijder zonder rijbewijs C"
+                      value={positionGuidInputs['1-false'] || ""}
+                      onChange={(e) => setPositionGuidInputs({ ...positionGuidInputs, '1-false': e.target.value })}
+                    />
+                  </div>
+                  <Button
+                    onClick={() => handlePositionMappingSave(1, false)}
+                    disabled={updatePositionMappingMutation.isPending}
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    Opslaan
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
