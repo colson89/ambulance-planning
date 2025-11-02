@@ -285,6 +285,18 @@ export default function ScheduleGenerator() {
     enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
   });
 
+  // Haal laatste succesvolle Verdi sync timestamp op
+  const { data: lastVerdiSync } = useQuery<{ lastSync: string | null }>({
+    queryKey: ["/api/verdi/last-sync", effectiveStationId, selectedMonth + 1, selectedYear],
+    queryFn: async () => {
+      const url = `/api/verdi/last-sync/${effectiveStationId}/${selectedMonth + 1}/${selectedYear}`;
+      const res = await apiRequest("GET", url);
+      if (!res.ok) return { lastSync: null };
+      return res.json();
+    },
+    enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
+  });
+
   // Mutatie om de planning te genereren
   const generateScheduleMutation = useMutation({
     mutationFn: async () => {
@@ -1510,6 +1522,22 @@ export default function ScheduleGenerator() {
                         <strong>Alle shifts</strong>: Synchroniseert alle shifts opnieuw
                         <br />
                         <strong>Alleen wijzigingen</strong>: Synchroniseert alleen nieuwe of aangepaste shifts
+                        {lastVerdiSync?.lastSync && (
+                          <>
+                            <br />
+                            <span className="text-sm text-muted-foreground">
+                              Laatste sync: {format(new Date(lastVerdiSync.lastSync), "d MMMM yyyy, HH:mm", { locale: nl })}
+                            </span>
+                          </>
+                        )}
+                        {!lastVerdiSync?.lastSync && (
+                          <>
+                            <br />
+                            <span className="text-sm text-muted-foreground">
+                              Laatste sync: Nog niet gesynchroniseerd
+                            </span>
+                          </>
+                        )}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
