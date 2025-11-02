@@ -74,15 +74,12 @@ export class VerdiClient {
         throw new Error(`Gebruiker ${user.id} (${user.firstName} ${user.lastName}) heeft geen Verdi person GUID mapping`);
       }
 
-      // Zoek de juiste position mapping op basis van de positie index EN rijbewijs C status
-      const positionMapping = positionMappings.find(pm => 
-        pm.positionIndex === i && pm.requiresLicenseC === user.hasDrivingLicenseC
-      );
+      // Zoek de position mapping voor deze positie index
+      const positionMapping = positionMappings.find(pm => pm.positionIndex === i);
 
       if (!positionMapping) {
-        const licenseStatus = user.hasDrivingLicenseC ? 'met' : 'zonder';
         throw new Error(
-          `Geen Verdi position mapping gevonden voor positie ${i + 1} ${licenseStatus} rijbewijs C. ` +
+          `Geen Verdi position mapping gevonden voor positie ${i + 1}. ` +
           `Configureer eerst de position mappings in Verdi instellingen.`
         );
       }

@@ -3130,28 +3130,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertVerdiPositionMapping(stationId: number, positionIndex: number, positionGuid: string, requiresLicenseC: boolean): Promise<VerdiPositionMapping> {
-    const existing = await db.select().from(verdiPositionMappings)
-      .where(and(
-        eq(verdiPositionMappings.stationId, stationId),
-        eq(verdiPositionMappings.positionIndex, positionIndex),
-        eq(verdiPositionMappings.requiresLicenseC, requiresLicenseC)
-      ));
-    
-    if (existing[0]) {
-      const result = await db.update(verdiPositionMappings)
-        .set({
-          positionGuid,
-          updatedAt: new Date()
-        })
+    // Atomic delete + insert binnen transactie om race conditions te voorkomen
+    // Dit zorgt ervoor dat er altijd maar 1 mapping per positie is, ongeacht requiresLicenseC waarde
+    return await db.transaction(async (tx) => {
+      // Verwijder alle bestaande mappings voor deze stationId + positionIndex combinatie
+      await tx.delete(verdiPositionMappings)
         .where(and(
           eq(verdiPositionMappings.stationId, stationId),
-          eq(verdiPositionMappings.positionIndex, positionIndex),
-          eq(verdiPositionMappings.requiresLicenseC, requiresLicenseC)
-        ))
-        .returning();
-      return result[0];
-    } else {
-      const result = await db.insert(verdiPositionMappings)
+          eq(verdiPositionMappings.positionIndex, positionIndex)
+        ));
+      
+      // Maak nieuwe mapping aan
+      const result = await tx.insert(verdiPositionMappings)
         .values({
           stationId,
           positionIndex,
@@ -3160,7 +3150,7 @@ export class DatabaseStorage implements IStorage {
         })
         .returning();
       return result[0];
-    }
+    });
   }
 
   async getAllVerdiPositionMappings(): Promise<VerdiPositionMapping[]> {
