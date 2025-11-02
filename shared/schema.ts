@@ -208,3 +208,75 @@ export const insertCalendarTokenSchema = createInsertSchema(calendarTokens).omit
 });
 export type CalendarToken = typeof calendarTokens.$inferSelect;
 export type InsertCalendarToken = z.infer<typeof insertCalendarTokenSchema>;
+
+// Verdi integratie tabellen
+export const verdiStationConfig = pgTable("verdi_station_config", {
+  id: serial("id").primaryKey(),
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  shiftSheetGuid: text("shift_sheet_guid"), // GuidShiftSheet van Verdi export
+  enabled: boolean("enabled").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+export const verdiUserMappings = pgTable("verdi_user_mappings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  personGuid: text("person_guid").notNull(), // PersonGuid van Verdi export
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+export const verdiPositionMappings = pgTable("verdi_position_mappings", {
+  id: serial("id").primaryKey(),
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  positionIndex: integer("position_index").notNull(), // 0, 1, 2 voor de 3 posities per shift
+  positionGuid: text("position_guid").notNull(), // GuidShiftSheetGroupItem van Verdi export
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+export const verdiSyncLog = pgTable("verdi_sync_log", {
+  id: serial("id").primaryKey(),
+  shiftId: integer("shift_id").notNull().references(() => shifts.id),
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  syncStatus: text("sync_status", { enum: ["pending", "success", "error"] }).notNull().default("pending"),
+  verdiShiftGuid: text("verdi_shift_guid"), // GUID van de shift in Verdi (uit response)
+  errorMessage: text("error_message"),
+  warningMessages: text("warning_messages"), // JSON array van warnings
+  syncedAt: timestamp("synced_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+});
+
+export const insertVerdiStationConfigSchema = createInsertSchema(verdiStationConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type VerdiStationConfig = typeof verdiStationConfig.$inferSelect;
+export type InsertVerdiStationConfig = z.infer<typeof insertVerdiStationConfigSchema>;
+
+export const insertVerdiUserMappingSchema = createInsertSchema(verdiUserMappings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type VerdiUserMapping = typeof verdiUserMappings.$inferSelect;
+export type InsertVerdiUserMapping = z.infer<typeof insertVerdiUserMappingSchema>;
+
+export const insertVerdiPositionMappingSchema = createInsertSchema(verdiPositionMappings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type VerdiPositionMapping = typeof verdiPositionMappings.$inferSelect;
+export type InsertVerdiPositionMapping = z.infer<typeof insertVerdiPositionMappingSchema>;
+
+export const insertVerdiSyncLogSchema = createInsertSchema(verdiSyncLog).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type VerdiSyncLog = typeof verdiSyncLog.$inferSelect;
+export type InsertVerdiSyncLog = z.infer<typeof insertVerdiSyncLogSchema>;
