@@ -2830,10 +2830,12 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   app.post("/api/verdi/config/:stationId", requireAdmin, async (req, res) => {
     try {
       const stationId = parseInt(req.params.stationId);
-      const { verdiUrl, shiftSheetGuid, enabled } = req.body;
+      const { verdiUrl, authId, authSecret, shiftSheetGuid, enabled } = req.body;
       
       const config = await storage.upsertVerdiStationConfig(stationId, {
         verdiUrl,
+        authId,
+        authSecret,
         shiftSheetGuid,
         enabled
       });
