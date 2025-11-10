@@ -2016,7 +2016,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const isWeekend = pref.date.getDay() === 0 || pref.date.getDay() === 6;
           const key = `${pref.type}${isWeekend ? 'Weekend' : 'Week'}` as keyof typeof acc;
           // Only count approved or pending preferences (not unavailable)
-          if (pref.type !== 'unavailable') {
+          // Check notes for "Niet beschikbaar" because unavailable prefs are stored with notes field
+          if (pref.type !== 'unavailable' && pref.notes !== 'Niet beschikbaar') {
             // Standard hours: day = 12h, night = 12h
             const hours = pref.type === 'day' ? 12 : 12;
             acc[key] += hours;
