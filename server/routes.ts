@@ -1007,15 +1007,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { month, year, userId } = req.body;
+      const userStationId = req.user?.stationId;
       
       if (!month || !year) {
         return res.status(400).json({ message: "Month and year are required" });
       }
 
+      // Controleer of gebruiker ingelogd is en stationId heeft
+      if (!req.user || !userStationId) {
+        return res.status(401).json({ message: "Geen geldige sessie of station informatie. Log opnieuw in." });
+      }
+
       // Mark process as active
       isGeneratingPreferences = true;
       currentProgress = { percentage: 0, message: "Voorkeurengeneratie gestart...", isActive: true };
-      console.log("[BLOKKERING] Voorkeurengeneratie proces gestart - nieuwe verzoeken worden geblokkeerd");
+      console.log(`[BLOKKERING] Voorkeurengeneratie proces gestart voor station ${userStationId} - nieuwe verzoeken worden geblokkeerd`);
       
       let users;
       if (userId) {
@@ -1025,8 +1031,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         users = [user];
       } else {
-        users = await storage.getAllUsers();
-        // Include all users including admins
+        // Alleen gebruikers van het huidige station ophalen
+        users = await storage.getUsersByStation(userStationId);
+        console.log(`[0%] Voorkeuren genereren voor ${users.length} gebruikers van station ${userStationId}`);
       }
       
       // Eerst alle bestaande voorkeuren voor deze maand/jaar verwijderen
