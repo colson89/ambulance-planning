@@ -48,6 +48,7 @@ Protected Files: Do not make changes to the `dist/` folder or the file `dist/pub
   - **Production Environment**: Implementation fee of €1,380 excl. BTW (one-time)
   - **Security**: All credentials stored in database per station. Use UI configuration page only (never share credentials in chat/logs).
   - **User Search**: Gebruiker Mappings tab includes a search bar to filter users by username, first name, last name, or full name (case-insensitive, null-safe).
+  - **Timezone Handling**: Shift times are formatted as local time (Europe/Brussels) without UTC conversion when sending to Verdi API. Database stores timestamps without timezone info; VerdiClient uses formatLocalDateTime() helper to preserve local times (7:00-19:00 stays 7:00-19:00, not converted to 9:00-21:00).
   - **Future Enhancement**: Configuratie and Positie Mappings tabs should be restricted to supervisors only (currently open to admins for testing purposes). Gebruiker Mappings tab remains available to admins for their station users.
 
 ### Build & Deployment

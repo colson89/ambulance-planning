@@ -1,5 +1,21 @@
 import type { Shift, VerdiUserMapping, VerdiPositionMapping, VerdiStationConfig, User } from "../shared/schema";
 
+/**
+ * Formatteert een Date object als ISO string zonder timezone conversie
+ * Behoudt de lokale tijd zoals die in de database staat (7:00 blijft 7:00)
+ * Verdi verwacht tijden in lokale tijd, niet in UTC
+ */
+function formatLocalDateTime(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
 interface VerdiShiftAssignment {
   position: string; // GUID van de position
   person: string;   // GUID van de person
@@ -94,10 +110,12 @@ export class VerdiClient {
     }
 
     // Bouw request body
+    // Gebruik formatLocalDateTime() om tijden te versturen zonder timezone conversie
+    // Dit zorgt ervoor dat 7:00 in de database als 7:00 naar Verdi wordt gestuurd (niet als 7:00Z UTC)
     const requestBody: VerdiShiftRequest = {
       shiftSheet: stationConfig.shiftSheetGuid,
-      start: shift.startTime.toISOString(),
-      end: shift.endTime.toISOString(),
+      start: formatLocalDateTime(shift.startTime),
+      end: formatLocalDateTime(shift.endTime),
       assignments: verdiAssignments
     };
 
