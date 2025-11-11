@@ -3278,7 +3278,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
               await storage.updateVerdiSyncLog(
                 shift.id,
                 syncStatus,
-                response.shiftGuid,
+                response.shift,
                 errorMessage || undefined,
                 warningMessages || undefined,
                 shift.startTime,
@@ -3290,7 +3290,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
                 shift.id,
                 shift.stationId,
                 syncStatus,
-                response.shiftGuid,
+                response.shift,
                 errorMessage || undefined,
                 warningMessages || undefined,
                 shift.startTime,

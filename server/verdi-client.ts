@@ -59,7 +59,7 @@ interface VerdiResponse {
   result: "Success" | "Error";
   warningFeedback: string[];
   errorFeedback: string[];
-  shiftGuid: string; // GUID van de aangemaakte/aangepaste shift
+  shift: string; // GUID van de aangemaakte/aangepaste shift (Verdi gebruikt 'shift' als veldnaam)
 }
 
 export class VerdiClient {
@@ -183,24 +183,10 @@ export class VerdiClient {
       
       console.log(`Verdi response:`, {
         result: data.result,
-        shiftGuid: data.shiftGuid,
+        shift: data.shift,
         warnings: data.warningFeedback?.length || 0,
         errors: data.errorFeedback?.length || 0
       });
-
-      // DEBUG: Log volledige response als shiftGuid ontbreekt
-      if (!data.shiftGuid && data.result === 'Success') {
-        console.error(`⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!`);
-        console.error(`Full Verdi response object:`, JSON.stringify(data, null, 2));
-        console.error(`Response keys:`, Object.keys(data));
-        console.error(`Response has these properties:`, {
-          hasShiftGuid: 'shiftGuid' in data,
-          hasShift: 'shift' in data,
-          hasId: 'id' in data,
-          hasData: 'data' in data,
-          allKeys: Object.keys(data)
-        });
-      }
 
       // Log volledige error/warning details voor debugging
       if (data.errorFeedback && data.errorFeedback.length > 0) {
