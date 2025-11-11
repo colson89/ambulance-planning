@@ -1,10 +1,14 @@
 # GitHub Deployment naar Windows Server
 
+## BELANGRIJK: Debug Deployment voor Verdi GUID Issue
+
+Deze deployment voegt **extra debug logging** toe om te ontdekken waarom Verdi geen `shiftGuid` terugstuurt.
+
 ## Stap 1: Push de code naar GitHub (doe dit nu in Replit)
 
 ```bash
 git add .
-git commit -m "Verdi UPDATE detectie met snapshot data - fixes conflicts bij regenerate"
+git commit -m "Add debug logging for Verdi GUID response issue"
 git push origin main
 ```
 
@@ -50,36 +54,37 @@ Je zou moeten zien:
 }
 ```
 
-## Stap 4: BELANGRIJK - Eenmalige cleanup
+## Stap 4: DEBUG - Test Verdi synchronisatie en bekijk logs
 
-**Optie A - Via Verdi interface (AANBEVOLEN)**:
-1. Log in op Verdi alarm software
-2. Verwijder ALLE mei 2026 shifts handmatig
-3. Dit reset de Verdi database en voorkomt conflicts
+**BELANGRIJK**: Deze deployment is puur voor debugging. Je hoeft NIETS te verwijderen in Verdi.
 
-**Optie B - Via cleanup button (als Verdi niet toegankelijk is)**:
-1. Log in als admin in de applicatie
-2. Ga naar **Verdi Settings**
-3. Klik op **"Legacy Logs Opschonen"**
-4. Wacht op bevestiging
-
-## Stap 5: Synchroniseer opnieuw
-
-1. Ga naar je planning pagina
-2. Klik **"Synchroniseren naar Verdi"**
-3. Alle shifts worden nu MET snapshot data aangemaakt
-4. Console logs zouden moeten tonen: `isUpdate: false` (eerste keer is correct - het zijn nieuwe shifts)
-
-## Stap 6: Test UPDATE functionaliteit
-
-1. Wijzig **1 persoon** in een shift (vervang iemand door iemand anders)
-2. Klik weer **"Synchroniseren naar Verdi"**
-3. Nu zou je in de logs moeten zien:
+1. **Ga naar je planning pagina**
+2. **Klik "Synchroniseren naar Verdi"** (1 keer)
+3. **Bekijk direct de PM2 logs**:
+   ```powershell
+   pm2 logs ambulance-planning --lines 200
    ```
-   Found existing Verdi shift via date/time match for [datum]_[tijd]_[type]: [GUID]
-   isUpdate: true
-   ```
-4. **GEEN conflict errors meer!** ✅
+
+## Stap 5: Wat te zoeken in de logs
+
+Als `shiftGuid` **WEL** wordt teruggegeven:
+```
+Verdi response: { result: 'Success', shiftGuid: 'abc-123-def-456', warnings: 0, errors: 0 }
+```
+✅ GEEN debug errors → de fix werkt al!
+
+Als `shiftGuid` **NIET** wordt teruggegeven:
+```
+⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+Full Verdi response object: { ... }
+Response keys: ['result', 'warningFeedback', 'errorFeedback', 'shift']
+Response has these properties: { hasShift: true, hasId: false, ... }
+```
+🔍 Kopieer deze VOLLEDIGE debug output en stuur naar mij!
+
+## Stap 6: Stuur debug output
+
+**Kopieer de volledige console output** (vooral de regels met "CRITICAL" en "Full Verdi response") en deel deze met mij. Dan kan ik de definitieve fix maken.
 
 ## Troubleshooting
 
