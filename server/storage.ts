@@ -127,6 +127,7 @@ export interface IStorage {
   getLastSuccessfulVerdiSync(stationId: number, month: number, year: number): Promise<Date | null>;
   getLegacyVerdiSyncLogs(stationId?: number): Promise<any[]>;
   deleteVerdiSyncLog(shiftId: number): Promise<void>;
+  resetVerdiSyncLog(shiftId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2780,8 +2781,9 @@ export class DatabaseStorage implements IStorage {
 
     if (!shift) throw new Error("Shift not found");
     
-    // Verwijder sync log - wijziging is nog niet naar Verdi gestuurd
-    await this.deleteVerdiSyncLog(id);
+    // Reset sync status naar 'pending' maar behoud GUID
+    // Dit zorgt ervoor dat bij volgende sync een UPDATE wordt gestuurd
+    await this.resetVerdiSyncLog(id);
     
     return shift;
   }
@@ -3332,6 +3334,23 @@ export class DatabaseStorage implements IStorage {
 
   async deleteVerdiSyncLog(shiftId: number): Promise<void> {
     await db.delete(verdiSyncLog).where(eq(verdiSyncLog.shiftId, shiftId));
+  }
+
+  async resetVerdiSyncLog(shiftId: number): Promise<void> {
+    // Reset sync status naar 'pending' maar behoud de GUID
+    // Dit zorgt ervoor dat bij volgende sync een UPDATE wordt gestuurd
+    const existingLog = await this.getVerdiSyncLog(shiftId);
+    if (existingLog) {
+      await db
+        .update(verdiSyncLog)
+        .set({
+          syncStatus: 'pending',
+          errorMessage: null,
+          warningMessages: null,
+          updatedAt: new Date()
+        })
+        .where(eq(verdiSyncLog.shiftId, shiftId));
+    }
   }
 }
 
