@@ -910,16 +910,22 @@ Planning Gebruiker ←→ Verdi Person GUID
 **Hoe Gebruiken:**
 
 1. **Ga naar tab "Gebruiker Mappings"**
-2. **Zie lijst van alle teamleden** met kolommen:
+2. **🔍 Zoekfunctie gebruiken** (optioneel):
+   - Bovenaan de tabel ziet u een zoekbalk
+   - Type een naam of gebruikersnaam om de lijst te filteren
+   - Zoekt op: gebruikersnaam, voornaam, achternaam en volledige naam
+   - Handig bij grote teams om snel een specifieke gebruiker te vinden
+3. **Zie lijst van teamleden** met kolommen:
    - Gebruikersnaam
    - Naam
    - Person GUID (invoerveld)
-3. **Vul Person GUID in** voor elke gebruiker
+4. **Vul Person GUID in** voor elke gebruiker
    - Verkrijgbaar via Verdi export
    - Formaat: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
-4. **Klik "Opslaan"** naast elke gebruiker
+5. **Klik "Opslaan"** naast elke gebruiker
 
-**💡 Tip:** 
+**💡 Tips:** 
+- Gebruik de zoekbalk om snel specifieke gebruikers te vinden
 - Bulk import functie volgt later
 - Momenteel: handmatige invoer per gebruiker
 
@@ -1658,7 +1664,10 @@ Het systeem wordt regelmatig bijgewerkt met nieuwe functies en verbeteringen:
   - Position GUID mappings per station
   - Comprehensive sync logging met status tracking (success/error/pending)
   - Toegangscontrole: Admins en Supervisors hebben volledige toegang
-  - ⏳ Frontend admin interface volgt binnenkort (wacht op Verdi Auth Secret)
+  - 🔍 **Zoekfunctie in Gebruiker Mappings** - Snel gebruikers vinden bij GUID koppeling
+    - Zoekt op gebruikersnaam, voornaam, achternaam en volledige naam
+    - Real-time filtering terwijl u typt
+    - Null-safe implementatie (werkt ook met incomplete namen)
 
 **Beveiliging:**
 - 🔒 **Enhanced Authorization** - Alle Verdi endpoints beveiligd
