@@ -75,6 +75,8 @@ export default function ScheduleGenerator() {
   const [generateProgressMessage, setGenerateProgressMessage] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [testPassword, setTestPassword] = useState<string>("");
+  const [deletePreferencesPassword, setDeletePreferencesPassword] = useState<string>("");
+  const [isDeletingPreferences, setIsDeletingPreferences] = useState(false);
   
   // Add Shift Dialog state
   const [showAddShiftDialog, setShowAddShiftDialog] = useState(false);
@@ -1220,6 +1222,130 @@ export default function ScheduleGenerator() {
                         }}
                       >
                         Genereer Test Voorkeuren
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+
+              {/* Voorkeuren verwijderen */}
+              <div className="mt-4 p-4 border border-orange-100 rounded-md bg-orange-50">
+                <h3 className="font-semibold mb-2 flex items-center text-orange-800">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Voorkeuren Verwijderen
+                </h3>
+                <p className="text-sm text-orange-800 mb-4">
+                  Verwijder alle opgegeven voorkeuren voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+                </p>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-orange-300 bg-orange-100 text-orange-900 hover:bg-orange-200"
+                      disabled={isDeletingPreferences}
+                    >
+                      {isDeletingPreferences ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Bezig met verwijderen...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Verwijder Voorkeuren
+                        </>
+                      )}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Voorkeuren Verwijderen</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        <div className="space-y-4">
+                          <p>
+                            Weet u zeker dat u alle voorkeuren wilt verwijderen voor <strong>{format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}</strong>?
+                          </p>
+                          
+                          <div className="p-3 bg-red-50 border border-red-200 rounded">
+                            <span className="text-red-600 font-medium">⚠️ Dit verwijdert ALLE opgegeven voorkeuren van alle gebruikers voor deze maand!</span>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor="delete-preferences-password">Voer het wachtwoord in om door te gaan:</Label>
+                            <Input
+                              id="delete-preferences-password"
+                              type="password"
+                              value={deletePreferencesPassword}
+                              onChange={(e) => setDeletePreferencesPassword(e.target.value)}
+                              placeholder="Wachtwoord vereist"
+                              className="w-full"
+                            />
+                          </div>
+                          
+                          <p className="text-sm text-gray-600">
+                            Deze actie kan niet ongedaan worden gemaakt. Gebruikers moeten opnieuw hun voorkeuren opgeven.
+                          </p>
+                        </div>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel onClick={() => setDeletePreferencesPassword("")}>
+                        Annuleren
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        disabled={deletePreferencesPassword !== "Jeroen0143."}
+                        className="bg-red-600 hover:bg-red-700"
+                        onClick={async () => {
+                          // Valideer wachtwoord
+                          if (deletePreferencesPassword !== "Jeroen0143.") {
+                            toast({
+                              title: "Onjuist wachtwoord",
+                              description: "Het ingevoerde wachtwoord is onjuist.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          
+                          try {
+                            setIsDeletingPreferences(true);
+                            
+                            const res = await apiRequest("POST", "/api/preferences/delete-month", {
+                              month: selectedMonth + 1,
+                              year: selectedYear,
+                              password: deletePreferencesPassword
+                            });
+                            
+                            if (!res.ok) {
+                              const error = await res.json();
+                              throw new Error(error.message || "Kon voorkeuren niet verwijderen");
+                            }
+                            
+                            const data = await res.json();
+                            toast({
+                              title: "Voorkeuren Verwijderd",
+                              description: data.message,
+                            });
+                            
+                            // Ververs de gegevens
+                            refetchPreferences();
+                            
+                            // Vernieuw ook de tijdstempel voor de huidige maand
+                            queryClient.invalidateQueries({ queryKey: ["/api/system/settings/last-preferences-generated", selectedMonth + 1, selectedYear, effectiveStationId] });
+                          } catch (error) {
+                            toast({
+                              title: "Fout",
+                              description: error instanceof Error ? error.message : "Onbekende fout bij verwijderen voorkeuren",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setIsDeletingPreferences(false);
+                            setDeletePreferencesPassword(""); // Reset wachtwoord na gebruik
+                          }
+                        }}
+                      >
+                        Verwijder Voorkeuren
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

@@ -1234,6 +1234,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Delete all preferences for a specific month/year/station (admin only)
+  app.post("/api/preferences/delete-month", requireAdmin, async (req, res) => {
+    try {
+      const { month, year, password } = req.body;
+      const userStationId = req.user?.stationId;
+      
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+
+      // Controleer of gebruiker ingelogd is en stationId heeft
+      if (!req.user || !userStationId) {
+        return res.status(401).json({ message: "Geen geldige sessie of station informatie. Log opnieuw in." });
+      }
+
+      // Verifieer wachtwoord (zelfde als test preferences)
+      if (password !== "Jeroen0143.") {
+        return res.status(403).json({ message: "Onjuist wachtwoord" });
+      }
+
+      // Verwijder alle voorkeuren voor deze maand/jaar/station
+      const deletedCount = await storage.deletePreferencesByMonthAndStation(month, year, userStationId);
+      
+      console.log(`Deleted ${deletedCount} preferences for station ${userStationId}, month ${month}/${year}`);
+      
+      res.status(200).json({ 
+        message: `Successfully deleted ${deletedCount} preferences for ${month}/${year}`,
+        deletedCount
+      });
+    } catch (error) {
+      console.error("Error deleting preferences:", error);
+      res.status(500).json({ 
+        message: "Failed to delete preferences",
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
   
   // Get all preferences for admin view
   app.get("/api/preferences/all", requireAdmin, async (req, res) => {

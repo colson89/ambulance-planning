@@ -1027,6 +1027,20 @@ export class DatabaseStorage implements IStorage {
     await db.delete(shiftPreferences).where(eq(shiftPreferences.id, id));
   }
 
+  async deletePreferencesByMonthAndStation(month: number, year: number, stationId: number): Promise<number> {
+    const result = await db
+      .delete(shiftPreferences)
+      .where(
+        and(
+          eq(shiftPreferences.month, month),
+          eq(shiftPreferences.year, year),
+          eq(shiftPreferences.stationId, stationId)
+        )
+      );
+    
+    return result.rowCount || 0;
+  }
+
   async getOpenShiftsForPlanning(month: number, year: number): Promise<Shift[]> {
     return await db.select()
       .from(shifts)
