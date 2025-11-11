@@ -188,6 +188,14 @@ export class VerdiClient {
         errors: data.errorFeedback?.length || 0
       });
 
+      // Log volledige error/warning details voor debugging
+      if (data.errorFeedback && data.errorFeedback.length > 0) {
+        console.error(`Verdi ERROR details:`, data.errorFeedback);
+      }
+      if (data.warningFeedback && data.warningFeedback.length > 0) {
+        console.warn(`Verdi WARNING details:`, data.warningFeedback);
+      }
+
       return data;
     } catch (error) {
       console.error("Error sending shift to Verdi:", error);
@@ -231,6 +239,12 @@ export class VerdiClient {
           'Authorization': this.getBasicAuthHeader(stationConfig.authId, stationConfig.authSecret)
         }
       });
+
+      // 404 betekent dat de shift al niet meer bestaat in Verdi - dat is OK!
+      if (response.status === 404) {
+        console.log(`Shift ${verdiShiftGuid} bestaat niet meer in Verdi (404) - behandeld als succesvol verwijderd`);
+        return;
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
