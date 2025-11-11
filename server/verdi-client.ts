@@ -2,16 +2,17 @@ import type { Shift, VerdiUserMapping, VerdiPositionMapping, VerdiStationConfig,
 
 /**
  * Formatteert een Date object als ISO string zonder timezone conversie
- * Behoudt de lokale tijd zoals die in de database staat (7:00 blijft 7:00)
- * Verdi verwacht tijden in lokale tijd, niet in UTC
+ * Gebruikt UTC componenten omdat database timestamps zonder timezone worden opgeslagen
+ * en PostgreSQL deze als UTC aan Node.js doorgeeft, ongeacht de server timezone.
+ * Dit zorgt ervoor dat 7:00 in de database als 7:00 naar Verdi wordt gestuurd.
  */
 function formatLocalDateTime(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
   
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 }
@@ -131,7 +132,11 @@ export class VerdiClient {
       shiftId: shift.id,
       stationId: shift.stationId,
       assignments: assignedUsers.length,
-      isUpdate: !!existingVerdiShiftGuid
+      isUpdate: !!existingVerdiShiftGuid,
+      rawStartTime: shift.startTime,
+      rawEndTime: shift.endTime,
+      formattedStart: requestBody.start,
+      formattedEnd: requestBody.end
     });
 
     try {
