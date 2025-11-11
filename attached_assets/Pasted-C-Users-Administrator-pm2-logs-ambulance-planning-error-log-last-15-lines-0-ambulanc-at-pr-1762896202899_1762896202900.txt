@@ -1,0 +1,707 @@
+C:\Users\Administrator\.pm2\logs\ambulance-planning-error.log last 15 lines:
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulanc |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulanc | Failed to delete shift 8005: Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.
+0|ambulanc | Error deleting shift from Verdi: Error: Verdi API DELETE error (404):
+0|ambulanc |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulanc |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulanc | Error deleting shift 8002 from Verdi: Error: Verdi API DELETE error (404):
+0|ambulanc |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulanc |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulanc | Failed to delete shift 8002: Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.
+
+C:\Users\Administrator\.pm2\logs\ambulance-planning-out.log last 15 lines:
+0|ambulanc | user: {
+0|ambulanc |   id: 17,
+0|ambulanc |   username: 'tvdd19',
+0|ambulanc |   password: 'Admin123',
+0|ambulanc |   firstName: 'Tom',
+0|ambulanc |   lastName: 'Vandendijck',
+0|ambulanc |   email: '',
+0|ambulanc |   role: 'admin',
+0|ambulanc |   isAdmin: false,
+0|ambulanc |   isProfessional: true,
+0|ambulanc |   hasDrivingLicenseC: true,
+0|ambulanc |   hours: 24,
+0|ambulanc |   stationId: 2
+0|ambulanc | }
+0|ambulanc | 10:17:09 PM [express] GET /api/shifts 200 in 3ms :: [{"id":7992,"userId":166,"stationId":2,"date":"20…
+
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === GET /api/users DEBUG ===
+0|ambulance-planning  | Admin user object: {
+0|ambulance-planning  |   "id": 17,
+0|ambulance-planning  |   "username": "tvdd19",
+0|ambulance-planning  |   "password": "Admin123",
+0|ambulance-planning  |   "firstName": "Tom",
+0|ambulance-planning  |   "lastName": "Vandendijck",
+0|ambulance-planning  |   "email": "",
+0|ambulance-planning  |   "role": "admin",
+0|ambulance-planning  |   "isAdmin": false,
+0|ambulance-planning  |   "isProfessional": true,
+0|ambulance-planning  |   "hasDrivingLicenseC": true,
+0|ambulance-planning  |   "hours": 24,
+0|ambulance-planning  |   "stationId": 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Admin stationId: 2
+0|ambulance-planning  | Admin role: admin
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:17:09.253Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:17:09.253Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:17:09.253Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Fetching comments for month: 5, year: 2026, station: 2
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | 10:17:30 PM [express] GET /api/user 200 in 15ms :: {"id":17,"username":"tvdd19","password":"Admin123"…
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:17:09.253Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | All users from database: 117
+0|ambulance-planning  | Users station IDs: [
+0|ambulance-planning  |   'rove319:1', 'tvdd20:4',  'drpa338:1', 'emth312:1', 'fima342:1',
+0|ambulance-planning  |   'gihe566:1', 'gihu503:1', 'guel545:1', 'jabe308:1', 'javk322:1',
+0|ambulance-planning  |   'jisr332:1', 'jomi499:1', 'jost468:1', 'juvh324:1', 'kuwu580:1',
+0|ambulance-planning  |   'mami479:1', 'math470:1', 'svdb435:1', 'stry334:1', 'tove318:1',
+0|ambulance-planning  |   'toth471:1', 'vidb464:1', 'suku611:1', 'rost612:1', 'jevb631:1',
+0|ambulance-planning  |   'stli351:1', 'robu535:5', 'jowe210:5', 'gime604:1', 'mita313:1',
+0|ambulance-planning  |   'pavh191:5', 'rodk152:5', 'havm323:1', 'jope179:5', 'sevl577:5',
+0|ambulance-planning  |   'stma453:5', 'siba534:5', 'vile170:5', 'maka546:1', 'bave198:5',
+0|ambulance-planning  |   'tvdd19:2',  'rvdb189:5', 'ivgo344:1', 'sthe7:1',   'topo298:2',
+0|ambulance-planning  |   'bami339:1', 'jaco37:7',  'dimu355:6', 'gico556:5', 'babo142:5',
+0|ambulance-planning  |   'jovv423:5', 'chve200:5', 'timi86:7',  'jeva400:8', 'nilu84:7',
+0|ambulance-planning  |   'thhu81:7',  'leve509:7', 'dero484:7', 'dave203:7', 'tivr108:7',
+0|ambulance-planning  |   'rume450:7', 'todo73:7',  'mast555:7', 'gube551:7', 'koma85:7',
+0|ambulance-planning  |   'rigo488:5', 'koge76:7',  'krvl63:7',  'gist529:7', 'krcl35:7',
+0|ambulance-planning  |   'phho162:5', 'frcl34:7',  'ivve60:7',  'elru411:8', 'javd54:7',
+0|ambulance-planning  |   'pave61:7',  'jevd55:7',  'stke427:7', 'jobo31:7',  'stpe50:7',
+0|ambulance-planning  |   'jodb49:7',  'wevr57:7',  'wiva58:7',  'jolu48:7',  'jeda38:7',
+0|ambulance-planning  |   'anwo67:7',  'bben30:7',  'diap28:7',  'mavdb95:7', 'miae27:7',
+0|ambulance-planning  |   'toge75:7',  'elvs521:8', 'esds634:8', 'jeva418:2', 'daru306:2',
+0|ambulance-planning  |   'dica261:2', 'fidr571:2', 'glph405:2', 'jobo257:2', 'joli301:2',
+0|ambulance-planning  |   ... 17 more items
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: getUsersByStation called with stationId: 2
+0|ambulance-planning  | 10:17:30 PM [express] GET /api/weekday-configs 200 in 17ms :: [{"id":1,"stationId":2,"dayOfWeek":0,"e…
+0|ambulance-planning  | 10:17:30 PM [express] GET /api/system/settings/last-preferences-generated 200 in 17ms :: {"timestamp"…
+0|ambulance-planning  | 10:17:30 PM [express] GET /api/system/settings/last-schedule-generated 200 in 17ms :: {"timestamp":"2…
+0|ambulance-planning  | Found 0 comments for station 2: []
+0|ambulance-planning  | 10:17:30 PM [express] GET /api/preferences/all 200 in 27ms :: [{"id":7046,"userId":17,"stationId":2,"…
+0|ambulance-planning  | DEBUG: Found 22 primary users for station 2: [
+0|ambulance-planning  |   'tvdd19:17',   'topo298:58',
+0|ambulance-planning  |   'jeva418:159', 'daru306:163',
+0|ambulance-planning  |   'dica261:164', 'fidr571:166',
+0|ambulance-planning  |   'glph405:167', 'jobo257:168',
+0|ambulance-planning  |   'joli301:169', 'joni495:170',
+0|ambulance-planning  |   'liro562:171', 'pibe297:172',
+0|ambulance-planning  |   'mava296:174', 'guva285:175',
+0|ambulance-planning  |   'dygr460:181', 'toho21:157',
+0|ambulance-planning  |   'bawo25:180',  'bagi20:156',
+0|ambulance-planning  |   'bjlo22:158',  'frba17:155',
+0|ambulance-planning  |   'niae66:179',  'drru293:165'
+0|ambulance-planning  | ]
+0|ambulance-planning  | Returning 0 comments with user details for station 2
+0|ambulance-planning  | DEBUG: Found 1 additional users for station 2: [ 'jeva400:87' ]
+0|ambulance-planning  | DEBUG: Adding additional user jeva400:87 to results
+0|ambulance-planning  | DEBUG: Total 23 users returned for station 2
+0|ambulance-planning  | Admin gets users for station 2: 23 users (including cross-station)
+0|ambulance-planning  | 10:17:30 PM [express] GET /api/shifts 200 in 37ms :: [{"id":7992,"userId":166,"stationId":2,"date":"2…
+0|ambulance-planning  | 10:17:30 PM [express] GET /api/comments/all/5/2026 200 in 38ms :: []
+0|ambulance-planning  | 10:17:30 PM [express] GET /api/verdi/sync-status/5/2026 200 in 38ms :: [{"id":106,"shiftId":7999,"sta…
+0|ambulance-planning  | 10:17:30 PM [express] GET /api/verdi/last-sync/2/5/2026 200 in 39ms :: {"lastSync":null}
+0|ambulance-planning  | 10:17:30 PM [express] GET /api/users 200 in 43ms :: [{"id":156,"username":"bagi20","firstName":"Bart …
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | 10:17:53 PM [express] GET /api/user 200 in 2ms :: {"id":17,"username":"tvdd19","password":"Admin123",…
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === GET /api/users DEBUG ===
+0|ambulance-planning  | Admin user object: {
+0|ambulance-planning  |   "id": 17,
+0|ambulance-planning  |   "username": "tvdd19",
+0|ambulance-planning  |   "password": "Admin123",
+0|ambulance-planning  |   "firstName": "Tom",
+0|ambulance-planning  |   "lastName": "Vandendijck",
+0|ambulance-planning  |   "email": "",
+0|ambulance-planning  |   "role": "admin",
+0|ambulance-planning  |   "isAdmin": false,
+0|ambulance-planning  |   "isProfessional": true,
+0|ambulance-planning  |   "hasDrivingLicenseC": true,
+0|ambulance-planning  |   "hours": 24,
+0|ambulance-planning  |   "stationId": 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Admin stationId: 2
+0|ambulance-planning  | Admin role: admin
+0|ambulance-planning  | All users from database: 117
+0|ambulance-planning  | Users station IDs: [
+0|ambulance-planning  |   'rove319:1', 'tvdd20:4',  'drpa338:1', 'emth312:1', 'fima342:1',
+0|ambulance-planning  |   'gihe566:1', 'gihu503:1', 'guel545:1', 'jabe308:1', 'javk322:1',
+0|ambulance-planning  |   'jisr332:1', 'jomi499:1', 'jost468:1', 'juvh324:1', 'kuwu580:1',
+0|ambulance-planning  |   'mami479:1', 'math470:1', 'svdb435:1', 'stry334:1', 'tove318:1',
+0|ambulance-planning  |   'toth471:1', 'vidb464:1', 'suku611:1', 'rost612:1', 'jevb631:1',
+0|ambulance-planning  |   'stli351:1', 'robu535:5', 'jowe210:5', 'gime604:1', 'mita313:1',
+0|ambulance-planning  |   'pavh191:5', 'rodk152:5', 'havm323:1', 'jope179:5', 'sevl577:5',
+0|ambulance-planning  |   'stma453:5', 'siba534:5', 'vile170:5', 'maka546:1', 'bave198:5',
+0|ambulance-planning  |   'tvdd19:2',  'rvdb189:5', 'ivgo344:1', 'sthe7:1',   'topo298:2',
+0|ambulance-planning  |   'bami339:1', 'jaco37:7',  'dimu355:6', 'gico556:5', 'babo142:5',
+0|ambulance-planning  |   'jovv423:5', 'chve200:5', 'timi86:7',  'jeva400:8', 'nilu84:7',
+0|ambulance-planning  |   'thhu81:7',  'leve509:7', 'dero484:7', 'dave203:7', 'tivr108:7',
+0|ambulance-planning  |   'rume450:7', 'todo73:7',  'mast555:7', 'gube551:7', 'koma85:7',
+0|ambulance-planning  |   'rigo488:5', 'koge76:7',  'krvl63:7',  'gist529:7', 'krcl35:7',
+0|ambulance-planning  |   'phho162:5', 'frcl34:7',  'ivve60:7',  'elru411:8', 'javd54:7',
+0|ambulance-planning  |   'pave61:7',  'jevd55:7',  'stke427:7', 'jobo31:7',  'stpe50:7',
+0|ambulance-planning  |   'jodb49:7',  'wevr57:7',  'wiva58:7',  'jolu48:7',  'jeda38:7',
+0|ambulance-planning  |   'anwo67:7',  'bben30:7',  'diap28:7',  'mavdb95:7', 'miae27:7',
+0|ambulance-planning  |   'toge75:7',  'elvs521:8', 'esds634:8', 'jeva418:2', 'daru306:2',
+0|ambulance-planning  |   'dica261:2', 'fidr571:2', 'glph405:2', 'jobo257:2', 'joli301:2',
+0|ambulance-planning  |   ... 17 more items
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: getUsersByStation called with stationId: 2
+0|ambulance-planning  | DEBUG: Found 22 primary users for station 2: [
+0|ambulance-planning  |   'tvdd19:17',   'topo298:58',
+0|ambulance-planning  |   'jeva418:159', 'daru306:163',
+0|ambulance-planning  |   'dica261:164', 'fidr571:166',
+0|ambulance-planning  |   'glph405:167', 'jobo257:168',
+0|ambulance-planning  |   'joli301:169', 'joni495:170',
+0|ambulance-planning  |   'liro562:171', 'pibe297:172',
+0|ambulance-planning  |   'mava296:174', 'guva285:175',
+0|ambulance-planning  |   'dygr460:181', 'toho21:157',
+0|ambulance-planning  |   'bawo25:180',  'bagi20:156',
+0|ambulance-planning  |   'bjlo22:158',  'frba17:155',
+0|ambulance-planning  |   'niae66:179',  'drru293:165'
+0|ambulance-planning  | ]
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | DEBUG: Found 1 additional users for station 2: [ 'jeva400:87' ]
+0|ambulance-planning  | DEBUG: Adding additional user jeva400:87 to results
+0|ambulance-planning  | DEBUG: Total 23 users returned for station 2
+0|ambulance-planning  | Admin gets users for station 2: 23 users (including cross-station)
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:17:53.284Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | 10:17:53 PM [express] GET /api/users 200 in 7ms :: [{"id":156,"username":"bagi20","firstName":"Bart "…
+0|ambulance-planning  | 10:17:53 PM [express] GET /api/weekday-configs 200 in 3ms :: [{"id":1,"stationId":2,"dayOfWeek":0,"en…
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:17:53.296Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:17:53.296Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Fetching comments for month: 5, year: 2026, station: 2
+0|ambulance-planning  | Found 0 comments for station 2: []
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | 10:17:53 PM [express] GET /api/system/settings/last-preferences-generated 200 in 9ms :: {"timestamp":…
+0|ambulance-planning  | 10:17:53 PM [express] GET /api/system/settings/last-schedule-generated 200 in 9ms :: {"timestamp":"20…
+0|ambulance-planning  | Returning 0 comments with user details for station 2
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:17:53.296Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | 10:17:53 PM [express] GET /api/comments/all/5/2026 200 in 12ms :: []
+0|ambulance-planning  | 10:17:53 PM [express] GET /api/preferences/all 200 in 24ms :: [{"id":7046,"userId":17,"stationId":2,"…
+0|ambulance-planning  | 10:17:53 PM [express] GET /api/shifts 200 in 25ms :: [{"id":7992,"userId":166,"stationId":2,"date":"2…
+0|ambulance-planning  | 10:17:53 PM [express] GET /api/verdi/last-sync/2/5/2026 200 in 28ms :: {"lastSync":null}
+0|ambulance-planning  | 10:17:53 PM [express] GET /api/verdi/sync-status/5/2026 200 in 27ms :: [{"id":106,"shiftId":7999,"sta…
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === GET /api/users DEBUG ===
+0|ambulance-planning  | Admin user object: {
+0|ambulance-planning  |   "id": 17,
+0|ambulance-planning  |   "username": "tvdd19",
+0|ambulance-planning  |   "password": "Admin123",
+0|ambulance-planning  |   "firstName": "Tom",
+0|ambulance-planning  |   "lastName": "Vandendijck",
+0|ambulance-planning  |   "email": "",
+0|ambulance-planning  |   "role": "admin",
+0|ambulance-planning  |   "isAdmin": false,
+0|ambulance-planning  |   "isProfessional": true,
+0|ambulance-planning  |   "hasDrivingLicenseC": true,
+0|ambulance-planning  |   "hours": 24,
+0|ambulance-planning  |   "stationId": 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Admin stationId: 2
+0|ambulance-planning  | Admin role: admin
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:17:53.324Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | All users from database: 117
+0|ambulance-planning  | Users station IDs: [
+0|ambulance-planning  |   'rove319:1', 'tvdd20:4',  'drpa338:1', 'emth312:1', 'fima342:1',
+0|ambulance-planning  |   'gihe566:1', 'gihu503:1', 'guel545:1', 'jabe308:1', 'javk322:1',
+0|ambulance-planning  |   'jisr332:1', 'jomi499:1', 'jost468:1', 'juvh324:1', 'kuwu580:1',
+0|ambulance-planning  |   'mami479:1', 'math470:1', 'svdb435:1', 'stry334:1', 'tove318:1',
+0|ambulance-planning  |   'toth471:1', 'vidb464:1', 'suku611:1', 'rost612:1', 'jevb631:1',
+0|ambulance-planning  |   'stli351:1', 'robu535:5', 'jowe210:5', 'gime604:1', 'mita313:1',
+0|ambulance-planning  |   'pavh191:5', 'rodk152:5', 'havm323:1', 'jope179:5', 'sevl577:5',
+0|ambulance-planning  |   'stma453:5', 'siba534:5', 'vile170:5', 'maka546:1', 'bave198:5',
+0|ambulance-planning  |   'tvdd19:2',  'rvdb189:5', 'ivgo344:1', 'sthe7:1',   'topo298:2',
+0|ambulance-planning  |   'bami339:1', 'jaco37:7',  'dimu355:6', 'gico556:5', 'babo142:5',
+0|ambulance-planning  |   'jovv423:5', 'chve200:5', 'timi86:7',  'jeva400:8', 'nilu84:7',
+0|ambulance-planning  |   'thhu81:7',  'leve509:7', 'dero484:7', 'dave203:7', 'tivr108:7',
+0|ambulance-planning  |   'rume450:7', 'todo73:7',  'mast555:7', 'gube551:7', 'koma85:7',
+0|ambulance-planning  |   'rigo488:5', 'koge76:7',  'krvl63:7',  'gist529:7', 'krcl35:7',
+0|ambulance-planning  |   'phho162:5', 'frcl34:7',  'ivve60:7',  'elru411:8', 'javd54:7',
+0|ambulance-planning  |   'pave61:7',  'jevd55:7',  'stke427:7', 'jobo31:7',  'stpe50:7',
+0|ambulance-planning  |   'jodb49:7',  'wevr57:7',  'wiva58:7',  'jolu48:7',  'jeda38:7',
+0|ambulance-planning  |   'anwo67:7',  'bben30:7',  'diap28:7',  'mavdb95:7', 'miae27:7',
+0|ambulance-planning  |   'toge75:7',  'elvs521:8', 'esds634:8', 'jeva418:2', 'daru306:2',
+0|ambulance-planning  |   'dica261:2', 'fidr571:2', 'glph405:2', 'jobo257:2', 'joli301:2',
+0|ambulance-planning  |   ... 17 more items
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: getUsersByStation called with stationId: 2
+0|ambulance-planning  | DEBUG: Found 22 primary users for station 2: [
+0|ambulance-planning  |   'tvdd19:17',   'topo298:58',
+0|ambulance-planning  |   'jeva418:159', 'daru306:163',
+0|ambulance-planning  |   'dica261:164', 'fidr571:166',
+0|ambulance-planning  |   'glph405:167', 'jobo257:168',
+0|ambulance-planning  |   'joli301:169', 'joni495:170',
+0|ambulance-planning  |   'liro562:171', 'pibe297:172',
+0|ambulance-planning  |   'mava296:174', 'guva285:175',
+0|ambulance-planning  |   'dygr460:181', 'toho21:157',
+0|ambulance-planning  |   'bawo25:180',  'bagi20:156',
+0|ambulance-planning  |   'bjlo22:158',  'frba17:155',
+0|ambulance-planning  |   'niae66:179',  'drru293:165'
+0|ambulance-planning  | ]
+0|ambulance-planning  | 10:18:21 PM [express] GET /api/user 200 in 9ms :: {"id":17,"username":"tvdd19","password":"Admin123",…
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | 10:18:21 PM [express] GET /api/weekday-configs 200 in 10ms :: [{"id":1,"stationId":2,"dayOfWeek":0,"e…
+0|ambulance-planning  | DEBUG: Found 1 additional users for station 2: [ 'jeva400:87' ]
+0|ambulance-planning  | DEBUG: Adding additional user jeva400:87 to results
+0|ambulance-planning  | DEBUG: Total 23 users returned for station 2
+0|ambulance-planning  | Admin gets users for station 2: 23 users (including cross-station)
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:18:21.274Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Fetching comments for month: 5, year: 2026, station: 2
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | 10:18:21 PM [express] GET /api/users 200 in 17ms :: [{"id":156,"username":"bagi20","firstName":"Bart …
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | 10:18:21 PM [express] GET /api/system/settings/last-schedule-generated 200 in 14ms :: {"timestamp":"2…
+0|ambulance-planning  | Found 0 comments for station 2: []
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:18:21.279Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:18:21.285Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Returning 0 comments with user details for station 2
+0|ambulance-planning  | 10:18:21 PM [express] GET /api/preferences/all 200 in 28ms :: [{"id":7046,"userId":17,"stationId":2,"…
+0|ambulance-planning  | 10:18:21 PM [express] GET /api/comments/all/5/2026 200 in 30ms :: []
+0|ambulance-planning  | 10:18:21 PM [express] GET /api/verdi/sync-status/5/2026 200 in 31ms :: [{"id":106,"shiftId":7999,"sta…
+0|ambulance-planning  | 10:18:21 PM [express] GET /api/verdi/last-sync/2/5/2026 200 in 34ms :: {"lastSync":null}
+0|ambulance-planning  | 10:18:21 PM [express] GET /api/system/settings/last-preferences-generated 200 in 27ms :: {"timestamp"…
+0|ambulance-planning  | 10:18:21 PM [express] GET /api/shifts 200 in 27ms :: [{"id":7992,"userId":166,"stationId":2,"date":"2…
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Deleting all shifts for 5/2026 for station 2
+0|ambulance-planning  | [0%] Begonnen met verwijderen van 37 shifts...
+0|ambulance-planning  | [3%] 1/37 shifts verwijderd, 0 gefaald
+0|ambulance-planning  | [30%] 11/37 shifts verwijderd, 0 gefaald
+0|ambulance-planning  | [57%] 21/37 shifts verwijderd, 0 gefaald
+0|ambulance-planning  | [84%] 31/37 shifts verwijderd, 0 gefaald
+0|ambulance-planning  | [100%] 37/37 shifts verwijderd, 0 gefaald
+0|ambulance-planning  | [100%] 37 shifts succesvol verwijderd voor 5/2026
+0|ambulance-planning  | 10:18:27 PM [express] DELETE /api/shifts/month 200 in 63ms :: {"message":"37 shifts verwijderd voor 5…
