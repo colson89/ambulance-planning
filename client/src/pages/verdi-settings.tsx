@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Home, Save, Upload, Download } from "lucide-react";
+import { Home, Save, Upload, Download, Search } from "lucide-react";
 
 export default function VerdiSettings() {
   const { user } = useAuth();
@@ -91,6 +91,7 @@ export default function VerdiSettings() {
 
   const [userGuidInputs, setUserGuidInputs] = useState<{ [userId: number]: string }>({});
   const [positionGuidInputs, setPositionGuidInputs] = useState<{ [positionIndex: number]: string }>({});
+  const [userSearchQuery, setUserSearchQuery] = useState("");
 
   useEffect(() => {
     if (verdiConfig) {
@@ -378,7 +379,16 @@ export default function VerdiSettings() {
                 Koppel elke ambulancier aan hun Verdi Person GUID
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Zoek op naam of gebruikersnaam..."
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -389,31 +399,47 @@ export default function VerdiSettings() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => {
-                    const existingMapping = userMappings.find((m: any) => m.userId === user.id);
-                    return (
-                      <TableRow key={user.id}>
-                        <TableCell>{user.username}</TableCell>
-                        <TableCell>{user.firstName} {user.lastName}</TableCell>
-                        <TableCell>
-                          <Input
-                            placeholder="Person GUID"
-                            defaultValue={existingMapping?.personGuid || ""}
-                            onChange={(e) => setUserGuidInputs({ ...userGuidInputs, [user.id]: e.target.value })}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            onClick={() => handleUserMappingSave(user.id)}
-                            disabled={updateUserMappingMutation.isPending}
-                          >
-                            <Save className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {users
+                    .filter((user) => {
+                      if (!userSearchQuery) return true;
+                      const query = userSearchQuery.toLowerCase().trim();
+                      const firstName = (user.firstName ?? "").toLowerCase();
+                      const lastName = (user.lastName ?? "").toLowerCase();
+                      const fullName = `${firstName} ${lastName}`.trim();
+                      const username = user.username.toLowerCase();
+                      
+                      return (
+                        username.includes(query) ||
+                        firstName.includes(query) ||
+                        lastName.includes(query) ||
+                        fullName.includes(query)
+                      );
+                    })
+                    .map((user) => {
+                      const existingMapping = userMappings.find((m: any) => m.userId === user.id);
+                      return (
+                        <TableRow key={user.id}>
+                          <TableCell>{user.username}</TableCell>
+                          <TableCell>{user.firstName} {user.lastName}</TableCell>
+                          <TableCell>
+                            <Input
+                              placeholder="Person GUID"
+                              defaultValue={existingMapping?.personGuid || ""}
+                              onChange={(e) => setUserGuidInputs({ ...userGuidInputs, [user.id]: e.target.value })}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              onClick={() => handleUserMappingSave(user.id)}
+                              disabled={updateUserMappingMutation.isPending}
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                 </TableBody>
               </Table>
             </CardContent>
