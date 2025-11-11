@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Loader2, BarChart3, ArrowLeft, Calendar, Users, Clock, TrendingUp, Search } from "lucide-react";
+import { Loader2, BarChart3, ArrowLeft, Calendar, Users, Clock, TrendingUp, Search, ArrowUp, ArrowDown } from "lucide-react";
 import { useLocation } from "wouter";
 import {
   Table,
@@ -88,6 +88,10 @@ export default function Statistics() {
   const [selectedQuarter, setSelectedQuarter] = useState(Math.ceil(CURRENT_MONTH / 3));
   const [searchTerm, setSearchTerm] = useState("");
   
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<keyof ShiftStatistics | "name" | "percentage">("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  
   // Station selector state voor supervisors
   const [selectedStationId, setSelectedStationId] = useState<number | null>(
     user?.role === 'supervisor' ? null : user?.stationId || null
@@ -169,6 +173,28 @@ export default function Statistics() {
     });
   };
 
+  // Handle column sort
+  const handleSort = (column: keyof ShiftStatistics | "name" | "percentage") => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // New column, default to ascending
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
+
+  // Render sort indicator
+  const renderSortIcon = (column: keyof ShiftStatistics | "name" | "percentage") => {
+    if (sortColumn !== column) return null;
+    return sortDirection === "asc" ? (
+      <ArrowUp className="inline h-3 w-3 ml-1" />
+    ) : (
+      <ArrowDown className="inline h-3 w-3 ml-1" />
+    );
+  };
+
   // Filter and sort statistics
   const filteredAndSortedStatistics = useMemo(() => {
     if (!statistics) return [];
@@ -182,15 +208,37 @@ export default function Statistics() {
       return fullName.includes(search) || username.includes(search);
     });
     
-    // Sort alphabetically by last name, then first name
+    // Sort based on selected column and direction
     return filtered.sort((a, b) => {
-      const lastNameComparison = a.lastName.localeCompare(b.lastName);
-      if (lastNameComparison !== 0) {
-        return lastNameComparison;
+      let aValue: string | number;
+      let bValue: string | number;
+      
+      if (sortColumn === "name") {
+        // Sort by full name
+        aValue = `${a.lastName} ${a.firstName}`.toLowerCase();
+        bValue = `${b.lastName} ${b.firstName}`.toLowerCase();
+      } else if (sortColumn === "percentage") {
+        // Sort by calculated percentage
+        aValue = a.maxHours > 0 ? (a.totalPreferenceHours / a.maxHours) * 100 : 0;
+        bValue = b.maxHours > 0 ? (b.totalPreferenceHours / b.maxHours) * 100 : 0;
+      } else {
+        // Sort by numeric column
+        aValue = a[sortColumn] as number;
+        bValue = b[sortColumn] as number;
       }
-      return a.firstName.localeCompare(b.firstName);
+      
+      // Compare values
+      let comparison = 0;
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        comparison = aValue.localeCompare(bValue);
+      } else {
+        comparison = (aValue as number) - (bValue as number);
+      }
+      
+      // Apply direction
+      return sortDirection === "asc" ? comparison : -comparison;
     });
-  }, [statistics, searchTerm]);
+  }, [statistics, searchTerm, sortColumn, sortDirection]);
 
   // Guard voor supervisors: vereist station selectie
   if (user?.role === 'supervisor' && !selectedStationId) {
@@ -487,21 +535,77 @@ export default function Statistics() {
                 <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead rowSpan={2} className="align-middle">Medewerker</TableHead>
+                  <TableHead 
+                    rowSpan={2} 
+                    className="align-middle cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("name")}
+                  >
+                    Medewerker {renderSortIcon("name")}
+                  </TableHead>
                   <TableHead colSpan={6} className="text-center">Voorkeuren</TableHead>
                   <TableHead colSpan={4} className="text-center">Werkelijke Shifts</TableHead>
                 </TableRow>
                 <TableRow>
-                  <TableHead className="text-center text-xs">Dag Week (u)</TableHead>
-                  <TableHead className="text-center text-xs">Nacht Week (u)</TableHead>
-                  <TableHead className="text-center text-xs">Dag Weekend (u)</TableHead>
-                  <TableHead className="text-center text-xs">Nacht Weekend (u)</TableHead>
-                  <TableHead className="text-center text-xs">Totaal (u)</TableHead>
-                  <TableHead className="text-center text-xs border-r-2 border-gray-300">Percentage</TableHead>
-                  <TableHead className="text-center text-xs">Dag Week (u)</TableHead>
-                  <TableHead className="text-center text-xs">Nacht Week (u)</TableHead>
-                  <TableHead className="text-center text-xs">Dag Weekend (u)</TableHead>
-                  <TableHead className="text-center text-xs">Nacht Weekend (u)</TableHead>
+                  <TableHead 
+                    className="text-center text-xs cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("dayShiftWeekHours")}
+                  >
+                    Dag Week (u) {renderSortIcon("dayShiftWeekHours")}
+                  </TableHead>
+                  <TableHead 
+                    className="text-center text-xs cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("nightShiftWeekHours")}
+                  >
+                    Nacht Week (u) {renderSortIcon("nightShiftWeekHours")}
+                  </TableHead>
+                  <TableHead 
+                    className="text-center text-xs cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("dayShiftWeekendHours")}
+                  >
+                    Dag Weekend (u) {renderSortIcon("dayShiftWeekendHours")}
+                  </TableHead>
+                  <TableHead 
+                    className="text-center text-xs cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("nightShiftWeekendHours")}
+                  >
+                    Nacht Weekend (u) {renderSortIcon("nightShiftWeekendHours")}
+                  </TableHead>
+                  <TableHead 
+                    className="text-center text-xs cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("totalPreferenceHours")}
+                  >
+                    Totaal (u) {renderSortIcon("totalPreferenceHours")}
+                  </TableHead>
+                  <TableHead 
+                    className="text-center text-xs border-r-2 border-gray-300 cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("percentage")}
+                  >
+                    Percentage {renderSortIcon("percentage")}
+                  </TableHead>
+                  <TableHead 
+                    className="text-center text-xs cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("actualDayShiftWeekHours")}
+                  >
+                    Dag Week (u) {renderSortIcon("actualDayShiftWeekHours")}
+                  </TableHead>
+                  <TableHead 
+                    className="text-center text-xs cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("actualNightShiftWeekHours")}
+                  >
+                    Nacht Week (u) {renderSortIcon("actualNightShiftWeekHours")}
+                  </TableHead>
+                  <TableHead 
+                    className="text-center text-xs cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("actualDayShiftWeekendHours")}
+                  >
+                    Dag Weekend (u) {renderSortIcon("actualDayShiftWeekendHours")}
+                  </TableHead>
+                  <TableHead 
+                    className="text-center text-xs cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleSort("actualNightShiftWeekendHours")}
+                  >
+                    Nacht Weekend (u) {renderSortIcon("actualNightShiftWeekendHours")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
