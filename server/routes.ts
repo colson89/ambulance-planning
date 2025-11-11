@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, hashPassword, comparePasswords } from "./auth";
-import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shiftPreferences, shifts, insertWeekdayConfigSchema, insertUserCommentSchema, insertHolidaySchema, userStations, users, type User } from "../shared/schema";
+import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shiftPreferences, shifts, insertWeekdayConfigSchema, insertUserCommentSchema, insertHolidaySchema, userStations, users, type User, type Shift } from "../shared/schema";
 import { z } from "zod";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
@@ -3062,34 +3062,76 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       
       const positionMappings = await storage.getVerdiPositionMappings(stationId);
       
+      // Groepeer shifts op basis van startTime, endTime, type (meerdere users kunnen dezelfde shift hebben)
+      const shiftGroups = new Map<string, Shift[]>();
+      for (const shift of shiftsToSync) {
+        const key = `${shift.startTime.toISOString()}_${shift.endTime.toISOString()}_${shift.type}`;
+        if (!shiftGroups.has(key)) {
+          shiftGroups.set(key, []);
+        }
+        shiftGroups.get(key)!.push(shift);
+      }
+      
       let synced = 0;
       let errors = 0;
+      let skipped = 0;
       const results = [];
       
-      // Synchroniseer elke shift (1 per keer zoals Verdi aanraadt)
-      for (const shift of shiftsToSync) {
+      // Synchroniseer elke shift groep (1 per keer zoals Verdi aanraadt)
+      for (const [groupKey, groupShifts] of Array.from(shiftGroups.entries())) {
         try {
-          // Haal bestaande sync log op
-          const existingLog = await storage.getVerdiSyncLog(shift.id);
+          // Verzamel alle userIds in deze groep
+          const userIds = groupShifts.map((s: Shift) => s.userId).filter((id: number, index: number, arr: number[]) => arr.indexOf(id) === index);
           
-          // Bepaal welke gebruikers toegewezen zijn (in praktijk moet dit uit de shifts tabel komen)
-          // Voor nu nemen we aan dat de shift.userId de primaire gebruiker is
-          const userIds = [shift.userId]; // TODO: Uitbreiden voor 2-3 personen per shift
+          // Skip shifts met 0 personen (zou niet moeten voorkomen, maar voor de zekerheid)
+          if (userIds.length === 0) {
+            console.log(`Skipping shift group ${groupKey}: geen gebruikers toegewezen`);
+            skipped++;
+            
+            // Log als skipped voor alle shifts in deze groep
+            for (const shift of groupShifts) {
+              const existingLog = await storage.getVerdiSyncLog(shift.id);
+              if (existingLog) {
+                await storage.updateVerdiSyncLog(shift.id, 'error', undefined, 'Shift heeft geen toegewezen gebruikers');
+              } else {
+                await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, 'Shift heeft geen toegewezen gebruikers');
+              }
+            }
+            continue;
+          }
           
           // Haal User objecten op zodat we hasDrivingLicenseC kunnen checken
           const assignedUsers = await Promise.all(
-            userIds.map(userId => storage.getUser(userId))
+            userIds.map((userId: number) => storage.getUser(userId))
           );
           
           // Filter out any null users (shouldn't happen but safety check)
           const validUsers = assignedUsers.filter((u): u is User => u !== null && u !== undefined);
           if (validUsers.length === 0) {
-            throw new Error(`Geen geldige gebruikers gevonden voor shift ${shift.id}`);
+            console.log(`Skipping shift group ${groupKey}: geen geldige gebruikers gevonden`);
+            skipped++;
+            
+            // Log als error voor alle shifts in deze groep
+            for (const shift of groupShifts) {
+              const existingLog = await storage.getVerdiSyncLog(shift.id);
+              if (existingLog) {
+                await storage.updateVerdiSyncLog(shift.id, 'error', undefined, 'Geen geldige gebruikers gevonden');
+              } else {
+                await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, 'Geen geldige gebruikers gevonden');
+              }
+            }
+            continue;
           }
+          
+          // Gebruik het eerste shift object als representatief voor de hele groep
+          const representativeShift = groupShifts[0];
+          
+          // Haal bestaande sync log op (van het eerste shift record)
+          const existingLog = await storage.getVerdiSyncLog(representativeShift.id);
           
           // Stuur naar Verdi
           const response = await verdiClient.sendShiftToVerdi(
-            shift,
+            representativeShift,
             config,
             userMappingMap,
             positionMappings,
@@ -3097,28 +3139,31 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             existingLog?.verdiShiftGuid || undefined
           );
           
-          // Update sync log
+          // Update sync log voor ALLE shifts in deze groep
           const syncStatus = response.result === 'Success' ? 'success' : 'error';
           const errorMessage = response.errorFeedback.length > 0 ? response.errorFeedback.join(', ') : null;
           const warningMessages = response.warningFeedback.length > 0 ? JSON.stringify(response.warningFeedback) : null;
           
-          if (existingLog) {
-            await storage.updateVerdiSyncLog(
-              shift.id,
-              syncStatus,
-              response.shift,
-              errorMessage || undefined,
-              warningMessages || undefined
-            );
-          } else {
-            await storage.createVerdiSyncLog(
-              shift.id,
-              shift.stationId,
-              syncStatus,
-              response.shift,
-              errorMessage || undefined,
-              warningMessages || undefined
-            );
+          for (const shift of groupShifts) {
+            const shiftLog = await storage.getVerdiSyncLog(shift.id);
+            if (shiftLog) {
+              await storage.updateVerdiSyncLog(
+                shift.id,
+                syncStatus,
+                response.shift,
+                errorMessage || undefined,
+                warningMessages || undefined
+              );
+            } else {
+              await storage.createVerdiSyncLog(
+                shift.id,
+                shift.stationId,
+                syncStatus,
+                response.shift,
+                errorMessage || undefined,
+                warningMessages || undefined
+              );
+            }
           }
           
           if (response.result === 'Success') {
@@ -3128,28 +3173,34 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           }
           
           results.push({
-            shiftId: shift.id,
-            date: shift.date,
+            shiftId: representativeShift.id,
+            date: representativeShift.date,
+            userCount: validUsers.length,
+            users: validUsers.map(u => `${u.firstName} ${u.lastName}`).join(', '),
             success: response.result === 'Success',
             errors: response.errorFeedback,
             warnings: response.warningFeedback
           });
           
         } catch (error: any) {
-          console.error(`Error syncing shift ${shift.id}:`, error);
+          console.error(`Error syncing shift group ${groupKey}:`, error);
           errors++;
           
-          // Log error
-          const existingLog = await storage.getVerdiSyncLog(shift.id);
-          if (existingLog) {
-            await storage.updateVerdiSyncLog(shift.id, 'error', undefined, error.message);
-          } else {
-            await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, error.message);
+          // Log error voor alle shifts in deze groep
+          for (const shift of groupShifts) {
+            const existingLog = await storage.getVerdiSyncLog(shift.id);
+            if (existingLog) {
+              await storage.updateVerdiSyncLog(shift.id, 'error', undefined, error.message);
+            } else {
+              await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, error.message);
+            }
           }
           
           results.push({
-            shiftId: shift.id,
-            date: shift.date,
+            shiftId: groupShifts[0].id,
+            date: groupShifts[0].date,
+            userCount: groupShifts.length,
+            users: 'Error fetching users',
             success: false,
             errors: [error.message],
             warnings: []
@@ -3159,10 +3210,11 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       
       res.json({
         success: true,
-        message: `Synchronisatie voltooid: ${synced} gelukt, ${errors} fouten`,
+        message: `Synchronisatie voltooid: ${synced} gelukt, ${errors} fouten${skipped > 0 ? `, ${skipped} overgeslagen` : ''}`,
         synced,
         errors,
-        total: shiftsToSync.length,
+        skipped,
+        total: shiftGroups.size,
         results
       });
       

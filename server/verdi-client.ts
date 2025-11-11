@@ -75,11 +75,14 @@ export class VerdiClient {
       }
 
       // Zoek de position mapping voor deze positie index
-      const positionMapping = positionMappings.find(pm => pm.positionIndex === i);
+      // Posities beginnen bij 1: eerste persoon = positie 1 (Chauffeur), tweede persoon = positie 2 (Ambulancier)
+      const positionIndex = i + 1;
+      const positionMapping = positionMappings.find(pm => pm.positionIndex === positionIndex);
 
       if (!positionMapping) {
+        const positionName = positionIndex === 1 ? 'Chauffeur' : positionIndex === 2 ? 'Ambulancier' : `Positie ${positionIndex}`;
         throw new Error(
-          `Geen Verdi position mapping gevonden voor positie ${i + 1}. ` +
+          `Geen Verdi position mapping gevonden voor Positie ${positionIndex} (${positionName}). ` +
           `Configureer eerst de position mappings in Verdi instellingen.`
         );
       }
