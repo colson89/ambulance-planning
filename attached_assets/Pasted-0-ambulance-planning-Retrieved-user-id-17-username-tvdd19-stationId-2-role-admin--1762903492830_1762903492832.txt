@@ -1,0 +1,1314 @@
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T23:21:01.803Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Fetching comments for month: 5, year: 2026, station: 2
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Found 0 comments for station 2: []
+0|ambulance-planning  | 12:21:01 AM [express] GET /api/preferences/all 200 in 26ms :: [{"id":7046,"userId":17,"stationId":2,"…
+0|ambulance-planning  | 12:21:01 AM [express] GET /api/shifts 200 in 29ms :: [{"id":8182,"userId":0,"stationId":2,"date":"202…
+0|ambulance-planning  | Returning 0 comments with user details for station 2
+0|ambulance-planning  | 12:21:01 AM [express] GET /api/verdi/sync-status/5/2026 200 in 33ms :: [{"id":277,"shiftId":8195,"sta…
+0|ambulance-planning  | 12:21:01 AM [express] GET /api/comments/all/5/2026 200 in 34ms :: []
+0|ambulance-planning  | 12:21:01 AM [express] GET /api/verdi/last-sync/2/5/2026 200 in 34ms :: {"lastSync":null}
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === GET /api/users DEBUG ===
+0|ambulance-planning  | Admin user object: {
+0|ambulance-planning  |   "id": 17,
+0|ambulance-planning  |   "username": "tvdd19",
+0|ambulance-planning  |   "password": "Admin123",
+0|ambulance-planning  |   "firstName": "Tom",
+0|ambulance-planning  |   "lastName": "Vandendijck",
+0|ambulance-planning  |   "email": "",
+0|ambulance-planning  |   "role": "admin",
+0|ambulance-planning  |   "isAdmin": false,
+0|ambulance-planning  |   "isProfessional": true,
+0|ambulance-planning  |   "hasDrivingLicenseC": true,
+0|ambulance-planning  |   "hours": 24,
+0|ambulance-planning  |   "stationId": 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Admin stationId: 2
+0|ambulance-planning  | Admin role: admin
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T23:21:01.840Z,
+0|ambulance-planning  |     originalMaxAge: 86399999,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T23:21:01.840Z,
+0|ambulance-planning  |     originalMaxAge: 86399999,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Fetching comments for month: 5, year: 2026, station: 2
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T23:21:01.840Z,
+0|ambulance-planning  |     originalMaxAge: 86399999,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T23:21:01.840Z,
+0|ambulance-planning  |     originalMaxAge: 86399999,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | 12:23:09 AM [express] GET /api/user 200 in 11ms :: {"id":17,"username":"tvdd19","password":"Admin123"…
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | All users from database: 117
+0|ambulance-planning  | Users station IDs: [
+0|ambulance-planning  |   'rove319:1', 'tvdd20:4',  'drpa338:1', 'emth312:1', 'fima342:1',
+0|ambulance-planning  |   'gihe566:1', 'gihu503:1', 'guel545:1', 'jabe308:1', 'javk322:1',
+0|ambulance-planning  |   'jisr332:1', 'jomi499:1', 'jost468:1', 'juvh324:1', 'kuwu580:1',
+0|ambulance-planning  |   'mami479:1', 'math470:1', 'svdb435:1', 'stry334:1', 'tove318:1',
+0|ambulance-planning  |   'toth471:1', 'vidb464:1', 'suku611:1', 'rost612:1', 'jevb631:1',
+0|ambulance-planning  |   'stli351:1', 'robu535:5', 'jowe210:5', 'gime604:1', 'mita313:1',
+0|ambulance-planning  |   'pavh191:5', 'rodk152:5', 'havm323:1', 'jope179:5', 'sevl577:5',
+0|ambulance-planning  |   'stma453:5', 'siba534:5', 'vile170:5', 'maka546:1', 'bave198:5',
+0|ambulance-planning  |   'tvdd19:2',  'rvdb189:5', 'ivgo344:1', 'sthe7:1',   'topo298:2',
+0|ambulance-planning  |   'bami339:1', 'jaco37:7',  'dimu355:6', 'gico556:5', 'babo142:5',
+0|ambulance-planning  |   'jovv423:5', 'chve200:5', 'timi86:7',  'jeva400:8', 'nilu84:7',
+0|ambulance-planning  |   'thhu81:7',  'leve509:7', 'dero484:7', 'dave203:7', 'tivr108:7',
+0|ambulance-planning  |   'rume450:7', 'todo73:7',  'mast555:7', 'gube551:7', 'koma85:7',
+0|ambulance-planning  |   'rigo488:5', 'koge76:7',  'krvl63:7',  'gist529:7', 'krcl35:7',
+0|ambulance-planning  |   'phho162:5', 'frcl34:7',  'ivve60:7',  'elru411:8', 'javd54:7',
+0|ambulance-planning  |   'pave61:7',  'jevd55:7',  'stke427:7', 'jobo31:7',  'stpe50:7',
+0|ambulance-planning  |   'jodb49:7',  'wevr57:7',  'wiva58:7',  'jolu48:7',  'jeda38:7',
+0|ambulance-planning  |   'anwo67:7',  'bben30:7',  'diap28:7',  'mavdb95:7', 'miae27:7',
+0|ambulance-planning  |   'toge75:7',  'elvs521:8', 'esds634:8', 'jeva418:2', 'daru306:2',
+0|ambulance-planning  |   'dica261:2', 'fidr571:2', 'glph405:2', 'jobo257:2', 'joli301:2',
+0|ambulance-planning  |   ... 17 more items
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: getUsersByStation called with stationId: 2
+0|ambulance-planning  | Found 0 comments for station 2: []
+0|ambulance-planning  | 12:23:09 AM [express] GET /api/system/settings/last-preferences-generated 200 in 18ms :: {"timestamp"…
+0|ambulance-planning  | 12:23:09 AM [express] GET /api/weekday-configs 200 in 18ms :: [{"id":1,"stationId":2,"dayOfWeek":0,"e…
+0|ambulance-planning  | 12:23:09 AM [express] GET /api/shifts 200 in 19ms :: [{"id":8182,"userId":0,"stationId":2,"date":"202…
+0|ambulance-planning  | 12:23:09 AM [express] GET /api/system/settings/last-schedule-generated 200 in 20ms :: {"timestamp":"2…
+0|ambulance-planning  | DEBUG: Found 22 primary users for station 2: [
+0|ambulance-planning  |   'tvdd19:17',   'topo298:58',
+0|ambulance-planning  |   'jeva418:159', 'daru306:163',
+0|ambulance-planning  |   'dica261:164', 'fidr571:166',
+0|ambulance-planning  |   'glph405:167', 'jobo257:168',
+0|ambulance-planning  |   'joli301:169', 'joni495:170',
+0|ambulance-planning  |   'liro562:171', 'pibe297:172',
+0|ambulance-planning  |   'mava296:174', 'guva285:175',
+0|ambulance-planning  |   'dygr460:181', 'toho21:157',
+0|ambulance-planning  |   'bawo25:180',  'bagi20:156',
+0|ambulance-planning  |   'bjlo22:158',  'frba17:155',
+0|ambulance-planning  |   'niae66:179',  'drru293:165'
+0|ambulance-planning  | ]
+0|ambulance-planning  | Returning 0 comments with user details for station 2
+0|ambulance-planning  | DEBUG: Found 1 additional users for station 2: [ 'jeva400:87' ]
+0|ambulance-planning  | DEBUG: Adding additional user jeva400:87 to results
+0|ambulance-planning  | DEBUG: Total 23 users returned for station 2
+0|ambulance-planning  | Admin gets users for station 2: 23 users (including cross-station)
+0|ambulance-planning  | 12:23:09 AM [express] GET /api/preferences/all 200 in 33ms :: [{"id":7046,"userId":17,"stationId":2,"…
+0|ambulance-planning  | 12:23:09 AM [express] GET /api/verdi/sync-status/5/2026 200 in 40ms :: [{"id":277,"shiftId":8195,"sta…
+0|ambulance-planning  | 12:23:09 AM [express] GET /api/comments/all/5/2026 200 in 38ms :: []
+0|ambulance-planning  | 12:23:09 AM [express] GET /api/verdi/last-sync/2/5/2026 200 in 37ms :: {"lastSync":null}
+0|ambulance-planning  | 12:23:09 AM [express] GET /api/users 200 in 40ms :: [{"id":156,"username":"bagi20","firstName":"Bart …
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Verdi sync: Found 39 existing sync logs, 0 with valid Verdi GUIDs
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8185,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-31T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-31T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-31T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-31T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "652b1f83-bb0b-4615-96d1-b3920181774a",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8186,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-31T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-06-01T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-31T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-06-01T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "ea4a063a-ba85-41fa-b86a-b392018177aa",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8187,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-30T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-30T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-30T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-30T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "05001903-2ba0-46d0-8fc0-b39201817802",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8188,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-30T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-31T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-30T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-31T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "175ef8a4-a8de-47a9-91f4-b3920181785d",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8189,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-15T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-16T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-15T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-16T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "a9264d04-7204-4a89-b372-b392018178b5",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8190,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-11T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-12T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-11T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-12T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "a28b3783-f34d-4872-86e8-b39201817911",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8191,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-07T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-08T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-07T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-08T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "af308896-ddc8-479f-9df1-b3920181796d",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8192,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-24T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-24T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-24T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-24T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "917fe41b-5317-495b-b2a9-b392018179e1",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8193,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-24T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-25T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-24T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-25T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "0bc0b5dc-5251-4dbc-a422-b39201817a3b",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8194,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-23T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-23T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-23T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-23T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "1efbf968-bf82-4a47-a5d8-b39201817a97",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8195,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-23T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-24T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-23T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-24T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "de3b55b8-aa52-4200-b395-b39201817af0",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8196,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-16T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-16T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-16T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-16T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "ab077bab-d169-4b2a-be48-b39201817b4a",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8197,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-16T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-17T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-16T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-17T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "af658e85-dff4-4147-a5e3-b39201817ba7",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8199,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-14T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-15T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-14T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-15T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "e54fd63a-e5b3-4daa-9e6e-b39201817c1f",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8200,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-10T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-10T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-10T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-10T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "fcd86ae5-ee36-43a4-a7fd-b39201817c90",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8201,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-10T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-11T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-10T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-11T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "71a3f55d-da42-4446-8eda-b39201817cd1",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8202,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-03T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-03T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-03T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-03T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "9df3c7a9-7635-4165-9bb2-b39201817d29",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8203,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-03T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-04T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-03T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-04T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "08253258-803f-44de-b266-b39201817d69",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8205,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-02T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-03T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-02T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-03T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "2c1ec433-c873-4226-bee3-b39201817dad",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8206,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-25T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-25T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-25T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-25T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "20928f1b-c38c-4142-b968-b39201817de2",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8207,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-25T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-26T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-25T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-26T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "c1eaf3f9-404a-4b04-967f-b39201817e3c",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8208,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-17T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-17T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-17T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-17T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "fd30942f-ad7b-4bed-97d6-b39201817e82",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8209,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-17T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-18T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-17T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-18T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "70ec8fe4-1171-4c7b-abc3-b39201817ecd",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8210,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-09T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-09T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-09T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-09T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "d3b93e6b-28d8-4733-86af-b39201817f0a",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8211,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-09T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-10T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-09T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-10T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "93733122-3094-4877-8b87-b39201817f42",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8214,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-22T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-23T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-22T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-23T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "0dccb3b0-b7c8-4da3-af27-b39201817f6e",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8215,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-13T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-14T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-13T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-14T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "20cc3f78-1651-413d-9908-b39201817fa4",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8216,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-29T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-30T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-29T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-30T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "797cf962-1c07-4bde-8d22-b39201817fda",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8217,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-28T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-29T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-28T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-29T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "10206ee3-1363-4b65-91a2-b39201818004",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8218,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-26T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-27T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-26T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-27T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "1d992681-3eb9-4a60-a261-b39201818035",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8219,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-20T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-21T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-20T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-21T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "044116df-aac4-4474-a1aa-b3920181806f",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8220,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-18T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-19T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-18T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-19T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "ac930671-32d9-4e6c-a143-b3920181808f",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8221,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-08T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-09T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-08T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-09T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "6a49a314-b0ca-427a-8012-b392018180c8",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8222,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-21T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-22T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-21T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-22T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "502b310c-2c1b-49d2-abca-b392018180ee",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8223,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-12T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-13T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-12T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-13T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "2d68a306-abd2-4fc1-8b52-b39201818131",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8224,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-04T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-05T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-04T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-05T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "2b7bf897-d2af-42b7-b200-b39201818160",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8225,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-06T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-07T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-06T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-07T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "7e91c9dc-1333-46a2-82f3-b3920181819b",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8212,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-01T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-01T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-01T07:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-01T19:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "84ab5e66-9cf8-4a37-bb5c-b392018181c4",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8213,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-05-01T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-02T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-01T19:00:00+02:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-02T07:00:00+02:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: { result: 'Success', shiftGuid: undefined, warnings: 0, errors: 0 }
+0|ambulance-planning  | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulance-planning  | Full Verdi response object: {
+0|ambulance-planning  |   "shift": "82d1faf2-1c4b-4694-aa0b-b392018181f8",
+0|ambulance-planning  |   "result": "Success",
+0|ambulance-planning  |   "warningFeedback": [],
+0|ambulance-planning  |   "errorFeedback": []
+0|ambulance-planning  | }
+0|ambulance-planning  | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | Response has these properties: {
+0|ambulance-planning  |   hasShiftGuid: false,
+0|ambulance-planning  |   hasShift: true,
+0|ambulance-planning  |   hasId: false,
+0|ambulance-planning  |   hasData: false,
+0|ambulance-planning  |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulance-planning  | }
+0|ambulance-planning  | 12:23:23 AM [express] POST /api/verdi/sync 200 in 9479ms :: {"success":true,"message":"Synchronisatie…
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T23:23:23.160Z,
+0|ambulance-planning  |     originalMaxAge: 86399999,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 17,
+0|ambulance-planning  |   username: 'tvdd19',
+0|ambulance-planning  |   password: 'Admin123',
+0|ambulance-planning  |   firstName: 'Tom',
+0|ambulance-planning  |   lastName: 'Vandendijck',
+0|ambulance-planning  |   email: '',
+0|ambulance-planning  |   role: 'admin',
+0|ambulance-planning  |   isAdmin: false,
+0|ambulance-planning  |   isProfessional: true,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 24,
+0|ambulance-planning  |   stationId: 2
+0|ambulance-planning  | }
+0|ambulance-planning  | 12:23:23 AM [express] GET /api/shifts 200 in 4ms :: [{"id":8182,"userId":0,"stationId":2,"date":"2026…
