@@ -978,10 +978,10 @@ Planning Gebruiker ←→ Verdi Person GUID
 
 Elke positie in de ambulance (chauffeur, verzorger) moet gekoppeld worden aan een Verdi Position GUID:
 
-| Planning Positie | Verdi Functie | Voorbeeld |
-|-----------------|---------------|-----------|
-| Positie 1       | Position GUID 1 | Chauffeur |
-| Positie 2       | Position GUID 2 | Bijrijder/Verzorger |
+| Planning Positie | Verdi Functie | Typisch Gebruik |
+|-----------------|---------------|-----------------|
+| Positie 1       | Chauffeur     | Altijd gebruikt bij 1+ personen |
+| Positie 2       | Ambulancier   | Gebruikt bij 2 personen |
 
 **Toegang:**
 - ✅ **Admins**: Kunnen hun eigen station configureren
@@ -995,11 +995,26 @@ Elke positie in de ambulance (chauffeur, verzorger) moet gekoppeld worden aan ee
 **Hoe Gebruiken:**
 
 1. **Ga naar tab "Positie Mappings"**
-2. **Zie lijst van posities** (normaal 2-3 per shift):
-   - Positie 0, 1, 2
+2. **Configureer minimaal de volgende posities**:
+   - **Positie 1 (Chauffeur)**: Verplicht - wordt gebruikt voor alle shifts met 1 of 2 personen
+   - **Positie 2 (Ambulancier)**: Optioneel - alleen nodig als u shifts met 2 personen heeft
 3. **Vul Position GUID in** voor elke positie
    - Verkrijgbaar via Verdi ShiftSheet export
-4. **Klik "Opslaan"**
+   - Formaat: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+4. **Stel "Rijbewijs C vereist" in** voor posities die een C-rijbewijs nodig hebben
+5. **Klik "Opslaan"**
+
+**💡 Intelligente Positie Toewijzing:**
+
+Het systeem werkt flexibel met variabel aantal personen per shift:
+
+- **Shifts met 1 persoon**: Gebruikt alleen Positie 1 (Chauffeur)
+- **Shifts met 2 personen**: Gebruikt Positie 1 (Chauffeur) + Positie 2 (Ambulancier)
+- **Shifts met 0 personen**: Worden automatisch overgeslagen (niet naar Verdi gestuurd)
+
+**Voorbeeld:**
+- PIT stations (altijd 1 persoon): Configureer alleen Positie 1
+- Ambulance stations (1 of 2 personen): Configureer Positie 1 én Positie 2
 
 #### 📤 Shifts Synchroniseren
 
@@ -1720,6 +1735,16 @@ Het systeem wordt regelmatig bijgewerkt met nieuwe functies en verbeteringen:
   - Visuele sorteer-indicatoren (▲ ▼) tonen actieve kolom en richting
   - Toggle functionaliteit: klik opnieuw om sorteerrichting om te draaien
   - Percentage kolom sorteert correct op berekende waarde (voorkeuren/max uren)
+
+**Verdi Sync Verbeteringen:**
+- 🎯 **Flexibele Personeelsbezetting** - Intelligente handling van variabel aantal personen
+  - Automatische groepering van shifts met meerdere personen
+  - Shifts met 1 persoon: gebruikt alleen Positie 1 (Chauffeur)
+  - Shifts met 2 personen: gebruikt Positie 1 (Chauffeur) + Positie 2 (Ambulancier)
+  - Shifts met 0 personen: worden automatisch overgeslagen met duidelijke logging
+  - Positie indices aangepast naar 1-based (Positie 1, 2) i.p.v. 0-based
+  - Verbeterde error messages met specifieke positienamen (Chauffeur/Ambulancier)
+  - Sync logs worden correct toegepast op alle shift records in een groep
 
 **Beveiliging:**
 - 🔒 **Enhanced Authorization** - Alle Verdi endpoints beveiligd
