@@ -248,6 +248,10 @@ export const verdiSyncLog = pgTable("verdi_sync_log", {
   verdiShiftGuid: text("verdi_shift_guid"), // GUID van de shift in Verdi (uit response)
   errorMessage: text("error_message"),
   warningMessages: text("warning_messages"), // JSON array van warnings
+  // Snapshot van shift data voor UPDATE detectie bij opnieuw gegenereerde planningen
+  shiftStartTime: timestamp("shift_start_time"), // Kopie van shift.startTime
+  shiftEndTime: timestamp("shift_end_time"), // Kopie van shift.endTime
+  shiftType: text("shift_type", { enum: ["day", "night"] }), // Kopie van shift.type
   syncedAt: timestamp("synced_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()

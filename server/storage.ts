@@ -3236,7 +3236,7 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<VerdiSyncLog> {
+  async createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string, shiftStartTime?: Date, shiftEndTime?: Date, shiftType?: string): Promise<VerdiSyncLog> {
     const result = await db.insert(verdiSyncLog)
       .values({
         shiftId,
@@ -3245,13 +3245,17 @@ export class DatabaseStorage implements IStorage {
         verdiShiftGuid: verdiShiftGuid || null,
         errorMessage: errorMessage || null,
         warningMessages: warningMessages || null,
-        syncedAt: syncStatus === 'success' ? new Date() : null
+        syncedAt: syncStatus === 'success' ? new Date() : null,
+        // Snapshot van shift data voor UPDATE detectie
+        shiftStartTime: shiftStartTime || null,
+        shiftEndTime: shiftEndTime || null,
+        shiftType: shiftType as "day" | "night" | null || null
       })
       .returning();
     return result[0];
   }
 
-  async updateVerdiSyncLog(shiftId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<VerdiSyncLog> {
+  async updateVerdiSyncLog(shiftId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string, shiftStartTime?: Date, shiftEndTime?: Date, shiftType?: string): Promise<VerdiSyncLog> {
     const result = await db.update(verdiSyncLog)
       .set({
         syncStatus: syncStatus as "pending" | "success" | "error",
@@ -3259,6 +3263,10 @@ export class DatabaseStorage implements IStorage {
         errorMessage: errorMessage || null,
         warningMessages: warningMessages || null,
         syncedAt: syncStatus === 'success' ? new Date() : null,
+        // Snapshot van shift data voor UPDATE detectie
+        shiftStartTime: shiftStartTime || null,
+        shiftEndTime: shiftEndTime || null,
+        shiftType: shiftType as "day" | "night" | null || null,
         updatedAt: new Date()
       })
       .where(eq(verdiSyncLog.shiftId, shiftId))

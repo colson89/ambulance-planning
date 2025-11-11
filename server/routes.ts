@@ -3093,15 +3093,58 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(400).json({ message: "Verdi is niet geconfigureerd of niet ingeschakeld voor dit station" });
       }
       
+      // Haal ALLE sync logs op voor deze maand/station om bestaande Verdi shifts te vinden
+      // Dit is cruciaal voor UPDATE detectie bij opnieuw gegenereerde planningen
+      const allSyncLogs = await storage.getVerdiSyncLogsByMonth(month, year, stationId);
+      
+      // Maak twee mappings:
+      // 1. Op shift ID (voor bestaande shifts die niet opnieuw zijn gegenereerd)
+      const syncLogByIdMap = new Map(allSyncLogs.map(log => [log.shiftId, log]));
+      
+      // 2. Op datum+tijd+type (voor UPDATE detectie bij opnieuw gegenereerde shifts)
+      // Filter alleen logs met verdiShiftGuid en success status om oude/verwijderde shifts te vermijden
+      const syncLogByKeyMap = new Map<string, any>();
+      for (const log of allSyncLogs) {
+        if (log.verdiShiftGuid && log.syncStatus === 'success') {
+          // Gebruik opgeslagen snapshot data i.p.v. shift op te halen (werkt ook voor verwijderde shifts!)
+          if (log.shiftStartTime && log.shiftEndTime && log.shiftType) {
+            const key = `${log.shiftStartTime.toISOString()}_${log.shiftEndTime.toISOString()}_${log.shiftType}`;
+            syncLogByKeyMap.set(key, log);
+          } else {
+            // Legacy log zonder snapshot data - probeer shift op te halen als fallback
+            const shift = await storage.getShift(log.shiftId);
+            if (shift) {
+              const key = `${shift.startTime.toISOString()}_${shift.endTime.toISOString()}_${shift.type}`;
+              syncLogByKeyMap.set(key, log);
+              console.warn(`Legacy sync log ${log.id} heeft geen snapshot data - shift ${log.shiftId} gebruikt als fallback`);
+            } else {
+              console.warn(`Legacy sync log ${log.id} heeft geen snapshot data en shift ${log.shiftId} bestaat niet meer - skip voor UPDATE detectie`);
+            }
+          }
+        }
+      }
+      
+      console.log(`Verdi sync: Found ${allSyncLogs.length} existing sync logs, ${syncLogByKeyMap.size} with valid Verdi GUIDs`);
+      
       // Filter op alleen wijzigingen indien gevraagd
       let shiftsToSync = plannedShifts;
       if (changesOnly) {
-        const syncLogs = await storage.getVerdiSyncLogsByMonth(month, year, stationId);
-        const syncLogMap = new Map(syncLogs.map(log => [log.shiftId, log]));
-        
         shiftsToSync = plannedShifts.filter(shift => {
-          const log = syncLogMap.get(shift.id);
-          return !log || log.syncStatus === 'error' || log.syncStatus === 'pending';
+          // Check eerst op shift ID (voor niet-opnieuw-gegenereerde shifts)
+          const logById = syncLogByIdMap.get(shift.id);
+          if (logById && logById.syncStatus === 'success') {
+            return false; // Al gesynchroniseerd
+          }
+          
+          // Check dan op datum+tijd+type (voor opnieuw gegenereerde shifts)
+          const key = `${shift.startTime.toISOString()}_${shift.endTime.toISOString()}_${shift.type}`;
+          const logByKey = syncLogByKeyMap.get(key);
+          if (logByKey && logByKey.syncStatus === 'success') {
+            return false; // Al gesynchroniseerd in Verdi (andere shift ID)
+          }
+          
+          // Niet gesynchroniseerd of fout → moet gesynchroniseerd worden
+          return true;
         });
       }
       
@@ -3153,9 +3196,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             for (const shift of groupShifts) {
               const existingLog = await storage.getVerdiSyncLog(shift.id);
               if (existingLog) {
-                await storage.updateVerdiSyncLog(shift.id, 'error', undefined, 'Shift heeft geen toegewezen gebruikers');
+                await storage.updateVerdiSyncLog(shift.id, 'error', undefined, 'Shift heeft geen toegewezen gebruikers', undefined, shift.startTime, shift.endTime, shift.type);
               } else {
-                await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, 'Shift heeft geen toegewezen gebruikers');
+                await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, 'Shift heeft geen toegewezen gebruikers', undefined, shift.startTime, shift.endTime, shift.type);
               }
             }
             continue;
@@ -3176,9 +3219,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             for (const shift of groupShifts) {
               const existingLog = await storage.getVerdiSyncLog(shift.id);
               if (existingLog) {
-                await storage.updateVerdiSyncLog(shift.id, 'error', undefined, 'Geen geldige gebruikers gevonden');
+                await storage.updateVerdiSyncLog(shift.id, 'error', undefined, 'Geen geldige gebruikers gevonden', undefined, shift.startTime, shift.endTime, shift.type);
               } else {
-                await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, 'Geen geldige gebruikers gevonden');
+                await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, 'Geen geldige gebruikers gevonden', undefined, shift.startTime, shift.endTime, shift.type);
               }
             }
             continue;
@@ -3187,17 +3230,30 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           // Gebruik het eerste shift object als representatief voor de hele groep
           const representativeShift = groupShifts[0];
           
-          // Haal bestaande sync log op (van het eerste shift record)
-          const existingLog = await storage.getVerdiSyncLog(representativeShift.id);
+          // Zoek bestaande Verdi shift GUID op twee manieren:
+          // 1. Via shift ID (voor niet-opnieuw-gegenereerde shifts)
+          let existingVerdiShiftGuid: string | undefined = undefined;
+          const existingLogById = await storage.getVerdiSyncLog(representativeShift.id);
+          if (existingLogById?.verdiShiftGuid) {
+            existingVerdiShiftGuid = existingLogById.verdiShiftGuid;
+            console.log(`Found existing Verdi shift via ID ${representativeShift.id}: ${existingVerdiShiftGuid}`);
+          } else {
+            // 2. Via datum+tijd+type (voor opnieuw gegenereerde shifts - dit is de cruciale fix!)
+            const existingLogByKey = syncLogByKeyMap.get(groupKey);
+            if (existingLogByKey?.verdiShiftGuid) {
+              existingVerdiShiftGuid = existingLogByKey.verdiShiftGuid;
+              console.log(`Found existing Verdi shift via date/time match for ${groupKey}: ${existingVerdiShiftGuid}`);
+            }
+          }
           
-          // Stuur naar Verdi
+          // Stuur naar Verdi (met bestaande GUID voor UPDATE indien gevonden)
           const response = await verdiClient.sendShiftToVerdi(
             representativeShift,
             config,
             userMappingMap,
             positionMappings,
             validUsers,
-            existingLog?.verdiShiftGuid || undefined
+            existingVerdiShiftGuid
           );
           
           // Update sync log voor ALLE shifts in deze groep
@@ -3213,7 +3269,10 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
                 syncStatus,
                 response.shiftGuid,
                 errorMessage || undefined,
-                warningMessages || undefined
+                warningMessages || undefined,
+                shift.startTime,
+                shift.endTime,
+                shift.type
               );
             } else {
               await storage.createVerdiSyncLog(
@@ -3222,7 +3281,10 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
                 syncStatus,
                 response.shiftGuid,
                 errorMessage || undefined,
-                warningMessages || undefined
+                warningMessages || undefined,
+                shift.startTime,
+                shift.endTime,
+                shift.type
               );
             }
           }
@@ -3251,9 +3313,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           for (const shift of groupShifts) {
             const existingLog = await storage.getVerdiSyncLog(shift.id);
             if (existingLog) {
-              await storage.updateVerdiSyncLog(shift.id, 'error', undefined, error.message);
+              await storage.updateVerdiSyncLog(shift.id, 'error', undefined, error.message, undefined, shift.startTime, shift.endTime, shift.type);
             } else {
-              await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, error.message);
+              await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, error.message, undefined, shift.startTime, shift.endTime, shift.type);
             }
           }
           
