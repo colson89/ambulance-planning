@@ -1753,7 +1753,40 @@ Oplossingen:
 
 ## 🔄 Systeem Updates
 
-Het systeem wordt regelmatig bijgewerkt met nieuwe functies en verbeteringen:
+Het systeem wordt regelmatig bijgewerkt met nieuwe functies en verbeteringen.
+
+### 🔄 Na een Update: Browser Verversen
+
+**Belangrijk: Na een systeem update moet u uw browser verversen!**
+
+Wanneer het systeem wordt bijgewerkt (bijvoorbeeld na een `git pull` en `npm run build` op de server), moet u uw browser **hard refresh** doen om de nieuwste versie te zien.
+
+**Hoe doe je een hard refresh?**
+
+**Windows / Linux:**
+- Druk op **Ctrl + F5**
+- Of: **Ctrl + Shift + R**
+
+**Mac:**
+- Druk op **Cmd + Shift + R**
+
+**Waarom is dit nodig?**
+
+Browsers bewaren oude versies van de website code in hun cache om snelheid te verhogen. Na een update kan uw browser daarom nog steeds de oude code gebruiken, waardoor:
+- Nieuwe functies niet zichtbaar zijn
+- Knoppen niet correct werken
+- Instellingen niet correct worden opgeslagen
+
+Een hard refresh forceert de browser om de nieuwste versie te downloaden.
+
+**Wanneer moet je dit doen?**
+
+- Direct na een melding van de beheerder dat het systeem is bijgewerkt
+- Als nieuwe functies niet zichtbaar zijn
+- Als bestaande functies opeens niet meer werken
+- Bij twijfel - een hard refresh kan geen kwaad!
+
+---
 
 ### ⭐ Versie 2025.4 - November 2025
 

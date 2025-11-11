@@ -1,0 +1,86 @@
+0|ambulance-planning  | DEBUG: Total 23 users returned for station 2
+0|ambulance-planning  | 8:22:13 PM [express] GET /api/stations 200 in 13ms :: [{"id":6,"name":"balen","code":"balen","displa…
+0|ambulance-planning  | 8:22:13 PM [express] GET /api/verdi/config/2 200 in 13ms :: {"id":1,"stationId":2,"verdiUrl":"https:…
+0|ambulance-planning  | 8:22:13 PM [express] GET /api/verdi/users 200 in 14ms :: [{"id":156,"username":"bagi20","firstName":…
+0|ambulance-planning  | 8:23:50 PM [express] GET /api/calendar/feed/76714eea2f378afa37bae7d0b9e1a9e775a83717fa39e7164db068f9…
+PS C:\ambulance-planning> npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.20 building for production...
+✓ 2687 modules transformed.
+../dist/public/index.html                   1.60 kB │ gzip:   0.63 kB
+../dist/public/assets/index-kE0607NN.css   70.27 kB │ gzip:  11.94 kB
+../dist/public/assets/index-YL3wbKoI.js   735.21 kB │ gzip: 210.16 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 8.01s
+
+  dist\index.js  231.1kb
+
+Done in 61ms
+PS C:\ambulance-planning> pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [ambulance-planning](0) ✓
+┌────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning    │ default     │ 1.0.0   │ fork    │ 22072    │ 0s     │ 5    │ online    │ 31.3%    │ 87.0mb   │ jeva400  │ disabled │
+└────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+PS C:\ambulance-planning> pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+C:\Users\jeva400\.pm2\pm2.log last 15 lines:
+PM2        | 2025-11-11T19:41:49: PM2 log: Stopping app:ambulance-planning id:0
+PM2        | 2025-11-11T19:41:50: PM2 log: App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2        | 2025-11-11T19:41:50: PM2 log: pid=19132 msg=process killed
+PM2        | 2025-11-11T19:41:50: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-11-11T19:41:50: PM2 log: App [ambulance-planning:0] online
+PM2        | 2025-11-11T20:18:18: PM2 log: Stopping app:ambulance-planning id:0
+PM2        | 2025-11-11T20:18:19: PM2 log: App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2        | 2025-11-11T20:18:19: PM2 log: pid=22356 msg=process killed
+PM2        | 2025-11-11T20:18:19: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-11-11T20:18:19: PM2 log: App [ambulance-planning:0] online
+PM2        | 2025-11-11T20:27:57: PM2 log: Stopping app:ambulance-planning id:0
+PM2        | 2025-11-11T20:27:57: PM2 log: App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2        | 2025-11-11T20:27:57: PM2 log: pid=12708 msg=process killed
+PM2        | 2025-11-11T20:27:57: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-11-11T20:27:57: PM2 log: App [ambulance-planning:0] online
+
+C:\Users\Administrator\.pm2\logs\ambulance-planning-error.log last 15 lines:
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:62:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:5063:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc | Error syncing shift group 2026-05-12T19:00:00.000Z_2026-05-13T07:00:00.000Z_night: Error: Geen Verdi position mapping gevonden voor Positie 1 (Chauffeur). Configureer eerst de position mappings in Verdi instellingen.
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:62:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:5063:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc | Error syncing shift group 2026-05-04T19:00:00.000Z_2026-05-05T07:00:00.000Z_night: Error: Geen Verdi position mapping gevonden voor Positie 1 (Chauffeur). Configureer eerst de position mappings in Verdi instellingen.
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:62:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:5063:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc | Error syncing shift group 2026-05-06T19:00:00.000Z_2026-05-07T07:00:00.000Z_night: Error: Geen Verdi position mapping gevonden voor Positie 1 (Chauffeur). Configureer eerst de position mappings in Verdi instellingen.
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:62:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:5063:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+C:\Users\Administrator\.pm2\logs\ambulance-planning-out.log last 15 lines:
+0|ambulanc | user: {
+0|ambulanc |   id: 17,
+0|ambulanc |   username: 'tvdd19',
+0|ambulanc |   password: 'Admin123',
+0|ambulanc |   firstName: 'Tom',
+0|ambulanc |   lastName: 'Vandendijck',
+0|ambulanc |   email: '',
+0|ambulanc |   role: 'admin',
+0|ambulanc |   isAdmin: false,
+0|ambulanc |   isProfessional: true,
+0|ambulanc |   hasDrivingLicenseC: true,
+0|ambulanc |   hours: 24,
+0|ambulanc |   stationId: 2
+0|ambulanc | }
+0|ambulanc | 8:28:23 PM [express] GET /api/shifts 200 in 4ms :: [{"id":7962,"userId":0,"stationId":2,"date":"2026

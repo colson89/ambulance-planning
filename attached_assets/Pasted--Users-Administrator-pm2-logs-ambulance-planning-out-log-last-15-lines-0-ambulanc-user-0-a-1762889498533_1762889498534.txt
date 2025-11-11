@@ -1,0 +1,33 @@
+:\Users\Administrator\.pm2\logs\ambulance-planning-out.log last 15 lines:
+0|ambulanc | user: {
+0|ambulanc |   id: 17,
+0|ambulanc |   username: 'tvdd19',
+0|ambulanc |   password: 'Admin123',
+0|ambulanc |   firstName: 'Tom',
+0|ambulanc |   lastName: 'Vandendijck',
+0|ambulanc |   email: '',
+0|ambulanc |   role: 'admin',
+0|ambulanc |   isAdmin: false,
+0|ambulanc |   isProfessional: true,
+0|ambulanc |   hasDrivingLicenseC: true,
+0|ambulanc |   hours: 24,
+0|ambulanc |   stationId: 2
+0|ambulanc | }
+0|ambulanc | 8:30:16 PM [express] GET /api/shifts 200 in 3ms :: [{"id":7962,"userId":0,"stationId":2,"date":"2026…
+
+C:\Users\Administrator\.pm2\logs\ambulance-planning-error.log last 15 lines:
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:62:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:5063:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc | Error syncing shift group 2026-05-12T19:00:00.000Z_2026-05-13T07:00:00.000Z_night: Error: Geen Verdi position mapping gevonden voor Positie 1 (Chauffeur). Configureer eerst de position mappings in Verdi instellingen.
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:62:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:5063:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc | Error syncing shift group 2026-05-04T19:00:00.000Z_2026-05-05T07:00:00.000Z_night: Error: Geen Verdi position mapping gevonden voor Positie 1 (Chauffeur). Configureer eerst de position mappings in Verdi instellingen.
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:62:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:5063:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc | Error syncing shift group 2026-05-06T19:00:00.000Z_2026-05-07T07:00:00.000Z_night: Error: Geen Verdi position mapping gevonden voor Positie 1 (Chauffeur). Configureer eerst de position mappings in Verdi instellingen.
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:62:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:5063:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
