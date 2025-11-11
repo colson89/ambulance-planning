@@ -417,6 +417,49 @@ Als admin ziet u extra knoppen:
 - Klik op shift om handmatig toe te wijzen
 - Selecteer beschikbare medewerker
 
+#### Voorkeuren Verwijderen
+
+⚠️ **Let Op: Dit is een destructieve actie die niet ongedaan gemaakt kan worden!**
+
+**Wat doet deze functie?**
+
+De "Verwijder Voorkeuren" knop verwijdert ALLE opgegeven shift voorkeuren van alle gebruikers voor een specifieke maand. Dit is handig wanneer:
+
+- Er een fout is gemaakt bij het genereren van test voorkeuren
+- Alle voorkeuren opnieuw moeten worden opgegeven voor een maand
+- Je alle voorkeuren wilt resetten voordat gebruikers ze opnieuw opgeven
+
+**Hoe gebruik je het?**
+
+**Stap 1: Navigeer naar Planning Pagina**
+- Klik "Planning" op dashboard
+- Selecteer de juiste maand en jaar waarvan je de voorkeuren wilt verwijderen
+
+**Stap 2: Klik op "Verwijder Voorkeuren"**
+- Oranje knop in de sectie "Voorkeuren Verwijderen"
+- Let op: Deze sectie staat tussen "Test Voorkeuren Genereren" en "Planning Verwijderen"
+
+**Stap 3: Bevestig de Actie**
+- Je ziet een waarschuwingsvenster
+- Lees de waarschuwing zorgvuldig
+- Voer het admin wachtwoord in
+- Klik "Verwijder Voorkeuren" om te bevestigen
+
+**Wat gebeurt er?**
+
+- Alle opgegeven voorkeuren voor de geselecteerde maand worden verwijderd
+- Alleen voorkeuren van jouw station worden verwijderd (niet van andere stations)
+- De planning blijft behouden (alleen voorkeuren worden verwijderd)
+- Gebruikers moeten opnieuw hun voorkeuren opgeven
+
+**Belangrijk:**
+
+- ✅ Deze actie is beperkt tot jouw station
+- ✅ De planning (shifts) wordt niet verwijderd
+- ⚠️ Alle gebruikers moeten opnieuw hun voorkeuren opgeven
+- ⚠️ Deze actie kan niet ongedaan worden gemaakt
+- 🔒 Wachtwoord vereist voor beveiliging
+
 ### 🧠 Gedetailleerde Uitleg Planning Algoritme
 
 #### 📋 Overzicht Planning Process
