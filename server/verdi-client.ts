@@ -59,7 +59,7 @@ interface VerdiResponse {
   result: "Success" | "Error";
   warningFeedback: string[];
   errorFeedback: string[];
-  shift: string; // GUID van de aangemaakte/aangepaste shift
+  shiftGuid: string; // GUID van de aangemaakte/aangepaste shift
 }
 
 export class VerdiClient {
@@ -183,7 +183,7 @@ export class VerdiClient {
       
       console.log(`Verdi response:`, {
         result: data.result,
-        shiftGuid: data.shift,
+        shiftGuid: data.shiftGuid,
         warnings: data.warningFeedback?.length || 0,
         errors: data.errorFeedback?.length || 0
       });
