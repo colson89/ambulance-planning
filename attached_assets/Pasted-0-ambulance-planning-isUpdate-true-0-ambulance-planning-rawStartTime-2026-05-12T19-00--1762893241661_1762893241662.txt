@@ -1,0 +1,60 @@
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-05-12T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-13T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-12T19:00:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-13T07:00:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shiftGuid: 'c0286637-9958-461d-be1d-b392014c25cb',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8004,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-05-04T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-05T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-04T19:00:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-05T07:00:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shiftGuid: '2a90bd06-31e5-464b-a853-b392014c25e8',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8005,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-05-06T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-07T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-06T19:00:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-07T07:00:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shiftGuid: 'd8d20e8f-c457-4264-b8cf-b392014c2604',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 8002,
+0|ambulance-planning  |   stationId: 2,
+0|ambulance-planning  |   assignments: 1,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-05-21T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-05-22T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-05-21T19:00:00',
+0|ambulance-planning  |   formattedEnd: '2026-05-22T07:00:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shiftGuid: '91be719c-3a57-4110-916c-b392014c261f',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }

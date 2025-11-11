@@ -1821,11 +1821,13 @@ Een hard refresh forceert de browser om de nieuwste versie te downloaden.
   - Positie indices aangepast naar 1-based (Positie 1, 2) i.p.v. 0-based
   - Verbeterde error messages met specifieke positienamen (Chauffeur/Ambulancier)
   - Sync logs worden correct toegepast op alle shift records in een groep
-- 🕐 **Correcte Tijdzones** - Shift tijden worden correct naar Verdi gestuurd
-  - Dagshifts: 7:00-19:00 (niet meer 9:00-21:00)
-  - Nachtshifts: 19:00-7:00 (niet meer 21:00-9:00)
-  - Lokale tijd wordt behouden zonder UTC conversie
+- 🕐 **Correcte Tijdzones met Zomer/Wintertijd** - Shift tijden worden correct naar Verdi gestuurd
+  - Dagshifts: 7:00-19:00 (altijd correct, ongeacht seizoen)
+  - Nachtshifts: 19:00-7:00 (altijd correct, ongeacht seizoen)
+  - Automatische detectie van zomertijd (CEST, UTC+2) en wintertijd (CET, UTC+1)
+  - Timezone indicator wordt toegevoegd: +02:00 in zomer, +01:00 in winter
   - Shift tijden in Verdi matchen exact met tijden in planning systeem
+  - Werkt correct bij overgang zomer/wintertijd (laatste zondag maart/oktober)
 
 **Beveiliging:**
 - 🔒 **Enhanced Authorization** - Alle Verdi endpoints beveiligd

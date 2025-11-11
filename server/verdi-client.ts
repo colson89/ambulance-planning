@@ -1,10 +1,32 @@
 import type { Shift, VerdiUserMapping, VerdiPositionMapping, VerdiStationConfig, User } from "../shared/schema";
 
 /**
- * Formatteert een Date object als ISO string zonder timezone conversie
- * Gebruikt UTC componenten omdat database timestamps zonder timezone worden opgeslagen
- * en PostgreSQL deze als UTC aan Node.js doorgeeft, ongeacht de server timezone.
- * Dit zorgt ervoor dat 7:00 in de database als 7:00 naar Verdi wordt gestuurd.
+ * Bepaalt of een datum in zomertijd (CEST) of wintertijd (CET) valt voor Europe/Brussels
+ * Zomertijd: laatste zondag maart 02:00 → laatste zondag oktober 03:00 (UTC+2)
+ * Wintertijd: rest van het jaar (UTC+1)
+ */
+function isDaylightSavingTime(date: Date): boolean {
+  const year = date.getUTCFullYear();
+  
+  // Vind laatste zondag van maart (start zomertijd om 01:00 UTC = 02:00 CET)
+  const marchLastDay = new Date(Date.UTC(year, 2, 31, 1, 0, 0));
+  const marchLastSunday = new Date(marchLastDay);
+  marchLastSunday.setUTCDate(31 - marchLastDay.getUTCDay());
+  
+  // Vind laatste zondag van oktober (einde zomertijd om 01:00 UTC = 03:00 CEST)
+  const octoberLastDay = new Date(Date.UTC(year, 9, 31, 1, 0, 0));
+  const octoberLastSunday = new Date(octoberLastDay);
+  octoberLastSunday.setUTCDate(31 - octoberLastDay.getUTCDay());
+  
+  // Check of de datum tussen start en einde van zomertijd valt
+  return date >= marchLastSunday && date < octoberLastSunday;
+}
+
+/**
+ * Formatteert een Date object als ISO string met Europe/Brussels timezone offset
+ * Database timestamps worden als UTC geïnterpreteerd door PostgreSQL
+ * Verdi verwacht tijden in lokale tijd met timezone indicator
+ * Voorbeeld: 2026-05-12T19:00:00+02:00 (zomertijd) of 2026-12-15T19:00:00+01:00 (wintertijd)
  */
 function formatLocalDateTime(date: Date): string {
   const year = date.getUTCFullYear();
@@ -14,7 +36,10 @@ function formatLocalDateTime(date: Date): string {
   const minutes = String(date.getUTCMinutes()).padStart(2, '0');
   const seconds = String(date.getUTCSeconds()).padStart(2, '0');
   
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  // Bepaal timezone offset: +02:00 voor zomertijd (CEST), +01:00 voor wintertijd (CET)
+  const offset = isDaylightSavingTime(date) ? '+02:00' : '+01:00';
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${offset}`;
 }
 
 interface VerdiShiftAssignment {
