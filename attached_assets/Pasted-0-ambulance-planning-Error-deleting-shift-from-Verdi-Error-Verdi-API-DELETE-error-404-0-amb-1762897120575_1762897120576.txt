@@ -1,0 +1,121 @@
+0|ambulance-planning  | Error deleting shift from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Error deleting shift 8042 from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Failed to delete shift 8042: Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.
+0|ambulance-planning  | Deleting shift 8043 from Verdi (GUID: bb95773a-8b0e-4480-989b-b39201624eaa)
+0|ambulance-planning  | Deleting shift from Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning/bb95773a-8b0e-4480-989b-b39201624eaa { verdiShiftGuid: 'bb95773a-8b0e-4480-989b-b39201624eaa' }
+0|ambulance-planning  | Error deleting shift from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Error deleting shift 8043 from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Failed to delete shift 8043: Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.
+0|ambulance-planning  | Deleting shift 8044 from Verdi (GUID: 10fff491-85dc-4593-914c-b39201624ec7)
+0|ambulance-planning  | Deleting shift from Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning/10fff491-85dc-4593-914c-b39201624ec7 { verdiShiftGuid: '10fff491-85dc-4593-914c-b39201624ec7' }
+0|ambulance-planning  | Error deleting shift from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Error deleting shift 8044 from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Failed to delete shift 8044: Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.
+0|ambulance-planning  | Deleting shift 8045 from Verdi (GUID: 00f973d5-44c3-4a8c-a045-b39201624ee3)
+0|ambulance-planning  | Deleting shift from Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning/00f973d5-44c3-4a8c-a045-b39201624ee3 { verdiShiftGuid: '00f973d5-44c3-4a8c-a045-b39201624ee3' }
+0|ambulance-planning  | Error deleting shift from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Error deleting shift 8045 from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Failed to delete shift 8045: Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.
+0|ambulance-planning  | Deleting shift 8046 from Verdi (GUID: fd8840a6-1dbe-44fa-afe7-b39201624eff)
+0|ambulance-planning  | Deleting shift from Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning/fd8840a6-1dbe-44fa-afe7-b39201624eff { verdiShiftGuid: 'fd8840a6-1dbe-44fa-afe7-b39201624eff' }
+0|ambulance-planning  | Error deleting shift from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Error deleting shift 8046 from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Failed to delete shift 8046: Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.
+0|ambulance-planning  | [93%] 6/44 shifts verwijderd, 35 gefaald
+0|ambulance-planning  | Deleting shift 8047 from Verdi (GUID: edf5676f-7ab6-4ca0-b721-b39201624f17)
+0|ambulance-planning  | Deleting shift from Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning/edf5676f-7ab6-4ca0-b721-b39201624f17 { verdiShiftGuid: 'edf5676f-7ab6-4ca0-b721-b39201624f17' }
+0|ambulance-planning  | Error deleting shift from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Error deleting shift 8047 from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Failed to delete shift 8047: Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.
+0|ambulance-planning  | Deleting shift 8048 from Verdi (GUID: a26e9d24-2d77-49bd-9724-b39201624f51)
+0|ambulance-planning  | Deleting shift from Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning/a26e9d24-2d77-49bd-9724-b39201624f51 { verdiShiftGuid: 'a26e9d24-2d77-49bd-9724-b39201624f51' }
+0|ambulance-planning  | Error deleting shift from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Error deleting shift 8048 from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Failed to delete shift 8048: Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.
+0|ambulance-planning  | Deleting shift 8049 from Verdi (GUID: 7dfebe8d-9ae8-4750-b5fe-b39201624fb1)
+0|ambulance-planning  | Deleting shift from Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning/7dfebe8d-9ae8-4750-b5fe-b39201624fb1 { verdiShiftGuid: '7dfebe8d-9ae8-4750-b5fe-b39201624fb1' }
+0|ambulance-planning  | Error deleting shift from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Error deleting shift 8049 from Verdi: Error: Verdi API DELETE error (404):
+0|ambulance-planning  |     at VerdiClient.deleteShiftFromVerdi (file:///C:/ambulance-planning/dist/index.js:165:19)
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async DatabaseStorage.deleteShift (file:///C:/ambulance-planning/dist/index.js:2293:9)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:3866:11
+0|ambulance-planning  | Failed to delete shift 8049: Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.
+0|ambulance-planning  | [100%] 6/44 shifts verwijderd, 38 gefaald
+0|ambulance-planning  | [100%] 6/44 shifts verwijderd, 38 gefaald
+0|ambulance-planning  | 10:37:47 PM [express] DELETE /api/shifts/month 207 in 1277ms :: {"message":"6/44 shifts verwijderd. 3…
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-12T21:37:47.803Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: false,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
