@@ -456,8 +456,8 @@ export default function VerdiSettings() {
             </CardHeader>
             <CardContent className="space-y-4">
               {[
-                { index: 0, name: "Positie 1 (Chauffeur)", description: "Voor ambulancier die rijdt - vereist rijbewijs C tijdens planning" },
-                { index: 1, name: "Positie 2 (Bijrijder)", description: "Voor ambulancier die meerijdt - rijbewijs C niet vereist" }
+                { index: 1, name: "Positie 1 (Chauffeur)", description: "Voor ambulancier die rijdt - vereist rijbewijs C tijdens planning" },
+                { index: 2, name: "Positie 2 (Bijrijder)", description: "Voor ambulancier die meerijdt - rijbewijs C niet vereist" }
               ].map((position) => {
                 const existingMapping = positionMappings.find((m: any) => m.positionIndex === position.index);
                 return (
