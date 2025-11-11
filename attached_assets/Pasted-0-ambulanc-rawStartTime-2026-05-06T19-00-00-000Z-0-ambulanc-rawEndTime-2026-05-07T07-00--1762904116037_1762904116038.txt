@@ -1,0 +1,263 @@
+0|ambulanc |   rawStartTime: 2026-05-06T19:00:00.000Z,
+0|ambulanc |   rawEndTime: 2026-05-07T07:00:00.000Z,
+0|ambulanc |   formattedStart: '2026-05-06T19:00:00+02:00',
+0|ambulanc |   formattedEnd: '2026-05-07T07:00:00+02:00'
+0|ambulanc | }
+0|ambulanc | Verdi response: { result: 'Failed', shift: undefined, warnings: 0, errors: 1 }
+0|ambulanc | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulanc |   shiftId: 8212,
+0|ambulanc |   stationId: 2,
+0|ambulanc |   assignments: 1,
+0|ambulanc |   isUpdate: false,
+0|ambulanc |   rawStartTime: 2026-05-01T07:00:00.000Z,
+0|ambulanc |   rawEndTime: 2026-05-01T19:00:00.000Z,
+0|ambulanc |   formattedStart: '2026-05-01T07:00:00+02:00',
+0|ambulanc |   formattedEnd: '2026-05-01T19:00:00+02:00'
+0|ambulanc | }
+0|ambulanc | Verdi response: { result: 'Failed', shift: undefined, warnings: 0, errors: 1 }
+0|ambulanc | Sending shift to Verdi: https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulanc |   shiftId: 8213,
+0|ambulanc |   stationId: 2,
+0|ambulanc |   assignments: 1,
+0|ambulanc |   isUpdate: false,
+0|ambulanc |   rawStartTime: 2026-05-01T19:00:00.000Z,
+0|ambulanc |   rawEndTime: 2026-05-02T07:00:00.000Z,
+0|ambulanc |   formattedStart: '2026-05-01T19:00:00+02:00',
+0|ambulanc |   formattedEnd: '2026-05-02T07:00:00+02:00'
+0|ambulanc | }
+0|ambulanc | Verdi response: { result: 'Failed', shift: undefined, warnings: 0, errors: 1 }
+0|ambulanc | 12:33:08 AM [express] POST /api/verdi/sync 200 in 2030ms :: {"success":true,"message":"Synchronisatie…
+0|ambulanc | === DESERIALIZE USER ===
+0|ambulanc | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulanc | Using session stationId: 2
+0|ambulanc | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulanc | === REQUIRE AUTH DEBUG ===
+0|ambulanc | isAuthenticated: true
+0|ambulanc | session: Session {
+0|ambulanc |   cookie: {
+0|ambulanc |     path: '/',
+0|ambulanc |     _expires: 2025-11-12T23:33:08.075Z,
+0|ambulanc |     originalMaxAge: 86400000,
+0|ambulanc |     httpOnly: false,
+0|ambulanc |     secure: false,
+0|ambulanc |     sameSite: 'lax'
+0|ambulanc |   },
+0|ambulanc |   passport: { user: { id: 17, stationId: 2 } }
+0|ambulanc | }
+0|ambulanc | user: {
+0|ambulanc |   id: 17,
+0|ambulanc |   username: 'tvdd19',
+0|ambulanc |   password: 'Admin123',
+0|ambulanc |   firstName: 'Tom',
+0|ambulanc |   lastName: 'Vandendijck',
+0|ambulanc |   email: '',
+0|ambulanc |   role: 'admin',
+0|ambulanc |   isAdmin: false,
+0|ambulanc |   isProfessional: true,
+0|ambulanc |   hasDrivingLicenseC: true,
+0|ambulanc |   hours: 24,
+0|ambulanc |   stationId: 2
+0|ambulanc | }
+0|ambulanc | 12:33:08 AM [express] GET /api/shifts 200 in 3ms :: [{"id":8182,"userId":0,"stationId":2,"date":"2026…
+
+C:\Users\Administrator\.pm2\logs\ambulance-planning-error.log last 200 lines:
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulanc | Full Verdi response object: {
+0|ambulanc |   "shift": "1d992681-3eb9-4a60-a261-b39201818035",
+0|ambulanc |   "result": "Success",
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulanc | Full Verdi response object: {
+0|ambulanc |   "shift": "044116df-aac4-4474-a1aa-b3920181806f",
+0|ambulanc |   "result": "Success",
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulanc | Full Verdi response object: {
+0|ambulanc |   "shift": "ac930671-32d9-4e6c-a143-b3920181808f",
+0|ambulanc |   "result": "Success",
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulanc | Full Verdi response object: {
+0|ambulanc |   "shift": "6a49a314-b0ca-427a-8012-b392018180c8",
+0|ambulanc |   "result": "Success",
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulanc | Full Verdi response object: {
+0|ambulanc |   "shift": "502b310c-2c1b-49d2-abca-b392018180ee",
+0|ambulanc |   "result": "Success",
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulanc | Full Verdi response object: {
+0|ambulanc |   "shift": "2d68a306-abd2-4fc1-8b52-b39201818131",
+0|ambulanc |   "result": "Success",
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulanc | Full Verdi response object: {
+0|ambulanc |   "shift": "2b7bf897-d2af-42b7-b200-b39201818160",
+0|ambulanc |   "result": "Success",
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulanc | Full Verdi response object: {
+0|ambulanc |   "shift": "7e91c9dc-1333-46a2-82f3-b3920181819b",
+0|ambulanc |   "result": "Success",
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulanc | Full Verdi response object: {
+0|ambulanc |   "shift": "84ab5e66-9cf8-4a37-bb5c-b392018181c4",
+0|ambulanc |   "result": "Success",
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | ⚠️ CRITICAL: Verdi returned Success but NO shiftGuid!
+0|ambulanc | Full Verdi response object: {
+0|ambulanc |   "shift": "82d1faf2-1c4b-4694-aa0b-b392018181f8",
+0|ambulanc |   "result": "Success",
+0|ambulanc |   "warningFeedback": [],
+0|ambulanc |   "errorFeedback": []
+0|ambulanc | }
+0|ambulanc | Response keys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | Response has these properties: {
+0|ambulanc |   hasShiftGuid: false,
+0|ambulanc |   hasShift: true,
+0|ambulanc |   hasId: false,
+0|ambulanc |   hasData: false,
+0|ambulanc |   allKeys: [ 'shift', 'result', 'warningFeedback', 'errorFeedback' ]
+0|ambulanc | }
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
