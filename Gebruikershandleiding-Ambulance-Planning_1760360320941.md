@@ -802,6 +802,49 @@ Het systeem gebruikt geavanceerde algoritmes:
 - **<200%**: Niet voldoende shifts doorgegeven → Persoon heeft niet voldoende shifts opgegeven
 - **>100%**: Veel te weinig shifts doorgegeven → Persoon geeft minder shifts door dan hij shifts wil doen
 
+#### 🔄 Sorteren van Statistieken
+
+**Klikbare Kolom Headers:**
+
+De statistieken tabel ondersteunt sorteren op elke kolom om snel inzicht te krijgen:
+
+- **Klik op een kolom header** om te sorteren op die kolom
+- **Klik opnieuw** om de sorteerrichting om te draaien (oplopend ↔ aflopend)
+- **Visuele indicator** (▲ ▼) toont welke kolom actief is gesorteerd
+
+**Sorteerbare Kolommen:**
+
+**Medewerker:**
+- Alfabetisch sorteren op achternaam en voornaam
+- Handig om snel een specifieke medewerker te vinden
+
+**Voorkeuren (alle kolommen sorteerbaar):**
+- Dag Week (u), Nacht Week (u), Dag Weekend (u), Nacht Weekend (u)
+- Totaal (u) - zie direct wie de meeste/minste voorkeuren heeft opgegeven
+- Percentage - identificeer wie te weinig voorkeuren heeft doorgegeven
+
+**Werkelijke Shifts (alle kolommen sorteerbaar):**
+- Dag Week (u), Nacht Week (u), Dag Weekend (u), Nacht Weekend (u)
+- Zie direct wie de meeste/minste shifts heeft gewerkt
+
+**Praktische Voorbeelden:**
+
+1. **Wie heeft de meeste voorkeuren opgegeven?**
+   - Klik op "Totaal (u)" onder Voorkeuren
+   - Klik nogmaals voor aflopend (hoogste eerst)
+
+2. **Wie heeft te weinig voorkeuren doorgegeven?**
+   - Klik op "Percentage" kolom
+   - Medewerkers met laagste percentage staan bovenaan
+
+3. **Weekend shifts verdeling controleren:**
+   - Klik op "Dag Weekend (u)" onder Werkelijke Shifts
+   - Zie direct wie veel/weinig weekend shifts heeft gedaan
+
+4. **Alfabetisch sorteren:**
+   - Klik op "Medewerker" kolom
+   - Default sortering: alfabetisch op achternaam
+
 ### ⚙️ Weekdag Instellingen
 
 #### Configuratie Openen
@@ -1668,6 +1711,15 @@ Het systeem wordt regelmatig bijgewerkt met nieuwe functies en verbeteringen:
     - Zoekt op gebruikersnaam, voornaam, achternaam en volledige naam
     - Real-time filtering terwijl u typt
     - Null-safe implementatie (werkt ook met incomplete namen)
+
+**Statistieken Verbeteringen:**
+- 🔄 **Sorteerbare Kolommen** - Klik op elke kolom header om te sorteren
+  - Sorteren op medewerker naam (alfabetisch)
+  - Sorteren op alle voorkeuren kolommen (dag/nacht, week/weekend, totaal, percentage)
+  - Sorteren op alle werkelijke shifts kolommen
+  - Visuele sorteer-indicatoren (▲ ▼) tonen actieve kolom en richting
+  - Toggle functionaliteit: klik opnieuw om sorteerrichting om te draaien
+  - Percentage kolom sorteert correct op berekende waarde (voorkeuren/max uren)
 
 **Beveiliging:**
 - 🔒 **Enhanced Authorization** - Alle Verdi endpoints beveiligd
