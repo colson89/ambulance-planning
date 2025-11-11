@@ -3347,6 +3347,83 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // Cleanup legacy Verdi sync logs (admin only)
+  app.post("/api/verdi/cleanup-legacy-logs", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const stationId = req.body.stationId;
+      
+      // Haal legacy logs op zonder snapshot data
+      const legacyLogs = await storage.getLegacyVerdiSyncLogs(stationId);
+      
+      if (legacyLogs.length === 0) {
+        return res.json({
+          success: true,
+          message: 'Geen legacy logs gevonden - alle logs hebben snapshot data',
+          deleted: 0,
+          failed: 0
+        });
+      }
+      
+      console.log(`Found ${legacyLogs.length} legacy sync logs to clean up`);
+      
+      let deleted = 0;
+      let failed = 0;
+      const errors: string[] = [];
+      
+      // Verwijder elke legacy log en probeer de Verdi shift te deleten
+      for (const log of legacyLogs) {
+        try {
+          // Als de log een Verdi GUID heeft, probeer de shift te verwijderen
+          if (log.verdiShiftGuid) {
+            const config = await storage.getVerdiStationConfig(log.stationId);
+            if (config?.verdiUrl && config?.authId && config?.authSecret && config?.shiftSheetGuid) {
+              const verdiClient = new VerdiClient(
+                config.verdiUrl,
+                config.authId,
+                config.authSecret,
+                config.shiftSheetGuid
+              );
+              
+              try {
+                await verdiClient.deleteShiftFromVerdi(log.verdiShiftGuid);
+                console.log(`Deleted Verdi shift ${log.verdiShiftGuid} for legacy log ${log.id}`);
+              } catch (deleteError: any) {
+                // 404 is OK - shift bestaat al niet meer in Verdi
+                if (deleteError.statusCode === 404) {
+                  console.log(`Verdi shift ${log.verdiShiftGuid} already deleted (404) - continuing`);
+                } else {
+                  console.warn(`Failed to delete Verdi shift ${log.verdiShiftGuid}:`, deleteError.message);
+                }
+              }
+            }
+          }
+          
+          // Verwijder de sync log uit de database
+          await storage.deleteVerdiSyncLog(log.shiftId);
+          deleted++;
+          
+        } catch (error: any) {
+          console.error(`Error cleaning up legacy log ${log.id}:`, error);
+          failed++;
+          errors.push(`Log ${log.id}: ${error.message}`);
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: `Legacy logs opgeschoond: ${deleted} verwijderd, ${failed} fouten`,
+        deleted,
+        failed,
+        errors: errors.length > 0 ? errors : undefined
+      });
+      
+    } catch (error: any) {
+      console.error("Error cleaning up legacy logs:", error);
+      res.status(500).json({ message: "Failed to cleanup legacy logs", error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

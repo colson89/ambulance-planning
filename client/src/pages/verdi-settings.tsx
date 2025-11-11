@@ -195,6 +195,27 @@ export default function VerdiSettings() {
     },
   });
 
+  const cleanupLegacyLogsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/verdi/cleanup-legacy-logs", { stationId: effectiveStationId });
+      if (!res.ok) throw new Error("Kon legacy logs niet opschonen");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Opgeschoond",
+        description: `${data.deleted} legacy logs verwijderd${data.failed > 0 ? `, ${data.failed} fouten` : ''}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleConfigSave = () => {
     updateConfigMutation.mutate(configForm);
   };
@@ -363,10 +384,24 @@ export default function VerdiSettings() {
                 <Label htmlFor="enabled">Verdi synchronisatie ingeschakeld</Label>
               </div>
 
-              <Button onClick={handleConfigSave} disabled={updateConfigMutation.isPending}>
-                <Save className="mr-2 h-4 w-4" />
-                {updateConfigMutation.isPending ? "Opslaan..." : "Configuratie Opslaan"}
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={handleConfigSave} disabled={updateConfigMutation.isPending}>
+                  <Save className="mr-2 h-4 w-4" />
+                  {updateConfigMutation.isPending ? "Opslaan..." : "Configuratie Opslaan"}
+                </Button>
+
+                <Button 
+                  variant="outline"
+                  onClick={() => cleanupLegacyLogsMutation.mutate()}
+                  disabled={cleanupLegacyLogsMutation.isPending}
+                >
+                  {cleanupLegacyLogsMutation.isPending ? "Opschonen..." : "Legacy Logs Opschonen"}
+                </Button>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Gebruik "Legacy Logs Opschonen" om oude sync logs zonder snapshot data te verwijderen. Dit is nodig na de update naar het nieuwe systeem.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>

@@ -121,10 +121,12 @@ export interface IStorage {
   upsertVerdiPositionMapping(stationId: number, positionIndex: number, positionGuid: string, requiresLicenseC: boolean): Promise<any>;
   getAllVerdiPositionMappings(): Promise<any[]>;
   getVerdiSyncLog(shiftId: number): Promise<any>;
-  createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<any>;
-  updateVerdiSyncLog(shiftId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string): Promise<any>;
+  createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string, shiftStartTime?: Date, shiftEndTime?: Date, shiftType?: string): Promise<any>;
+  updateVerdiSyncLog(shiftId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string, shiftStartTime?: Date, shiftEndTime?: Date, shiftType?: string): Promise<any>;
   getVerdiSyncLogsByMonth(month: number, year: number, stationId?: number): Promise<any[]>;
   getLastSuccessfulVerdiSync(stationId: number, month: number, year: number): Promise<Date | null>;
+  getLegacyVerdiSyncLogs(stationId?: number): Promise<any[]>;
+  deleteVerdiSyncLog(shiftId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3306,6 +3308,26 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     
     return result[0]?.syncedAt || null;
+  }
+
+  async getLegacyVerdiSyncLogs(stationId?: number): Promise<VerdiSyncLog[]> {
+    // Haal alle sync logs op zonder snapshot data (shiftStartTime IS NULL)
+    let query = db.select()
+      .from(verdiSyncLog)
+      .where(isNull(verdiSyncLog.shiftStartTime));
+    
+    if (stationId !== undefined) {
+      query = query.where(and(
+        isNull(verdiSyncLog.shiftStartTime),
+        eq(verdiSyncLog.stationId, stationId)
+      )) as any;
+    }
+    
+    return await query;
+  }
+
+  async deleteVerdiSyncLog(shiftId: number): Promise<void> {
+    await db.delete(verdiSyncLog).where(eq(verdiSyncLog.shiftId, shiftId));
   }
 }
 
