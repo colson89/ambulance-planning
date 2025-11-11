@@ -3388,16 +3388,11 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           // Als de log een Verdi GUID heeft, probeer de shift te verwijderen
           if (log.verdiShiftGuid) {
             const config = await storage.getVerdiStationConfig(log.stationId);
-            if (config?.verdiUrl && config?.authId && config?.authSecret && config?.shiftSheetGuid) {
-              const verdiClient = new VerdiClient(
-                config.verdiUrl,
-                config.authId,
-                config.authSecret,
-                config.shiftSheetGuid
-              );
+            if (config?.verdiUrl && config?.authId && config?.authSecret) {
+              const { verdiClient } = await import('./verdi-client');
               
               try {
-                await verdiClient.deleteShiftFromVerdi(log.verdiShiftGuid);
+                await verdiClient.deleteShiftFromVerdi(log.verdiShiftGuid, config);
                 console.log(`Deleted Verdi shift ${log.verdiShiftGuid} for legacy log ${log.id}`);
               } catch (deleteError: any) {
                 // 404 is OK - shift bestaat al niet meer in Verdi
