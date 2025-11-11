@@ -2779,6 +2779,10 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     if (!shift) throw new Error("Shift not found");
+    
+    // Verwijder sync log - wijziging is nog niet naar Verdi gestuurd
+    await this.deleteVerdiSyncLog(id);
+    
     return shift;
   }
 
