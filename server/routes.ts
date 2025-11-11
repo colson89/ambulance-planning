@@ -51,6 +51,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Version endpoint for deployment verification
+  app.get("/api/version", (req, res) => {
+    const version = {
+      gitSha: process.env.GIT_SHA || '2b5e2f7',
+      buildTime: process.env.BUILD_TIME || new Date().toISOString(),
+      schemaVersion: '1.1.0-snapshot-fix',
+      features: ['snapshot-based-update-detection', 'legacy-log-cleanup']
+    };
+    res.json(version);
+  });
+
   // Station management routes
   app.get("/api/stations", async (req, res) => {
     try {
