@@ -194,6 +194,55 @@ export class VerdiClient {
       throw error;
     }
   }
+
+  /**
+   * Verwijdert een shift uit Verdi
+   * @param verdiShiftGuid De GUID van de shift in Verdi
+   * @param stationConfig De Verdi configuratie van het station
+   */
+  async deleteShiftFromVerdi(
+    verdiShiftGuid: string,
+    stationConfig: VerdiStationConfig
+  ): Promise<void> {
+    // Validatie
+    if (!stationConfig.verdiUrl) {
+      throw new Error("Station heeft geen Verdi URL geconfigureerd");
+    }
+    
+    if (!stationConfig.authId) {
+      throw new Error("Station heeft geen Verdi Auth ID geconfigureerd");
+    }
+    
+    if (!stationConfig.authSecret) {
+      throw new Error("Station heeft geen Verdi Auth Secret geconfigureerd");
+    }
+
+    // DELETE request naar Verdi
+    const url = `${stationConfig.verdiUrl}/comm-api/hooks/v1/ShiftPlanning/${verdiShiftGuid}`;
+    
+    console.log(`Deleting shift from Verdi: ${url}`, {
+      verdiShiftGuid
+    });
+
+    try {
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': this.getBasicAuthHeader(stationConfig.authId, stationConfig.authSecret)
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Verdi API DELETE error (${response.status}): ${errorText}`);
+      }
+
+      console.log(`Successfully deleted shift from Verdi: ${verdiShiftGuid}`);
+    } catch (error) {
+      console.error("Error deleting shift from Verdi:", error);
+      throw error;
+    }
+  }
 }
 
 export const verdiClient = new VerdiClient();

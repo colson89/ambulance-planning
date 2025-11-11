@@ -1456,31 +1456,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Initialize progress tracking
       deleteProgress = { percentage: 0, message: "Beginnen met verwijderen...", isActive: true };
       
+      // Track successes and failures
+      let successCount = 0;
+      const failedShifts: Array<{ id: number; error: string }> = [];
+      
       // Verwijder alle shifts voor deze maand/jaar met voortgangsindicatie
       for (let i = 0; i < shifts.length; i++) {
-        await storage.deleteShift(shifts[i].id);
+        try {
+          await storage.deleteShift(shifts[i].id);
+          successCount++;
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          console.error(`Failed to delete shift ${shifts[i].id}:`, errorMsg);
+          failedShifts.push({ id: shifts[i].id, error: errorMsg });
+        }
         
         // Update progress for every shift
         const progress = Math.round(((i + 1) / totalShifts) * 100);
         deleteProgress.percentage = progress;
-        deleteProgress.message = `${i + 1}/${totalShifts} shifts verwijderd`;
+        deleteProgress.message = `${successCount}/${totalShifts} shifts verwijderd${failedShifts.length > 0 ? ` (${failedShifts.length} gefaald)` : ''}`;
         
         // Log voortgang elke 10 shifts of bij de laatste
         if (i % 10 === 0 || i === shifts.length - 1) {
-          console.log(`[${progress}%] ${i + 1}/${totalShifts} shifts verwijderd`);
+          console.log(`[${progress}%] ${successCount}/${totalShifts} shifts verwijderd, ${failedShifts.length} gefaald`);
         }
       }
       
       // Complete progress tracking
       deleteProgress = { percentage: 100, message: "Verwijderen voltooid!", isActive: false };
       
-      console.log(`[100%] ${totalShifts} shifts succesvol verwijderd voor ${month}/${year}`);
-      res.status(200).json({ 
-        message: `${totalShifts} shifts verwijderd voor ${month}/${year}`,
-        count: totalShifts
-      });
+      // Return summary
+      if (failedShifts.length === 0) {
+        console.log(`[100%] ${successCount} shifts succesvol verwijderd voor ${month}/${year}`);
+        res.status(200).json({ 
+          message: `${successCount} shifts verwijderd voor ${month}/${year}`,
+          count: successCount
+        });
+      } else {
+        console.log(`[100%] ${successCount}/${totalShifts} shifts verwijderd, ${failedShifts.length} gefaald`);
+        res.status(207).json({ 
+          message: `${successCount}/${totalShifts} shifts verwijderd. ${failedShifts.length} shifts konden niet worden verwijderd uit Verdi.`,
+          count: successCount,
+          failed: failedShifts.length,
+          failedShifts: failedShifts
+        });
+      }
     } catch (error) {
       console.error("Error deleting shifts:", error);
+      deleteProgress = { percentage: 0, message: "Verwijderen gefaald", isActive: false };
       res.status(500).json({ message: "Failed to delete shifts" });
     }
   });

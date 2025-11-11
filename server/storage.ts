@@ -7,6 +7,7 @@ import { client, pool } from "./db";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import memorystore from "memorystore";
+import { verdiClient } from "./verdi-client";
 
 const scryptAsync = promisify(scrypt);
 const PostgresSessionStore = connectPg(session);
@@ -2780,6 +2781,60 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteShift(id: number): Promise<void> {
+    // Check of deze shift al naar Verdi is gestuurd
+    const [syncLog] = await db
+      .select()
+      .from(verdiSyncLog)
+      .where(
+        and(
+          eq(verdiSyncLog.shiftId, id),
+          eq(verdiSyncLog.syncStatus, "success")
+        )
+      );
+
+    // Als de shift naar Verdi is gestuurd, eerst daar verwijderen
+    if (syncLog && syncLog.verdiShiftGuid) {
+      // Haal station config op
+      const [stationCfg] = await db
+        .select()
+        .from(verdiStationConfig)
+        .where(eq(verdiStationConfig.stationId, syncLog.stationId));
+
+      // KRITIEK: Als shift eerder naar Verdi is gestuurd maar config is nu disabled/missing,
+      // kunnen we niet verwijderen uit Verdi -> gooi error
+      if (!stationCfg || !stationCfg.enabled) {
+        throw new Error(
+          `Kan shift niet verwijderen: Deze shift is eerder naar Verdi gestuurd maar Verdi integratie is nu uitgeschakeld. ` +
+          `Activeer eerst Verdi integratie in instellingen of verwijder de shift handmatig in Verdi.`
+        );
+      }
+
+      // Verdi config bestaat en is enabled - probeer te verwijderen
+      try {
+        console.log(`Deleting shift ${id} from Verdi (GUID: ${syncLog.verdiShiftGuid})`);
+        await verdiClient.deleteShiftFromVerdi(syncLog.verdiShiftGuid, stationCfg);
+        console.log(`Successfully deleted shift ${id} from Verdi`);
+      } catch (error) {
+        console.error(`Error deleting shift ${id} from Verdi:`, error);
+        // Update sync log met error status voor traceerbaarheid
+        await db
+          .update(verdiSyncLog)
+          .set({
+            syncStatus: "error",
+            errorMessage: `Failed to delete from Verdi: ${error instanceof Error ? error.message : String(error)}`,
+            updatedAt: new Date()
+          })
+          .where(eq(verdiSyncLog.id, syncLog.id));
+        
+        // Gooi error naar caller - shift blijft in beide systemen
+        throw new Error(`Kan shift niet verwijderen: Verdi DELETE gefaald. Probeer later opnieuw of verwijder handmatig in Verdi.`);
+      }
+    }
+
+    // Verwijder sync log entries (alleen als Verdi DELETE succesvol was of niet nodig was)
+    await db.delete(verdiSyncLog).where(eq(verdiSyncLog.shiftId, id));
+
+    // Verwijder de shift uit database
     await db.delete(shifts).where(eq(shifts.id, id));
   }
 
