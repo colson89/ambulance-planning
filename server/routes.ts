@@ -3113,10 +3113,10 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       const syncLogByIdMap = new Map(allSyncLogs.map(log => [log.shiftId, log]));
       
       // 2. Op datum+tijd+type (voor UPDATE detectie bij opnieuw gegenereerde shifts)
-      // Filter alleen logs met verdiShiftGuid en success status om oude/verwijderde shifts te vermijden
+      // Filter alleen logs met verdiShiftGuid (ongeacht status - ook 'pending' na wijzigingen)
       const syncLogByKeyMap = new Map<string, any>();
       for (const log of allSyncLogs) {
-        if (log.verdiShiftGuid && log.syncStatus === 'success') {
+        if (log.verdiShiftGuid) {
           // Gebruik opgeslagen snapshot data i.p.v. shift op te halen (werkt ook voor verwijderde shifts!)
           if (log.shiftStartTime && log.shiftEndTime && log.shiftType) {
             const key = `${log.shiftStartTime.toISOString()}_${log.shiftEndTime.toISOString()}_${log.shiftType}`;
