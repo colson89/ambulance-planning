@@ -346,22 +346,25 @@ export default function ShiftPlanner() {
       // Bepaal of dit een halve shift is en pas tijden aan indien nodig
       const canSplit = preferenceType === "first" || preferenceType === "second";
       let notesText: string | null = null;
+      let splitType: "morning" | "afternoon" | null = null;
       
       // Bepaal de juiste notesText op basis van preferenceType
       if (preferenceType === "unavailable") {
         notesText = "Niet beschikbaar";
       } else if (canSplit) {
-        notesText = preferenceType; // "first" of "second"
+        notesText = preferenceType; // "first" of "second" - behouden voor backward compatibility
         
         if (shiftType === "day") {
           if (preferenceType === "first") {
             // Eerste helft dagshift (7:00-13:00)
             startTimeHour = 7;
             endTimeHour = 13;
+            splitType = "morning";
           } else if (preferenceType === "second") {
             // Tweede helft dagshift (13:00-19:00)
             startTimeHour = 13;
             endTimeHour = 19;
+            splitType = "afternoon";
           }
         } else if (shiftType === "night") {
           if (preferenceType === "first") {
@@ -388,6 +391,7 @@ export default function ShiftPlanner() {
           endTimeHour, 0, 0
         ),
         canSplit: canSplit,
+        splitType: splitType,
         month: selectedMonth.getMonth() + 1,
         year: selectedMonth.getFullYear(),
         notes: notesText
@@ -596,7 +600,7 @@ export default function ShiftPlanner() {
                         />
                         <span>Volledige shift (7:00-19:00)</span>
                       </label>
-                      {allowSplitShifts && (
+                      {(allowSplitShifts || isMultiStation) && (
                         <>
                           <label className="flex items-center space-x-2">
                             <input
@@ -606,7 +610,7 @@ export default function ShiftPlanner() {
                               checked={currentDaySelection === "first"}
                               onChange={(e) => handleTypeChange(e, selectedDate, "day")}
                             />
-                            <span>Eerste deel (7:00-13:00)</span>
+                            <span>Ochtend (7:00-13:00)</span>
                           </label>
                           <label className="flex items-center space-x-2">
                             <input
@@ -616,7 +620,7 @@ export default function ShiftPlanner() {
                               checked={currentDaySelection === "second"}
                               onChange={(e) => handleTypeChange(e, selectedDate, "day")}
                             />
-                            <span>Tweede deel (13:00-19:00)</span>
+                            <span>Middag (13:00-19:00)</span>
                           </label>
                         </>
                       )}

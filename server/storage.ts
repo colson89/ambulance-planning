@@ -1671,11 +1671,19 @@ export class DatabaseStorage implements IStorage {
           
           for (const pref of prefsForThisDay) {
             if (pref.type === 'day') {
-              const splitInfo = pref.notes?.toLowerCase() || '';
-              if (splitInfo.includes('first')) {
+              // Check splitType eerst (nieuwe field), fallback naar notes voor backward compatibility
+              if (pref.splitType === 'morning') {
                 availableForDayFirstHalf.push(userId);
-              } else if (splitInfo.includes('second')) {
+              } else if (pref.splitType === 'afternoon') {
                 availableForDaySecondHalf.push(userId);
+              } else {
+                // Fallback: check notes voor oude preferences
+                const splitInfo = pref.notes?.toLowerCase() || '';
+                if (splitInfo.includes('first')) {
+                  availableForDayFirstHalf.push(userId);
+                } else if (splitInfo.includes('second')) {
+                  availableForDaySecondHalf.push(userId);
+                }
               }
             }
           }

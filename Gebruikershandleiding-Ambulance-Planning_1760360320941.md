@@ -147,13 +147,23 @@ Werkt u bij **1 station**?
 
 **Split Shifts (Halve Diensten):**
 
-Split shift opties (eerste/tweede deel) zijn **alleen zichtbaar** als:
-- U bij **1 station** werkt EN dat station split shifts toestaat, OF
-- U bij **meerdere stations** werkt EN **ALLE** stations split shifts toestaan
+⭐ **NIEUW: Cross-team Gebruikers en Halve Dagshiften**
 
-**Waarom deze regel?**
-- Als 1 van uw stations geen split shifts ondersteunt, kunnen halve diensten niet overal worden gebruikt
-- Het systeem toont daarom alleen hele shifts om problemen te voorkomen
+Als u bij **meerdere stations** werkt:
+- ✅ U kunt **altijd** halve dagshiften opgeven (ochtend 7-13u / middag 13-19u)
+- ✅ Dit geeft maximale flexibiliteit voor uw beschikbaarheid
+- ℹ️ Elk station gebruikt uw halve shift voorkeuren op basis van hun eigen systeem:
+  - **Uitgebreid systeem**: kan u inplannen voor halve dagshiften (ochtend OF middag)
+  - **Eenvoudig systeem**: heeft volledige dagshiften nodig (ochtend ÉN middag)
+
+**Voorbeeld:**
+Jan werkt bij PIT Geel (uitgebreid) en ZW Balen (eenvoudig). Hij geeft op:
+- Maandag 1 december: "Ochtend beschikbaar" (7-13u)
+- **PIT Geel**: kan Jan inplannen voor ochtend shift
+- **ZW Balen**: kan Jan NIET inplannen (heeft hele dag nodig, maar Jan is alleen ochtend beschikbaar)
+
+Als u bij **1 station** werkt:
+- Split shift opties zijn alleen zichtbaar als uw station dit toestaat
 
 **Belangrijke Tips:**
 

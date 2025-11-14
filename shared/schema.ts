@@ -56,6 +56,7 @@ export const shiftPreferences = pgTable("shift_preferences", {
   month: integer("month").notNull(),
   year: integer("year").notNull(),
   canSplit: boolean("can_split").notNull().default(false),
+  splitType: text("split_type", { enum: ["morning", "afternoon"] }),
   notes: text("notes")
 });
 
@@ -85,6 +86,7 @@ export const insertShiftPreferenceSchema = createInsertSchema(shiftPreferences, 
   date: z.coerce.date(),
   startTime: z.coerce.date().nullable(),
   endTime: z.coerce.date().nullable(),
+  splitType: z.enum(["morning", "afternoon"]).nullable(),
 }).pick({
   userId: true,
   stationId: true,
@@ -93,6 +95,7 @@ export const insertShiftPreferenceSchema = createInsertSchema(shiftPreferences, 
   startTime: true,
   endTime: true,
   canSplit: true,
+  splitType: true,
   month: true,
   year: true,
   notes: true
