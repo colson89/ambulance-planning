@@ -2,7 +2,7 @@
 
 ## Ambulance Planning Systeem
 
-**Versie 2025.4 - November 2025**
+**Versie 2025.5 - November 2025**
 
 ---
 
@@ -1143,7 +1143,21 @@ Het systeem houdt bij:
 A: Nee! Na configuratie synchroniseert het systeem automatisch. U drukt alleen op de sync knop.
 
 **Q: Wat gebeurt er als ik een shift aanpas na synchronisatie?**
-A: Gebruik "Alleen Wijzigingen" sync optie - alleen gewijzigde shifts worden opnieuw gestuurd.
+A: Gebruik "Alleen Wijzigingen" sync optie - het systeem detecteert automatisch of een shift moet worden aangemaakt (CREATE) of bijgewerkt (UPDATE) in Verdi. Gewijzigde shifts krijgen status "pending" en worden bij de volgende sync automatisch bijgewerkt.
+
+**Q: Hoe werkt de automatische UPDATE detectie?** ⭐ NIEUW
+A: Het systeem is intelligent:
+- **Eerste keer**: Shift wordt aangemaakt in Verdi (CREATE operatie)
+- **Wijziging**: Als u een shift aanpast, wordt de status "pending"
+- **Volgende sync**: Systeem detecteert bestaande Verdi GUID en stuurt UPDATE i.p.v. CREATE
+- **Voordeel**: Geen dubbele shifts of conflicten in Verdi!
+
+**Q: Wat betekent de "pending" status?**
+A: Een shift met status "pending" (geel) betekent:
+- De shift is gewijzigd sinds laatste sync
+- Bij volgende sync wordt dit een UPDATE operatie
+- De Verdi GUID blijft behouden (geen nieuwe shift)
+- Na succesvolle sync wordt status weer "success" (groen)
 
 **Q: Kan ik zien welke shifts al in Verdi staan?**
 A: Ja, de sync status indicator toont dit per shift (groen = gesynchroniseerd).
@@ -1223,9 +1237,36 @@ A: Synchronisatie is eenrichtingsverkeer (planning → Verdi). Voor verwijdering
 - Klik "Koppelen"
 
 **Beheer Toewijzingen:**
-- Bekijk alle station toewijzingen
-- Wijzig uur limieten
-- Verwijder toewijzingen indien nodig
+- Bekijk alle station toewijzingen van een gebruiker
+- Wijzig uur limieten door het getal aan te passen
+- Verwijder cross-team toewijzingen met de **X knop** (zie hieronder)
+
+#### Cross-Team Toewijzing Verwijderen ⭐ NIEUW
+
+**Stap-voor-stap:**
+
+1. **Open Gebruikersbeheer**
+   - Ga naar "Gebruikersbeheer"
+   - Selecteer tab "Cross-team Beheer"
+
+2. **Selecteer Gebruiker**
+   - Zoek en klik op de medewerker
+   - Bekijk "Huidige Toewijzingen"
+
+3. **Verwijder Toewijzing**
+   - Naast elke cross-team toewijzing staat een **X knop**
+   - Klik op de X naast het station dat je wilt verwijderen
+   - Bevestig de verwijdering in het dialoogvenster
+
+**Belangrijk:**
+- ❌ Het **primaire station** van een gebruiker kan NIET verwijderd worden (geen X knop)
+- ✅ Alleen **cross-team** toewijzingen kunnen verwijderd worden
+- 🔒 Alleen supervisors kunnen toewijzingen verwijderen
+
+**Voorbeeld:**
+- Jan Cools heeft primair station "ZW Geel" en cross-team "PIT Geel"
+- Je ziet een X knop naast "PIT Geel" (cross-team) maar NIET naast "ZW Geel" (primair)
+- Klik X → Bevestig → PIT Geel toewijzing is verwijderd
 
 #### Cross-Team Planning
 

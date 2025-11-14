@@ -10,6 +10,8 @@ Communication Style: Simple, everyday language. Iterative development preferred.
 
 Protected Files: Do not make changes to the `dist/` folder or the file `dist/public/assets/index-BiU_A5mR.js`.
 
+Documentation Policy: **ALWAYS update `Gebruikershandleiding-Ambulance-Planning_1760360320941.md` when adding new features or making changes to existing functionality.** This ensures end-users have up-to-date documentation for all system capabilities.
+
 ## System Architecture
 
 ### Frontend
