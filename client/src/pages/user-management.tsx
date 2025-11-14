@@ -13,7 +13,7 @@ import { z } from "zod";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, UserPlus, KeyRound, Home, Users, Settings, Plus, Minus } from "lucide-react";
+import { Pencil, Trash2, UserPlus, KeyRound, Home, Users, Settings, Plus, Minus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Calendar } from "@/components/ui/calendar";
@@ -156,6 +156,28 @@ export default function UserManagement() {
       toast({
         title: "Succes",
         description: "Uur limiet bijgewerkt",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserStationAssignmentMutation = useMutation({
+    mutationFn: async (data: { userId: number; stationId: number }) => {
+      const res = await apiRequest("DELETE", `/api/users/${data.userId}/station-assignments/${data.stationId}`);
+      if (!res.ok) throw new Error("Kon cross-team toewijzing niet verwijderen");
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchAssignments();
+      toast({
+        title: "Succes",
+        description: "Cross-team toewijzing verwijderd",
       });
     },
     onError: (error: Error) => {
@@ -1256,6 +1278,21 @@ export default function UserManagement() {
                                       }}
                                     />
                                     <span className="text-sm text-muted-foreground">u</span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={() => {
+                                        if (confirm(`Weet je zeker dat je ${selectedUserForCrossTeam.firstName} ${selectedUserForCrossTeam.lastName} wil verwijderen van ${assignment.station.displayName}?`)) {
+                                          deleteUserStationAssignmentMutation.mutate({
+                                            userId: selectedUserForCrossTeam.id,
+                                            stationId: assignment.station.id
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
                                   </div>
                                 </div>
                               ))

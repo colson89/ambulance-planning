@@ -610,6 +610,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Remove user from station (delete cross-team assignment)
+  app.delete("/api/users/:userId/station-assignments/:stationId", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const stationId = parseInt(req.params.stationId);
+      
+      // Input validation
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Ongeldige gebruiker ID" });
+      }
+      if (isNaN(stationId)) {
+        return res.status(400).json({ message: "Ongeldig station ID" });
+      }
+      
+      // Authorization: Only supervisors can remove users from stations
+      const currentUser = req.user;
+      if (!currentUser || currentUser.role !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen supervisors kunnen gebruikers verwijderen van stations" });
+      }
+      
+      // Verify user exists
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify station exists
+      const station = await storage.getStation(stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station not found" });
+      }
+      
+      // Prevent removing user from their primary station
+      if (targetUser.stationId === stationId) {
+        return res.status(400).json({ message: "Kan gebruiker niet verwijderen van hun primaire station" });
+      }
+      
+      // Check if supervisor has access to target station
+      const accessibleStations = await storage.getUserAccessibleStations(currentUser.id);
+      const hasStationAccess = accessibleStations.some(s => s.id === stationId);
+      
+      if (!hasStationAccess) {
+        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      }
+      
+      await storage.removeUserFromStation(userId, stationId);
+      
+      res.json({ 
+        message: `${targetUser.firstName} ${targetUser.lastName} verwijderd van ${station.displayName}`
+      });
+    } catch (error) {
+      console.error("Error removing user from station:", error);
+      res.status(500).json({ message: "Failed to remove user from station" });
+    }
+  });
+
   // Update user's hour limit for a specific station
   app.put("/api/users/:userId/stations/:stationId/hours", requireAdmin, async (req, res) => {
     try {
