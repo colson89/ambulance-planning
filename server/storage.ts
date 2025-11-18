@@ -342,6 +342,11 @@ export class DatabaseStorage implements IStorage {
     
     const oldPrimaryStationId = user.stationId;
     
+    // Skip if trying to set same station as primary
+    if (oldPrimaryStationId === newPrimaryStationId) {
+      return user;
+    }
+    
     // Update primary station in users table
     const [updatedUser] = await db
       .update(users)
@@ -351,15 +356,31 @@ export class DatabaseStorage implements IStorage {
     
     if (!updatedUser) throw new Error("Failed to update primary station");
     
-    // Remove new primary station from userStations if it exists there
+    // Remove new primary station from userStations (it's now the primary, not cross-team)
     await db
       .delete(userStations)
       .where(and(eq(userStations.userId, userId), eq(userStations.stationId, newPrimaryStationId)));
     
-    // Add old primary station to userStations (as cross team assignment)
-    // Only if it's different from the new one
-    if (oldPrimaryStationId !== newPrimaryStationId) {
-      await this.addUserToStation(userId, oldPrimaryStationId, maxHoursForOldStation);
+    // Check if old primary station already exists in userStations
+    // (it shouldn't, but handle gracefully)
+    const existingOldStation = await db
+      .select()
+      .from(userStations)
+      .where(and(eq(userStations.userId, userId), eq(userStations.stationId, oldPrimaryStationId)));
+    
+    if (existingOldStation.length > 0) {
+      // Update existing record
+      await db
+        .update(userStations)
+        .set({ maxHours: maxHoursForOldStation })
+        .where(and(eq(userStations.userId, userId), eq(userStations.stationId, oldPrimaryStationId)));
+    } else {
+      // Insert new record
+      await db.insert(userStations).values({ 
+        userId, 
+        stationId: oldPrimaryStationId, 
+        maxHours: maxHoursForOldStation 
+      });
     }
     
     return updatedUser;
