@@ -412,6 +412,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteUser(targetUserId);
       res.sendStatus(200);
     } catch (error) {
+      console.error("❌ DELETE USER ERROR:", error);
+      console.error("Error details:", {
+        targetUserId,
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined
+      });
       res.status(500).json({ message: "Failed to delete user" });
     }
   });
