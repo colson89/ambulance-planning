@@ -261,7 +261,44 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(userId: number): Promise<void> {
-    await db.delete(users).where(eq(users.id, userId));
+    // CASCADE DELETE: Verwijder eerst alle gerelateerde records in een transaction
+    // Dit voorkomt foreign key constraint errors en zorgt voor atomic cleanup
+    
+    await db.transaction(async (tx) => {
+      // 1. Haal eerst alle shifts van deze user op (voor verdiSyncLog cleanup)
+      const userShifts = await tx
+        .select({ id: shifts.id })
+        .from(shifts)
+        .where(eq(shifts.userId, userId));
+      
+      const shiftIds = userShifts.map(s => s.id);
+      
+      // 2. Verwijder Verdi sync logs voor deze shifts (FK constraint op shift_id)
+      if (shiftIds.length > 0) {
+        await tx.delete(verdiSyncLog).where(inArray(verdiSyncLog.shiftId, shiftIds));
+      }
+      
+      // 3. Verwijder shifts
+      await tx.delete(shifts).where(eq(shifts.userId, userId));
+      
+      // 4. Verwijder shift preferences
+      await tx.delete(shiftPreferences).where(eq(shiftPreferences.userId, userId));
+      
+      // 5. Verwijder user comments
+      await tx.delete(userComments).where(eq(userComments.userId, userId));
+      
+      // 6. Verwijder cross-team station assignments (FK constraint)
+      await tx.delete(userStations).where(eq(userStations.userId, userId));
+      
+      // 7. Verwijder calendar tokens (FK constraint)
+      await tx.delete(calendarTokens).where(eq(calendarTokens.userId, userId));
+      
+      // 8. Verwijder Verdi user mappings (FK constraint)
+      await tx.delete(verdiUserMappings).where(eq(verdiUserMappings.userId, userId));
+      
+      // 9. Ten slotte, verwijder de user zelf
+      await tx.delete(users).where(eq(users.id, userId));
+    });
   }
 
   // Multi-station access functions
