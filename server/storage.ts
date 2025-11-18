@@ -335,6 +335,36 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(userStations.userId, userId), eq(userStations.stationId, stationId)));
   }
 
+  async changePrimaryStation(userId: number, newPrimaryStationId: number, maxHoursForOldStation: number = 24): Promise<User> {
+    // Get current user to find old primary station
+    const user = await this.getUser(userId);
+    if (!user) throw new Error("User not found");
+    
+    const oldPrimaryStationId = user.stationId;
+    
+    // Update primary station in users table
+    const [updatedUser] = await db
+      .update(users)
+      .set({ stationId: newPrimaryStationId })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    if (!updatedUser) throw new Error("Failed to update primary station");
+    
+    // Remove new primary station from userStations if it exists there
+    await db
+      .delete(userStations)
+      .where(and(eq(userStations.userId, userId), eq(userStations.stationId, newPrimaryStationId)));
+    
+    // Add old primary station to userStations (as cross team assignment)
+    // Only if it's different from the new one
+    if (oldPrimaryStationId !== newPrimaryStationId) {
+      await this.addUserToStation(userId, oldPrimaryStationId, maxHoursForOldStation);
+    }
+    
+    return updatedUser;
+  }
+
   async getUsersByStation(stationId: number): Promise<User[]> {
     console.log(`DEBUG: getUsersByStation called with stationId: ${stationId}`);
     

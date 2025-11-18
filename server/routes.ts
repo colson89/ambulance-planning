@@ -666,6 +666,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Change user's primary station (supervisor only)
+  app.put("/api/users/:userId/primary-station", requireAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { newPrimaryStationId, maxHoursForOldStation } = req.body;
+      
+      // Input validation
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Ongeldige gebruiker ID" });
+      }
+      
+      // Validate body input
+      const schema = z.object({
+        newPrimaryStationId: z.number().min(1),
+        maxHoursForOldStation: z.number().min(1).max(160).default(24)
+      });
+      
+      const validatedData = schema.parse({ newPrimaryStationId, maxHoursForOldStation });
+      
+      // Authorization: Only supervisors can change primary station
+      const currentUser = req.user;
+      if (!currentUser || currentUser.role !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen supervisors kunnen het primaire station wijzigen" });
+      }
+      
+      // Verify user exists
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify new primary station exists
+      const newStation = await storage.getStation(validatedData.newPrimaryStationId);
+      if (!newStation) {
+        return res.status(404).json({ message: "Nieuw primair station niet gevonden" });
+      }
+      
+      // Verify old primary station exists
+      const oldStation = await storage.getStation(targetUser.stationId);
+      if (!oldStation) {
+        return res.status(404).json({ message: "Oud primair station niet gevonden" });
+      }
+      
+      // Check if supervisor has access to both stations
+      const accessibleStations = await storage.getUserAccessibleStations(currentUser.id);
+      const hasNewStationAccess = accessibleStations.some(s => s.id === validatedData.newPrimaryStationId);
+      const hasOldStationAccess = accessibleStations.some(s => s.id === targetUser.stationId);
+      
+      if (!hasNewStationAccess || !hasOldStationAccess) {
+        return res.status(403).json({ message: "Geen toegang tot één of beide stations" });
+      }
+      
+      // Verify that new primary station is in user's accessible stations
+      const userAccessibleStations = await storage.getUserAccessibleStations(userId);
+      const isNewStationAccessible = userAccessibleStations.some(s => s.id === validatedData.newPrimaryStationId);
+      
+      if (!isNewStationAccessible) {
+        return res.status(400).json({ 
+          message: `${targetUser.firstName} ${targetUser.lastName} heeft geen toegang tot ${newStation.displayName}. Voeg eerst toegang toe via cross team beheer.` 
+        });
+      }
+      
+      // Change primary station
+      await storage.changePrimaryStation(
+        userId, 
+        validatedData.newPrimaryStationId, 
+        validatedData.maxHoursForOldStation
+      );
+      
+      res.json({ 
+        message: `Primair station van ${targetUser.firstName} ${targetUser.lastName} gewijzigd van ${oldStation.displayName} naar ${newStation.displayName}. ${oldStation.displayName} is nu een cross team toewijzing met ${validatedData.maxHoursForOldStation} uur limiet.`
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Ongeldige gegevens", errors: error.errors });
+      }
+      console.error("Error changing primary station:", error);
+      res.status(500).json({ message: "Failed to change primary station" });
+    }
+  });
+
   // Update user's hour limit for a specific station
   app.put("/api/users/:userId/stations/:stationId/hours", requireAdmin, async (req, res) => {
     try {
