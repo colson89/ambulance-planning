@@ -54,6 +54,9 @@ export default function UserManagement() {
   const [selectedUserForCrossTeam, setSelectedUserForCrossTeam] = useState<User | null>(null);
   const [selectedCrossTeamStation, setSelectedCrossTeamStation] = useState<number | null>(null);
   const [crossTeamHourLimit, setCrossTeamHourLimit] = useState<number>(24);
+  const [changePrimaryStationDialogOpen, setChangePrimaryStationDialogOpen] = useState(false);
+  const [newPrimaryStationId, setNewPrimaryStationId] = useState<number | null>(null);
+  const [maxHoursForOldStation, setMaxHoursForOldStation] = useState<number>(24);
   
   // Query om stations op te halen (voor supervisors)
   const { data: stations = [] } = useQuery({
@@ -202,6 +205,36 @@ export default function UserManagement() {
       toast({
         title: "Succes",
         description: "Primaire station uren bijgewerkt",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const changePrimaryStationMutation = useMutation({
+    mutationFn: async (data: { userId: number; newPrimaryStationId: number; maxHoursForOldStation: number }) => {
+      const res = await apiRequest("PUT", `/api/users/${data.userId}/primary-station`, {
+        newPrimaryStationId: data.newPrimaryStationId,
+        maxHoursForOldStation: data.maxHoursForOldStation
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Kon primair station niet wijzigen");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users/all'] });
+      refetchAssignments();
+      setChangePrimaryStationDialogOpen(false);
+      toast({
+        title: "Succes",
+        description: data.message || "Primair station gewijzigd",
       });
     },
     onError: (error: Error) => {
@@ -1250,8 +1283,8 @@ export default function UserManagement() {
                             {userStationAssignments?.length > 0 ? (
                               userStationAssignments.map((assignment: any) => (
                                 <div key={assignment.station.id} className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                                  <div>
-                                    <div className="flex items-center gap-2">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
                                       <div className="font-medium">{assignment.station.displayName}</div>
                                       <div className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">
                                         Cross-team
@@ -1278,6 +1311,20 @@ export default function UserManagement() {
                                       }}
                                     />
                                     <span className="text-sm text-muted-foreground">u</span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8"
+                                      onClick={() => {
+                                        setNewPrimaryStationId(assignment.station.id);
+                                        setMaxHoursForOldStation(selectedUserForCrossTeam.hours || 24);
+                                        setChangePrimaryStationDialogOpen(true);
+                                      }}
+                                      title="Maak dit het primaire station"
+                                    >
+                                      <Home className="h-4 w-4 mr-1" />
+                                      Primair
+                                    </Button>
                                     <Button
                                       variant="ghost"
                                       size="sm"
@@ -1380,6 +1427,70 @@ export default function UserManagement() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Bevestigingsdialoog voor primair station wijzigen */}
+      <AlertDialog open={changePrimaryStationDialogOpen} onOpenChange={setChangePrimaryStationDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Primair Station Wijzigen</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              {selectedUserForCrossTeam && newPrimaryStationId && (
+                <>
+                  <div>
+                    Weet je zeker dat je het primaire station van <strong>{selectedUserForCrossTeam.firstName} {selectedUserForCrossTeam.lastName}</strong> wil wijzigen?
+                  </div>
+                  <div className="bg-muted p-3 rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Huidig primair station:</span>
+                      <span className="text-sm">{(stations as Station[])?.find(s => s.id === selectedUserForCrossTeam.stationId)?.displayName}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Nieuw primair station:</span>
+                      <span className="text-sm font-semibold text-primary">{(stations as Station[])?.find(s => s.id === newPrimaryStationId)?.displayName}</span>
+                    </div>
+                  </div>
+                  <div>
+                    Het oude primaire station wordt automatisch een <strong>cross-team toewijzing</strong>.
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium block mb-2">
+                      Max uren per maand voor oude primaire station:
+                    </label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="160"
+                      value={maxHoursForOldStation}
+                      onChange={(e) => setMaxHoursForOldStation(parseInt(e.target.value) || 24)}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Let op: Alle shifts, voorkeuren en statistieken blijven gekoppeld aan de gebruiker en worden automatisch bijgewerkt.
+                  </div>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (selectedUserForCrossTeam && newPrimaryStationId) {
+                  changePrimaryStationMutation.mutate({
+                    userId: selectedUserForCrossTeam.id,
+                    newPrimaryStationId: newPrimaryStationId,
+                    maxHoursForOldStation: maxHoursForOldStation
+                  });
+                }
+              }}
+              disabled={changePrimaryStationMutation.isPending}
+            >
+              {changePrimaryStationMutation.isPending ? "Wijzigen..." : "Primair Station Wijzigen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
