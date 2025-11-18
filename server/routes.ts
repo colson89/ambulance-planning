@@ -3193,71 +3193,143 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       
       console.log(`Verdi sync: Found ${allSyncLogs.length} existing sync logs, ${syncLogByKeyMap.size} with valid Verdi GUIDs`);
       
-      // STAP 1: DETECTEER EN VERWIJDER SHIFTS DIE NIET MEER IN DE PLANNING STAAN
-      // Dit is cruciaal voor het opruimen van shifts die zijn verwijderd (bijv. bij ziekte)
+      // STAP 1: ASSIGNMENT-AWARE DELETE/UPDATE VOOR VERDI SHIFTS
+      // Groepeer sync logs per Verdi GUID en check welke assignments nog bestaan
       const { verdiClient } = await import('./verdi-client');
       
-      // Maak een Set van alle huidige shift IDs voor snelle lookup
-      const currentShiftIds = new Set(plannedShifts.map(s => s.id));
-      
-      // Maak een Map van huidige shifts op basis van datum+tijd+type
-      const currentShiftKeys = new Set(
-        plannedShifts.map(s => `${s.startTime.toISOString()}_${s.endTime.toISOString()}_${s.type}`)
-      );
-      
-      // Vind sync logs van shifts die niet meer bestaan (noch op ID, noch op datum+tijd+type)
-      const deletedShiftLogs = allSyncLogs.filter(log => {
-        // Skip logs zonder Verdi GUID (niet naar Verdi gestuurd)
-        if (!log.verdiShiftGuid) return false;
-        
-        // Skip logs met error status die 'DELETE failed' bevatten (voorkom oneindige retry loops)
-        if (log.syncStatus === 'error' && log.errorMessage && log.errorMessage.includes('DELETE failed')) {
-          return false;
+      // Groepeer sync logs per Verdi GUID
+      const logsByVerdiGuid = new Map<string, any[]>();
+      for (const log of allSyncLogs) {
+        if (log.verdiShiftGuid && (log.syncStatus !== 'error' || !log.errorMessage?.includes('DELETE failed'))) {
+          if (!logsByVerdiGuid.has(log.verdiShiftGuid)) {
+            logsByVerdiGuid.set(log.verdiShiftGuid, []);
+          }
+          logsByVerdiGuid.get(log.verdiShiftGuid)!.push(log);
         }
-        
-        // Check of shift nog bestaat op ID
-        if (currentShiftIds.has(log.shiftId)) return false;
-        
-        // Check of shift nog bestaat op datum+tijd+type (voor opnieuw gegenereerde shifts)
-        if (log.shiftStartTime && log.shiftEndTime && log.shiftType) {
-          const key = `${log.shiftStartTime.toISOString()}_${log.shiftEndTime.toISOString()}_${log.shiftType}`;
-          if (currentShiftKeys.has(key)) return false;
-        }
-        
-        // Shift bestaat niet meer - moet verwijderd worden uit Verdi
-        return true;
-      });
+      }
       
       let deleted = 0;
+      let updated = 0;
       let deleteErrors = 0;
       
-      if (deletedShiftLogs.length > 0) {
-        console.log(`Found ${deletedShiftLogs.length} shifts to delete from Verdi`);
-        
-        for (const log of deletedShiftLogs) {
-          try {
-            await verdiClient.deleteShiftFromVerdi(log.verdiShiftGuid!, config);
-            console.log(`Successfully deleted Verdi shift ${log.verdiShiftGuid} (shift ID: ${log.shiftId})`);
+      // Voor elke Verdi GUID: check welke assignments nog bestaan
+      for (const [verdiGuid, logs] of logsByVerdiGuid.entries()) {
+        try {
+          // Haal alle user IDs uit de sync logs (wat er oorspronkelijk was)
+          const allOriginalUserIds = new Set<number>();
+          let hasLegacyLogsWithoutData = false;
+          
+          for (const log of logs) {
+            if (log.assignedUserIds) {
+              try {
+                const userIds = JSON.parse(log.assignedUserIds);
+                userIds.forEach((id: number) => allOriginalUserIds.add(id));
+              } catch (e) {
+                // Legacy log met corrupt JSON - haal userId op uit shift
+                const shift = await storage.getShift(log.shiftId);
+                if (shift) {
+                  allOriginalUserIds.add(shift.userId);
+                } else {
+                  // Shift bestaat niet meer - kan geen betrouwbare vergelijking maken
+                  hasLegacyLogsWithoutData = true;
+                }
+              }
+            } else {
+              // Legacy log - haal userId op uit shift
+              const shift = await storage.getShift(log.shiftId);
+              if (shift) {
+                allOriginalUserIds.add(shift.userId);
+              } else {
+                // Shift bestaat niet meer - kan geen betrouwbare vergelijking maken
+                hasLegacyLogsWithoutData = true;
+              }
+            }
+          }
+          
+          // GUARD: Skip DELETE/UPDATE als we legacy logs hebben zonder data
+          // Dit voorkomt onjuiste DELETEs voor historische shifts
+          if (hasLegacyLogsWithoutData && allOriginalUserIds.size === 0) {
+            console.log(`Skipping Verdi GUID ${verdiGuid}: legacy logs without shift data, cannot determine assignments`);
+            continue;
+          }
+          
+          // Check welke van deze shifts nog bestaan in de planning
+          const remainingShifts = plannedShifts.filter(shift => {
+            // Check of deze shift bij dit Verdi GUID hoort
+            const matchingLog = logs.find(log => log.shiftId === shift.id);
+            return !!matchingLog;
+          });
+          
+          if (remainingShifts.length === 0) {
+            // Alle assignments zijn verwijderd → DELETE
+            console.log(`All assignments removed for Verdi shift ${verdiGuid}, deleting...`);
+            await verdiClient.deleteShiftFromVerdi(verdiGuid, config);
             
-            // Verwijder de sync log uit de database (shift bestaat niet meer)
-            await storage.deleteVerdiSyncLogById(log.id);
+            // Verwijder alle sync logs voor dit Verdi GUID
+            for (const log of logs) {
+              await storage.deleteVerdiSyncLogById(log.id);
+            }
+            
             deleted++;
-          } catch (error: any) {
-            console.error(`Error deleting Verdi shift ${log.verdiShiftGuid}:`, error);
-            deleteErrors++;
+            console.log(`Successfully deleted Verdi shift ${verdiGuid}`);
+          } else if (remainingShifts.length < allOriginalUserIds.size) {
+            // Sommige assignments verwijderd → UPDATE met resterende users
+            console.log(`Some assignments removed for Verdi shift ${verdiGuid}, updating...`);
             
-            // Update log met delete error (gebruik log.id omdat shift niet meer bestaat)
-            // Dit voorkomt oneindige retry loops - logs met 'DELETE failed' worden geskipt
+            // Verzamel resterende users
+            const remainingUserIds = remainingShifts.map(s => s.userId);
+            const remainingUsers = await Promise.all(
+              remainingUserIds.map((userId: number) => storage.getUser(userId))
+            );
+            const validUsers = remainingUsers.filter((u): u is User => u !== null && u !== undefined);
+            
+            if (validUsers.length > 0) {
+              // Stuur UPDATE naar Verdi met reduced user list
+              const representativeShift = remainingShifts[0];
+              const response = await verdiClient.sendShiftToVerdi(
+                representativeShift,
+                config,
+                userMappingMap,
+                positionMappings,
+                validUsers,
+                verdiGuid // Bestaande GUID voor UPDATE
+              );
+              
+              if (response.result === 'Success') {
+                updated++;
+                console.log(`Successfully updated Verdi shift ${verdiGuid} with ${validUsers.length} remaining users`);
+                
+                // Verwijder sync logs voor verwijderde users
+                const remainingShiftIds = new Set(remainingShifts.map(s => s.id));
+                for (const log of logs) {
+                  if (!remainingShiftIds.has(log.shiftId)) {
+                    await storage.deleteVerdiSyncLogById(log.id);
+                  }
+                }
+              } else {
+                console.error(`Failed to update Verdi shift ${verdiGuid}:`, response.errorFeedback);
+                deleteErrors++;
+              }
+            }
+          }
+          // Else: alle assignments bestaan nog, geen actie nodig
+          
+        } catch (error: any) {
+          console.error(`Error processing Verdi shift ${verdiGuid}:`, error);
+          deleteErrors++;
+          
+          // Mark logs met error
+          for (const log of logs) {
             await storage.updateVerdiSyncLogById(
               log.id,
               'error',
-              `DELETE failed: ${error.message}`
+              `DELETE/UPDATE failed: ${error.message}`
             );
           }
         }
-        
-        console.log(`Verdi cleanup: ${deleted} shifts deleted, ${deleteErrors} errors`);
       }
+      
+      console.log(`Verdi cleanup: ${deleted} deleted, ${updated} updated, ${deleteErrors} errors`);
       
       // Filter op alleen wijzigingen indien gevraagd
       let shiftsToSync = plannedShifts;
@@ -3287,6 +3359,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           message: "Alle shifts zijn al gesynchroniseerd",
           synced: 0,
           errors: 0,
+          updated,
           deleted,
           deleteErrors
         });
@@ -3393,6 +3466,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           const errorMessage = response.errorFeedback.length > 0 ? response.errorFeedback.join(', ') : null;
           const warningMessages = response.warningFeedback.length > 0 ? JSON.stringify(response.warningFeedback) : null;
           
+          // Extract user IDs voor assignment tracking
+          const assignedUserIds = groupShifts.map(s => s.userId);
+          
           for (const shift of groupShifts) {
             const shiftLog = await storage.getVerdiSyncLog(shift.id);
             if (shiftLog) {
@@ -3416,7 +3492,13 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
                 warningMessages || undefined,
                 shift.startTime,
                 shift.endTime,
-                shift.type
+                shift.type,
+                // Split shift metadata voor assignment tracking
+                shift.isSplitShift,
+                shift.splitGroup,
+                shift.splitStartTime,
+                shift.splitEndTime,
+                assignedUserIds
               );
             }
           }
@@ -3465,10 +3547,11 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       
       res.json({
         success: true,
-        message: `Synchronisatie voltooid: ${synced} gelukt, ${errors} fouten${skipped > 0 ? `, ${skipped} overgeslagen` : ''}${deleted > 0 ? `, ${deleted} verwijderd uit Verdi` : ''}${deleteErrors > 0 ? ` (${deleteErrors} delete fouten)` : ''}`,
+        message: `Synchronisatie voltooid: ${synced} gelukt, ${errors} fouten${skipped > 0 ? `, ${skipped} overgeslagen` : ''}${updated > 0 ? `, ${updated} geüpdatet` : ''}${deleted > 0 ? `, ${deleted} verwijderd uit Verdi` : ''}${deleteErrors > 0 ? ` (${deleteErrors} delete/update fouten)` : ''}`,
         synced,
         errors,
         skipped,
+        updated,
         deleted,
         deleteErrors,
         total: shiftGroups.size,

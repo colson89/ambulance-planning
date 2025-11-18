@@ -255,6 +255,12 @@ export const verdiSyncLog = pgTable("verdi_sync_log", {
   shiftStartTime: timestamp("shift_start_time"), // Kopie van shift.startTime
   shiftEndTime: timestamp("shift_end_time"), // Kopie van shift.endTime
   shiftType: text("shift_type", { enum: ["day", "night"] }), // Kopie van shift.type
+  // Split shift metadata voor assignment tracking (voor slimme DELETE/UPDATE)
+  isSplitShift: boolean("is_split_shift"), // Kopie van shift.isSplitShift
+  splitGroup: integer("split_group"), // Kopie van shift.splitGroup
+  splitStartTime: timestamp("split_start_time"), // Kopie van shift.splitStartTime
+  splitEndTime: timestamp("split_end_time"), // Kopie van shift.splitEndTime
+  assignedUserIds: text("assigned_user_ids"), // JSON array van user IDs die in deze sync zaten
   syncedAt: timestamp("synced_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()

@@ -121,7 +121,7 @@ export interface IStorage {
   upsertVerdiPositionMapping(stationId: number, positionIndex: number, positionGuid: string, requiresLicenseC: boolean): Promise<any>;
   getAllVerdiPositionMappings(): Promise<any[]>;
   getVerdiSyncLog(shiftId: number): Promise<any>;
-  createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string, shiftStartTime?: Date, shiftEndTime?: Date, shiftType?: string): Promise<any>;
+  createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string, shiftStartTime?: Date, shiftEndTime?: Date, shiftType?: string, isSplitShift?: boolean, splitGroup?: number, splitStartTime?: Date, splitEndTime?: Date, assignedUserIds?: number[]): Promise<any>;
   updateVerdiSyncLog(shiftId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string, shiftStartTime?: Date, shiftEndTime?: Date, shiftType?: string): Promise<any>;
   getVerdiSyncLogsByMonth(month: number, year: number, stationId?: number): Promise<any[]>;
   getLastSuccessfulVerdiSync(stationId: number, month: number, year: number): Promise<Date | null>;
@@ -3254,7 +3254,7 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string, shiftStartTime?: Date, shiftEndTime?: Date, shiftType?: string): Promise<VerdiSyncLog> {
+  async createVerdiSyncLog(shiftId: number, stationId: number, syncStatus: string, verdiShiftGuid?: string, errorMessage?: string, warningMessages?: string, shiftStartTime?: Date, shiftEndTime?: Date, shiftType?: string, isSplitShift?: boolean, splitGroup?: number, splitStartTime?: Date, splitEndTime?: Date, assignedUserIds?: number[]): Promise<VerdiSyncLog> {
     const result = await db.insert(verdiSyncLog)
       .values({
         shiftId,
@@ -3267,7 +3267,13 @@ export class DatabaseStorage implements IStorage {
         // Snapshot van shift data voor UPDATE detectie
         shiftStartTime: shiftStartTime || null,
         shiftEndTime: shiftEndTime || null,
-        shiftType: shiftType as "day" | "night" | null || null
+        shiftType: shiftType as "day" | "night" | null || null,
+        // Split shift metadata voor assignment tracking
+        isSplitShift: isSplitShift || null,
+        splitGroup: splitGroup || null,
+        splitStartTime: splitStartTime || null,
+        splitEndTime: splitEndTime || null,
+        assignedUserIds: assignedUserIds ? JSON.stringify(assignedUserIds) : null
       })
       .returning();
     return result[0];
