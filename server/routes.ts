@@ -3193,6 +3193,72 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       
       console.log(`Verdi sync: Found ${allSyncLogs.length} existing sync logs, ${syncLogByKeyMap.size} with valid Verdi GUIDs`);
       
+      // STAP 1: DETECTEER EN VERWIJDER SHIFTS DIE NIET MEER IN DE PLANNING STAAN
+      // Dit is cruciaal voor het opruimen van shifts die zijn verwijderd (bijv. bij ziekte)
+      const { verdiClient } = await import('./verdi-client');
+      
+      // Maak een Set van alle huidige shift IDs voor snelle lookup
+      const currentShiftIds = new Set(plannedShifts.map(s => s.id));
+      
+      // Maak een Map van huidige shifts op basis van datum+tijd+type
+      const currentShiftKeys = new Set(
+        plannedShifts.map(s => `${s.startTime.toISOString()}_${s.endTime.toISOString()}_${s.type}`)
+      );
+      
+      // Vind sync logs van shifts die niet meer bestaan (noch op ID, noch op datum+tijd+type)
+      const deletedShiftLogs = allSyncLogs.filter(log => {
+        // Skip logs zonder Verdi GUID (niet naar Verdi gestuurd)
+        if (!log.verdiShiftGuid) return false;
+        
+        // Skip logs met error status die 'DELETE failed' bevatten (voorkom oneindige retry loops)
+        if (log.syncStatus === 'error' && log.errorMessage && log.errorMessage.includes('DELETE failed')) {
+          return false;
+        }
+        
+        // Check of shift nog bestaat op ID
+        if (currentShiftIds.has(log.shiftId)) return false;
+        
+        // Check of shift nog bestaat op datum+tijd+type (voor opnieuw gegenereerde shifts)
+        if (log.shiftStartTime && log.shiftEndTime && log.shiftType) {
+          const key = `${log.shiftStartTime.toISOString()}_${log.shiftEndTime.toISOString()}_${log.shiftType}`;
+          if (currentShiftKeys.has(key)) return false;
+        }
+        
+        // Shift bestaat niet meer - moet verwijderd worden uit Verdi
+        return true;
+      });
+      
+      let deleted = 0;
+      let deleteErrors = 0;
+      
+      if (deletedShiftLogs.length > 0) {
+        console.log(`Found ${deletedShiftLogs.length} shifts to delete from Verdi`);
+        
+        for (const log of deletedShiftLogs) {
+          try {
+            await verdiClient.deleteShiftFromVerdi(log.verdiShiftGuid!, config);
+            console.log(`Successfully deleted Verdi shift ${log.verdiShiftGuid} (shift ID: ${log.shiftId})`);
+            
+            // Verwijder de sync log uit de database (shift bestaat niet meer)
+            await storage.deleteVerdiSyncLogById(log.id);
+            deleted++;
+          } catch (error: any) {
+            console.error(`Error deleting Verdi shift ${log.verdiShiftGuid}:`, error);
+            deleteErrors++;
+            
+            // Update log met delete error (gebruik log.id omdat shift niet meer bestaat)
+            // Dit voorkomt oneindige retry loops - logs met 'DELETE failed' worden geskipt
+            await storage.updateVerdiSyncLogById(
+              log.id,
+              'error',
+              `DELETE failed: ${error.message}`
+            );
+          }
+        }
+        
+        console.log(`Verdi cleanup: ${deleted} shifts deleted, ${deleteErrors} errors`);
+      }
+      
       // Filter op alleen wijzigingen indien gevraagd
       let shiftsToSync = plannedShifts;
       if (changesOnly) {
@@ -3220,12 +3286,11 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           success: true,
           message: "Alle shifts zijn al gesynchroniseerd",
           synced: 0,
-          errors: 0
+          errors: 0,
+          deleted,
+          deleteErrors
         });
       }
-      
-      // Importeer Verdi client
-      const { verdiClient } = await import('./verdi-client');
       
       // Haal user en position mappings op
       const allUserMappings = await storage.getAllVerdiUserMappings();
@@ -3400,10 +3465,12 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       
       res.json({
         success: true,
-        message: `Synchronisatie voltooid: ${synced} gelukt, ${errors} fouten${skipped > 0 ? `, ${skipped} overgeslagen` : ''}`,
+        message: `Synchronisatie voltooid: ${synced} gelukt, ${errors} fouten${skipped > 0 ? `, ${skipped} overgeslagen` : ''}${deleted > 0 ? `, ${deleted} verwijderd uit Verdi` : ''}${deleteErrors > 0 ? ` (${deleteErrors} delete fouten)` : ''}`,
         synced,
         errors,
         skipped,
+        deleted,
+        deleteErrors,
         total: shiftGroups.size,
         results
       });

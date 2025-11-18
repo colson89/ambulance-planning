@@ -127,6 +127,8 @@ export interface IStorage {
   getLastSuccessfulVerdiSync(stationId: number, month: number, year: number): Promise<Date | null>;
   getLegacyVerdiSyncLogs(stationId?: number): Promise<any[]>;
   deleteVerdiSyncLog(shiftId: number): Promise<void>;
+  deleteVerdiSyncLogById(logId: number): Promise<void>;
+  updateVerdiSyncLogById(logId: number, syncStatus: 'pending' | 'success' | 'error', errorMessage?: string): Promise<void>;
   resetVerdiSyncLog(shiftId: number): Promise<void>;
 }
 
@@ -3342,6 +3344,25 @@ export class DatabaseStorage implements IStorage {
 
   async deleteVerdiSyncLog(shiftId: number): Promise<void> {
     await db.delete(verdiSyncLog).where(eq(verdiSyncLog.shiftId, shiftId));
+  }
+
+  async deleteVerdiSyncLogById(logId: number): Promise<void> {
+    await db.delete(verdiSyncLog).where(eq(verdiSyncLog.id, logId));
+  }
+
+  async updateVerdiSyncLogById(
+    logId: number,
+    syncStatus: 'pending' | 'success' | 'error',
+    errorMessage?: string
+  ): Promise<void> {
+    await db
+      .update(verdiSyncLog)
+      .set({
+        syncStatus,
+        errorMessage: errorMessage || null,
+        updatedAt: new Date()
+      })
+      .where(eq(verdiSyncLog.id, logId));
   }
 
   async resetVerdiSyncLog(shiftId: number): Promise<void> {
