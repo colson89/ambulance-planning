@@ -399,8 +399,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "Cannot access supervisor station users" });
         }
       } else {
-        // Regular admins - only their station
-        if (targetUser.stationId !== adminStationId) {
+        // Regular admins - check if they have access to target user's primary station
+        // This includes both their primary station AND cross-team stations
+        const adminAccessibleStations = await storage.getUserAccessibleStations(currentUserId);
+        const hasAccessToTargetStation = adminAccessibleStations.some(s => s.id === targetUser.stationId);
+        
+        if (!hasAccessToTargetStation) {
           return res.status(404).json({ message: "User not found" });
         }
       }
