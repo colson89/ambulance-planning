@@ -92,6 +92,13 @@ export default function VerdiSettings() {
   const [userGuidInputs, setUserGuidInputs] = useState<{ [userId: number]: string }>({});
   const [positionGuidInputs, setPositionGuidInputs] = useState<{ [positionIndex: number]: string }>({});
   const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("users");
+
+  useEffect(() => {
+    if (user) {
+      setActiveTab(user.role === 'supervisor' ? 'config' : 'users');
+    }
+  }, [user]);
 
   useEffect(() => {
     if (verdiConfig) {
@@ -306,11 +313,15 @@ export default function VerdiSettings() {
         </Button>
       </div>
 
-      <Tabs defaultValue="config" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="config">Configuratie</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className={`grid w-full ${user?.role === 'supervisor' ? 'grid-cols-3' : 'grid-cols-1'}`}>
+          {user?.role === 'supervisor' && (
+            <TabsTrigger value="config">Configuratie</TabsTrigger>
+          )}
           <TabsTrigger value="users">Gebruiker Mappings</TabsTrigger>
-          <TabsTrigger value="positions">Positie Mappings</TabsTrigger>
+          {user?.role === 'supervisor' && (
+            <TabsTrigger value="positions">Positie Mappings</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="config" className="space-y-4">
