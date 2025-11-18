@@ -409,6 +409,16 @@ Als admin ziet u extra knoppen:
 - Alle shifts en voorkeuren worden ook verwijderd
 - Je kan jezelf niet verwijderen
 
+📋 **Cross-Team Admins**: Als je admin bent van meerdere stations (primair + cross-team), kun je gebruikers verwijderen uit alle stations waar je toegang toe hebt. Dit geldt zowel voor je primaire station als voor je cross-team stations.
+
+**Wat wordt automatisch verwijderd:**
+- Alle shifts van de gebruiker
+- Alle shift voorkeuren
+- Verdi synchronisatie logs
+- Cross-team station toewijzingen
+- Kalender tokens (gedeelde kalender links worden ongeldig)
+- Gebruikerscommentaren
+
 ### 📊 Planning Genereren
 
 #### Automatische Planning
