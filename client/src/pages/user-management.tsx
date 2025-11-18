@@ -1323,7 +1323,7 @@ export default function UserManagement() {
                                       title="Maak dit het primaire station"
                                     >
                                       <Home className="h-4 w-4 mr-1" />
-                                      Primair
+                                      Maak primair
                                     </Button>
                                     <Button
                                       variant="ghost"
