@@ -228,9 +228,12 @@ export class VerdiClient {
     // DELETE request naar Verdi
     const url = `${stationConfig.verdiUrl}/comm-api/hooks/v1/ShiftPlanning/${verdiShiftGuid}`;
     
-    console.log(`Deleting shift from Verdi: ${url}`, {
-      verdiShiftGuid
-    });
+    console.log(`\n========== VERDI DELETE REQUEST ==========`);
+    console.log(`URL: ${url}`);
+    console.log(`Method: DELETE`);
+    console.log(`Shift GUID: ${verdiShiftGuid}`);
+    console.log(`Authorization: Basic ****** (credentials verborgen)`);
+    console.log(`==========================================\n`);
 
     try {
       const response = await fetch(url, {
@@ -240,20 +243,43 @@ export class VerdiClient {
         }
       });
 
+      // Lees response body (kan leeg zijn bij DELETE)
+      const responseText = await response.text();
+      let responseData = null;
+      
+      // Probeer JSON te parsen als er een body is
+      if (responseText) {
+        try {
+          responseData = JSON.parse(responseText);
+        } catch (e) {
+          // Response is geen JSON, gebruik raw text
+          responseData = responseText;
+        }
+      }
+
+      console.log(`\n========== VERDI DELETE RESPONSE ==========`);
+      console.log(`Status: ${response.status} ${response.statusText}`);
+      console.log(`Headers:`, Object.fromEntries(response.headers.entries()));
+      console.log(`Body:`, responseData || '(leeg)');
+      console.log(`===========================================\n`);
+
       // 404 betekent dat de shift al niet meer bestaat in Verdi - dat is OK!
       if (response.status === 404) {
-        console.log(`Shift ${verdiShiftGuid} bestaat niet meer in Verdi (404) - behandeld als succesvol verwijderd`);
+        console.log(`✓ Shift ${verdiShiftGuid} bestaat niet meer in Verdi (404) - behandeld als succesvol verwijderd`);
         return;
       }
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Verdi API DELETE error (${response.status}): ${errorText}`);
+        console.error(`✗ Verdi DELETE gefaald voor shift ${verdiShiftGuid}`);
+        throw new Error(`Verdi API DELETE error (${response.status}): ${responseText || response.statusText}`);
       }
 
-      console.log(`Successfully deleted shift from Verdi: ${verdiShiftGuid}`);
+      console.log(`✓ Successfully deleted shift from Verdi: ${verdiShiftGuid}`);
     } catch (error) {
-      console.error("Error deleting shift from Verdi:", error);
+      console.error(`\n========== VERDI DELETE ERROR ==========`);
+      console.error(`Shift GUID: ${verdiShiftGuid}`);
+      console.error(`Error:`, error);
+      console.error(`========================================\n`);
       throw error;
     }
   }
