@@ -204,13 +204,20 @@ export class VerdiClient {
   }
 
   /**
-   * Verwijdert een shift uit Verdi
+   * Verwijdert alle personen uit een shift in Verdi (de shift zelf blijft bestaan)
+   * Volgens Verdi API: shifts kunnen niet verwijderd worden, maar je kan wel person: null
+   * sturen voor alle posities, waardoor alle personen uit de shift worden verwijderd.
+   * 
+   * @param shift De shift uit onze database (voor start/end tijden)
    * @param verdiShiftGuid De GUID van de shift in Verdi
    * @param stationConfig De Verdi configuratie van het station
+   * @param positionMappings Array van position mappings voor dit station
    */
-  async deleteShiftFromVerdi(
+  async clearShiftAssignments(
+    shift: Shift,
     verdiShiftGuid: string,
-    stationConfig: VerdiStationConfig
+    stationConfig: VerdiStationConfig,
+    positionMappings: VerdiPositionMapping[]
   ): Promise<void> {
     // Validatie
     if (!stationConfig.verdiUrl) {
@@ -224,62 +231,83 @@ export class VerdiClient {
     if (!stationConfig.authSecret) {
       throw new Error("Station heeft geen Verdi Auth Secret geconfigureerd");
     }
-
-    // DELETE request naar Verdi
-    const url = `${stationConfig.verdiUrl}/comm-api/hooks/v1/ShiftPlanning/${verdiShiftGuid}`;
     
-    console.log(`\n========== VERDI DELETE REQUEST ==========`);
+    if (!stationConfig.shiftSheetGuid) {
+      throw new Error("Station heeft geen shiftSheet GUID geconfigureerd");
+    }
+
+    // Bouw assignments met person: null voor elke positie
+    // Dit verwijdert alle personen uit de shift in Verdi
+    const verdiAssignments: VerdiShiftAssignment[] = positionMappings.map(pm => ({
+      position: pm.positionGuid,
+      person: null as any  // null verwijdert de persoon uit deze positie
+    }));
+
+    // Bouw request body - POST met shift GUID om bestaande shift te updaten
+    const requestBody: VerdiShiftRequest = {
+      shift: verdiShiftGuid,
+      shiftSheet: stationConfig.shiftSheetGuid,
+      start: formatLocalDateTime(shift.startTime),
+      end: formatLocalDateTime(shift.endTime),
+      assignments: verdiAssignments
+    };
+
+    const url = `${stationConfig.verdiUrl}/comm-api/hooks/v1/ShiftPlanning`;
+    
+    console.log(`\n========== VERDI CLEAR ASSIGNMENTS REQUEST ==========`);
     console.log(`URL: ${url}`);
-    console.log(`Method: DELETE`);
+    console.log(`Method: POST`);
     console.log(`Shift GUID: ${verdiShiftGuid}`);
+    console.log(`Action: Alle personen uit shift verwijderen (person: null voor ${verdiAssignments.length} posities)`);
     console.log(`Authorization: Basic ****** (credentials verborgen)`);
-    console.log(`==========================================\n`);
+    console.log(`=====================================================\n`);
 
     try {
       const response = await fetch(url, {
-        method: 'DELETE',
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': this.getBasicAuthHeader(stationConfig.authId, stationConfig.authSecret)
-        }
+        },
+        body: JSON.stringify(requestBody)
       });
 
-      // Lees response body (kan leeg zijn bij DELETE)
-      const responseText = await response.text();
-      let responseData = null;
-      
-      // Probeer JSON te parsen als er een body is
-      if (responseText) {
-        try {
-          responseData = JSON.parse(responseText);
-        } catch (e) {
-          // Response is geen JSON, gebruik raw text
-          responseData = responseText;
-        }
-      }
-
-      console.log(`\n========== VERDI DELETE RESPONSE ==========`);
-      console.log(`Status: ${response.status} ${response.statusText}`);
-      console.log(`Headers:`, Object.fromEntries(response.headers.entries()));
-      console.log(`Body:`, responseData || '(leeg)');
-      console.log(`===========================================\n`);
-
-      // 404 betekent dat de shift al niet meer bestaat in Verdi - dat is OK!
-      if (response.status === 404) {
-        console.log(`✓ Shift ${verdiShiftGuid} bestaat niet meer in Verdi (404) - behandeld als succesvol verwijderd`);
-        return;
-      }
-
       if (!response.ok) {
-        console.error(`✗ Verdi DELETE gefaald voor shift ${verdiShiftGuid}`);
-        throw new Error(`Verdi API DELETE error (${response.status}): ${responseText || response.statusText}`);
+        const errorText = await response.text();
+        console.error(`\n========== VERDI CLEAR ASSIGNMENTS ERROR ==========`);
+        console.error(`Status: ${response.status} ${response.statusText}`);
+        console.error(`Body:`, errorText);
+        console.error(`===================================================\n`);
+        throw new Error(`Verdi API error tijdens clearen assignments (${response.status}): ${errorText}`);
       }
 
-      console.log(`✓ Successfully deleted shift from Verdi: ${verdiShiftGuid}`);
+      const data: VerdiResponse = await response.json();
+      
+      console.log(`\n========== VERDI CLEAR ASSIGNMENTS RESPONSE ==========`);
+      console.log(`Result: ${data.result}`);
+      console.log(`Shift GUID: ${data.shift}`);
+      console.log(`Warnings: ${data.warningFeedback?.length || 0}`);
+      console.log(`Errors: ${data.errorFeedback?.length || 0}`);
+      console.log(`======================================================\n`);
+
+      // Log volledige error/warning details
+      if (data.errorFeedback && data.errorFeedback.length > 0) {
+        console.error(`Verdi ERROR details bij clearen assignments:`, data.errorFeedback);
+      }
+      if (data.warningFeedback && data.warningFeedback.length > 0) {
+        console.warn(`Verdi WARNING details bij clearen assignments:`, data.warningFeedback);
+      }
+
+      if (data.result !== "Success") {
+        throw new Error(`Verdi gaf geen Success terug bij clearen assignments: ${data.result}`);
+      }
+
+      console.log(`✓ Alle personen succesvol verwijderd uit Verdi shift ${verdiShiftGuid}`);
     } catch (error) {
-      console.error(`\n========== VERDI DELETE ERROR ==========`);
+      console.error(`\n========== VERDI CLEAR ASSIGNMENTS ERROR ==========`);
       console.error(`Shift GUID: ${verdiShiftGuid}`);
       console.error(`Error:`, error);
-      console.error(`========================================\n`);
+      console.error(`===================================================\n`);
       throw error;
     }
   }

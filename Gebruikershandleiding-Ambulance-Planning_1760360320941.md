@@ -1194,6 +1194,17 @@ A: Nee, synchronisatie gebeurt alleen on-demand via de sync knop. U behoudt voll
 **Q: Kan ik een sync ongedaan maken?**
 A: Synchronisatie is eenrichtingsverkeer (planning → Verdi). Voor verwijdering moet u Verdi zelf gebruiken.
 
+**Q: Wat gebeurt er als ik een shift verwijder die al naar Verdi is gestuurd?** ⭐ NIEUW
+A: Volgens de Verdi API specificaties kunnen shifts NIET volledig worden verwijderd uit Verdi. In plaats daarvan:
+- Wanneer u een shift verwijdert in het planningssysteem, worden **alle personen uit de shift verwijderd** in Verdi (alle posities krijgen `person: null`)
+- De shift zelf blijft **leeg** in Verdi staan (als placeholder zonder toegewezen personen)
+- Dit is officieel Verdi gedrag - de DELETE API wordt niet ondersteund
+- **Voordeel**: Geen data verlies in Verdi, volledige audit trail behouden
+- **Let op**: Lege shifts blijven zichtbaar in Verdi en moeten handmatig worden opgeschoond indien gewenst
+
+**Q: Hoe werk ik shifts bij die al in Verdi staan?**
+A: Wijzig gewoon de shift in het planningssysteem en klik op "Sync naar Verdi" → "Alleen wijzigingen". Het systeem detecteert automatisch dat de shift al bestaat en stuurt een UPDATE in plaats van een nieuwe shift aan te maken.
+
 #### 🚀 Aan de Slag Met Verdi
 
 **Checklist Voor Eerste Gebruik:**

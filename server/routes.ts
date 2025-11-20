@@ -3284,6 +3284,11 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       
       console.log(`Verdi sync: Found ${allSyncLogs.length} existing sync logs, ${syncLogByKeyMap.size} with valid Verdi GUIDs`);
       
+      // Haal user en position mappings op (nodig voor zowel DELETE als CREATE/UPDATE)
+      const allUserMappings = await storage.getAllVerdiUserMappings();
+      const userMappingMap = new Map(allUserMappings.map(m => [m.userId, m]));
+      const positionMappings = await storage.getVerdiPositionMappings(stationId);
+      
       // STAP 1: ASSIGNMENT-AWARE DELETE/UPDATE VOOR VERDI SHIFTS
       // Groepeer sync logs per Verdi GUID en check welke assignments nog bestaan
       const { verdiClient } = await import('./verdi-client');
@@ -3352,17 +3357,41 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           });
           
           if (remainingShifts.length === 0) {
-            // Alle assignments zijn verwijderd → DELETE
-            console.log(`All assignments removed for Verdi shift ${verdiGuid}, deleting...`);
-            await verdiClient.deleteShiftFromVerdi(verdiGuid, config);
+            // Alle assignments zijn verwijderd → CLEAR assignments
+            console.log(`All assignments removed for Verdi shift ${verdiGuid}, clearing...`);
             
-            // Verwijder alle sync logs voor dit Verdi GUID
-            for (const log of logs) {
-              await storage.deleteVerdiSyncLogById(log.id);
+            // Probeer shift data te krijgen uit logs (snapshot of fallback naar DB)
+            const firstLog = logs[0];
+            let shiftData: any = null;
+            
+            if (firstLog.shiftStartTime && firstLog.shiftEndTime) {
+              // Gebruik snapshot data uit log
+              shiftData = {
+                id: firstLog.shiftId,
+                stationId: firstLog.stationId,
+                startTime: firstLog.shiftStartTime,
+                endTime: firstLog.shiftEndTime,
+                type: firstLog.shiftType || 'day'
+              };
+            } else {
+              // Fallback: probeer shift op te halen
+              shiftData = await storage.getShift(firstLog.shiftId);
             }
             
-            deleted++;
-            console.log(`Successfully deleted Verdi shift ${verdiGuid}`);
+            if (shiftData && positionMappings.length > 0) {
+              await verdiClient.clearShiftAssignments(shiftData, verdiGuid, config, positionMappings);
+              
+              // Verwijder alle sync logs voor dit Verdi GUID
+              for (const log of logs) {
+                await storage.deleteVerdiSyncLogById(log.id);
+              }
+              
+              deleted++;
+              console.log(`Successfully cleared Verdi shift ${verdiGuid}`);
+            } else {
+              console.warn(`Cannot clear Verdi shift ${verdiGuid}: no shift data or position mappings`);
+              deleteErrors++;
+            }
           } else if (remainingShifts.length < allOriginalUserIds.size) {
             // Sommige assignments verwijderd → UPDATE met resterende users
             console.log(`Some assignments removed for Verdi shift ${verdiGuid}, updating...`);
@@ -3455,12 +3484,6 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           deleteErrors
         });
       }
-      
-      // Haal user en position mappings op
-      const allUserMappings = await storage.getAllVerdiUserMappings();
-      const userMappingMap = new Map(allUserMappings.map(m => [m.userId, m]));
-      
-      const positionMappings = await storage.getVerdiPositionMappings(stationId);
       
       // Groepeer shifts op basis van startTime, endTime, type (meerdere users kunnen dezelfde shift hebben)
       const shiftGroups = new Map<string, Shift[]>();
@@ -3679,28 +3702,13 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       let failed = 0;
       const errors: string[] = [];
       
-      // Verwijder elke legacy log en probeer de Verdi shift te deleten
+      // Verwijder elke legacy log
+      // NB: We proberen NIET Verdi te clearen voor legacy logs zonder snapshot data
+      // omdat we geen betrouwbare shift tijden hebben om clearShiftAssignments aan te roepen
       for (const log of legacyLogs) {
         try {
-          // Als de log een Verdi GUID heeft, probeer de shift te verwijderen
-          if (log.verdiShiftGuid) {
-            const config = await storage.getVerdiStationConfig(log.stationId);
-            if (config?.verdiUrl && config?.authId && config?.authSecret) {
-              const { verdiClient } = await import('./verdi-client');
-              
-              try {
-                await verdiClient.deleteShiftFromVerdi(log.verdiShiftGuid, config);
-                console.log(`Deleted Verdi shift ${log.verdiShiftGuid} for legacy log ${log.id}`);
-              } catch (deleteError: any) {
-                // 404 is OK - shift bestaat al niet meer in Verdi
-                if (deleteError.statusCode === 404) {
-                  console.log(`Verdi shift ${log.verdiShiftGuid} already deleted (404) - continuing`);
-                } else {
-                  console.warn(`Failed to delete Verdi shift ${log.verdiShiftGuid}:`, deleteError.message);
-                }
-              }
-            }
-          }
+          console.log(`Removing legacy sync log ${log.id} (shift ${log.shiftId}, Verdi GUID: ${log.verdiShiftGuid || 'none'})`);
+          console.warn(`⚠️  Legacy log cleanup: Verdi shift ${log.verdiShiftGuid || 'N/A'} moet handmatig verwijderd worden in Verdi indien nodig`);
           
           // Verwijder de sync log uit de database
           await storage.deleteVerdiSyncLog(log.shiftId);

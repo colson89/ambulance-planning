@@ -2887,6 +2887,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteShift(id: number): Promise<void> {
+    // Haal eerst de shift op (nodig voor Verdi clear assignments met start/end tijd)
+    const shift = await this.getShift(id);
+    if (!shift) {
+      throw new Error("Shift not found");
+    }
+
     // Haal ALLE sync logs op voor deze shift (niet alleen "success")
     // FIX: Oude code checkte alleen syncStatus === "success", waardoor shifts met
     // "pending" of "error" status werden verwijderd zonder Verdi cleanup
@@ -2899,8 +2905,8 @@ export class DatabaseStorage implements IStorage {
     const verdiSyncedLogs = syncLogs.filter(log => log.verdiShiftGuid);
     
     if (verdiSyncedLogs.length > 0) {
-      // Shift was gesynchroniseerd naar Verdi - we MOETEN het daar ook verwijderen
-      // Anders blijven orphaned shifts in Verdi staan
+      // Shift was gesynchroniseerd naar Verdi - we moeten alle personen eruit halen
+      // (volgens Verdi API kunnen shifts niet verwijderd worden, alleen gecleared)
       
       // Haal station config op (gebruik eerste log om station te bepalen)
       const [stationCfg] = await db
@@ -2908,7 +2914,7 @@ export class DatabaseStorage implements IStorage {
         .from(verdiStationConfig)
         .where(eq(verdiStationConfig.stationId, verdiSyncedLogs[0].stationId));
 
-      // STRICT: Als config disabled/missing is, kunnen we niet verwijderen uit Verdi
+      // STRICT: Als config disabled/missing is, kunnen we niet clearen in Verdi
       if (!stationCfg || !stationCfg.enabled) {
         throw new Error(
           `Kan shift niet verwijderen: Deze shift is gesynchroniseerd naar Verdi maar Verdi integratie is nu uitgeschakeld. ` +
@@ -2916,27 +2922,40 @@ export class DatabaseStorage implements IStorage {
         );
       }
 
-      // Probeer elke Verdi shift te verwijderen (kan meerdere zijn bij split shifts)
+      // Haal position mappings op voor dit station
+      const positionMappings = await db
+        .select()
+        .from(verdiPositionMappings)
+        .where(eq(verdiPositionMappings.stationId, shift.stationId));
+
+      if (positionMappings.length === 0) {
+        throw new Error(
+          `Kan shift niet verwijderen: Er zijn geen Verdi position mappings geconfigureerd voor dit station. ` +
+          `Configureer eerst de position mappings in Verdi instellingen.`
+        );
+      }
+
+      // Clear alle assignments voor elke Verdi shift GUID (kan meerdere zijn bij split shifts)
       const uniqueGuids = new Set(verdiSyncedLogs.map(log => log.verdiShiftGuid).filter(Boolean));
       
       for (const guid of uniqueGuids) {
         try {
-          console.log(`Deleting shift ${id} from Verdi (GUID: ${guid})`);
-          await verdiClient.deleteShiftFromVerdi(guid!, stationCfg);
-          console.log(`Successfully deleted shift ${id} from Verdi (GUID: ${guid})`);
+          console.log(`Clearing all assignments for shift ${id} in Verdi (GUID: ${guid})`);
+          await verdiClient.clearShiftAssignments(shift, guid!, stationCfg, positionMappings);
+          console.log(`Successfully cleared assignments for shift ${id} in Verdi (GUID: ${guid})`);
         } catch (error) {
-          console.error(`Error deleting shift ${id} from Verdi (GUID: ${guid}):`, error);
+          console.error(`Error clearing assignments for shift ${id} in Verdi (GUID: ${guid}):`, error);
           // STRICT: Gooi error - shift blijft in beide systemen
-          // Dit voorkomt orphaned shifts in Verdi
+          // Dit voorkomt inconsistentie tussen systemen
           throw new Error(
-            `Kan shift niet verwijderen: Verdi DELETE gefaald (${error instanceof Error ? error.message : String(error)}). ` +
+            `Kan shift niet verwijderen: Verdi clear assignments gefaald (${error instanceof Error ? error.message : String(error)}). ` +
             `Probeer later opnieuw of verwijder handmatig in Verdi.`
           );
         }
       }
     }
 
-    // Alleen als Verdi DELETE succesvol was (of niet nodig was): verwijder lokaal
+    // Alleen als Verdi clear succesvol was (of niet nodig was): verwijder lokaal
     await db.delete(verdiSyncLog).where(eq(verdiSyncLog.shiftId, id));
     await db.delete(shifts).where(eq(shifts.id, id));
   }
