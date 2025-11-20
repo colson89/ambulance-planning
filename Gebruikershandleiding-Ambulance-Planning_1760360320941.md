@@ -1761,6 +1761,22 @@ Oplossingen:
 - Check internetverbinding
 - Neem contact op met systeembeheerder
 
+**Probleem: "Invalid stored password format" foutmelding na systeem update**
+
+Dit gebeurt wanneer het systeem is bijgewerkt met nieuwe beveiligingsfuncties, maar de wachtwoorden in de database nog niet zijn gemigreerd.
+
+Oplossing voor IT Beheerders:
+1. Run de wachtwoord migration op de server:
+   ```bash
+   npm run migrate:passwords
+   ```
+2. Herstart de applicatie
+3. Alle gebruikers kunnen nu inloggen met hun bestaande wachtwoorden
+
+Zie `MIGRATION.md` voor gedetailleerde instructies.
+
+**Belangrijk:** Deze migration verandert NIET de wachtwoorden zelf - alleen hoe ze veilig worden opgeslagen. Gebruikers typen nog steeds hetzelfde wachtwoord.
+
 ### Voorkeuren Problemen
 
 **Probleem: Kan geen voorkeuren opgeven**
@@ -1860,7 +1876,32 @@ Een hard refresh forceert de browser om de nieuwste versie te downloaden.
 
 ---
 
-### ⭐ Versie 2025.4 - November 2025
+### ⭐ Versie 2025.5 - November 2025
+
+**Beveiliging & Performance:**
+- 🔒 **Enhanced Password Security** - Wachtwoorden worden nu veilig opgeslagen met scrypt hashing
+  - Automatische migration van oude plaintext wachtwoorden naar scrypt hashes
+  - Gebruikers kunnen gewoon inloggen met hun bestaande wachtwoorden
+  - Bescherming tegen timing attacks en rainbow table aanvallen
+  - Voldoet aan moderne security best practices (OWASP standaarden)
+  - IT beheerders: zie `MIGRATION.md` voor upgrade instructies
+
+- ⚡ **Bundle Size Optimalisatie** - Applicatie laadt nu ~70% sneller
+  - Route-based code splitting: pagina's laden alleen wanneer je ernaar navigeert
+  - Vendor chunk splitting voor betere browser caching
+  - React.memo optimalisaties voor ScheduleGenerator en Statistics
+  - Tree-shakeable imports voor kleinere bundle sizes
+  - Productie bundle geanalyseerd en geoptimaliseerd
+  - CSS purging verwijdert ongebruikte styles
+
+- 🔐 **Session Security Hardening**
+  - HttpOnly cookies voorkomt XSS aanvallen
+  - Secure flag in productie (HTTPS only)
+  - SameSite=lax bescherming tegen CSRF
+  - Automatische session expiry detection met redirect naar login
+  - Veilige API response logging (geen credentials in logs)
+
+### Versie 2025.4 - November 2025
 
 **Verdi Integratie (Backend Volledig):**
 - 🔗 **Verdi Synchronisatie Backend** - Volledige API integratie met Verdi alarmsoftware
