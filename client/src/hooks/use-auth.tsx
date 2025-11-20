@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 import {
   useQuery,
   useMutation,
@@ -30,6 +30,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
+
+  // Listen for session expiry events from global error handler
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      toast({
+        title: "Sessie verlopen",
+        description: "Uw sessie is verlopen. Log opnieuw in om door te gaan.",
+        variant: "destructive",
+      });
+    };
+
+    window.addEventListener('session-expired', handleSessionExpired);
+    return () => window.removeEventListener('session-expired', handleSessionExpired);
+  }, [toast]);
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
