@@ -22,58 +22,52 @@ export async function hashPassword(password: string) {
 }
 
 export async function comparePasswords(supplied: string, stored: string) {
-  // Directe vergelijking als laatste redmiddel
-  if (supplied === stored) {
-    console.log("Direct string comparison match!");
-    return true;
-  }
-  
+  // Security: STRICT scrypt-only authentication - NO plaintext fallback
   try {
-    // Controleer of we een geldig stored wachtwoord hebben
+    // Validate stored password format (must be hash.salt)
     if (!stored || !stored.includes(".")) {
-      console.log("Invalid stored password format, but we'll try direct comparison");
-      // Direct vergelijken als back-up
-      return supplied === stored;
+      console.error("Invalid stored password format - must be hashed with scrypt");
+      return false;
     }
 
     const [hashed, salt] = stored.split(".");
     
-    // Controleer of beide delen bestaan
+    // Validate both parts exist
     if (!hashed || !salt) {
-      console.log("Missing parts in stored password, using direct comparison");
-      // Direct vergelijken als back-up
-      return supplied === stored;
+      console.error("Missing hash or salt in stored password");
+      return false;
     }
     
     const hashedBuf = Buffer.from(hashed, "hex");
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
     
-    // Controleer of de buffers dezelfde lengte hebben
+    // Validate buffer lengths match
     if (hashedBuf.length !== suppliedBuf.length) {
-      console.log(`Buffer length mismatch: ${hashedBuf.length} vs ${suppliedBuf.length}`);
-      // Direct vergelijken als back-up
-      return supplied === stored;
+      console.error("Password hash length mismatch");
+      return false;
     }
     
+    // Timing-safe comparison to prevent timing attacks
     return timingSafeEqual(hashedBuf, suppliedBuf);
   } catch (error) {
     console.error("Error in comparePasswords:", error);
-    // Direct vergelijken als laatste redmiddel
-    return supplied === stored;
+    return false;
   }
 }
 
 export function setupAuth(app: Express) {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "ambulance-secret-key-2024",
     resave: false,
-    saveUninitialized: true, // Changed to true to create sessions
+    saveUninitialized: false, // Security: Don't create sessions for unauthenticated users
     store: storage.sessionStore,
     cookie: {
-      secure: false, // Set to true in production with HTTPS
-      httpOnly: false, // Temporarily set to false for debugging
+      secure: isProduction, // HTTPS only in production
+      httpOnly: true, // Security: Prevent XSS attacks by blocking JavaScript access
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: 'lax' // Added for better cookie handling
+      sameSite: 'lax' // CSRF protection
     }
   };
 
@@ -94,38 +88,31 @@ export function setupAuth(app: Express) {
         // Get selected station from request body
         const selectedStationId = req.body.stationId;
         if (!selectedStationId) {
-          console.log(`Login failed: No station selected for ${username}`);
+          console.log(`Login failed: No station selected`);
           return done(null, false);
         }
         
         const user = await storage.getUserByUsernameAndStation(username, selectedStationId);
         
         if (!user) {
-          console.log(`Login failed: User ${username} not found for station ${selectedStationId}`);
+          console.log(`Login failed: User not found for station ${selectedStationId}`);
           return done(null, false);
         }
         
-        // Log wachtwoord details voor debugging
-        console.log(`Password in DB for ${username}: ${user.password}`);
-        console.log(`Supplied password: ${password}`);
+        // Security: NEVER log passwords - removed all password logging
         
-        // Gebruik de verbeterde comparePasswords functie die meerdere vergelijkingsmethoden probeert
+        // Use scrypt-based password comparison
         try {
           if (await comparePasswords(password, user.password)) {
-            console.log(`Password match for ${username} at station ${selectedStationId}!`);
+            console.log(`Login successful for user at station ${selectedStationId}`);
             return done(null, user);
           }
         } catch (err) {
           console.error("Error comparing passwords:", err);
+          return done(null, false);
         }
         
-        // Laatste directe vergelijking als noodoplossing
-        if (user.password === password) {
-          console.log(`Direct string equality match for ${username} at station ${selectedStationId}`);
-          return done(null, user);
-        }
-        
-        console.log(`Login failed: Incorrect password for ${username} at station ${selectedStationId}`);
+        console.log(`Login failed: Incorrect password`);
         return done(null, false);
       } catch (error) {
         console.error("Login error:", error);
