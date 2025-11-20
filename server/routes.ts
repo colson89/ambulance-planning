@@ -86,38 +86,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get station" });
     }
   });
-  
-  // Speciale route voor noodgeval login (ALLEEN VOOR ONTWIKKELING)
-  app.post("/api/dev-login", async (req, res) => {
-    // SECURITY: Only allow in development environment
-    if (process.env.NODE_ENV === 'production') {
-      return res.status(404).json({ message: "Not found" });
-    }
-    
-    try {
-      const { username } = req.body;
-      console.log(`Development login request for ${username}`);
-      
-      // Haal gebruiker op
-      const user = await storage.getUserByUsername(username);
-      if (!user) {
-        return res.status(404).json({ message: "Gebruiker niet gevonden" });
-      }
-      
-      // Log gebruiker in
-      req.login(user, (err) => {
-        if (err) {
-          console.error("Login error:", err);
-          return res.status(500).json({ message: "Login error" });
-        }
-        console.log(`Development login successful for ${username}`);
-        res.status(200).json(user);
-      });
-    } catch (error) {
-      console.error("Development login error:", error);
-      res.status(500).json({ message: "Server error" });
-    }
-  });
+
+  // Security: Dev login endpoint has been completely removed for security reasons
+  // Use proper authentication via /api/login instead
 
   // Get ALL users for cross-team management (supervisors only)
   app.get("/api/users/all", requireAdmin, async (req, res) => {
