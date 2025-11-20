@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -52,7 +52,7 @@ interface Station {
   updatedAt: string;
 }
 
-export default function ScheduleGenerator() {
+function ScheduleGenerator() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -2328,3 +2328,4 @@ export default function ScheduleGenerator() {
     </div>
   );
 }
+export default memo(ScheduleGenerator);

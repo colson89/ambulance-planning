@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -77,7 +77,7 @@ const QUARTERS = [
   { value: 4, label: "Q4 (Okt-Dec)" },
 ];
 
-export default function Statistics() {
+function Statistics() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -703,3 +703,4 @@ export default function Statistics() {
     </div>
   );
 }
+export default memo(Statistics);
