@@ -1,0 +1,617 @@
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+
+PS C:\Windows\system32> cd C:\ambulance-planning
+PS C:\ambulance-planning> node WINDOWS-migrate-passwords.js
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module 'C:\ambulance-planning\WINDOWS-migrate-passwords.js'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.17.0
+PS C:\ambulance-planning> $env:PATH += ";$env:APPDATA\npm"
+PS C:\ambulance-planning> node WINDOWS-migrate-passwords.js
+node:internal/modules/cjs/loader:1404
+  throw err;
+  ^
+
+Error: Cannot find module 'C:\ambulance-planning\WINDOWS-migrate-passwords.js'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.17.0
+PS C:\ambulance-planning> node WINDOWS-migrate-passwords.js
+
+🚀 Starting migration...
+
+═══════════════════════════════════════════════════
+   🚑 Password Migration - Ambulance Planning
+   DGH Brandweerzone Kempen
+═══════════════════════════════════════════════════
+
+🔌 Verbinden met database ambulance_planning...
+✓ Database verbinding succesvol!
+
+📊 Alle gebruikers ophalen uit database...
+✓ 116 gebruikers gevonden
+
+⚙️  Migration starten...
+
+⚠ User "rove319" (ID: 16) - plaintext password detected, migrating...
+✓ User "rove319" (ID: 16) - successfully migrated
+⚠ User "tvdd19" (ID: 17) - plaintext password detected, migrating...
+✓ User "tvdd19" (ID: 17) - successfully migrated
+✓ User "ivgo344" (ID: 25) - already hashed, skipping
+⚠ User "sthe7" (ID: 26) - plaintext password detected, migrating...
+✓ User "sthe7" (ID: 26) - successfully migrated
+⚠ User "bami339" (ID: 27) - plaintext password detected, migrating...
+✓ User "bami339" (ID: 27) - successfully migrated
+⚠ User "drpa338" (ID: 28) - plaintext password detected, migrating...
+✓ User "drpa338" (ID: 28) - successfully migrated
+⚠ User "emth312" (ID: 29) - plaintext password detected, migrating...
+✓ User "emth312" (ID: 29) - successfully migrated
+⚠ User "fima342" (ID: 30) - plaintext password detected, migrating...
+✓ User "fima342" (ID: 30) - successfully migrated
+⚠ User "gihe566" (ID: 31) - plaintext password detected, migrating...
+✓ User "gihe566" (ID: 31) - successfully migrated
+✓ User "gime604" (ID: 32) - already hashed, skipping
+⚠ User "gihu503" (ID: 33) - plaintext password detected, migrating...
+✓ User "gihu503" (ID: 33) - successfully migrated
+⚠ User "guel545" (ID: 34) - plaintext password detected, migrating...
+✓ User "guel545" (ID: 34) - successfully migrated
+✓ User "havm323" (ID: 35) - already hashed, skipping
+⚠ User "jabe308" (ID: 36) - plaintext password detected, migrating...
+✓ User "jabe308" (ID: 36) - successfully migrated
+⚠ User "javk322" (ID: 37) - plaintext password detected, migrating...
+✓ User "javk322" (ID: 37) - successfully migrated
+⚠ User "jisr332" (ID: 38) - plaintext password detected, migrating...
+✓ User "jisr332" (ID: 38) - successfully migrated
+⚠ User "jomi499" (ID: 39) - plaintext password detected, migrating...
+✓ User "jomi499" (ID: 39) - successfully migrated
+⚠ User "jost468" (ID: 40) - plaintext password detected, migrating...
+✓ User "jost468" (ID: 40) - successfully migrated
+⚠ User "juvh324" (ID: 41) - plaintext password detected, migrating...
+✓ User "juvh324" (ID: 41) - successfully migrated
+⚠ User "kuwu580" (ID: 42) - plaintext password detected, migrating...
+✓ User "kuwu580" (ID: 42) - successfully migrated
+✓ User "maka546" (ID: 43) - already hashed, skipping
+⚠ User "mami479" (ID: 44) - plaintext password detected, migrating...
+✓ User "mami479" (ID: 44) - successfully migrated
+⚠ User "math470" (ID: 45) - plaintext password detected, migrating...
+✓ User "math470" (ID: 45) - successfully migrated
+✓ User "mita313" (ID: 46) - already hashed, skipping
+⚠ User "svdb435" (ID: 47) - plaintext password detected, migrating...
+✓ User "svdb435" (ID: 47) - successfully migrated
+✓ User "stry334" (ID: 48) - already hashed, skipping
+⚠ User "tove318" (ID: 49) - plaintext password detected, migrating...
+✓ User "tove318" (ID: 49) - successfully migrated
+⚠ User "toth471" (ID: 50) - plaintext password detected, migrating...
+✓ User "toth471" (ID: 50) - successfully migrated
+⚠ User "vidb464" (ID: 51) - plaintext password detected, migrating...
+✓ User "vidb464" (ID: 51) - successfully migrated
+⚠ User "suku611" (ID: 53) - plaintext password detected, migrating...
+✓ User "suku611" (ID: 53) - successfully migrated
+⚠ User "rost612" (ID: 54) - plaintext password detected, migrating...
+✓ User "rost612" (ID: 54) - successfully migrated
+✓ User "jevb631" (ID: 56) - already hashed, skipping
+⚠ User "stli351" (ID: 57) - plaintext password detected, migrating...
+✓ User "stli351" (ID: 57) - successfully migrated
+⚠ User "jaco37" (ID: 61) - plaintext password detected, migrating...
+✓ User "jaco37" (ID: 61) - successfully migrated
+✓ User "rvdb189" (ID: 62) - already hashed, skipping
+⚠ User "dimu355" (ID: 63) - plaintext password detected, migrating...
+✓ User "dimu355" (ID: 63) - successfully migrated
+✓ User "bave198" (ID: 67) - already hashed, skipping
+✓ User "jope179" (ID: 68) - already hashed, skipping
+✓ User "sevl577" (ID: 69) - already hashed, skipping
+✓ User "stma453" (ID: 70) - already hashed, skipping
+✓ User "robu535" (ID: 71) - already hashed, skipping
+✓ User "rodk152" (ID: 72) - already hashed, skipping
+✓ User "jowe210" (ID: 73) - already hashed, skipping
+✓ User "siba534" (ID: 74) - already hashed, skipping
+✓ User "pavh191" (ID: 75) - already hashed, skipping
+✓ User "vile170" (ID: 77) - already hashed, skipping
+✓ User "svvb422" (ID: 78) - already hashed, skipping
+✓ User "phho162" (ID: 81) - already hashed, skipping
+✓ User "gico556" (ID: 82) - already hashed, skipping
+✓ User "babo142" (ID: 83) - already hashed, skipping
+✓ User "jovv423" (ID: 84) - already hashed, skipping
+✓ User "rigo488" (ID: 85) - already hashed, skipping
+✓ User "chve200" (ID: 86) - already hashed, skipping
+✓ User "jeva400" (ID: 87) - already hashed, skipping
+✓ User "gist529" (ID: 92) - already hashed, skipping
+✓ User "dero484" (ID: 95) - already hashed, skipping
+✓ User "rume450" (ID: 97) - already hashed, skipping
+✓ User "gube551" (ID: 100) - already hashed, skipping
+✓ User "jobo31" (ID: 127) - already hashed, skipping
+✓ User "elru411" (ID: 128) - already hashed, skipping
+✓ User "elvs521" (ID: 145) - already hashed, skipping
+✓ User "esds634" (ID: 146) - already hashed, skipping
+✓ User "frba17" (ID: 155) - already hashed, skipping
+✓ User "bagi20" (ID: 156) - already hashed, skipping
+✓ User "toho21" (ID: 157) - already hashed, skipping
+✓ User "jeva418" (ID: 159) - already hashed, skipping
+✓ User "dica261" (ID: 164) - already hashed, skipping
+✓ User "fidr571" (ID: 166) - already hashed, skipping
+✓ User "glph405" (ID: 167) - already hashed, skipping
+✓ User "joli301" (ID: 169) - already hashed, skipping
+✓ User "joni495" (ID: 170) - already hashed, skipping
+✓ User "liro562" (ID: 171) - already hashed, skipping
+✓ User "mava296" (ID: 174) - already hashed, skipping
+✓ User "kepe505" (ID: 176) - already hashed, skipping
+✓ User "stra614" (ID: 177) - already hashed, skipping
+✓ User "niae66" (ID: 179) - already hashed, skipping
+✓ User "bawo25" (ID: 180) - already hashed, skipping
+✓ User "dygr460" (ID: 181) - already hashed, skipping
+✓ User "wvdv327" (ID: 183) - already hashed, skipping
+✓ User "thhu81" (ID: 184) - already hashed, skipping
+✓ User "mast555" (ID: 185) - already hashed, skipping
+✓ User "timi86" (ID: 186) - already hashed, skipping
+✓ User "todo73" (ID: 187) - already hashed, skipping
+✓ User "tivr108" (ID: 188) - already hashed, skipping
+✓ User "leve509" (ID: 189) - already hashed, skipping
+✓ User "koge76" (ID: 190) - already hashed, skipping
+✓ User "mvdb95" (ID: 191) - already hashed, skipping
+✓ User "pave61" (ID: 192) - already hashed, skipping
+✓ User "anwo64" (ID: 193) - already hashed, skipping
+✓ User "ivve60" (ID: 194) - already hashed, skipping
+✓ User "stke427" (ID: 195) - already hashed, skipping
+✓ User "jolu48" (ID: 196) - already hashed, skipping
+✓ User "roha382" (ID: 198) - already hashed, skipping
+✓ User "stca391" (ID: 199) - already hashed, skipping
+✓ User "davc374" (ID: 200) - already hashed, skipping
+✓ User "mavc388" (ID: 201) - already hashed, skipping
+✓ User "nive393" (ID: 202) - already hashed, skipping
+✓ User "tobu445" (ID: 203) - already hashed, skipping
+✓ User "kacl384" (ID: 204) - already hashed, skipping
+✓ User "joth392" (ID: 205) - already hashed, skipping
+✓ User "bvda377" (ID: 206) - already hashed, skipping
+✓ User "pvdp385" (ID: 207) - already hashed, skipping
+✓ User "bjlo22" (ID: 208) - already hashed, skipping
+✓ User "jile572" (ID: 209) - already hashed, skipping
+✓ User "math573" (ID: 210) - already hashed, skipping
+✓ User "chbr387" (ID: 211) - already hashed, skipping
+✓ User "calu582" (ID: 212) - already hashed, skipping
+✓ User "tage397" (ID: 213) - already hashed, skipping
+✓ User "jolu381" (ID: 214) - already hashed, skipping
+✓ User "make389" (ID: 215) - already hashed, skipping
+✓ User "nilu84" (ID: 221) - already hashed, skipping
+✓ User "rove537" (ID: 222) - already hashed, skipping
+✓ User "dave203" (ID: 223) - already hashed, skipping
+✓ User "didi617" (ID: 224) - already hashed, skipping
+✓ User "pivd595" (ID: 228) - already hashed, skipping
+✓ User "demu594" (ID: 229) - already hashed, skipping
+
+═══════════════════════════════════════════════════
+                  📋 SAMENVATTING
+═══════════════════════════════════════════════════
+Totaal verwerkt:      116 gebruikers
+Al beveiligd:         88 gebruikers ✓
+Nieuw gemigreerd:     28 gebruikers ⚡
+Mislukt:              0 gebruikers
+═══════════════════════════════════════════════════
+
+🎉 SUCCES! Alle plaintext wachtwoorden zijn veilig gemigreerd!
+   Gebruikers kunnen nu inloggen met hun bestaande wachtwoorden.
+
+📌 VOLGENDE STAP: Herstart je applicatie!
+   pm2 restart ambulance-planning
+
+🔌 Database verbinding gesloten.
+
+═══════════════════════════════════════════════════
+          ✅ MIGRATION VOLTOOID!
+═══════════════════════════════════════════════════
+
+PS C:\ambulance-planning> pm2 restart ambulance-planning
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [ambulance-planning](ids: [ 0 ])
+[PM2] [ambulance-planning](0) ✓
+┌────┬───────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                  │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼───────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning    │ default     │ 1.0.0   │ fork    │ 27988    │ 0s     │ 2    │ online    │ 0%       │ 60.6mb   │ jeva400  │ disabled │
+└────┴───────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+PS C:\ambulance-planning> pm2 log
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+C:\Users\jeva400\.pm2\pm2.log last 15 lines:
+PM2        | 2025-11-20T12:57:21: PM2 log: SIGTERM timeout      : 1600
+PM2        | 2025-11-20T12:57:21: PM2 log: Runtime Binary       : C:\Program Files\nodejs\node.exe
+PM2        | 2025-11-20T12:57:21: PM2 log: ===============================================================================
+PM2        | 2025-11-20T12:57:21: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-11-20T12:57:21: PM2 log: App [ambulance-planning:0] online
+PM2        | 2025-11-20T12:58:32: PM2 log: Stopping app:ambulance-planning id:0
+PM2        | 2025-11-20T12:58:33: PM2 log: App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2        | 2025-11-20T12:58:33: PM2 log: pid=34800 msg=process killed
+PM2        | 2025-11-20T12:58:33: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-11-20T12:58:33: PM2 log: App [ambulance-planning:0] online
+PM2        | 2025-11-20T13:43:31: PM2 log: Stopping app:ambulance-planning id:0
+PM2        | 2025-11-20T13:43:31: PM2 log: App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2        | 2025-11-20T13:43:31: PM2 log: pid=34100 msg=process killed
+PM2        | 2025-11-20T13:43:31: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-11-20T13:43:31: PM2 log: App [ambulance-planning:0] online
+
+C:\Users\Administrator\.pm2\logs\ambulance-planning-error.log last 15 lines:
+0|ambulanc |   where: undefined,
+0|ambulanc |   schema: 'public',
+0|ambulanc |   table: 'users',
+0|ambulanc |   column: undefined,
+0|ambulanc |   dataType: undefined,
+0|ambulanc |   constraint: 'users_username_unique',
+0|ambulanc |   file: 'nbtinsert.c',
+0|ambulanc |   line: '673',
+0|ambulanc |   routine: '_bt_check_unique'
+0|ambulanc | }
+0|ambulanc | Invalid stored password format - must be hashed with scrypt
+0|ambulanc | Invalid stored password format - must be hashed with scrypt
+0|ambulanc | Invalid stored password format - must be hashed with scrypt
+0|ambulanc | Invalid stored password format - must be hashed with scrypt
+0|ambulanc | Missing hash or salt in stored password
+
+C:\Users\Administrator\.pm2\logs\ambulance-planning-out.log last 15 lines:
+0|ambulanc |     code: 'zwgeel',
+0|ambulanc |     displayName: 'ZW Geel',
+0|ambulanc |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulanc |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulanc |   },
+0|ambulanc |   {
+0|ambulanc |     id: 4,
+0|ambulanc |     name: 'zwmol',
+0|ambulanc |     code: 'zwmol',
+0|ambulanc |     displayName: 'ZW Mol',
+0|ambulanc |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulanc |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulanc |   }
+0|ambulanc | ]
+0|ambulanc | 1:44:50 PM [express] GET /api/stations 200 in 8ms
+
+0|ambulance-planning  | 1:45:07 PM [express] GET /api/user 401 in 1ms
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | 1:45:07 PM [express] GET /api/stations 200 in 2ms
+0|ambulance-planning  | 1:45:09 PM [express] GET /api/user 401 in 1ms
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | 1:45:09 PM [express] GET /api/stations 200 in 4ms
+0|ambulance-planning  | Login attempt for username: tvdd19
+0|ambulance-planning  | Login successful for user at station 2
+0|ambulance-planning  | === SERIALIZE USER ===
+0|ambulance-planning  | Serializing user: { id: 17, username: 'tvdd19', stationId: 2 }
+0|ambulance-planning  | 1:45:16 PM [express] POST /api/login 200 in 80ms
+0|ambulance-planning  | 1:45:16 PM [express] GET /api/user 401 in 1ms
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: false
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-21T12:45:16.068Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: true,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: undefined
+0|ambulance-planning  | 1:45:16 PM [express] GET /api/shifts 401 in 1ms
+0|ambulance-planning  | Admin access denied: { isAuthenticated: false, userRole: undefined, userId: undefined }
+0|ambulance-planning  | 1:45:16 PM [express] GET /api/users 403 in 1ms
+0|ambulance-planning  | Admin access denied: { isAuthenticated: false, userRole: undefined, userId: undefined }
+0|ambulance-planning  | 1:45:16 PM [express] GET /api/preferences/all 403 in 1ms
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: false
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-21T12:45:16.075Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: true,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: undefined
+0|ambulance-planning  | 1:45:16 PM [express] GET /api/weekday-configs 401 in 1ms
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: false
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-21T12:45:16.077Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: true,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: undefined
+0|ambulance-planning  | 1:45:16 PM [express] GET /api/system/deadline-days 401 in 0ms
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | 1:45:16 PM [express] GET /api/stations 200 in 11ms
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | 1:45:16 PM [express] GET /api/stations 200 in 2ms
+0|ambulance-planning  | 1:45:16 PM [express] GET /api/user 401 in 1ms
