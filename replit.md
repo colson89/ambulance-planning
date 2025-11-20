@@ -39,7 +39,7 @@ Documentation Policy: **ALWAYS update `Gebruikershandleiding-Ambulance-Planning_
 
 ### Key Features
 - **Multi-Station Support**: Station-scoped entities, user accounts, and unified preference management across 8 stations.
-- **User Management**: Role-based access control (admin/supervisor/ambulancier), password management with scrypt, and admin contact system.
+- **User Management**: Role-based access control (admin/supervisor/ambulancier), password management with scrypt, and admin contact system. Cross-team user deletion is restricted to supervisors only - admins attempting to delete cross-team users receive a clear error message directing them to contact a supervisor.
 - **Shift Planning System**: Supports day/night and split shifts, preference-based scheduling, automated generation with optimization algorithms (including weekend-first, historical fairness, workload balancing, 12-hour rest enforcement, professional restrictions), and manual override capabilities.
 - **Availability Management**: Collects user preferences for monthly periods (full, partial, unavailable) with comments and visual calendar input.
 - **Schedule Generation**: Intelligent multi-phase algorithm considering user preferences, availability, historical fairness, scarcity-based prioritization, and conflict detection.
