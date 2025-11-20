@@ -70,6 +70,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('react-query-state');
       } catch (e) { /* ignore */ }
       
+      // Clear sessionStorage except selectedStation (needed for login)
+      // This prevents old user data from bleeding into new session
+      try {
+        const selectedStation = sessionStorage.getItem('selectedStation');
+        sessionStorage.clear();
+        if (selectedStation) {
+          sessionStorage.setItem('selectedStation', selectedStation);
+        }
+      } catch (e) { /* ignore */ }
+      
       // Explicitly remove all shift-related queries
       queryClient.removeQueries({ queryKey: ['/api/shifts'] });
       queryClient.removeQueries({ queryKey: ['/api/preferences'] });
@@ -113,11 +123,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      
       // Clear shift-related cache data to prevent stale data between different users
       queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
       queryClient.invalidateQueries({ queryKey: ["/api/statistics"] });
+      
+      // Clear sessionStorage to remove station selection and any other session data
+      try {
+        sessionStorage.clear();
+      } catch (e) { /* ignore */ }
     },
     onError: (error: Error) => {
       toast({
