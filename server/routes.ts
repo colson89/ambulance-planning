@@ -364,12 +364,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
+      // Check if target user is cross-team (assigned to multiple stations)
+      const isCrossTeamUser = await storage.isUserCrossTeam(targetUserId);
+      
       // Supervisors can delete users in any station except supervisor station (8)
       if (adminRole === 'supervisor') {
         if (targetUser.stationId === 8) {
           return res.status(403).json({ message: "Cannot access supervisor station users" });
         }
       } else {
+        // SECURITY: Regular admins cannot delete cross-team users
+        if (isCrossTeamUser) {
+          return res.status(403).json({ 
+            message: "Deze gebruiker is toegewezen aan meerdere stations (cross-team). Alleen supervisors kunnen cross-team gebruikers verwijderen." 
+          });
+        }
+        
         // Regular admins - check if they have access to target user's primary station
         // This includes both their primary station AND cross-team stations
         const adminAccessibleStations = await storage.getUserAccessibleStations(currentUserId);
