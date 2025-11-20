@@ -399,6 +399,7 @@ export default function ScheduleGenerator() {
       // Force refresh van alle shift-gerelateerde data om sync status bij te werken
       queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/verdi/sync-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/verdi/sync-status"] });
       queryClient.invalidateQueries({ queryKey: ["/api/verdi/last-sync"] });
       
       // Refetch huidige shifts
