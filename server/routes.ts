@@ -3003,6 +3003,19 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   // VERDI INTEGRATIE ENDPOINTS
   // =========================
   
+  // Helper function to mask sensitive Verdi credentials before sending to frontend
+  const maskVerdiConfig = (config: any) => {
+    if (!config) return config;
+    
+    return {
+      ...config,
+      // Security: Mask authSecret - only show last 4 characters
+      authSecret: config.authSecret 
+        ? `****${config.authSecret.slice(-4)}` 
+        : null
+    };
+  };
+  
   // Get Verdi configuration voor station
   app.get("/api/verdi/config/:stationId", requireAdmin, async (req, res) => {
     try {
@@ -3017,7 +3030,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         });
       }
       
-      res.json(config);
+      // Security: Mask authSecret before sending to frontend
+      res.json(maskVerdiConfig(config));
     } catch (error) {
       console.error("Error fetching Verdi config:", error);
       res.status(500).json({ message: "Failed to fetch Verdi configuration" });
@@ -3049,7 +3063,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   app.get("/api/verdi/configs", requireAdmin, async (req, res) => {
     try {
       const configs = await storage.getAllVerdiStationConfigs();
-      res.json(configs);
+      // Security: Mask authSecret in all configs before sending to frontend
+      const maskedConfigs = configs.map(maskVerdiConfig);
+      res.json(maskedConfigs);
     } catch (error) {
       console.error("Error fetching Verdi configs:", error);
       res.status(500).json({ message: "Failed to fetch Verdi configurations" });
