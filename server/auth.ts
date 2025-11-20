@@ -58,13 +58,17 @@ export async function comparePasswords(supplied: string, stored: string) {
 export function setupAuth(app: Express) {
   const isProduction = process.env.NODE_ENV === 'production';
   
+  // Windows Server deployment: Nginx handles HTTPS, Express backend uses HTTP
+  // Cookie secure flag must be false for HTTP backend, even though external connection is HTTPS
+  const useSecureCookies = false; // Always false for reverse proxy deployments
+  
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "ambulance-secret-key-2024",
     resave: false,
     saveUninitialized: false, // Security: Don't create sessions for unauthenticated users
     store: storage.sessionStore,
     cookie: {
-      secure: isProduction, // HTTPS only in production
+      secure: useSecureCookies, // False for reverse proxy (Nginx handles HTTPS)
       httpOnly: true, // Security: Prevent XSS attacks by blocking JavaScript access
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: 'lax' // CSRF protection
