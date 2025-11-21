@@ -437,6 +437,62 @@ Als admin ziet u extra knoppen:
 - Klik op shift om handmatig toe te wijzen
 - Selecteer beschikbare medewerker
 
+#### 👥 Beschikbaarheid Bekijken per Datum (NIEUW)
+
+Als admin kunt u op elke datum in de planning klikken om te zien wie beschikbaar is voor die specifieke shift. Dit helpt u om:
+- Snel te zien wie nog kan worden ingepland
+- Beschikbare uren te controleren voordat u toewijst
+- Weloverwogen planning beslissingen te nemen
+
+**Hoe Gebruiken:**
+
+1. **Klik op een datum** in de planning kalender
+2. **Zie het beschikbaarheidsscherm** met drie belangrijke kolommen:
+   - **Naam**: Naam van de ambulancier
+   - **Status**: Beschikbaar (groen), Toegewezen (blauw), of Niet beschikbaar (grijs)
+   - **Uren**: Hoeveel uur deze persoon wil werken deze maand
+   - **Ingepland**: ⭐ NIEUW - Hoeveel uur deze persoon al is ingepland
+
+**De "Ingepland" Kolom:**
+
+Deze nieuwe kolom toont in één oogopslag hoeveel van de beschikbare uren al gebruikt zijn:
+
+```
+24 / 48 (50%)
+│   │    └─ Percentage van beschikbare uren al ingepland
+│   └────── Totaal beschikbare uren (opgegeven door gebruiker)
+└────────── Al ingepland deze maand
+```
+
+**Voorbeelden:**
+
+| Naam | Status | Uren | Ingepland | Interpretatie |
+|------|--------|------|-----------|---------------|
+| Emiel Thys | Beschikbaar | 48 | **24 / 48 (50%)** | Heeft nog 24 uur vrij |
+| Filip Mangelschots | Beschikbaar | 24 | **24 / 24 (100%)** | Volledig ingepland |
+| Gilles Heylen | Beschikbaar | 36 | **0 / 36 (0%)** | Nog niet ingepland |
+| Guanny Elaily | Toegewezen | 36 | **12 / 36 (33%)** | Al toegewezen aan huidige shift |
+
+**💡 Planning Tips:**
+
+- ✅ **Prioriteer personen met 0%** - Nog helemaal niet ingepland
+- ⚠️ **Let op bij 80%+** - Bijna vol, nog weinig ruimte
+- 🚫 **Vermijd bij 100%** - Volledig ingepland (tenzij ze meer uren willen)
+- 📊 **Gebruik percentages** om eerlijke verdeling te bewaken
+
+**Voorbeeld Scenario:**
+
+U moet iemand toewijzen aan een 12-uur nachtshift op 15 november:
+
+1. Klik op **15 november** → Beschikbaarheidsscherm opent
+2. Zie wie beschikbaar is:
+   - Jan: 36 / 48 (75%) - Nog 12 uur vrij ✅
+   - Piet: 48 / 48 (100%) - Volledig ingepland ❌
+   - Anna: 0 / 36 (0%) - Nog helemaal niet ingepland ✅✅
+3. **Kies Anna** - Zij heeft prioriteit omdat ze nog 0% heeft
+
+Dit helpt u om eerlijke planning te garanderen en te voorkomen dat sommige mensen te veel shifts krijgen terwijl anderen te weinig hebben!
+
 #### Voorkeuren Verwijderen
 
 ⚠️ **Let Op: Dit is een destructieve actie die niet ongedaan gemaakt kan worden!**
@@ -1030,10 +1086,37 @@ Planning Gebruiker ←→ Verdi Person GUID
    - Formaat: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
 5. **Klik "Opslaan"** naast elke gebruiker
 
-**💡 Tips:** 
-- Gebruik de zoekbalk om snel specifieke gebruikers te vinden
-- Bulk import functie volgt later
-- Momenteel: handmatige invoer per gebruiker
+**📥 Excel Import Functie (NIEUW)**
+
+Voor snelle bulk import van Person GUIDs:
+
+1. **Exporteer vanuit Verdi**:
+   - Ga in Verdi naar ShiftPlanning → Person overzicht
+   - Exporteer naar Excel (bevat kolommen: FirstName, Naam, PersonGuid, Post)
+   
+2. **Klik "Import uit Excel"** knop (rechtsboven in Gebruiker Mappings tab)
+
+3. **Selecteer uw Verdi export bestand**
+   - Systeem matcht automatisch op voor- en achternaam
+   - **Accent-insensitive**: José = Jose, Müller = Muller
+   - **Case-insensitive**: JANSEN = Jansen = jansen
+
+4. **Preview scherm controle**:
+   - ✅ **Geslaagde matches**: Groen, automatisch geselecteerd voor import
+   - ⚠️ **Bestaande mappings**: Oranje achtergrond met "Was: [oude GUID]" waarschuwing
+   - ❌ **Niet gevonden in systeem**: Personen uit Excel die geen account hebben
+   - ℹ️ **Geen match**: Gebruikers zonder Excel entry (worden niet gewijzigd)
+
+5. **Selecteer welke te importeren**:
+   - Vink aan/uit om specifieke mappings te (de)selecteren
+   - Bij overwrites ziet u de oude GUID → nieuwe GUID wijziging
+
+6. **Klik "Importeer X mappings"** om te bevestigen
+
+**💡 Tips:**
+- Gebruik Excel import voor snelle bulk configuratie (alle GUIDs in 1 keer)
+- Bij kleine wijzigingen: gebruik de zoekbalk + handmatige invoer
+- Overwrites worden duidelijk getoond - controleer altijd het preview scherm
 
 #### 🚁 Tab 3: Positie Mappings (Position GUID Koppeling)
 
