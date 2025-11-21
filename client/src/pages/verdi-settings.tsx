@@ -404,6 +404,12 @@ export default function VerdiSettings() {
   if (user.role === 'supervisor' && !selectedStationId) {
     return (
       <div className="container mx-auto p-6">
+        <div className="mb-4">
+          <Button variant="outline" onClick={() => setLocation("/")}>
+            <Home className="mr-2 h-4 w-4" />
+            Terug naar Dashboard
+          </Button>
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>Selecteer een station</CardTitle>
