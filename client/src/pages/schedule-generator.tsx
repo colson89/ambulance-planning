@@ -440,6 +440,7 @@ function ScheduleGenerator() {
         isAssigned: boolean;
         isAvailable: boolean;
         hours: number;
+        scheduledHours: number;
       }> = [];
       
       // Gezochte datum in YMD formaat voor eenvoudigere vergelijking
@@ -533,7 +534,8 @@ function ScheduleGenerator() {
             canSplit: false, // Niet relevant voor weergave
             isAssigned: isAssigned, // Extra veld om snel te kunnen checken of deze gebruiker al is toegewezen
             isAvailable: isAvailable && wantsToWork, // Of de gebruiker beschikbaar is en uren wil werken
-            hours: ambulancier.hours || 0 // Hoeveel uren deze persoon wil werken
+            hours: ambulancier.hours || 0, // Hoeveel uren deze persoon wil werken
+            scheduledHours: countUserShiftsHours(ambulancier.id) // Hoeveel uren deze persoon al is ingepland deze maand
           });
         }
       });
@@ -2202,6 +2204,7 @@ function ScheduleGenerator() {
                             <TableHead>Naam</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Uren</TableHead>
+                            <TableHead>Ingepland</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -2222,12 +2225,22 @@ function ScheduleGenerator() {
                                 )}
                               </TableCell>
                               <TableCell>{u.hours}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <span>{u.scheduledHours}</span>
+                                  {u.hours > 0 && (
+                                    <span className="text-xs text-muted-foreground">
+                                      / {u.hours} ({Math.round((u.scheduledHours / u.hours) * 100)}%)
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
                             </TableRow>
                           ))}
                           
                           {getUsersAvailableForDate(selectedDate, "day").length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={3} className="text-center py-4">
+                              <TableCell colSpan={4} className="text-center py-4">
                                 Geen beschikbare ambulanciers gevonden
                               </TableCell>
                             </TableRow>
@@ -2248,6 +2261,7 @@ function ScheduleGenerator() {
                           <TableHead>Naam</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Uren</TableHead>
+                          <TableHead>Ingepland</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -2268,12 +2282,22 @@ function ScheduleGenerator() {
                               )}
                             </TableCell>
                             <TableCell>{u.hours}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1">
+                                <span>{u.scheduledHours}</span>
+                                {u.hours > 0 && (
+                                  <span className="text-xs text-muted-foreground">
+                                    / {u.hours} ({Math.round((u.scheduledHours / u.hours) * 100)}%)
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
                           </TableRow>
                         ))}
                         
                         {getUsersAvailableForDate(selectedDate, "night").length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={3} className="text-center py-4">
+                            <TableCell colSpan={4} className="text-center py-4">
                               Geen beschikbare ambulanciers gevonden
                             </TableCell>
                           </TableRow>
