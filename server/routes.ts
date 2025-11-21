@@ -3399,6 +3399,21 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // Check pending changes status voor Verdi sync (voor visuele indicator)
+  app.get("/api/verdi/pending-changes/:stationId/:month/:year", requireAdmin, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const month = parseInt(req.params.month);
+      const year = parseInt(req.params.year);
+      
+      const status = await storage.getVerdiSyncStatus(stationId, month, year);
+      res.json(status);
+    } catch (error) {
+      console.error("Error fetching Verdi pending changes:", error);
+      res.status(500).json({ message: "Failed to fetch Verdi pending changes status" });
+    }
+  });
+
   // Get laatste succesvolle sync timestamp voor station/maand/jaar
   app.get("/api/verdi/last-sync/:stationId/:month/:year", requireAdmin, async (req, res) => {
     try {

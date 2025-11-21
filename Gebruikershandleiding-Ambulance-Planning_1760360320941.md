@@ -1177,6 +1177,21 @@ Het systeem werkt flexibel met variabel aantal personen per shift:
 - Selecteer de juiste maand en station
 - Klik op "Sync naar Verdi" knop (alleen zichtbaar voor admins en supervisors)
 
+**💡 Visuele Status Indicator (NIEUW)**
+
+De "Sync naar Verdi" knop toont automatisch de synchronisatiestatus met kleurcodering:
+
+- **🔴 RODE knop**: Er zijn wijzigingen die nog niet gesynchroniseerd zijn
+  - Toont aantal nieuwe + gewijzigde shifts: "Sync naar Verdi (5)"
+  - Tooltip: "3 nieuwe en 2 gewijzigde shifts - klik om te syncen"
+  - **Actie vereist**: Klik om te synchroniseren
+
+- **🟢 GROENE knop**: Alles is gesynchroniseerd
+  - Tooltip: "Alles gesynchroniseerd - geen wijzigingen"
+  - **Geen actie nodig**: Planning is up-to-date in Verdi
+
+De status wordt automatisch elke 30 seconden ververst, zodat u altijd de meest actuele status ziet!
+
 **Stap 3: Sync Opties Kiezen**
 
 U ziet een bevestigingsvenster met twee opties:

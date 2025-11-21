@@ -299,6 +299,25 @@ function ScheduleGenerator() {
     enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
   });
 
+  // Check of er pending changes zijn voor Verdi sync (voor groene/rode knop indicator)
+  const { data: verdiPendingChanges } = useQuery<{
+    hasPendingChanges: boolean;
+    newShifts: number;
+    modifiedShifts: number;
+    totalShifts: number;
+  }>({
+    queryKey: ["/api/verdi/pending-changes", effectiveStationId, selectedMonth + 1, selectedYear],
+    queryFn: async () => {
+      const url = `/api/verdi/pending-changes/${effectiveStationId}/${selectedMonth + 1}/${selectedYear}`;
+      const res = await apiRequest("GET", url);
+      if (!res.ok) return { hasPendingChanges: false, newShifts: 0, modifiedShifts: 0, totalShifts: 0 };
+      return res.json();
+    },
+    enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
+    // Refetch regelmatig om de status up-to-date te houden
+    refetchInterval: 30000, // 30 seconden
+  });
+
   // Mutatie om de planning te genereren
   const generateScheduleMutation = useMutation({
     mutationFn: async () => {
@@ -401,6 +420,7 @@ function ScheduleGenerator() {
       queryClient.invalidateQueries({ queryKey: ["/api/verdi/sync-logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/verdi/sync-status"] });
       queryClient.invalidateQueries({ queryKey: ["/api/verdi/last-sync"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/verdi/pending-changes"] });
       
       // Refetch huidige shifts
       refetchShifts();
@@ -1634,6 +1654,20 @@ function ScheduleGenerator() {
                       variant="outline"
                       size="sm"
                       disabled={!shifts || shifts.length === 0 || syncToVerdiMutation.isPending}
+                      className={
+                        verdiPendingChanges?.hasPendingChanges 
+                          ? "bg-red-500 hover:bg-red-600 text-white border-red-600" 
+                          : shifts && shifts.length > 0 && verdiPendingChanges && !verdiPendingChanges.hasPendingChanges
+                          ? "bg-green-500 hover:bg-green-600 text-white border-green-600"
+                          : ""
+                      }
+                      title={
+                        verdiPendingChanges?.hasPendingChanges
+                          ? `${verdiPendingChanges.newShifts} nieuwe en ${verdiPendingChanges.modifiedShifts} gewijzigde shifts - klik om te syncen`
+                          : shifts && shifts.length > 0 && verdiPendingChanges && !verdiPendingChanges.hasPendingChanges
+                          ? "Alles gesynchroniseerd - geen wijzigingen"
+                          : "Verdi synchronisatie"
+                      }
                     >
                       {syncToVerdiMutation.isPending ? (
                         <>
@@ -1644,6 +1678,11 @@ function ScheduleGenerator() {
                         <>
                           <LinkIcon className="h-4 w-4 mr-2" />
                           Sync naar Verdi
+                          {verdiPendingChanges?.hasPendingChanges && (
+                            <span className="ml-1 text-xs font-semibold">
+                              ({verdiPendingChanges.newShifts + verdiPendingChanges.modifiedShifts})
+                            </span>
+                          )}
                         </>
                       )}
                     </Button>

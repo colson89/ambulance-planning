@@ -41,7 +41,9 @@ export const shifts = pgTable("shifts", {
   splitStartTime: timestamp("split_start_time"),
   splitEndTime: timestamp("split_end_time"),
   month: integer("month").notNull(),
-  year: integer("year").notNull()
+  year: integer("year").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 export const shiftPreferences = pgTable("shift_preferences", {

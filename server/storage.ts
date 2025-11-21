@@ -130,6 +130,7 @@ export interface IStorage {
   deleteVerdiSyncLogById(logId: number): Promise<void>;
   updateVerdiSyncLogById(logId: number, syncStatus: 'pending' | 'success' | 'error', errorMessage?: string): Promise<void>;
   resetVerdiSyncLog(shiftId: number): Promise<void>;
+  getVerdiSyncStatus(stationId: number, month: number, year: number): Promise<{hasPendingChanges: boolean, newShifts: number, modifiedShifts: number, totalShifts: number}>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2873,7 +2874,10 @@ export class DatabaseStorage implements IStorage {
   async updateShift(id: number, updateData: Partial<Shift>): Promise<Shift> {
     const [shift] = await db
       .update(shifts)
-      .set(updateData)
+      .set({
+        ...updateData,
+        updatedAt: new Date() // Track when shift was last modified
+      })
       .where(eq(shifts.id, id))
       .returning();
 
@@ -3490,6 +3494,63 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(verdiSyncLog.shiftId, shiftId));
     }
+  }
+
+  async getVerdiSyncStatus(stationId: number, month: number, year: number): Promise<{hasPendingChanges: boolean, newShifts: number, modifiedShifts: number, totalShifts: number}> {
+    // Haal alle planned shifts op voor deze maand/station
+    const allShifts = await this.getShiftsByMonth(month, year, stationId);
+    const plannedShifts = allShifts.filter(s => s.status === 'planned');
+    
+    if (plannedShifts.length === 0) {
+      return {
+        hasPendingChanges: false,
+        newShifts: 0,
+        modifiedShifts: 0,
+        totalShifts: 0
+      };
+    }
+    
+    // Haal alle sync logs op voor deze maand/station
+    const allSyncLogs = await this.getVerdiSyncLogsByMonth(month, year, stationId);
+    
+    // Group sync logs by shiftId and get the LATEST one for each shift
+    // (om oude pending/error logs te negeren na een latere succesvolle sync)
+    const latestSyncLogMap = new Map<number, any>();
+    for (const log of allSyncLogs) {
+      const existing = latestSyncLogMap.get(log.shiftId);
+      if (!existing || log.updatedAt > existing.updatedAt) {
+        latestSyncLogMap.set(log.shiftId, log);
+      }
+    }
+    
+    let newShifts = 0;
+    let modifiedShifts = 0;
+    
+    for (const shift of plannedShifts) {
+      const latestSyncLog = latestSyncLogMap.get(shift.id);
+      
+      if (!latestSyncLog) {
+        // Geen sync log = nieuwe shift
+        newShifts++;
+      } else {
+        // Check sync status OR shift modificatie (NIET beide om dubbeltelling te voorkomen)
+        const hasFailedSync = latestSyncLog.syncStatus === 'pending' || latestSyncLog.syncStatus === 'error';
+        const isModifiedAfterSync = shift.updatedAt && latestSyncLog.updatedAt && shift.updatedAt > latestSyncLog.updatedAt;
+        
+        if (hasFailedSync || isModifiedAfterSync) {
+          modifiedShifts++;
+        }
+      }
+    }
+    
+    const hasPendingChanges = newShifts > 0 || modifiedShifts > 0;
+    
+    return {
+      hasPendingChanges,
+      newShifts,
+      modifiedShifts,
+      totalShifts: plannedShifts.length
+    };
   }
 
   async getShiftGuidFromRegistry(
