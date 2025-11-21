@@ -271,8 +271,8 @@ export const verdiShiftRegistry = pgTable("verdi_shift_registry", {
   stationId: integer("station_id").notNull().references(() => stations.id),
   shiftDate: timestamp("shift_date").notNull(), // Datum van de shift
   shiftType: text("shift_type", { enum: ["day", "night"] }).notNull(), // Type shift (dag/nacht)
-  splitStartTimeStr: text("split_start_time_str"), // ISO string van split start tijd (of NULL voor niet-split)
-  splitEndTimeStr: text("split_end_time_str"), // ISO string van split end tijd (of NULL voor niet-split)
+  splitStartTimeStr: text("split_start_time_str").notNull(), // ISO string van split start tijd (of '__UNSPLIT__' voor niet-split)
+  splitEndTimeStr: text("split_end_time_str").notNull(), // ISO string van split end tijd (of '__UNSPLIT__' voor niet-split)
   verdiShiftGuid: text("verdi_shift_guid").notNull(), // Permanente GUID voor deze unieke shift
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()
