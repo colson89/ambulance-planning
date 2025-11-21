@@ -9,9 +9,24 @@ import {format} from 'date-fns';
 import { db } from "./db";
 import { and, gte, lte, asc, ne, eq } from "drizzle-orm";
 import * as XLSX from 'xlsx';
+import multer from 'multer';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
+
+  // Multer configuratie voor file uploads (memory storage voor Excel imports)
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+          file.mimetype === 'application/vnd.ms-excel') {
+        cb(null, true);
+      } else {
+        cb(new Error('Alleen Excel bestanden zijn toegestaan'));
+      }
+    }
+  });
 
   // Admin middleware (includes supervisors)
   const requireAdmin = (req: any, res: any, next: any) => {
@@ -3152,6 +3167,185 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     } catch (error) {
       console.error("Error fetching Verdi user mappings:", error);
       res.status(500).json({ message: "Failed to fetch Verdi user mappings" });
+    }
+  });
+
+  // Import Verdi Person GUIDs from Excel export
+  app.post("/api/verdi/mappings/users/import", requireAdmin, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Geen bestand geüpload" });
+      }
+
+      // Parse Excel bestand
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const excelData = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as Array<{
+        PersonGuid: string;
+        Naam: string;
+        FirstName: string;
+        Post?: string;
+        Graad?: string;
+        FunctieNaam?: string;
+      }>;
+
+      if (excelData.length === 0) {
+        return res.status(400).json({ message: "Excel bestand is leeg" });
+      }
+
+      // Valideer dat de juiste kolommen aanwezig zijn
+      const firstRow = excelData[0];
+      if (!firstRow.PersonGuid || !firstRow.Naam || !firstRow.FirstName) {
+        return res.status(400).json({ 
+          message: "Excel bestand mist verplichte kolommen (PersonGuid, Naam, FirstName)" 
+        });
+      }
+
+      // Haal gebruikers op (met zelfde logica als GET /api/verdi/users)
+      const user = req.user!;
+      let users;
+      
+      if (user.role === 'supervisor') {
+        users = await storage.getAllUsers();
+      } else {
+        if (!user.stationId) {
+          return res.status(400).json({ message: "Admin user must have a stationId" });
+        }
+        users = await storage.getUsersByStation(user.stationId);
+      }
+
+      // Verwijder duplicaten uit Excel (zelfde PersonGuid)
+      const uniqueExcelData = new Map<string, typeof excelData[0]>();
+      excelData.forEach(row => {
+        if (row.PersonGuid && !uniqueExcelData.has(row.PersonGuid)) {
+          uniqueExcelData.set(row.PersonGuid, row);
+        }
+      });
+
+      // Matching op firstName + lastName (case-insensitive, accent-insensitive, trim)
+      const normalizeString = (str: string) => 
+        str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
+
+      // Haal bestaande mappings op om conflicts te detecteren
+      const existingMappings = await storage.getAllVerdiUserMappings();
+      const existingMappingsByUserId = new Map(existingMappings.map(m => [m.userId, m.personGuid]));
+
+      const matched: Array<{
+        userId: number;
+        username: string;
+        firstName: string;
+        lastName: string;
+        personGuid: string;
+        excelPost?: string;
+        hasExistingMapping?: boolean;
+        existingGuid?: string;
+      }> = [];
+
+      const notFoundInSystem: Array<{
+        firstName: string;
+        lastName: string;
+        personGuid: string;
+        post?: string;
+      }> = [];
+
+      const matchedUserIds = new Set<number>();
+
+      // Match elke persoon uit Excel met system users
+      uniqueExcelData.forEach((excelRow) => {
+        const excelFirstName = normalizeString(excelRow.FirstName);
+        const excelLastName = normalizeString(excelRow.Naam);
+        
+        const matchedUser = users.find(u => {
+          const userFirstName = normalizeString(u.firstName);
+          const userLastName = normalizeString(u.lastName);
+          return userFirstName === excelFirstName && userLastName === excelLastName;
+        });
+
+        if (matchedUser) {
+          const existingGuid = existingMappingsByUserId.get(matchedUser.id);
+          matched.push({
+            userId: matchedUser.id,
+            username: matchedUser.username,
+            firstName: matchedUser.firstName,
+            lastName: matchedUser.lastName,
+            personGuid: excelRow.PersonGuid,
+            excelPost: excelRow.Post,
+            hasExistingMapping: !!existingGuid,
+            existingGuid: existingGuid
+          });
+          matchedUserIds.add(matchedUser.id);
+        } else {
+          notFoundInSystem.push({
+            firstName: excelRow.FirstName,
+            lastName: excelRow.Naam,
+            personGuid: excelRow.PersonGuid,
+            post: excelRow.Post
+          });
+        }
+      });
+
+      // Gebruikers zonder match
+      const noMatch = users
+        .filter(u => !matchedUserIds.has(u.id))
+        .map(u => ({
+          userId: u.id,
+          username: u.username,
+          firstName: u.firstName,
+          lastName: u.lastName
+        }));
+
+      res.json({
+        success: true,
+        matched,
+        notFoundInSystem,
+        noMatch,
+        stats: {
+          totalExcelRows: excelData.length,
+          uniquePersons: uniqueExcelData.size,
+          matchedCount: matched.length,
+          notFoundCount: notFoundInSystem.length,
+          noMatchCount: noMatch.length
+        }
+      });
+    } catch (error) {
+      console.error("Error importing Verdi Person GUIDs:", error);
+      res.status(500).json({ 
+        message: "Failed to import Verdi Person GUIDs",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Bevestig en sla geïmporteerde mappings op
+  app.post("/api/verdi/mappings/users/import/confirm", requireAdmin, async (req, res) => {
+    try {
+      const { mappings } = req.body as { 
+        mappings: Array<{ userId: number; personGuid: string }> 
+      };
+
+      if (!mappings || !Array.isArray(mappings)) {
+        return res.status(400).json({ message: "Ongeldige mappings data" });
+      }
+
+      // Sla alle mappings op
+      const results = [];
+      for (const mapping of mappings) {
+        const result = await storage.upsertVerdiUserMapping(mapping.userId, mapping.personGuid);
+        results.push(result);
+      }
+
+      res.json({
+        success: true,
+        imported: results.length,
+        message: `${results.length} Person GUID mappings succesvol geïmporteerd`
+      });
+    } catch (error) {
+      console.error("Error confirming Verdi Person GUID import:", error);
+      res.status(500).json({ 
+        message: "Failed to confirm import",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

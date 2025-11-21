@@ -19,7 +19,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Home, Save, Upload, Download, Search } from "lucide-react";
+import { Home, Save, Upload, Download, Search, FileUp, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function VerdiSettings() {
   const { user } = useAuth();
@@ -93,6 +107,16 @@ export default function VerdiSettings() {
   const [positionGuidInputs, setPositionGuidInputs] = useState<{ [positionIndex: number]: string }>({});
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("users");
+  
+  // Excel import state
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importResults, setImportResults] = useState<{
+    matched: Array<{ userId: number; username: string; firstName: string; lastName: string; personGuid: string; excelPost?: string; hasExistingMapping?: boolean; existingGuid?: string }>;
+    notFoundInSystem: Array<{ firstName: string; lastName: string; personGuid: string; post?: string }>;
+    noMatch: Array<{ userId: number; username: string; firstName: string; lastName: string }>;
+    stats: { totalExcelRows: number; uniquePersons: number; matchedCount: number; notFoundCount: number; noMatchCount: number };
+  } | null>(null);
+  const [selectedMatches, setSelectedMatches] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (user) {
@@ -223,6 +247,68 @@ export default function VerdiSettings() {
     },
   });
 
+  const importExcelMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/verdi/mappings/users/import', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Kon Excel bestand niet importeren");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setImportResults(data);
+      // Select all matched users by default
+      setSelectedMatches(new Set(data.matched.map((m: any) => m.userId)));
+      setImportDialogOpen(true);
+      toast({
+        title: "Excel geïmporteerd",
+        description: `${data.stats.matchedCount} matches gevonden uit ${data.stats.uniquePersons} personen`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Import fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const confirmImportMutation = useMutation({
+    mutationFn: async (mappings: Array<{ userId: number; personGuid: string }>) => {
+      const res = await apiRequest("POST", "/api/verdi/mappings/users/import/confirm", { mappings });
+      if (!res.ok) throw new Error("Kon mappings niet opslaan");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/verdi/mappings/users"] });
+      setImportDialogOpen(false);
+      setImportResults(null);
+      setSelectedMatches(new Set());
+      // Reset file input
+      const fileInput = document.getElementById('excel-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      toast({
+        title: "Import voltooid",
+        description: data.message,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Import fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleConfigSave = () => {
     updateConfigMutation.mutate(configForm);
   };
@@ -251,6 +337,53 @@ export default function VerdiSettings() {
       return;
     }
     updatePositionMappingMutation.mutate({ positionIndex, positionGuid });
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      importExcelMutation.mutate(file);
+      // Reset file input to allow re-uploading same file
+      event.target.value = '';
+    }
+  };
+
+  const handleConfirmImport = () => {
+    if (!importResults) return;
+    
+    const mappings = importResults.matched
+      .filter(m => selectedMatches.has(m.userId))
+      .map(m => ({ userId: m.userId, personGuid: m.personGuid }));
+    
+    if (mappings.length === 0) {
+      toast({
+        title: "Geen selectie",
+        description: "Selecteer minimaal één gebruiker om te importeren",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    confirmImportMutation.mutate(mappings);
+  };
+
+  const toggleMatchSelection = (userId: number) => {
+    const newSet = new Set(selectedMatches);
+    if (newSet.has(userId)) {
+      newSet.delete(userId);
+    } else {
+      newSet.add(userId);
+    }
+    setSelectedMatches(newSet);
+  };
+
+  const toggleAllMatches = () => {
+    if (!importResults) return;
+    if (selectedMatches.size === importResults.matched.length) {
+      setSelectedMatches(new Set());
+    } else {
+      setSelectedMatches(new Set(importResults.matched.map(m => m.userId)));
+    }
   };
 
   if (!user || (user.role !== 'admin' && user.role !== 'supervisor')) {
@@ -420,10 +553,31 @@ export default function VerdiSettings() {
         <TabsContent value="users" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Gebruiker Mappings</CardTitle>
-              <CardDescription>
-                Koppel elke ambulancier aan hun Verdi Person GUID
-              </CardDescription>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle>Gebruiker Mappings</CardTitle>
+                  <CardDescription>
+                    Koppel elke ambulancier aan hun Verdi Person GUID
+                  </CardDescription>
+                </div>
+                <div>
+                  <input
+                    type="file"
+                    id="excel-upload"
+                    accept=".xlsx,.xls"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => document.getElementById('excel-upload')?.click()}
+                    disabled={importExcelMutation.isPending}
+                  >
+                    <FileUp className="mr-2 h-4 w-4" />
+                    {importExcelMutation.isPending ? "Importeren..." : "Import uit Excel"}
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="relative">
@@ -538,6 +692,168 @@ export default function VerdiSettings() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Import Preview Dialog */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Excel Import Preview</DialogTitle>
+            <DialogDescription>
+              Review de automatische matches en selecteer welke je wilt importeren
+            </DialogDescription>
+          </DialogHeader>
+
+          {importResults && (
+            <div className="space-y-6">
+              {/* Statistics */}
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Import Statistieken</AlertTitle>
+                <AlertDescription className="mt-2 space-y-1">
+                  <div>Totaal personen in Excel: <strong>{importResults.stats.uniquePersons}</strong> (uit {importResults.stats.totalExcelRows} rijen)</div>
+                  <div className="text-green-600">✓ Matches gevonden: <strong>{importResults.stats.matchedCount}</strong></div>
+                  <div className="text-amber-600">⚠ Niet in systeem: <strong>{importResults.stats.notFoundCount}</strong></div>
+                  <div className="text-blue-600">ⓘ Gebruikers zonder match: <strong>{importResults.stats.noMatchCount}</strong></div>
+                </AlertDescription>
+              </Alert>
+
+              {/* Matched Users - Selecteerbaar */}
+              {importResults.matched.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      Succesvolle Matches ({selectedMatches.size}/{importResults.matched.length} geselecteerd)
+                    </h3>
+                    <Button variant="outline" size="sm" onClick={toggleAllMatches}>
+                      {selectedMatches.size === importResults.matched.length ? "Deselecteer alles" : "Selecteer alles"}
+                    </Button>
+                  </div>
+                  <div className="border rounded-lg max-h-64 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12"></TableHead>
+                          <TableHead>Gebruiker</TableHead>
+                          <TableHead>Naam</TableHead>
+                          <TableHead>Person GUID</TableHead>
+                          <TableHead>Excel Post</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {importResults.matched.map((match) => (
+                          <TableRow key={match.userId} className={match.hasExistingMapping ? "bg-amber-50" : ""}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedMatches.has(match.userId)}
+                                onCheckedChange={() => toggleMatchSelection(match.userId)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              {match.username}
+                              {match.hasExistingMapping && (
+                                <span className="ml-2 text-xs text-amber-600">(heeft mapping)</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{match.firstName} {match.lastName}</TableCell>
+                            <TableCell className="font-mono text-xs">
+                              {match.personGuid}
+                              {match.hasExistingMapping && match.existingGuid !== match.personGuid && (
+                                <div className="text-xs text-amber-600 mt-1">
+                                  Was: {match.existingGuid}
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{match.excelPost || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {/* Not Found in System */}
+              {importResults.notFoundInSystem.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-amber-600" />
+                    Niet gevonden in systeem ({importResults.notFoundInSystem.length})
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Deze personen staan in het Excel bestand maar niet in uw planning systeem
+                  </p>
+                  <div className="border rounded-lg max-h-48 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Voornaam</TableHead>
+                          <TableHead>Achternaam</TableHead>
+                          <TableHead>Person GUID</TableHead>
+                          <TableHead>Post</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {importResults.notFoundInSystem.map((person, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>{person.firstName}</TableCell>
+                            <TableCell>{person.lastName}</TableCell>
+                            <TableCell className="font-mono text-xs">{person.personGuid}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{person.post || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {/* Users Without Match */}
+              {importResults.noMatch.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <XCircle className="h-5 w-5 text-blue-600" />
+                    Gebruikers zonder match ({importResults.noMatch.length})
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Deze gebruikers staan in uw systeem maar niet in het Excel bestand
+                  </p>
+                  <div className="border rounded-lg max-h-48 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Gebruiker</TableHead>
+                          <TableHead>Naam</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {importResults.noMatch.map((user) => (
+                          <TableRow key={user.userId}>
+                            <TableCell>{user.username}</TableCell>
+                            <TableCell>{user.firstName} {user.lastName}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportDialogOpen(false)}>
+              Annuleren
+            </Button>
+            <Button 
+              onClick={handleConfirmImport}
+              disabled={confirmImportMutation.isPending || selectedMatches.size === 0}
+            >
+              {confirmImportMutation.isPending ? "Importeren..." : `Importeer ${selectedMatches.size} mappings`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
