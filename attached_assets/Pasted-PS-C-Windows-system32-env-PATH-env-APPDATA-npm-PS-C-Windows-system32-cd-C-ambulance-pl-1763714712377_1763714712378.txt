@@ -1,0 +1,78 @@
+PS C:\Windows\system32> $env:PATH += ";$env:APPDATA\npm"
+PS C:\Windows\system32> cd C:\ambulance-planning
+PS C:\ambulance-planning> pm2 status
+[PM2] Spawning PM2 daemon with pm2_home=C:\Users\jeva400\.pm2
+[PM2] PM2 Successfully daemonized
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+PS C:\ambulance-planning> Get-ScheduledTask | Where-Object {$_.TaskName -like "*ambulance*" -or $_.TaskName -like "*pm2*"} | Format-List TaskName, State, TaskPath
+
+
+TaskName : PM2-AutoStart
+State    : Ready
+TaskPath : \
+
+
+
+PS C:\ambulance-planning> Get-ScheduledTaskInfo -TaskName "PM2-AutoStart"
+
+
+LastRunTime        : 31/10/2025 13:49:49
+LastTaskResult     : 0
+NextRunTime        :
+NumberOfMissedRuns : 0
+TaskName           : PM2-AutoStart
+TaskPath           :
+PSComputerName     :
+
+
+
+PS C:\ambulance-planning> Export-ScheduledTask -TaskName "PM2-AutoStart"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Date>2025-09-19T18:12:20</Date>
+    <Author>DGH\jeva400</Author>
+    <URI>\PM2-AutoStart</URI>
+  </RegistrationInfo>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-21-3330072564-3562399962-3701738372-500</UserId>
+      <LogonType>Password</LogonType>
+    </Principal>
+  </Principals>
+  <Settings>
+    <DisallowStartIfOnBatteries>true</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>true</StopIfGoingOnBatteries>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <IdleSettings>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+  </Settings>
+  <Triggers>
+    <BootTrigger>
+      <StartBoundary>2025-09-19T18:12:00</StartBoundary>
+      <Delay>PT1M</Delay>
+    </BootTrigger>
+  </Triggers>
+  <Actions Context="Author">
+    <Exec>
+      <Command>C:\ambulance-planning\start-pm2.bat</Command>
+      <Arguments>&gt;&gt;c:\ambulance-planning\logs\batch.log</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+PS C:\ambulance-planning> Start-ScheduledTask -TaskName "PM2-AutoStart
+>> Start-ScheduledTask -TaskName "PM2-AutoStart"
+>> ^C
+PS C:\ambulance-planning> Export-ScheduledTask -TaskName "PM2-AutoStart"^C
+PS C:\ambulance-planning> pm2 restart all
+Use --update-env to update environment variables
+[PM2][WARN] No process found
+PS C:\ambulance-planning> cd C:\ambulance-planning
+PS C:\ambulance-planning> pm2 restart all
+Use --update-env to update environment variables
+[PM2][WARN] No process found
+PS C:\ambulance-planning>
