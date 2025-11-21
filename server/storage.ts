@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -3490,6 +3490,78 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(verdiSyncLog.shiftId, shiftId));
     }
+  }
+
+  async getShiftGuidFromRegistry(
+    stationId: number,
+    shiftDate: Date,
+    shiftType: 'day' | 'night',
+    splitStartTime?: Date | null,
+    splitEndTime?: Date | null
+  ): Promise<string | null> {
+    // KRITISCH: Gebruik sentinel waarde '__UNSPLIT__' voor niet-split shifts
+    // Dit lost het PostgreSQL NULL uniqueness probleem op
+    const UNSPLIT_SENTINEL = '__UNSPLIT__';
+    const splitStartTimeStr = splitStartTime ? splitStartTime.toISOString() : UNSPLIT_SENTINEL;
+    const splitEndTimeStr = splitEndTime ? splitEndTime.toISOString() : UNSPLIT_SENTINEL;
+    
+    const result = await db
+      .select()
+      .from(verdiShiftRegistry)
+      .where(and(
+        eq(verdiShiftRegistry.stationId, stationId),
+        eq(verdiShiftRegistry.shiftDate, shiftDate),
+        eq(verdiShiftRegistry.shiftType, shiftType),
+        eq(verdiShiftRegistry.splitStartTimeStr, splitStartTimeStr),
+        eq(verdiShiftRegistry.splitEndTimeStr, splitEndTimeStr)
+      ))
+      .orderBy(desc(verdiShiftRegistry.updatedAt))
+      .limit(1);
+
+    return result[0]?.verdiShiftGuid || null;
+  }
+
+  async saveShiftGuidToRegistry(
+    stationId: number,
+    shiftDate: Date,
+    shiftType: 'day' | 'night',
+    verdiShiftGuid: string,
+    splitStartTime?: Date | null,
+    splitEndTime?: Date | null
+  ): Promise<VerdiShiftRegistry> {
+    // KRITISCH: Gebruik sentinel waarde '__UNSPLIT__' voor niet-split shifts
+    // Dit lost het PostgreSQL NULL uniqueness probleem op en zorgt ervoor dat
+    // onConflictDoUpdate correct werkt (NULL != NULL in PostgreSQL unique indexes!)
+    const UNSPLIT_SENTINEL = '__UNSPLIT__';
+    const splitStartTimeStr = splitStartTime ? splitStartTime.toISOString() : UNSPLIT_SENTINEL;
+    const splitEndTimeStr = splitEndTime ? splitEndTime.toISOString() : UNSPLIT_SENTINEL;
+    
+    const result = await db
+      .insert(verdiShiftRegistry)
+      .values({
+        stationId,
+        shiftDate,
+        shiftType,
+        verdiShiftGuid,
+        splitStartTimeStr,
+        splitEndTimeStr
+      })
+      .onConflictDoUpdate({
+        target: [
+          verdiShiftRegistry.stationId,
+          verdiShiftRegistry.shiftDate,
+          verdiShiftRegistry.shiftType,
+          verdiShiftRegistry.splitStartTimeStr,
+          verdiShiftRegistry.splitEndTimeStr
+        ],
+        set: {
+          verdiShiftGuid,
+          updatedAt: new Date()
+        }
+      })
+      .returning();
+
+    return result[0];
   }
 }
 

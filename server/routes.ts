@@ -3546,19 +3546,32 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           // Gebruik het eerste shift object als representatief voor de hele groep
           const representativeShift = groupShifts[0];
           
-          // Zoek bestaande Verdi shift GUID op twee manieren:
-          // 1. Via shift ID (voor niet-opnieuw-gegenereerde shifts)
+          // Zoek bestaande Verdi shift GUID op drie manieren (in volgorde van betrouwbaarheid):
+          // 1. EERST: Permanente registry check (KRITISCH voor hergebruik na delete!)
           let existingVerdiShiftGuid: string | undefined = undefined;
-          const existingLogById = await storage.getVerdiSyncLog(representativeShift.id);
-          if (existingLogById?.verdiShiftGuid) {
-            existingVerdiShiftGuid = existingLogById.verdiShiftGuid;
-            console.log(`Found existing Verdi shift via ID ${representativeShift.id}: ${existingVerdiShiftGuid}`);
+          const registryGuid = await storage.getShiftGuidFromRegistry(
+            representativeShift.stationId,
+            representativeShift.date,
+            representativeShift.type,
+            representativeShift.splitStartTime,
+            representativeShift.splitEndTime
+          );
+          if (registryGuid) {
+            existingVerdiShiftGuid = registryGuid;
+            console.log(`✓ Found PERSISTENT Verdi GUID from registry for ${groupKey}: ${existingVerdiShiftGuid}`);
           } else {
-            // 2. Via datum+tijd+type (voor opnieuw gegenereerde shifts - dit is de cruciale fix!)
-            const existingLogByKey = syncLogByKeyMap.get(groupKey);
-            if (existingLogByKey?.verdiShiftGuid) {
-              existingVerdiShiftGuid = existingLogByKey.verdiShiftGuid;
-              console.log(`Found existing Verdi shift via date/time match for ${groupKey}: ${existingVerdiShiftGuid}`);
+            // 2. Via shift ID (voor niet-opnieuw-gegenereerde shifts)
+            const existingLogById = await storage.getVerdiSyncLog(representativeShift.id);
+            if (existingLogById?.verdiShiftGuid) {
+              existingVerdiShiftGuid = existingLogById.verdiShiftGuid;
+              console.log(`Found existing Verdi shift via ID ${representativeShift.id}: ${existingVerdiShiftGuid}`);
+            } else {
+              // 3. Via datum+tijd+type (voor opnieuw gegenereerde shifts - legacy fallback)
+              const existingLogByKey = syncLogByKeyMap.get(groupKey);
+              if (existingLogByKey?.verdiShiftGuid) {
+                existingVerdiShiftGuid = existingLogByKey.verdiShiftGuid;
+                console.log(`Found existing Verdi shift via date/time match for ${groupKey}: ${existingVerdiShiftGuid}`);
+              }
             }
           }
           
@@ -3616,6 +3629,24 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           
           if (response.result === 'Success') {
             synced++;
+            
+            // Sla Verdi GUID op in permanente registry voor toekomstig hergebruik
+            // Dit zorgt ervoor dat shifts na delete+regenerate dezelfde GUID behouden
+            if (response.shift) {
+              try {
+                await storage.saveShiftGuidToRegistry(
+                  representativeShift.stationId,
+                  representativeShift.date,
+                  representativeShift.type,
+                  response.shift,
+                  representativeShift.splitStartTime,
+                  representativeShift.splitEndTime
+                );
+                console.log(`✓ Saved GUID ${response.shift} to registry for future use`);
+              } catch (regError: any) {
+                console.error(`⚠ Failed to save GUID to registry (non-critical):`, regError.message);
+              }
+            }
           } else {
             errors++;
           }

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, varchar, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, varchar, date, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -266,6 +266,26 @@ export const verdiSyncLog = pgTable("verdi_sync_log", {
   updatedAt: timestamp("updated_at").notNull().defaultNow()
 });
 
+export const verdiShiftRegistry = pgTable("verdi_shift_registry", {
+  id: serial("id").primaryKey(),
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  shiftDate: timestamp("shift_date").notNull(), // Datum van de shift
+  shiftType: text("shift_type", { enum: ["day", "night"] }).notNull(), // Type shift (dag/nacht)
+  splitStartTimeStr: text("split_start_time_str"), // ISO string van split start tijd (of NULL voor niet-split)
+  splitEndTimeStr: text("split_end_time_str"), // ISO string van split end tijd (of NULL voor niet-split)
+  verdiShiftGuid: text("verdi_shift_guid").notNull(), // Permanente GUID voor deze unieke shift
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow()
+}, (table) => ({
+  uniqueShiftKey: unique("unique_shift_key").on(
+    table.stationId,
+    table.shiftDate,
+    table.shiftType,
+    table.splitStartTimeStr,
+    table.splitEndTimeStr
+  )
+}));
+
 export const insertVerdiStationConfigSchema = createInsertSchema(verdiStationConfig).omit({
   id: true,
   createdAt: true,
@@ -297,3 +317,11 @@ export const insertVerdiSyncLogSchema = createInsertSchema(verdiSyncLog).omit({
 });
 export type VerdiSyncLog = typeof verdiSyncLog.$inferSelect;
 export type InsertVerdiSyncLog = z.infer<typeof insertVerdiSyncLogSchema>;
+
+export const insertVerdiShiftRegistrySchema = createInsertSchema(verdiShiftRegistry).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type VerdiShiftRegistry = typeof verdiShiftRegistry.$inferSelect;
+export type InsertVerdiShiftRegistry = z.infer<typeof insertVerdiShiftRegistrySchema>;
