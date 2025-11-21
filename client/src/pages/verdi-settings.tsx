@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { type User, type Station } from "@shared/schema";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,13 @@ import {
   AlertTitle,
 } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function VerdiSettings() {
   const { user } = useAuth();
@@ -117,6 +124,7 @@ export default function VerdiSettings() {
     stats: { totalExcelRows: number; uniquePersons: number; matchedCount: number; notFoundCount: number; noMatchCount: number };
   } | null>(null);
   const [selectedMatches, setSelectedMatches] = useState<Set<number>>(new Set());
+  const previousConfigRef = useRef<string>("");
 
   useEffect(() => {
     if (user) {
@@ -125,24 +133,39 @@ export default function VerdiSettings() {
   }, [user]);
 
   useEffect(() => {
-    if (verdiConfig) {
-      setConfigForm({
-        verdiUrl: verdiConfig.verdiUrl || "",
-        authId: verdiConfig.authId || "",
-        authSecret: verdiConfig.authSecret || "",
-        shiftSheetGuid: verdiConfig.shiftSheetGuid || "",
-        enabled: verdiConfig.enabled || false,
-      });
-    } else {
-      setConfigForm({
-        verdiUrl: "",
-        authId: "",
-        authSecret: "",
-        shiftSheetGuid: "",
-        enabled: false,
-      });
+    // Serialize the relevant config fields to detect actual changes
+    const currentConfigStr = JSON.stringify({
+      verdiUrl: verdiConfig?.verdiUrl || "",
+      authId: verdiConfig?.authId || "",
+      authSecret: verdiConfig?.authSecret || "",
+      shiftSheetGuid: verdiConfig?.shiftSheetGuid || "",
+      enabled: verdiConfig?.enabled || false,
+      stationId: effectiveStationId
+    });
+    
+    // Only update if the config actually changed
+    if (currentConfigStr !== previousConfigRef.current) {
+      previousConfigRef.current = currentConfigStr;
+      
+      if (verdiConfig) {
+        setConfigForm({
+          verdiUrl: verdiConfig.verdiUrl || "",
+          authId: verdiConfig.authId || "",
+          authSecret: verdiConfig.authSecret || "",
+          shiftSheetGuid: verdiConfig.shiftSheetGuid || "",
+          enabled: verdiConfig.enabled || false,
+        });
+      } else {
+        setConfigForm({
+          verdiUrl: "",
+          authId: "",
+          authSecret: "",
+          shiftSheetGuid: "",
+          enabled: false,
+        });
+      }
     }
-  }, [verdiConfig]);
+  }, [verdiConfig, effectiveStationId]);
 
   useEffect(() => {
     const mappings: { [userId: number]: string } = {};
@@ -439,12 +462,35 @@ export default function VerdiSettings() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Verdi Integratie</h1>
-          <p className="text-muted-foreground mt-2">
-            Configureer de koppeling met Verdi alarmsoftware
-            {currentStation && <span className="font-semibold ml-2">- {currentStation.displayName}</span>}
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Verdi Integratie</h1>
+            <p className="text-muted-foreground mt-2">
+              Configureer de koppeling met Verdi alarmsoftware
+            </p>
+          </div>
+          {user?.role === 'supervisor' && (
+            <Select
+              value={selectedStationId?.toString() || ""}
+              onValueChange={(value) => setSelectedStationId(parseInt(value))}
+            >
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Kies station..." />
+              </SelectTrigger>
+              <SelectContent>
+                {stations.map((station) => (
+                  <SelectItem key={station.id} value={station.id.toString()}>
+                    {station.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {user?.role === 'admin' && currentStation && (
+            <span className="text-lg font-semibold text-muted-foreground">
+              {currentStation.displayName}
+            </span>
+          )}
         </div>
         <Button variant="outline" onClick={() => setLocation("/")}>
           <Home className="mr-2 h-4 w-4" />
