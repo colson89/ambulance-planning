@@ -1,0 +1,98 @@
+PS C:\Windows\system32> $env:PATH += ";$env:APPDATA\npm"
+PS C:\Windows\system32> cd C:\ambulance-planning
+PS C:\ambulance-planning> git pull origin main
+From https://github.com/colson89/ambulance-planning
+ * branch            main       -> FETCH_HEAD
+Updating c3160b5..2d28a10
+error: Your local changes to the following files would be overwritten by merge:
+        package-lock.json
+Please commit your changes or stash them before you merge.
+Aborting
+PS C:\ambulance-planning> git stash
+Saved working directory and index state WIP on main: c3160b5 Update script to correctly start and manage the planning application
+PS C:\ambulance-planning> git pull origin main
+From https://github.com/colson89/ambulance-planning
+ * branch            main       -> FETCH_HEAD
+Updating c3160b5..2d28a10
+Fast-forward
+ .replit                                            |   4 +
+ ...-C-ambulance-pl-1763717011215_1763717011216.txt |  42 +++
+ ...ch-log-Tail-30--1763716395594_1763716395594.txt |  17 ++
+ ...S-C-ambulance-p-1763716095675_1763716095676.txt |  25 ++
+ ...anning - Person (2025-11-10)_1763720318886.xlsx | Bin 0 -> 78267 bytes
+ attached_assets/image_1763721854333.png            | Bin 0 -> 1518 bytes
+ attached_assets/image_1763721887102.png            | Bin 0 -> 120500 bytes
+ client/src/pages/schedule-generator.tsx            |  30 +-
+ client/src/pages/verdi-settings.tsx                | 326 ++++++++++++++++++++-
+ package-lock.json                                  | 130 +++++++-
+ package.json                                       |   2 +
+ server/routes.ts                                   | 194 ++++++++++++
+ 12 files changed, 751 insertions(+), 19 deletions(-)
+ create mode 100644 attached_assets/Pasted-PS-C-Windows-system32-env-PATH-env-APPDATA-npm-PS-C-Windows-system32-cd-C-ambulance-pl-1763717011215_1763717011216.txt
+ create mode 100644 attached_assets/Pasted-PS-C-ambulance-planning-Get-Content-C-ambulance-planning-logs-batch-log-Tail-30--1763716395594_1763716395594.txt
+ create mode 100644 attached_assets/Pasted-PS-C-ambulance-planning-Remove-Item-C-ambulance-planning-logs-batch-log-Force-PS-C-ambulance-p-1763716095675_1763716095676.txt
+ create mode 100644 attached_assets/ShiftPlanning - Person (2025-11-10)_1763720318886.xlsx
+ create mode 100644 attached_assets/image_1763721854333.png
+ create mode 100644 attached_assets/image_1763721887102.png
+PS C:\ambulance-planning> npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.21 building for production...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+✓ 2689 modules transformed.
+../dist/public/index.html                                1.85 kB │ gzip:  0.69 kB
+../dist/public/assets/index-BX_aAPB7.css                70.63 kB │ gzip: 11.99 kB
+../dist/public/assets/index-ChBOfxbQ.js                  0.27 kB │ gzip:  0.23 kB
+../dist/public/assets/badge-CN2t8ypk.js                  0.75 kB │ gzip:  0.39 kB
+../dist/public/assets/not-found-DYF1fAsu.js              0.86 kB │ gzip:  0.45 kB
+../dist/public/assets/alert-C6Ihjgkq.js                  0.99 kB │ gzip:  0.51 kB
+../dist/public/assets/label-BITlXx2u.js                  1.14 kB │ gzip:  0.60 kB
+../dist/public/assets/table-KXVPR6Ep.js                  1.57 kB │ gzip:  0.56 kB
+../dist/public/assets/switch-DK-PlZGx.js                 2.56 kB │ gzip:  1.28 kB
+../dist/public/assets/station-select-BFCeOGu3.js         3.70 kB │ gzip:  1.44 kB
+../dist/public/assets/alert-dialog-DPC5cTtp.js           4.86 kB │ gzip:  1.78 kB
+../dist/public/assets/auth-page-2uTzn6VH.js              5.01 kB │ gzip:  2.06 kB
+../dist/public/assets/nl-Dq8ES2sN.js                     5.08 kB │ gzip:  1.89 kB
+../dist/public/assets/open-slot-warning-twreWDnB.js      6.35 kB │ gzip:  2.20 kB
+../dist/public/assets/dialog-BdRWBzyP.js                 7.45 kB │ gzip:  2.76 kB
+../dist/public/assets/checkbox-DORkO4Zv.js              10.52 kB │ gzip:  3.91 kB
+../dist/public/assets/weekday-settings-CAHTT2e_.js      11.52 kB │ gzip:  3.12 kB
+../dist/public/assets/holidays-management-tZd4J2vc.js   12.52 kB │ gzip:  3.70 kB
+../dist/public/assets/statistics-DB3SmOfJ.js            15.88 kB │ gzip:  3.75 kB
+../dist/public/assets/index-B6Fw07jD.js                 17.32 kB │ gzip:  6.56 kB
+../dist/public/assets/profile-BGDRjsjd.js               17.78 kB │ gzip:  5.16 kB
+../dist/public/assets/verdi-settings-Dcp36D_A.js        17.90 kB │ gzip:  4.81 kB
+../dist/public/assets/dashboard-Cc7tTuke.js             20.22 kB │ gzip:  5.93 kB
+../dist/public/assets/form-BFMAgtK7.js                  27.53 kB │ gzip: 10.27 kB
+../dist/public/assets/query-vendor-BUV8puuL.js          40.99 kB │ gzip: 12.43 kB
+../dist/public/assets/ui-vendor-Djdv0FkE.js             42.84 kB │ gzip: 10.66 kB
+../dist/public/assets/shift-planner-B-YfZcyp.js         44.70 kB │ gzip: 13.72 kB
+../dist/public/assets/schedule-generator-DnVNCiSL.js    46.90 kB │ gzip: 10.92 kB
+../dist/public/assets/select-CdP4-bwN.js                48.18 kB │ gzip: 17.16 kB
+../dist/public/assets/types-DbLYlY1V.js                 60.80 kB │ gzip: 14.64 kB
+../dist/public/assets/index-6Xiiz5bU.js                 66.93 kB │ gzip: 23.21 kB
+../dist/public/assets/user-management-CB8-Hw1F.js       81.34 kB │ gzip: 20.94 kB
+../dist/public/assets/react-vendor-BsK_Cp9f.js         141.28 kB │ gzip: 45.44 kB
+✓ built in 13.81s
+
+  dist\index.js  269.3kb
+
+Done in 100ms
+PS C:\ambulance-planning> pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [ambulance-planning](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning │ fork     │ 2    │ online    │ 87.4%    │ 116.2mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+PS C:\ambulance-planning> pm2 status
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning │ fork     │ 2    │ online    │ 0%       │ 83.0mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+PS C:\ambulance-planning>
