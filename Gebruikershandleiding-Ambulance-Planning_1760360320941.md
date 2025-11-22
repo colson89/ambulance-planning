@@ -800,47 +800,50 @@ Zaterdag Dagshift:
 
 **Intelligente Toewijzing bij Resterende Halve Shifts:**
 
-Het systeem werkt slim bij het vullen van resterende halve shifts:
+Het systeem werkt in twee fasen en filtert toegewezen gebruikers automatisch uit:
 
-- **Hele dag beschikbaar** = flexibel voor ochtend ÉN middag slots
-- **Specifieke voorkeur** (alleen ochtend of alleen middag) = enkel voor dat tijdslot
+**Fase 1 - Volledige Shifts (prioriteit):**
+- Mensen met hele dag beschikbaarheid krijgen eerst voorrang voor volledige 12-uur shifts
+- Mensen met expliciete halve dag voorkeur (alleen ochtend OF alleen middag) worden overgeslagen
+
+**Fase 2 - Resterende Halve Shifts:**
+- Als er nog halve shifts nodig zijn, gaat het systeem verder met fase 2
+- **Mensen die al in fase 1 zijn toegewezen, worden automatisch overgeslagen**
+- **BUGFIX:** Hele-dag gebruikers die NIET in fase 1 zijn toegewezen, kunnen nu voor ochtend- of middagslots worden ingezet
+- Mensen met specifieke halve dag voorkeur kunnen alleen voor hun specifieke tijdslot worden ingezet
 
 **Praktisch Voorbeeld:**
 
-*Stel: 2 personen nodig op dag 5 december*
+*Situatie: 3 personen nodig op dag 15 december*
 
 **Beschikbaarheid:**
-- Gebruiker A: alleen voormiddag (7-13u)
-- Gebruiker B: hele dag beschikbaar (7-19u)
-- Gebruiker C: alleen namiddag (13-19u)
+- Gebruiker A: hele dag (7-19u)
+- Gebruiker B: hele dag (7-19u)  
+- Gebruiker C: hele dag (7-19u), maar heeft slechts 6 uur beschikbaar (maximum bereikt)
+- Gebruiker D: alleen middag (13-19u)
 
-**Toewijzing fase 1 (volledige shifts):**
-- Gebruiker B wordt NIET toegewezen voor volledige shift (heeft geen prioriteit omdat A en C specifieke voorkeuren hebben)
+**Fase 1 (Volledige shifts):**
+- A → Volledige shift (7-19u) ✅
+- B → Volledige shift (7-19u) ✅
+- C wordt overgeslagen (heeft slechts 6 uur over in uur-limiet, niet genoeg voor volledige 12-uur shift)
+- Resultaat: 2 van 3 personen ingepland, stillNeedDayShifts = 1
 
-**Toewijzing fase 2 (halve shifts):**
-- Voormiddag (7-13u) → Gebruiker A ✅
-- Namiddag (13-19u) → Gebruiker C ✅
+**Fase 2 (Halve shifts):**
+We hebben nog 1 persoon nodig. Dit betekent: 3x voormiddag EN 3x middag coverage.
+Huidige coverage: 2 voormiddagen (van A+B), 2 middagen (van A+B). Nog nodig: 1 voormiddag + 1 middag.
 
-**Alternatief scenario** (alleen A en B beschikbaar):
+*Oude situatie (vóór bugfix):*
+- Voormiddag: Geen match ❌ (C heeft geen expliciete "alleen ochtend" voorkeur, dus niet in lijst)
+- Middag: D wordt toegewezen ✅  
+- **Probleem: Voormiddag blijft leeg!**
 
-**Toewijzing fase 1:**
-- Gebruiker B krijgt voorrang voor volledige shift (12u)
-- Resultaat: 1 persoon ingepland, nog 1 nodig
+*Nieuwe situatie (ná bugfix):*
+- Voormiddag: C wordt toegewezen ✅ (hele dag beschikbaar + nog niet toegewezen in fase 1 + heeft 6 uur over)
+- Middag: D wordt toegewezen ✅
+- **Alle slots gevuld! 🎉**
 
-**Toewijzing fase 2:**
-- Voormiddag (7-13u) → Gebruiker A ✅
-- Namiddag (13-19u) → **GEEN MATCH** ❌ (Gebruiker A is alleen ochtend, Gebruiker B is al ingepland)
-
-**Met de nieuwe logica** (na bugfix):
-
-**Toewijzing fase 1:**
-- Gebruiker A wordt overgeslagen (heeft expliciete voorkeur voor alleen ochtend)
-- Resultaat: nog steeds 2 personen nodig
-
-**Toewijzing fase 2:**
-- Voormiddag (7-13u) → Gebruiker A ✅
-- Namiddag (13-19u) → **Gebruiker B ✅** (hele dag beschikbaar = flexibel voor resterende slot!)
-- Resultaat: Beide tijdslots gedekt! 🎉
+**Kernverbetering:**
+Hele-dag gebruikers die in fase 1 niet zijn toegewezen, kunnen nu flexibel worden ingezet voor resterende halve shifts. Dit voorkomt lege slots en maximaliseert de inzet van beschikbaar personeel!
 
 ### 📊 Planning Resultaat Interpretatie
 
