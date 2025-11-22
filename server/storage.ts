@@ -1760,23 +1760,37 @@ export class DatabaseStorage implements IStorage {
           const key = `${userId}_${day}`;
           const prefsForThisDay = preferencesIndex.get(key) || [];
           
+          let hasSpecificSplitPreference = false;
+          
           for (const pref of prefsForThisDay) {
             if (pref.type === 'day') {
               // Check splitType eerst (nieuwe field), fallback naar notes voor backward compatibility
               if (pref.splitType === 'morning') {
                 availableForDayFirstHalf.push(userId);
+                hasSpecificSplitPreference = true;
               } else if (pref.splitType === 'afternoon') {
                 availableForDaySecondHalf.push(userId);
+                hasSpecificSplitPreference = true;
               } else {
                 // Fallback: check notes voor oude preferences
                 const splitInfo = pref.notes?.toLowerCase() || '';
                 if (splitInfo.includes('first')) {
                   availableForDayFirstHalf.push(userId);
+                  hasSpecificSplitPreference = true;
                 } else if (splitInfo.includes('second')) {
                   availableForDaySecondHalf.push(userId);
+                  hasSpecificSplitPreference = true;
                 }
               }
             }
+          }
+          
+          // BUG FIX: Gebruikers die HELE DAG beschikbaar zijn (geen specifieke split voorkeur)
+          // moeten ook beschikbaar zijn voor halve shifts, zodat ze kunnen worden toegewezen
+          // aan resterende voormiddag of namiddag slots als de volle shift niet lukt
+          if (!hasSpecificSplitPreference) {
+            availableForDayFirstHalf.push(userId);
+            availableForDaySecondHalf.push(userId);
           }
         }
       }
