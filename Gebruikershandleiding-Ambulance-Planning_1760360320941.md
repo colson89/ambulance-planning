@@ -798,6 +798,50 @@ Zaterdag Dagshift:
 1. Volledige shifts (12 uur)
 2. Halve dag shifts (6 uur)
 
+**Intelligente Toewijzing bij Resterende Halve Shifts:**
+
+Het systeem werkt slim bij het vullen van resterende halve shifts:
+
+- **Hele dag beschikbaar** = flexibel voor ochtend ÉN middag slots
+- **Specifieke voorkeur** (alleen ochtend of alleen middag) = enkel voor dat tijdslot
+
+**Praktisch Voorbeeld:**
+
+*Stel: 2 personen nodig op dag 5 december*
+
+**Beschikbaarheid:**
+- Gebruiker A: alleen voormiddag (7-13u)
+- Gebruiker B: hele dag beschikbaar (7-19u)
+- Gebruiker C: alleen namiddag (13-19u)
+
+**Toewijzing fase 1 (volledige shifts):**
+- Gebruiker B wordt NIET toegewezen voor volledige shift (heeft geen prioriteit omdat A en C specifieke voorkeuren hebben)
+
+**Toewijzing fase 2 (halve shifts):**
+- Voormiddag (7-13u) → Gebruiker A ✅
+- Namiddag (13-19u) → Gebruiker C ✅
+
+**Alternatief scenario** (alleen A en B beschikbaar):
+
+**Toewijzing fase 1:**
+- Gebruiker B krijgt voorrang voor volledige shift (12u)
+- Resultaat: 1 persoon ingepland, nog 1 nodig
+
+**Toewijzing fase 2:**
+- Voormiddag (7-13u) → Gebruiker A ✅
+- Namiddag (13-19u) → **GEEN MATCH** ❌ (Gebruiker A is alleen ochtend, Gebruiker B is al ingepland)
+
+**Met de nieuwe logica** (na bugfix):
+
+**Toewijzing fase 1:**
+- Gebruiker A wordt overgeslagen (heeft expliciete voorkeur voor alleen ochtend)
+- Resultaat: nog steeds 2 personen nodig
+
+**Toewijzing fase 2:**
+- Voormiddag (7-13u) → Gebruiker A ✅
+- Namiddag (13-19u) → **Gebruiker B ✅** (hele dag beschikbaar = flexibel voor resterende slot!)
+- Resultaat: Beide tijdslots gedekt! 🎉
+
 ### 📊 Planning Resultaat Interpretatie
 
 #### ✅ Succesvolle Planning
