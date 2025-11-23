@@ -1,5 +1,7 @@
-const CACHE_NAME = 'apk-planning-v1';
-const RUNTIME_CACHE = 'apk-runtime-v1';
+// Use timestamp as cache version to force cache refresh on each reload in dev
+const CACHE_VERSION = new Date().getTime();
+const CACHE_NAME = `apk-planning-v${CACHE_VERSION}`;
+const RUNTIME_CACHE = `apk-runtime-v${CACHE_VERSION}`;
 
 // Install event - skip waiting immediately and let runtime caching handle assets
 self.addEventListener('install', (event) => {
@@ -40,6 +42,14 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => self.clients.claim())
   );
+});
+
+// Listen for skip waiting message from update notification
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[ServiceWorker] Skip waiting triggered');
+    self.skipWaiting();
+  }
 });
 
 // Fetch event - network first, fallback to cache
@@ -93,6 +103,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip caching for JavaScript modules to avoid module loading errors
+  // These change frequently in development and cause stale module issues
+  const url = new URL(event.request.url);
+  const isJavaScriptModule = url.pathname.endsWith('.js') || 
+                              url.pathname.endsWith('.mjs') || 
+                              url.pathname.includes('/@vite/') ||
+                              url.pathname.includes('/@fs/') ||
+                              url.pathname.includes('/node_modules/') ||
+                              url.searchParams.has('t'); // Vite timestamp param
+  
+  if (isJavaScriptModule) {
+    // Always fetch fresh JavaScript modules, never cache
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   // Static assets - network first for HTML, cache first for others
   // This ensures app shell (HTML/JS/CSS) is always fresh when online
   const isNavigationRequest = event.request.mode === 'navigate' || 
@@ -117,7 +143,7 @@ self.addEventListener('fetch', (event) => {
         })
     );
   } else {
-    // Cache first for JS/CSS/images
+    // Cache first for CSS/images only (not JS)
     event.respondWith(
       caches.match(event.request)
         .then((cachedResponse) => {
@@ -137,7 +163,7 @@ self.addEventListener('fetch', (event) => {
 
           // Not in cache, fetch from network
           return fetch(event.request).then((response) => {
-            // Cache successful responses
+            // Only cache non-JS successful responses
             if (response && response.status === 200) {
               const responseClone = response.clone();
               caches.open(RUNTIME_CACHE).then((cache) => {

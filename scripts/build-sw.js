@@ -1,11 +1,18 @@
 import { generateSW } from 'workbox-build';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const distDir = path.join(__dirname, '../dist/public');
+
+// Read version from package.json
+const packageJson = JSON.parse(
+  readFileSync(path.join(__dirname, '../package.json'), 'utf-8')
+);
+const version = packageJson.version || '1.0.0';
 
 async function buildServiceWorker() {
   try {
@@ -13,21 +20,22 @@ async function buildServiceWorker() {
       swDest: path.join(distDir, 'sw.js'),
       globDirectory: distDir,
       globPatterns: [
-        '**/*.{html,js,css,png,jpg,jpeg,svg,woff,woff2}'
+        '**/*.{html,css,png,jpg,jpeg,svg,woff,woff2,js}'
       ],
       // Don't cache these
       globIgnores: [
-        '**/service-worker.js', // Don't cache old SW
-        '**/sw.js', // Don't cache ourselves
-        '**/stats.html' // Don't cache build stats
+        '**/service-worker.js',
+        '**/sw.js',
+        '**/stats.html'
       ],
-      // Runtime caching for API calls
+      // Runtime caching strategies
       runtimeCaching: [
         {
-          urlPattern: /^https:\/\/.*\/api\/.*/,
+          // API calls - network first
+          urlPattern: /^https?:\/\/.*\/api\/.*/,
           handler: 'NetworkFirst',
           options: {
-            cacheName: 'api-cache',
+            cacheName: `api-cache-v${version}`,
             networkTimeoutSeconds: 10,
             expiration: {
               maxEntries: 50,
@@ -35,6 +43,34 @@ async function buildServiceWorker() {
             },
             cacheableResponse: {
               statuses: [0, 200]
+            }
+          }
+        },
+        {
+          // JavaScript modules - ALWAYS network first, short cache
+          urlPattern: /\.m?js$/,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: `js-modules-v${version}`,
+            networkTimeoutSeconds: 3,
+            expiration: {
+              maxEntries: 30,
+              maxAgeSeconds: 60 * 5 // 5 minutes only
+            },
+            cacheableResponse: {
+              statuses: [200]
+            }
+          }
+        },
+        {
+          // CSS and fonts - stale while revalidate
+          urlPattern: /\.(css|woff2?)$/,
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: `static-resources-v${version}`,
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 60 * 24 * 7 // 1 week
             }
           }
         }
