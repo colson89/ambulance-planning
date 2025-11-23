@@ -1847,18 +1847,26 @@ function ScheduleGenerator() {
                               <span className="text-red-500 font-medium">
                                 {shift.status === "open" ? "Niet ingevuld" : "Medewerker verwijderd"}
                               </span>
-                            ) : (
-                              <span 
-                                className={`${isCurrentUserShift ? "font-bold text-green-600" : ""} 
-                                  ${searchTerm && shiftUser && 
+                            ) : shiftUser ? (
+                              <Button
+                                variant="link"
+                                className={`p-0 h-auto font-normal text-left hover:underline 
+                                  ${isCurrentUserShift ? "font-bold text-green-600" : ""} 
+                                  ${searchTerm && 
                                     (shiftUser.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                                      shiftUser.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                      shiftUser.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                      `${shiftUser.firstName} ${shiftUser.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()))
                                      ? "bg-green-200 px-1 py-0.5 rounded font-medium" : ""}`}
+                                onClick={() => {
+                                  setSelectedContactUser(shiftUser);
+                                  setShowContactDialog(true);
+                                }}
                               >
-                                {shiftUser ? `${shiftUser.firstName} ${shiftUser.lastName}` : "Onbekend"}
-                              </span>
+                                {`${shiftUser.firstName} ${shiftUser.lastName}`}
+                              </Button>
+                            ) : (
+                              <span>Onbekend</span>
                             )}
                           </TableCell>
                           <TableCell>

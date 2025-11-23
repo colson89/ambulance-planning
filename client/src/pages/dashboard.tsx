@@ -641,10 +641,19 @@ export default function Dashboard() {
                           <TableCell>
                             {shift.status === "open" ? (
                               <span className="text-red-500 font-medium">Niet ingevuld</span>
+                            ) : shiftUser ? (
+                              <Button
+                                variant="link"
+                                className={`p-0 h-auto font-normal text-left hover:underline ${isCurrentUserShift ? "font-bold text-green-600" : ""}`}
+                                onClick={() => {
+                                  setSelectedContactUser(shiftUser);
+                                  setShowContactDialog(true);
+                                }}
+                              >
+                                {`${shiftUser.firstName} ${shiftUser.lastName}`}
+                              </Button>
                             ) : (
-                              <span className={isCurrentUserShift ? "font-bold text-green-600" : ""}>
-                                {shiftUser ? `${shiftUser.firstName} ${shiftUser.lastName}` : "Onbekend"}
-                              </span>
+                              <span>Onbekend</span>
                             )}
                           </TableCell>
                           <TableCell>
