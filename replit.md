@@ -12,6 +12,10 @@ Protected Files: Do not make changes to the `dist/` folder or the file `dist/pub
 
 Documentation Policy: **ALWAYS update `Gebruikershandleiding-Ambulance-Planning_1760360320941.md` when adding new features or making changes to existing functionality.** This ensures end-users have up-to-date documentation for all system capabilities.
 
+Documentation Files:
+- **Gebruikershandleiding-Ambulance-Planning_1760360320941.md**: Complete end-user manual with feature documentation, screenshots, and step-by-step guides.
+- **IT-Beheerders-Handleiding.md**: Complete IT administrator guide for Windows Server deployment, database setup, SSL configuration, and maintenance procedures.
+
 ## System Architecture
 
 ### Frontend
