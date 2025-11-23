@@ -2583,11 +2583,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
       worksheet['!cols'] = colWidths;
       
+      // Apply red background color to open shifts
+      // Start from row 1 (skip header row 0)
+      for (let rowIndex = 1; rowIndex < excelData.length; rowIndex++) {
+        const row = excelData[rowIndex];
+        const firstName = row[5]; // Voornaam column (index 5)
+        const lastName = row[6];  // Achternaam column (index 6)
+        
+        // Check if this is an open shift
+        if (firstName === 'Open' && lastName === 'Shift') {
+          // Color entire row red
+          const excelRowNum = rowIndex + 1; // Excel rows are 1-indexed
+          const columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+          
+          columns.forEach(col => {
+            const cellRef = `${col}${excelRowNum}`;
+            if (!worksheet[cellRef]) return;
+            
+            // Apply red background color
+            worksheet[cellRef].s = {
+              fill: {
+                fgColor: { rgb: "FFFF0000" } // Red background
+              },
+              font: {
+                color: { rgb: "FFFFFFFF" } // White text for better contrast
+              }
+            };
+          });
+        }
+      }
+      
       // Add worksheet to workbook
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Planning');
       
-      // Generate XLSX buffer
-      const xlsxBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+      // Generate XLSX buffer with cell styling enabled
+      const xlsxBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx', cellStyles: true });
       
       // Set headers for XLSX download
       const filename = `planning_${targetMonth}_${targetYear}.xlsx`;
