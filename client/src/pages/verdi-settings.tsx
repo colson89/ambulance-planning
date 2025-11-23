@@ -133,6 +133,9 @@ export default function VerdiSettings() {
   }, [user]);
 
   useEffect(() => {
+    // Early return if config is still loading (undefined), but allow null (no config exists)
+    if (verdiConfig === undefined && effectiveStationId) return;
+    
     // Serialize the relevant config fields to detect actual changes
     const currentConfigStr = JSON.stringify({
       verdiUrl: verdiConfig?.verdiUrl || "",
