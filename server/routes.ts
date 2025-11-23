@@ -4148,6 +4148,130 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // =====================
+  // Push Notifications API
+  // =====================
+  
+  const pushNotifications = await import('./push-notifications');
+
+  // Get VAPID public key for client-side subscription
+  app.get("/api/push/vapid-public-key", (req, res) => {
+    res.send(pushNotifications.getVapidPublicKey());
+  });
+
+  // Subscribe to push notifications
+  app.post("/api/push/subscribe", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+
+    try {
+      const { endpoint, keys } = req.body;
+
+      if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
+        return res.status(400).json({ message: "Ongeldige subscription data" });
+      }
+
+      const subscription = await storage.createPushSubscription({
+        userId: req.user.id,
+        endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+        notifyNewPlanningPublished: false,
+        notifyMyShiftChanged: false,
+        notifyAvailabilityDeadline: true,
+        deadlineWarningDays: 3
+      });
+
+      res.json(subscription);
+    } catch (error: any) {
+      console.error("Error subscribing to push:", error);
+      res.status(500).json({ message: "Failed to subscribe", error: error.message });
+    }
+  });
+
+  // Get user's push subscription preferences
+  app.get("/api/push/subscription", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+
+    try {
+      const subscription = await storage.getPushSubscription(req.user.id);
+      res.json(subscription || null);
+    } catch (error: any) {
+      console.error("Error getting push subscription:", error);
+      res.status(500).json({ message: "Failed to get subscription", error: error.message });
+    }
+  });
+
+  // Update push notification preferences
+  app.patch("/api/push/preferences", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+
+    try {
+      const { endpoint, preferences } = req.body;
+
+      if (!endpoint) {
+        return res.status(400).json({ message: "Endpoint is verplicht" });
+      }
+
+      const updated = await storage.updatePushSubscription(
+        req.user.id,
+        endpoint,
+        preferences
+      );
+
+      res.json(updated);
+    } catch (error: any) {
+      console.error("Error updating push preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences", error: error.message });
+    }
+  });
+
+  // Unsubscribe from push notifications
+  app.post("/api/push/unsubscribe", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+
+    try {
+      const { endpoint } = req.body;
+
+      if (!endpoint) {
+        return res.status(400).json({ message: "Endpoint is verplicht" });
+      }
+
+      await storage.deletePushSubscription(req.user.id, endpoint);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error unsubscribing from push:", error);
+      res.status(500).json({ message: "Failed to unsubscribe", error: error.message });
+    }
+  });
+
+  // Test notification endpoint (only for testing)
+  app.post("/api/push/test", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+
+    try {
+      await pushNotifications.sendPushToUser(req.user.id, {
+        title: 'Test Notificatie',
+        body: 'Dit is een test notificatie van het Ambulance Planning systeem.',
+        url: '/'
+      });
+
+      res.json({ success: true, message: 'Test notificatie verzonden' });
+    } catch (error: any) {
+      console.error("Error sending test notification:", error);
+      res.status(500).json({ message: "Failed to send test notification", error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

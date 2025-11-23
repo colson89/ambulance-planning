@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -131,6 +131,14 @@ export interface IStorage {
   updateVerdiSyncLogById(logId: number, syncStatus: 'pending' | 'success' | 'error', errorMessage?: string): Promise<void>;
   resetVerdiSyncLog(shiftId: number): Promise<void>;
   getVerdiSyncStatus(stationId: number, month: number, year: number): Promise<{hasPendingChanges: boolean, newShifts: number, modifiedShifts: number, totalShifts: number}>;
+  
+  // Push Notifications
+  getPushSubscription(userId: number): Promise<PushSubscription | undefined>;
+  getAllPushSubscriptions(userId: number): Promise<PushSubscription[]>;
+  createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription>;
+  updatePushSubscription(userId: number, endpoint: string, updateData: Partial<PushSubscription>): Promise<PushSubscription>;
+  deletePushSubscription(userId: number, endpoint: string): Promise<void>;
+  deletePushSubscriptionsByUser(userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3639,6 +3647,88 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return result[0];
+  }
+
+  async getPushSubscription(userId: number): Promise<PushSubscription | undefined> {
+    const result = await db
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId))
+      .limit(1);
+    return result[0];
+  }
+
+  async getAllPushSubscriptions(userId: number): Promise<PushSubscription[]> {
+    return await db
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+  }
+
+  async createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription> {
+    const existing = await db
+      .select()
+      .from(pushSubscriptions)
+      .where(
+        and(
+          eq(pushSubscriptions.userId, subscription.userId),
+          eq(pushSubscriptions.endpoint, subscription.endpoint)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      const updated = await db
+        .update(pushSubscriptions)
+        .set({
+          p256dh: subscription.p256dh,
+          auth: subscription.auth,
+          updatedAt: new Date()
+        })
+        .where(eq(pushSubscriptions.id, existing[0].id))
+        .returning();
+      return updated[0];
+    }
+
+    const result = await db
+      .insert(pushSubscriptions)
+      .values(subscription)
+      .returning();
+    return result[0];
+  }
+
+  async updatePushSubscription(userId: number, endpoint: string, updateData: Partial<PushSubscription>): Promise<PushSubscription> {
+    const result = await db
+      .update(pushSubscriptions)
+      .set({
+        ...updateData,
+        updatedAt: new Date()
+      })
+      .where(
+        and(
+          eq(pushSubscriptions.userId, userId),
+          eq(pushSubscriptions.endpoint, endpoint)
+        )
+      )
+      .returning();
+    return result[0];
+  }
+
+  async deletePushSubscription(userId: number, endpoint: string): Promise<void> {
+    await db
+      .delete(pushSubscriptions)
+      .where(
+        and(
+          eq(pushSubscriptions.userId, userId),
+          eq(pushSubscriptions.endpoint, endpoint)
+        )
+      );
+  }
+
+  async deletePushSubscriptionsByUser(userId: number): Promise<void> {
+    await db
+      .delete(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
   }
 }
 
