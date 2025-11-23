@@ -44,7 +44,8 @@ export default defineConfig({
       'Pragma': 'no-cache',
     },
     hmr: {
-      overlay: true,
+      // Disable error overlay to prevent HMR race condition errors in Replit development
+      overlay: false,
     },
   },
   build: {
