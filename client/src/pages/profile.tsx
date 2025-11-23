@@ -9,11 +9,12 @@ import { z } from "zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Home, Calendar, Copy, RefreshCw, ChevronDown } from "lucide-react";
+import { Home, Calendar, Copy, RefreshCw, ChevronDown, Upload, User as UserIcon, Phone } from "lucide-react";
 import { useLocation } from "wouter";
 import type { User } from "@shared/schema";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const preferencesSchema = z.object({
   maxHours: z.number().min(0).max(168),
@@ -27,6 +28,10 @@ const passwordSchema = z.object({
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Wachtwoorden komen niet overeen",
   path: ["confirmPassword"],
+});
+
+const phoneSchema = z.object({
+  phoneNumber: z.string().optional()
 });
 
 // Component to show admin contact information
@@ -84,11 +89,22 @@ export default function Profile() {
   const [, setLocation] = useLocation();
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
 
+  // Guard: Wait for authentication to complete
+  if (!user) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex justify-center items-center h-64">
+          <p className="text-muted-foreground">Laden...</p>
+        </div>
+      </div>
+    );
+  }
+
   const preferencesForm = useForm({
     resolver: zodResolver(preferencesSchema),
     defaultValues: {
-      maxHours: user?.maxHours || 40,
-      preferredHours: user?.preferredHours || 32
+      maxHours: 40,
+      preferredHours: 32
     }
   });
 
@@ -185,6 +201,85 @@ export default function Profile() {
     }
   };
 
+  const phoneForm = useForm({
+    resolver: zodResolver(phoneSchema),
+    defaultValues: {
+      phoneNumber: user?.phoneNumber || ""
+    }
+  });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('photo', file);
+      
+      const res = await fetch(`/api/users/${user!.id}/profile-photo`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Upload mislukt');
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Gelukt!",
+        description: "Profielfoto bijgewerkt",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updatePhoneMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof phoneSchema>) => {
+      const res = await apiRequest("PATCH", `/api/users/${user!.id}/phone`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Gelukt!",
+        description: "Telefoonnummer bijgewerkt",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "Bestand te groot",
+          description: "Maximale bestandsgrootte is 2MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      uploadPhotoMutation.mutate(file);
+    }
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -199,6 +294,95 @@ export default function Profile() {
       </div>
 
       <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Persoonlijke Informatie</CardTitle>
+            <CardDescription>
+              Update je profielfoto en contactgegevens
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-start gap-6">
+              <div className="flex flex-col items-center gap-3">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={user?.profilePhotoUrl || undefined} alt={`${user?.firstName} ${user?.lastName}`} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadPhotoMutation.isPending}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {uploadPhotoMutation.isPending ? "Uploaden..." : "Wijzig Foto"}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Max 2MB (JPG, PNG, WebP)
+                </p>
+              </div>
+
+              <div className="flex-1 space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Naam</label>
+                  <div className="text-lg font-medium text-gray-900 mt-1">
+                    {user?.firstName} {user?.lastName}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Gebruikersnaam</label>
+                  <div className="text-lg text-gray-900 mt-1">
+                    {user?.username}
+                  </div>
+                </div>
+
+                <Form {...phoneForm}>
+                  <form onSubmit={phoneForm.handleSubmit((data) => updatePhoneMutation.mutate(data))} className="space-y-2">
+                    <FormField
+                      control={phoneForm.control}
+                      name="phoneNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Telefoonnummer</FormLabel>
+                          <div className="flex gap-2">
+                            <FormControl>
+                              <Input 
+                                {...field} 
+                                placeholder="+32 xxx xx xx xx"
+                                className="flex-1"
+                              />
+                            </FormControl>
+                            <Button
+                              type="submit"
+                              variant="outline"
+                              size="sm"
+                              disabled={updatePhoneMutation.isPending}
+                            >
+                              <Phone className="h-4 w-4 mr-2" />
+                              {updatePhoneMutation.isPending ? "Opslaan..." : "Opslaan"}
+                            </Button>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Werk Voorkeuren</CardTitle>

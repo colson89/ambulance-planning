@@ -28,6 +28,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Multer configuratie voor profielfoto uploads (disk storage)
+  const fs = await import('fs');
+  const path = await import('path');
+  
+  // Ensure upload directory exists
+  const uploadDir = 'public/uploads/profile-photos';
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const profilePhotoStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname).toLowerCase();
+      const allowedExts = ['.jpg', '.jpeg', '.png', '.webp'];
+      
+      if (!allowedExts.includes(ext)) {
+        return cb(new Error('Alleen afbeeldingen (JPEG, PNG, WebP) zijn toegestaan'));
+      }
+      
+      cb(null, `profile-${uniqueSuffix}${ext}`);
+    }
+  });
+
+  const profilePhotoUpload = multer({
+    storage: profilePhotoStorage,
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const ext = path.extname(file.originalname).toLowerCase();
+      const allowedExts = ['.jpg', '.jpeg', '.png', '.webp'];
+      
+      if (allowedTypes.includes(file.mimetype) && allowedExts.includes(ext)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Alleen afbeeldingen (JPEG, PNG, WebP) zijn toegestaan'));
+      }
+    }
+  });
+
   // Admin middleware (includes supervisors)
   const requireAdmin = (req: any, res: any, next: any) => {
     if (!req.isAuthenticated() || (req.user.role !== 'admin' && req.user.role !== 'supervisor')) {
@@ -415,6 +458,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stack: error instanceof Error ? error.stack : undefined
       });
       res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Upload profile photo (authenticated users can upload their own, admins can upload for their station users)
+  app.post("/api/users/:id/profile-photo", requireAuth, profilePhotoUpload.single('photo'), async (req, res) => {
+    try {
+      const targetUserId = parseInt(req.params.id);
+      const currentUserId = (req.user as any).id;
+      const userRole = (req.user as any).role;
+      const userStationId = (req.user as any).stationId;
+
+      // Users can update their own photo, admins can update their station users' photos
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Permission check
+      const isOwnProfile = currentUserId === targetUserId;
+      const isAdmin = userRole === 'admin' || userRole === 'supervisor';
+      const isSameStation = targetUser.stationId === userStationId;
+
+      if (!isOwnProfile && !(isAdmin && (userRole === 'supervisor' || isSameStation))) {
+        return res.status(403).json({ message: "Je hebt geen toestemming om deze foto bij te werken" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "Geen bestand geüpload" });
+      }
+
+      // Save file path to database (relative path)
+      const photoUrl = `/uploads/profile-photos/${req.file.filename}`;
+      const updatedUser = await storage.updateUser(targetUserId, { profilePhotoUrl: photoUrl });
+
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Profile photo upload error:", error);
+      res.status(500).json({ message: "Failed to upload profile photo" });
+    }
+  });
+
+  // Update phone number (authenticated users can update their own, admins can update for their station users)
+  app.patch("/api/users/:id/phone", requireAuth, async (req, res) => {
+    try {
+      const targetUserId = parseInt(req.params.id);
+      const currentUserId = (req.user as any).id;
+      const userRole = (req.user as any).role;
+      const userStationId = (req.user as any).stationId;
+
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Permission check
+      const isOwnProfile = currentUserId === targetUserId;
+      const isAdmin = userRole === 'admin' || userRole === 'supervisor';
+      const isSameStation = targetUser.stationId === userStationId;
+
+      if (!isOwnProfile && !(isAdmin && (userRole === 'supervisor' || isSameStation))) {
+        return res.status(403).json({ message: "Je hebt geen toestemming om dit telefoonnummer bij te werken" });
+      }
+
+      const schema = z.object({
+        phoneNumber: z.union([
+          z.string()
+            .min(1, "Telefoonnummer mag niet leeg zijn")
+            .max(20, "Telefoonnummer mag maximaal 20 karakters bevatten")
+            .regex(/^[+\d\s()-]+$/, "Telefoonnummer mag alleen cijfers, spaties en +()- bevatten"),
+          z.literal(""),
+          z.null()
+        ])
+      });
+
+      const validatedData = schema.parse(req.body);
+      
+      // Normalize empty string to null
+      const phoneNumber = !validatedData.phoneNumber || validatedData.phoneNumber === "" 
+        ? null 
+        : validatedData.phoneNumber;
+      
+      const updatedUser = await storage.updateUser(targetUserId, { phoneNumber });
+
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json(error.errors);
+      } else {
+        console.error("Phone update error:", error);
+        res.status(500).json({ message: "Failed to update phone number" });
+      }
     }
   });
 

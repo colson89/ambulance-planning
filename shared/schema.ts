@@ -19,6 +19,8 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email"), // Email optioneel voor bestaande gebruikers
+  phoneNumber: text("phone_number"), // GSM nummer (optioneel)
+  profilePhotoUrl: text("profile_photo_url"), // Profielfoto URL (optioneel)
   role: text("role", { enum: ["admin", "ambulancier", "supervisor"] }).notNull().default("ambulancier"),
   isAdmin: boolean("is_admin").notNull().default(false),
   isProfessional: boolean("is_professional").notNull().default(false), // Beroepspersoneel - max 1 shift per week

@@ -17,6 +17,12 @@ app.use('/attached_assets', express.static('attached_assets', {
   immutable: true
 }));
 
+// Serve uploads folder as static files with 1 year cache
+app.use('/uploads', express.static('public/uploads', {
+  maxAge: '1y',
+  immutable: true
+}));
+
 // Fix CSP issues - allow JavaScript to run
 app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', 
