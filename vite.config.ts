@@ -5,6 +5,7 @@ import path, { dirname } from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { fileURLToPath } from "url";
 import { visualizer } from "rollup-plugin-visualizer";
+import { cacheBustPlugin } from "./scripts/vite-plugin-cache-bust";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,6 +15,7 @@ export default defineConfig({
     react(),
     runtimeErrorOverlay(),
     themePlugin(),
+    cacheBustPlugin(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
