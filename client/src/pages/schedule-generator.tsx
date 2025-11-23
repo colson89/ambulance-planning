@@ -73,6 +73,8 @@ function ScheduleGenerator() {
   const [isGeneratingSchedule, setIsGeneratingSchedule] = useState(false);
   const [generateProgressPercentage, setGenerateProgressPercentage] = useState<number>(0);
   const [generateProgressMessage, setGenerateProgressMessage] = useState<string>("");
+  const [selectedContactUser, setSelectedContactUser] = useState<User | null>(null);
+  const [showContactDialog, setShowContactDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [testPassword, setTestPassword] = useState<string>("");
   const [deletePreferencesPassword, setDeletePreferencesPassword] = useState<string>("");
@@ -1587,26 +1589,41 @@ function ScheduleGenerator() {
           </CardHeader>
           <CardContent>
             <Table>
-              <TableCaption>Overzicht van gewenste en geplande uren per medewerker voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}</TableCaption>
+              <TableCaption>Overzicht van geplande uren per medewerker voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}</TableCaption>
               <TableHeader>
                 <TableRow>
                   <TableHead>Medewerker</TableHead>
-                  <TableHead className="text-center">Gewenste Uren</TableHead>
-                  <TableHead className="text-center">Totaal Geplande Uren</TableHead>
-                  <TableHead className="text-center">Weekdagen Uren</TableHead>
-                  <TableHead className="text-center">Weekend Uren</TableHead>
+                  <TableHead className="text-center">Ingepland</TableHead>
+                  <TableHead className="text-center">Weekdagen</TableHead>
+                  <TableHead className="text-center">Weekend</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{`${user.firstName} ${user.lastName}`}</TableCell>
-                    <TableCell className="text-center">{user.hours}</TableCell>
-                    <TableCell className="text-center">{countUserShiftsHours(user.id)}</TableCell>
-                    <TableCell className="text-center">{countUserWeekdayShiftHours(user.id)}</TableCell>
-                    <TableCell className="text-center">{countUserWeekendShiftHours(user.id)}</TableCell>
-                  </TableRow>
-                ))}
+                {users.map((user) => {
+                  const scheduledHours = countUserShiftsHours(user.id);
+                  const totalHours = user.hours || 0;
+                  const percentage = totalHours > 0 ? Math.round((scheduledHours / totalHours) * 100) : 0;
+                  
+                  return (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto font-medium text-left hover:underline"
+                          onClick={() => {
+                            setSelectedContactUser(user);
+                            setShowContactDialog(true);
+                          }}
+                        >
+                          {`${user.firstName} ${user.lastName}`}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center">{`${scheduledHours} / ${totalHours} (${percentage}%)`}</TableCell>
+                      <TableCell className="text-center">{countUserWeekdayShiftHours(user.id)}</TableCell>
+                      <TableCell className="text-center">{countUserWeekendShiftHours(user.id)}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
@@ -2388,6 +2405,80 @@ function ScheduleGenerator() {
           </CardContent>
         </Card>
       )}
+
+      {/* Contact Info Dialog */}
+      <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Contactgegevens</DialogTitle>
+            <DialogDescription>
+              Informatie over {selectedContactUser ? `${selectedContactUser.firstName} ${selectedContactUser.lastName}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedContactUser && (
+            <div className="space-y-4">
+              {/* Profile Photo */}
+              <div className="flex justify-center">
+                {selectedContactUser.profilePhotoUrl ? (
+                  <img 
+                    src={selectedContactUser.profilePhotoUrl} 
+                    alt={`${selectedContactUser.firstName} ${selectedContactUser.lastName}`}
+                    className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center">
+                    <Users className="w-16 h-16 text-gray-400" />
+                  </div>
+                )}
+              </div>
+
+              {/* User Details */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">{`${selectedContactUser.firstName} ${selectedContactUser.lastName}`}</span>
+                </div>
+                
+                {selectedContactUser.phoneNumber && (
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    <a href={`tel:${selectedContactUser.phoneNumber}`} className="text-blue-600 hover:underline">
+                      {selectedContactUser.phoneNumber}
+                    </a>
+                  </div>
+                )}
+                
+                {stations && stations.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 21h18"></path>
+                      <path d="M9 8h1"></path>
+                      <path d="M9 12h1"></path>
+                      <path d="M9 16h1"></path>
+                      <path d="M14 8h1"></path>
+                      <path d="M14 12h1"></path>
+                      <path d="M14 16h1"></path>
+                      <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path>
+                    </svg>
+                    <span className="text-sm text-gray-600">
+                      {stations.find(s => s.id === selectedContactUser.stationId)?.name || "Onbekend"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowContactDialog(false)}>
+              Sluiten
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

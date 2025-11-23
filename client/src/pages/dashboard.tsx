@@ -39,6 +39,8 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showAvailabilityDialog, setShowAvailabilityDialog] = useState(false);
+  const [selectedContactUser, setSelectedContactUser] = useState<UserType | null>(null);
+  const [showContactDialog, setShowContactDialog] = useState(false);
 
   const { data: shifts = [], isLoading: shiftsLoading } = useQuery<Shift[]>({
     queryKey: ["/api/shifts", selectedMonth + 1, selectedYear],
@@ -723,15 +725,28 @@ export default function Dashboard() {
                             <TableHead>Naam</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Beschikbare tijden</TableHead>
-                            <TableHead>Uren</TableHead>
+                            <TableHead>Ingepland</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {getUsersAvailableForDate(selectedDate, "day").map((u) => (
-                            <TableRow key={u.userId}>
-                              <TableCell>
-                                <div className="font-medium">{`${u.firstName} ${u.lastName}`}</div>
-                              </TableCell>
+                          {getUsersAvailableForDate(selectedDate, "day").map((u) => {
+                            const fullUser = users.find(usr => usr.id === u.userId);
+                            return (
+                              <TableRow key={u.userId}>
+                                <TableCell>
+                                  <Button
+                                    variant="link"
+                                    className="p-0 h-auto font-medium text-left hover:underline"
+                                    onClick={() => {
+                                      if (fullUser) {
+                                        setSelectedContactUser(fullUser);
+                                        setShowContactDialog(true);
+                                      }
+                                    }}
+                                  >
+                                    {`${u.firstName} ${u.lastName}`}
+                                  </Button>
+                                </TableCell>
                               <TableCell>
                                 {u.isAssigned ? (
                                   <Badge className="bg-blue-500 hover:bg-blue-600">Toegewezen</Badge>
@@ -756,9 +771,27 @@ export default function Dashboard() {
                                   "-"
                                 )}
                               </TableCell>
-                              <TableCell>{u.hours}</TableCell>
-                            </TableRow>
-                          ))}
+                              <TableCell>
+                                {u.isAssigned && u.startTime && u.endTime ? (
+                                  (() => {
+                                    const startTime = new Date(u.startTime);
+                                    const endTime = new Date(u.endTime);
+                                    let hours = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60));
+                                    // Handle cross-midnight shifts (e.g., 19:00-07:00)
+                                    if (hours <= 0) {
+                                      hours = hours + 24;
+                                    }
+                                    const totalHours = u.hours || 0;
+                                    const percentage = totalHours > 0 ? Math.round((hours / totalHours) * 100) : 0;
+                                    return `${hours} / ${totalHours} (${percentage}%)`;
+                                  })()
+                                ) : (
+                                  `0 / ${u.hours || 0} (0%)`
+                                )}
+                              </TableCell>
+                              </TableRow>
+                            );
+                          })}
                           
                           {getUsersAvailableForDate(selectedDate, "day").length === 0 && (
                             <TableRow>
@@ -783,15 +816,28 @@ export default function Dashboard() {
                           <TableHead>Naam</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Beschikbare tijden</TableHead>
-                          <TableHead>Uren</TableHead>
+                          <TableHead>Ingepland</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {getUsersAvailableForDate(selectedDate, "night").map((u) => (
-                          <TableRow key={u.userId}>
-                            <TableCell>
-                              <div className="font-medium">{`${u.firstName} ${u.lastName}`}</div>
-                            </TableCell>
+                        {getUsersAvailableForDate(selectedDate, "night").map((u) => {
+                          const fullUser = users.find(usr => usr.id === u.userId);
+                          return (
+                            <TableRow key={u.userId}>
+                              <TableCell>
+                                <Button
+                                  variant="link"
+                                  className="p-0 h-auto font-medium text-left hover:underline"
+                                  onClick={() => {
+                                    if (fullUser) {
+                                      setSelectedContactUser(fullUser);
+                                      setShowContactDialog(true);
+                                    }
+                                  }}
+                                >
+                                  {`${u.firstName} ${u.lastName}`}
+                                </Button>
+                              </TableCell>
                             <TableCell>
                               {u.isAssigned ? (
                                 <Badge className="bg-blue-500 hover:bg-blue-600">Toegewezen</Badge>
@@ -816,9 +862,27 @@ export default function Dashboard() {
                                 "-"
                               )}
                             </TableCell>
-                            <TableCell>{u.hours}</TableCell>
-                          </TableRow>
-                        ))}
+                            <TableCell>
+                              {u.isAssigned && u.startTime && u.endTime ? (
+                                (() => {
+                                  const startTime = new Date(u.startTime);
+                                  const endTime = new Date(u.endTime);
+                                  let hours = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60));
+                                  // Handle cross-midnight shifts (e.g., 19:00-07:00)
+                                  if (hours <= 0) {
+                                    hours = hours + 24;
+                                  }
+                                  const totalHours = u.hours || 0;
+                                  const percentage = totalHours > 0 ? Math.round((hours / totalHours) * 100) : 0;
+                                  return `${hours} / ${totalHours} (${percentage}%)`;
+                                })()
+                              ) : (
+                                `0 / ${u.hours || 0} (0%)`
+                              )}
+                            </TableCell>
+                            </TableRow>
+                          );
+                        })}
                         
                         {getUsersAvailableForDate(selectedDate, "night").length === 0 && (
                           <TableRow>
@@ -837,6 +901,69 @@ export default function Dashboard() {
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAvailabilityDialog(false)}>
+              Sluiten
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Contact Info Dialog */}
+      <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Contactgegevens</DialogTitle>
+            <DialogDescription>
+              Informatie over {selectedContactUser ? `${selectedContactUser.firstName} ${selectedContactUser.lastName}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedContactUser && (
+            <div className="space-y-4">
+              {/* Profile Photo */}
+              <div className="flex justify-center">
+                {selectedContactUser.profilePhotoUrl ? (
+                  <img 
+                    src={selectedContactUser.profilePhotoUrl} 
+                    alt={`${selectedContactUser.firstName} ${selectedContactUser.lastName}`}
+                    className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center">
+                    <UserIcon className="w-16 h-16 text-gray-400" />
+                  </div>
+                )}
+              </div>
+
+              {/* User Details */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <UserIcon className="h-4 w-4 text-gray-500" />
+                  <span className="font-medium">{`${selectedContactUser.firstName} ${selectedContactUser.lastName}`}</span>
+                </div>
+                
+                {selectedContactUser.phoneNumber && (
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    <a href={`tel:${selectedContactUser.phoneNumber}`} className="text-blue-600 hover:underline">
+                      {selectedContactUser.phoneNumber}
+                    </a>
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-600">
+                    {stations.find(s => s.id === selectedContactUser.stationId)?.name || "Onbekend"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowContactDialog(false)}>
               Sluiten
             </Button>
           </DialogFooter>
