@@ -7,7 +7,6 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
-import { UpdateNotification } from "@/components/update-notification";
 import { Loader2 } from "lucide-react";
 
 // Lazy load all pages for better performance
@@ -64,7 +63,6 @@ function App() {
           <Router />
           <Toaster />
           <PWAInstallPrompt />
-          <UpdateNotification />
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>

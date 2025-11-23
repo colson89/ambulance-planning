@@ -120,6 +120,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(version);
   });
 
+  // Build info endpoint for automatic update detection
+  app.get("/api/build-info", (req, res) => {
+    try {
+      const buildInfoPath = path.join(process.cwd(), 'dist', 'build-info.json');
+      if (fs.existsSync(buildInfoPath)) {
+        const buildInfo = JSON.parse(fs.readFileSync(buildInfoPath, 'utf-8'));
+        res.json(buildInfo);
+      } else {
+        // Development mode - no build info file
+        res.json({
+          buildId: 'dev',
+          buildTime: new Date().toISOString(),
+          version: '1.0.0'
+        });
+      }
+    } catch (error) {
+      console.error('Error reading build info:', error);
+      res.status(500).json({ error: 'Failed to read build info' });
+    }
+  });
+
   // Station management routes
   app.get("/api/stations", async (req, res) => {
     try {

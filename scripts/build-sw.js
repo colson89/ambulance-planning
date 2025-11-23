@@ -1,18 +1,28 @@
 import { generateSW } from 'workbox-build';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const distDir = path.join(__dirname, '../dist/public');
 
-// Read version from package.json
-const packageJson = JSON.parse(
-  readFileSync(path.join(__dirname, '../package.json'), 'utf-8')
+// Generate unique BUILD_ID using timestamp
+const BUILD_ID = Date.now().toString();
+const buildInfo = {
+  buildId: BUILD_ID,
+  buildTime: new Date().toISOString(),
+  version: JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf-8')).version
+};
+
+// Save BUILD_ID to file so server can expose it via API
+writeFileSync(
+  path.join(__dirname, '../dist/build-info.json'),
+  JSON.stringify(buildInfo, null, 2)
 );
-const version = packageJson.version || '1.0.0';
+
+console.log(`✓ Build ID generated: ${BUILD_ID}`);
 
 async function buildServiceWorker() {
   try {
@@ -28,14 +38,14 @@ async function buildServiceWorker() {
         '**/sw.js',
         '**/stats.html'
       ],
-      // Runtime caching strategies
+      // Runtime caching strategies with BUILD_ID in cache names
       runtimeCaching: [
         {
           // API calls - network first
           urlPattern: /^https?:\/\/.*\/api\/.*/,
           handler: 'NetworkFirst',
           options: {
-            cacheName: `api-cache-v${version}`,
+            cacheName: `api-cache-${BUILD_ID}`,
             networkTimeoutSeconds: 10,
             expiration: {
               maxEntries: 50,
@@ -51,7 +61,7 @@ async function buildServiceWorker() {
           urlPattern: /\.m?js$/,
           handler: 'NetworkFirst',
           options: {
-            cacheName: `js-modules-v${version}`,
+            cacheName: `js-modules-${BUILD_ID}`,
             networkTimeoutSeconds: 3,
             expiration: {
               maxEntries: 30,
@@ -67,7 +77,7 @@ async function buildServiceWorker() {
           urlPattern: /\.(css|woff2?)$/,
           handler: 'StaleWhileRevalidate',
           options: {
-            cacheName: `static-resources-v${version}`,
+            cacheName: `static-resources-${BUILD_ID}`,
             expiration: {
               maxEntries: 50,
               maxAgeSeconds: 60 * 60 * 24 * 7 // 1 week
