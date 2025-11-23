@@ -332,6 +332,15 @@ Als u bij **1 station** werkt:
 
 Met de kalender synchronisatie functie kunt u uw ingeplande shifts automatisch laten verschijnen in uw favoriete kalender app (Google Calendar, Outlook, Apple Agenda). Zodra u bent ingepland, verschijnt de shift in uw persoonlijke agenda.
 
+**Event Format in uw Kalender:**
+- Dagshift volledig: `Dagshift - Chiro` (07:00-19:00)
+- Dagshift voormiddag: `Dagshift VM - Tenerife` (07:00-13:00)
+- Dagshift namiddag: `Dagshift NM - Mol` (13:00-19:00)
+- Nachtshift: `Nachtshift - Westerlo` (19:00-07:00)
+
+**💡 Belangrijk voor Cross-Station Medewerkers:**
+Als u werkt voor meerdere stations, worden **alle uw shifts van alle stations** automatisch gesynchroniseerd naar uw kalender. De stationnaam in de event titel laat zien bij welk station u bent ingepland - handig om snel te zien waar u die dag moet zijn!
+
 #### Kalender Link Instellen
 
 **Stap 1: Ga naar uw Profiel**
