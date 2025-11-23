@@ -5,7 +5,6 @@ import path, { dirname } from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { fileURLToPath } from "url";
 import { visualizer } from "rollup-plugin-visualizer";
-import { cacheBustPlugin } from "./scripts/vite-plugin-cache-bust";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,7 +14,6 @@ export default defineConfig({
     react(),
     runtimeErrorOverlay(),
     themePlugin(),
-    cacheBustPlugin(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
@@ -40,7 +38,11 @@ export default defineConfig({
   },
   root: path.resolve(__dirname, "client"),
   server: {
-    // Add timestamp to module imports in development to prevent cache issues
+    // Send no-cache headers to prevent Replit's preview iframe from caching modules
+    headers: {
+      'Cache-Control': 'no-store',
+      'Pragma': 'no-cache',
+    },
     hmr: {
       overlay: true,
     },
