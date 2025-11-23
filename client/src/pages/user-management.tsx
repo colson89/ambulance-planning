@@ -316,12 +316,7 @@ export default function UserManagement() {
       } else {
         queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
       }
-      toast({
-        title: "Succes",
-        description: "Gebruiker bijgewerkt",
-      });
-      setEditDialogOpen(false);
-      updateUserForm.reset();
+      // Don't show toast or close dialog here - handled in form submit
     },
     onError: (error: Error) => {
       toast({
@@ -368,10 +363,7 @@ export default function UserManagement() {
         queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/users/all"] });
-      toast({
-        title: "Succes",
-        description: "Telefoonnummer bijgewerkt",
-      });
+      // Don't show toast here - handled in form submit
     },
     onError: (error: Error) => {
       toast({
@@ -407,12 +399,7 @@ export default function UserManagement() {
         queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/users/all"] });
-      toast({
-        title: "Succes",
-        description: "Profielfoto bijgewerkt",
-      });
-      setSelectedPhotoFile(null);
-      setPhotoPreviewUrl(null);
+      // Don't show toast or reset photo state here - handled in form submit
     },
     onError: (error: Error) => {
       toast({
@@ -1037,35 +1024,51 @@ export default function UserManagement() {
                           onSubmit={updateUserForm.handleSubmit(async (data) => {
                             if (!selectedUserId) return;
                             
-                            // Update basic user data
-                            await updateUserMutation.mutateAsync({ 
-                              userId: selectedUserId, 
-                              data: {
-                                firstName: data.firstName,
-                                lastName: data.lastName,
-                                email: data.email,
-                                role: data.role as "admin" | "ambulancier" | "supervisor",
-                                hours: data.hours,
-                                isProfessional: data.isProfessional,
-                                hasDrivingLicenseC: data.hasDrivingLicenseC
+                            try {
+                              // Update basic user data
+                              await updateUserMutation.mutateAsync({ 
+                                userId: selectedUserId, 
+                                data: {
+                                  firstName: data.firstName,
+                                  lastName: data.lastName,
+                                  email: data.email,
+                                  role: data.role as "admin" | "ambulancier" | "supervisor",
+                                  hours: data.hours,
+                                  isProfessional: data.isProfessional,
+                                  hasDrivingLicenseC: data.hasDrivingLicenseC
+                                }
+                              });
+                              
+                              // Update phone number if changed
+                              const currentUser = users?.find((u: User) => u.id === selectedUserId);
+                              if (data.phoneNumber !== (currentUser?.phoneNumber || "")) {
+                                await updatePhoneNumberMutation.mutateAsync({
+                                  userId: selectedUserId,
+                                  phoneNumber: data.phoneNumber || null
+                                });
                               }
-                            });
-                            
-                            // Update phone number if changed
-                            const currentUser = users?.find((u: User) => u.id === selectedUserId);
-                            if (data.phoneNumber !== (currentUser?.phoneNumber || "")) {
-                              await updatePhoneNumberMutation.mutateAsync({
-                                userId: selectedUserId,
-                                phoneNumber: data.phoneNumber || null
+                              
+                              // Upload profile photo if selected
+                              if (selectedPhotoFile) {
+                                await uploadProfilePhotoMutation.mutateAsync({
+                                  userId: selectedUserId,
+                                  file: selectedPhotoFile
+                                });
+                              }
+                              
+                              // Only close dialog if all operations succeeded
+                              setEditDialogOpen(false);
+                              updateUserForm.reset();
+                              setSelectedPhotoFile(null);
+                              setPhotoPreviewUrl(null);
+                              
+                              toast({
+                                title: "Succes",
+                                description: "Gebruiker volledig bijgewerkt",
                               });
-                            }
-                            
-                            // Upload profile photo if selected
-                            if (selectedPhotoFile) {
-                              await uploadProfilePhotoMutation.mutateAsync({
-                                userId: selectedUserId,
-                                file: selectedPhotoFile
-                              });
+                            } catch (error) {
+                              // Error is already handled by individual mutations
+                              // Don't close dialog so user can retry
                             }
                           })} 
                           className="space-y-4"
