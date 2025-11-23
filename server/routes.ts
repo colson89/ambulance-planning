@@ -11,6 +11,7 @@ import { and, gte, lte, asc, ne, eq } from "drizzle-orm";
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import multer from 'multer';
+import { sendPlanningPublishedNotification, sendShiftChangedNotification } from "./push-notifications";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -1901,6 +1902,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const key = `last_schedule_generated_${month}_${year}`;
       await storage.setSystemSetting(key, timestamp);
       
+      // Send push notification to all users with subscriptions enabled
+      console.log(`📱 Sending planning published notifications for ${month}/${year} at station ${userStationId}`);
+      sendPlanningPublishedNotification(userStationId, month, year).catch(err => {
+        console.error('Failed to send planning published notifications:', err);
+      });
       
       res.status(200).json(generatedShifts);
     } catch (error) {
@@ -1956,6 +1962,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update the shift
       const updatedShift = await storage.updateShift(shiftId, updateData);
+      
+      // Send push notification if userId changed (shift was assigned/reassigned)
+      if (updateData.userId !== undefined && updateData.userId !== existingShift.userId) {
+        // Notify new user if shift was assigned to someone (not just unassigned)
+        if (updateData.userId && updateData.userId > 0) {
+          console.log(`📱 Sending shift assigned notification to user ${updateData.userId}`);
+          sendShiftChangedNotification(updateData.userId, updatedShift, 'assigned').catch(err => {
+            console.error('Failed to send shift assigned notification:', err);
+          });
+        }
+        
+        // Notify previous user if shift was removed from them
+        if (existingShift.userId && existingShift.userId > 0) {
+          console.log(`📱 Sending shift removed notification to previous user ${existingShift.userId}`);
+          sendShiftChangedNotification(existingShift.userId, existingShift, 'removed').catch(err => {
+            console.error('Failed to send shift removed notification:', err);
+          });
+        }
+      }
+      
       res.status(200).json(updatedShift);
     } catch (error) {
       console.error("Error updating shift:", error);

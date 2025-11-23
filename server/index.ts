@@ -6,6 +6,7 @@ if (!process.env.NODE_ENV) {
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { checkAndNotifyDeadlines } from "./push-notifications";
 
 const app = express();
 app.use(express.json());
@@ -120,4 +121,42 @@ app.use((req, res, next) => {
   server.listen(port, host, () => {
     log(`serving on port ${port} (host: ${host})`);
   });
+
+  // Daily deadline notification check at 9:00 AM
+  const scheduleDeadlineCheck = () => {
+    const checkDeadlines = async () => {
+      try {
+        log('🔔 Running daily deadline notification check');
+        await checkAndNotifyDeadlines();
+      } catch (err) {
+        log(`Failed to check deadlines: ${String(err)}`);
+      }
+    };
+
+    // Track last check date to prevent duplicates
+    let lastCheckDate = '';
+    
+    // Run check immediately on startup (deadline logic handles date filtering)
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+    lastCheckDate = todayKey;
+    log('🔔 Running startup deadline check');
+    checkDeadlines();
+    
+    // Schedule daily check at 9:00 AM using interval-based approach
+    setInterval(() => {
+      const checkTime = new Date();
+      const checkDateKey = `${checkTime.getFullYear()}-${checkTime.getMonth() + 1}-${checkTime.getDate()}`;
+      
+      // Run at 9:00 and only once per day
+      if (checkTime.getHours() === 9 && checkTime.getMinutes() === 0 && lastCheckDate !== checkDateKey) {
+        lastCheckDate = checkDateKey;
+        checkDeadlines();
+      }
+    }, 60 * 1000); // Check every minute
+    
+    log('📅 Deadline check scheduler started (runs daily at 9:00 AM + on startup)');
+  };
+  
+  scheduleDeadlineCheck();
 })();

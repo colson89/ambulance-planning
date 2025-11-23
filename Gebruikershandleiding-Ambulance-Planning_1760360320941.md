@@ -2,7 +2,7 @@
 
 ## Ambulance Planning Systeem
 
-**Versie 2025.5 - November 2025**
+**Versie 2025.6 - November 2025**
 
 ---
 
@@ -18,6 +18,7 @@
   - [Planning Bekijken](#-uw-planning-bekijken)
   - [Profiel Beheren](#-profiel-beheren)
   - [Kalender Synchronisatie](#-kalender-synchronisatie) ⭐ NIEUW
+  - [Push Notificaties](#-push-notificaties) ⭐ NIEUW
 - [Handleiding voor Admins](#handleiding-voor-admins)
   - [Verdi Integratie](#-verdi-integratie) ⭐ NIEUW
 - [Handleiding voor Supervisors](#handleiding-voor-supervisors)
@@ -440,6 +441,160 @@ A: Ze kunnen dan al uw shifts zien. Deel de link dus nooit! Genereer een nieuwe 
 
 **Q: Werkt dit ook op mijn telefoon?**
 A: Ja! Eenmaal ingesteld synchroniseert uw kalender app automatisch op al uw apparaten (telefoon, tablet, computer).
+
+---
+
+### 🔔 Push Notificaties
+
+**Ontvang directe meldingen op uw apparaat wanneer er iets verandert in de planning!**
+
+#### Wat zijn Push Notificaties?
+
+Push notificaties zijn berichten die u ontvangt op uw smartphone, tablet of computer om u op de hoogte te houden van belangrijke gebeurtenissen in het planning systeem, zoals:
+
+- 📅 **Nieuwe planning gepubliceerd**: Zodra de planning voor een nieuwe maand klaar is
+- 🔄 **Shift wijzigingen**: Wanneer uw ingeplande shifts worden gewijzigd
+- ⏰ **Deadline herinneringen**: Waarschuwingen voordat de deadline voor beschikbaarheid verloopt
+
+#### Push Notificaties Inschakelen
+
+**Stap 1: Ga naar uw Profiel**
+- Klik op "Profiel" in de navigatie
+- Scroll naar de "Push Notificaties" sectie
+
+**Stap 2: Sta Browser Notificaties Toe**
+- Klik op de knop "Notificaties Inschakelen"
+- Uw browser vraagt toestemming - klik op **"Toestaan"**
+- ✅ U bent nu geabonneerd op push notificaties!
+
+**Stap 3: Stel uw Voorkeuren In**
+- U ziet drie soorten notificaties met aan/uit schakelaars:
+  - **Planning Gepubliceerd** (standaard UIT)
+  - **Mijn Shift Gewijzigd** (standaard UIT)
+  - **Beschikbaarheid Deadline** (standaard AAN)
+
+#### Notificatie Types
+
+**1. Planning Gepubliceerd**
+- **Wat**: Melding wanneer een nieuwe maandplanning wordt gepubliceerd
+- **Wanneer**: Direct na generatie van de planning door de admin
+- **Standaard**: UIT (zelf aan te zetten)
+- **Voorbeeld**: "Nieuwe Planning Gepubliceerd - De planning voor januari 2026 is beschikbaar."
+
+**2. Mijn Shift Gewijzigd**
+- **Wat**: Melding wanneer uw ingeplande shifts worden gewijzigd
+- **Wanneer**: Bij aanpassen, toevoegen of verwijderen van uw shifts
+- **Standaard**: UIT (zelf aan te zetten)
+- **Voorbeeld**: "Dienst Gewijzigd - Je dagdienst op 15 januari 2026 is gewijzigd."
+- **Let op**: U ontvangt ALLEEN meldingen over uw eigen shifts
+
+**3. Beschikbaarheid Deadline**
+- **Wat**: Herinnering om uw beschikbaarheid in te vullen
+- **Wanneer**: X dagen voor de deadline (instelbaar: 1-7 dagen)
+- **Standaard**: AAN met 3 dagen waarschuwing
+- **Voorbeeld**: "Deadline Beschikbaarheid Nadert - Je hebt nog 3 dagen om je beschikbaarheid voor februari 2026 in te vullen."
+- **Instelbaar**: Pas aan hoeveel dagen van tevoren u gewaarschuwd wilt worden (1 t/m 7 dagen)
+
+#### Instellingen Aanpassen
+
+**Notificaties Aan/Uit Zetten**
+- Klik op de schakelaar naast elk notificatie type
+- Groen = AAN, Grijs = UIT
+- Wijzigingen worden automatisch opgeslagen
+
+**Deadline Waarschuwing Aanpassen**
+- Bij "Beschikbaarheid Deadline" kunt u kiezen:
+  - 1 dag van tevoren
+  - 2 dagen van tevoren
+  - 3 dagen van tevoren (standaard)
+  - ... tot 7 dagen van tevoren
+- Selecteer uw voorkeur uit de keuzelijst
+- De instelling wordt automatisch opgeslagen
+
+**Test Notificatie Versturen**
+- Klik op de knop "Test Notificatie Versturen"
+- U ontvangt direct een testbericht
+- Controleer of notificaties goed werken
+
+#### Notificaties Uitschakelen
+
+**Tijdelijk Uitschakelen (aanbevolen)**
+- Zet de schakelaars UIT in uw profiel
+- U blijft geabonneerd en kunt later weer inschakelen
+
+**Volledig Uitschakelen**
+- Klik op "Notificaties Uitschakelen" onderaan de sectie
+- Dit verwijdert uw abonnement volledig
+- Om opnieuw te abonneren moet u de browser toestemming opnieuw geven
+
+**Via Browser Instellingen**
+- Chrome: Instellingen → Privacy en beveiliging → Website-instellingen → Notificaties
+- Safari: Voorkeuren → Websites → Notificaties
+- Zoek het planning systeem en blokkeer notificaties
+
+#### 📱 Platform Ondersteuning
+
+**Ondersteunde Browsers:**
+- ✅ Chrome (Android, Windows, Mac, Linux)
+- ✅ Edge (Windows, Mac)
+- ✅ Firefox (Android, Windows, Mac, Linux)
+- ✅ Safari (Mac, iPhone, iPad) - vanaf iOS 16.4+
+
+**Werkt op:**
+- 📱 Smartphones (Android en iPhone)
+- 💻 Computers (Windows, Mac, Linux)
+- 🖥️ Tablets (iPad en Android tablets)
+
+**Let op voor iPhone/iPad gebruikers:**
+- Werkt alleen in Safari (niet in Chrome of andere browsers)
+- Vereist iOS 16.4 of nieuwer
+- Installeer de app als PWA voor beste ervaring (zie sectie "App Installatie")
+
+#### ❓ Veelgestelde Vragen Push Notificaties
+
+**Q: Ik krijg geen notificaties, wat nu?**
+A: Controleer of:
+- U de browser toestemming heeft gegeven (zie browser adresbalk voor een icoon)
+- De notificatie types zijn ingeschakeld (groen) in uw profiel
+- U een ondersteunde browser gebruikt
+- Browser notificaties niet zijn uitgeschakeld in uw systeem instellingen
+
+**Q: Kan ik notificaties ontvangen als de website niet open is?**
+A: Ja! Push notificaties werken zelfs als de browser gesloten is (mits de browser op de achtergrond mag draaien).
+
+**Q: Werken notificaties op meerdere apparaten?**
+A: Ja! Als u de notificaties op elk apparaat apart inschakelt, ontvangt u berichten op al deze apparaten.
+
+**Q: Hoeveel notificaties krijg ik?**
+A: Dit hangt af van uw instellingen:
+- Planning Gepubliceerd: Max 1x per maand (als ingeschakeld)
+- Shift Gewijzigd: Alleen bij daadwerkelijke wijzigingen in uw shifts
+- Deadline: 1x per maand op de door u gekozen dag voor de deadline
+
+**Q: Kan ik specifieke notificaties uitschakelen?**
+A: Ja! Elke notificatie type heeft een eigen aan/uit schakelaar in uw profiel.
+
+**Q: Zijn mijn notificaties privé?**
+A: Ja, u ontvangt alleen meldingen over uw eigen shifts en planning van uw station(s).
+
+**Q: Wat gebeurt er bij een test notificatie?**
+A: U ontvangt direct een testbericht: "Test Notificatie - Dit is een test om te controleren of push notificaties werken."
+
+**Q: Kan ik de deadline waarschuwing aanpassen?**
+A: Ja! U kunt kiezen tussen 1 tot 7 dagen van tevoren gewaarschuwd worden.
+
+#### 🔒 Privacy & Veiligheid
+
+**Veilig & Privé:**
+- Notificaties worden direct naar uw apparaat verzonden
+- Geen tussenkomst van externe diensten (zoals Google of Apple voor de inhoud)
+- Alleen u kunt uw notificaties zien
+- U kunt altijd uitschrijven
+
+**Technische Details:**
+- Gebruikt Web Push Protocol standaard (W3C)
+- End-to-end versleuteld tussen server en uw apparaat
+- VAPID authenticatie voor veilige verzending
 
 ---
 

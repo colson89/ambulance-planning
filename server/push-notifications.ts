@@ -81,6 +81,23 @@ export async function sendPushToUser(
   await Promise.all(promises);
 }
 
+export async function sendPushToSubscriptions(
+  subscriptions: DBPushSubscription[],
+  payload: PushNotificationPayload
+): Promise<void> {
+  if (subscriptions.length === 0) {
+    return;
+  }
+
+  const promises = subscriptions.map(sub => 
+    sendPushNotification(sub, payload).catch(err => {
+      console.error(`Failed to send to subscription ${sub.endpoint}:`, err);
+    })
+  );
+
+  await Promise.all(promises);
+}
+
 export async function sendPushToMultipleUsers(
   userIds: number[],
   payload: PushNotificationPayload
@@ -100,21 +117,20 @@ export async function notifyNewPlanningPublished(
   month: number,
   year: number
 ): Promise<void> {
-  // Get all users from this station with newPlanningPublished enabled
+  // Get all users from this station
   const users = await storage.getUsersByStation(stationId);
   
-  const subscribedUserIds: number[] = [];
+  // Collect all enabled subscriptions across all users
+  const enabledSubscriptions: DBPushSubscription[] = [];
   for (const user of users) {
     const subscriptions = await storage.getAllPushSubscriptions(user.id);
-    const hasEnabledSubscription = subscriptions.some(
+    const userEnabledSubs = subscriptions.filter(
       sub => sub.notifyNewPlanningPublished
     );
-    if (hasEnabledSubscription) {
-      subscribedUserIds.push(user.id);
-    }
+    enabledSubscriptions.push(...userEnabledSubs);
   }
 
-  if (subscribedUserIds.length === 0) {
+  if (enabledSubscriptions.length === 0) {
     return;
   }
 
@@ -123,7 +139,7 @@ export async function notifyNewPlanningPublished(
     'juli', 'augustus', 'september', 'oktober', 'november', 'december'
   ];
 
-  await sendPushToMultipleUsers(subscribedUserIds, {
+  await sendPushToSubscriptions(enabledSubscriptions, {
     title: 'Nieuwe Planning Gepubliceerd',
     body: `De planning voor ${monthNames[month - 1]} ${year} is beschikbaar.`,
     icon: '/icon-192x192.png',
@@ -132,36 +148,6 @@ export async function notifyNewPlanningPublished(
   });
 }
 
-export async function notifyShiftChanged(
-  userId: number,
-  shiftDate: Date,
-  shiftType: 'day' | 'night'
-): Promise<void> {
-  const subscriptions = await storage.getAllPushSubscriptions(userId);
-  const enabledSubscriptions = subscriptions.filter(
-    sub => sub.notifyMyShiftChanged
-  );
-
-  if (enabledSubscriptions.length === 0) {
-    return;
-  }
-
-  const dateStr = shiftDate.toLocaleDateString('nl-BE', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
-
-  const shiftTypeText = shiftType === 'day' ? 'dagdienst' : 'nachtdienst';
-
-  await sendPushToUser(userId, {
-    title: 'Dienst Gewijzigd',
-    body: `Je ${shiftTypeText} op ${dateStr} is gewijzigd.`,
-    icon: '/icon-192x192.png',
-    url: '/schedule',
-    data: { type: 'shift_changed', userId, shiftDate: shiftDate.toISOString(), shiftType }
-  });
-}
 
 export async function checkAndNotifyDeadlines(): Promise<void> {
   // Get current deadline from system settings
@@ -184,18 +170,36 @@ export async function checkAndNotifyDeadlines(): Promise<void> {
   const deadlineDate = new Date(nextYear, nextMonth - 1, 1);
   deadlineDate.setDate(deadlineDate.getDate() - parsedDeadlineDays);
   
+  const monthNames = [
+    'januari', 'februari', 'maart', 'april', 'mei', 'juni',
+    'juli', 'augustus', 'september', 'oktober', 'november', 'december'
+  ];
+  
   // Get all users with deadline notifications enabled
   const allUsers = await storage.getAllUsers();
   
   for (const user of allUsers) {
     const subscriptions = await storage.getAllPushSubscriptions(user.id);
+    const enabledSubscriptions = subscriptions.filter(
+      sub => sub.notifyAvailabilityDeadline
+    );
     
-    for (const subscription of subscriptions) {
-      if (!subscription.notifyAvailabilityDeadline) {
-        continue;
-      }
-      
+    if (enabledSubscriptions.length === 0) {
+      continue;
+    }
+    
+    // Group subscriptions by warning days to avoid duplicates
+    const subscriptionsByWarningDays = new Map<number, DBPushSubscription[]>();
+    for (const subscription of enabledSubscriptions) {
       const warningDays = subscription.deadlineWarningDays || 3;
+      if (!subscriptionsByWarningDays.has(warningDays)) {
+        subscriptionsByWarningDays.set(warningDays, []);
+      }
+      subscriptionsByWarningDays.get(warningDays)!.push(subscription);
+    }
+    
+    // Check each warning period
+    for (const [warningDays, subs] of subscriptionsByWarningDays) {
       const notificationDate = new Date(deadlineDate);
       notificationDate.setDate(notificationDate.getDate() - warningDays);
       
@@ -205,12 +209,7 @@ export async function checkAndNotifyDeadlines(): Promise<void> {
         currentDate.getMonth() === notificationDate.getMonth() &&
         currentDate.getFullYear() === notificationDate.getFullYear()
       ) {
-        const monthNames = [
-          'januari', 'februari', 'maart', 'april', 'mei', 'juni',
-          'juli', 'augustus', 'september', 'oktober', 'november', 'december'
-        ];
-        
-        await sendPushToUser(user.id, {
+        await sendPushToSubscriptions(subs, {
           title: 'Deadline Beschikbaarheid Nadert',
           body: `Je hebt nog ${warningDays} dagen om je beschikbaarheid voor ${monthNames[nextMonth - 1]} ${nextYear} in te vullen.`,
           icon: '/icon-192x192.png',
@@ -229,4 +228,44 @@ export async function checkAndNotifyDeadlines(): Promise<void> {
 
 export function getVapidPublicKey(): string {
   return vapidPublicKey;
+}
+
+// Alias functions for use in routes
+export const sendPlanningPublishedNotification = notifyNewPlanningPublished;
+
+export async function sendShiftChangedNotification(
+  userId: number,
+  shift: { date: Date; type: 'day' | 'night' | 'day-half-1' | 'day-half-2' | 'night-half-1' | 'night-half-2' },
+  action: 'assigned' | 'removed' = 'assigned'
+): Promise<void> {
+  const subscriptions = await storage.getAllPushSubscriptions(userId);
+  const enabledSubscriptions = subscriptions.filter(
+    sub => sub.notifyMyShiftChanged
+  );
+
+  if (enabledSubscriptions.length === 0) {
+    return;
+  }
+
+  const dateStr = shift.date.toLocaleDateString('nl-BE', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  const shiftType = shift.type.startsWith('day') ? 'day' as const : 'night' as const;
+  const shiftTypeText = shiftType === 'day' ? 'dagdienst' : 'nachtdienst';
+
+  const title = action === 'assigned' ? 'Dienst Toegewezen' : 'Dienst Verwijderd';
+  const body = action === 'assigned' 
+    ? `Je bent ingepland voor een ${shiftTypeText} op ${dateStr}.`
+    : `Je ${shiftTypeText} op ${dateStr} is niet meer toegewezen aan jou.`;
+
+  await sendPushToSubscriptions(enabledSubscriptions, {
+    title,
+    body,
+    icon: '/icon-192x192.png',
+    url: '/schedule',
+    data: { type: 'shift_changed', userId, shiftDate: shift.date.toISOString(), shiftType, action }
+  });
 }
