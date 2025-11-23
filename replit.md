@@ -10,11 +10,12 @@ Communication Style: Simple, everyday language. Iterative development preferred.
 
 Protected Files: Do not make changes to the `dist/` folder or the file `dist/public/assets/index-BiU_A5mR.js`.
 
-Documentation Policy: **ALWAYS update `Gebruikershandleiding-Ambulance-Planning_1760360320941.md` when adding new features or making changes to existing functionality.** This ensures end-users have up-to-date documentation for all system capabilities.
+Documentation Policy: **ALWAYS update `Handleiding-Ambulance-Planning.md` when adding new features or making changes to existing functionality.** This ensures end-users and IT administrators have up-to-date documentation for all system capabilities.
 
 Documentation Files:
-- **Gebruikershandleiding-Ambulance-Planning_1760360320941.md**: Complete end-user manual with feature documentation, screenshots, and step-by-step guides.
-- **IT-Beheerders-Handleiding.md**: Complete IT administrator guide for Windows Server deployment, database setup, SSL configuration, and maintenance procedures.
+- **Handleiding-Ambulance-Planning.md**: Complete handleiding (versie 2025.6) met twee delen:
+  - **Deel I: Gebruikershandleiding** - Voor ambulanciers, admins en supervisors (feature documentatie, push notificaties, Verdi integratie, kalender sync, PWA installatie)
+  - **Deel II: IT Beheerders Handleiding** - Voor IT professionals (Windows Server deployment, database setup, Nginx/IIS configuratie, SSL certificaten, PM2 process management, onderhoud & troubleshooting)
 
 ## System Architecture
 
