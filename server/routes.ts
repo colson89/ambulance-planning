@@ -9,6 +9,7 @@ import {format} from 'date-fns';
 import { db } from "./db";
 import { and, gte, lte, asc, ne, eq } from "drizzle-orm";
 import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import multer from 'multer';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -2493,7 +2494,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Export planning to XLSX
+  // Export planning to XLSX (using ExcelJS for styling support)
   app.get("/api/schedule/export-xlsx", requireAdmin, async (req, res) => {
     try {
       const { month, year } = req.query;
@@ -2518,11 +2519,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Sort shifts by date
       const sortedShifts = shifts.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       
-      // Prepare data for Excel
-      const excelData = [
-        // Header row
-        ['Datum', 'Dag', 'Type', 'Start Tijd', 'Eind Tijd', 'Voornaam', 'Achternaam', 'Status']
+      // Create workbook and worksheet using ExcelJS
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Planning');
+      
+      // Add header row with styling
+      worksheet.columns = [
+        { header: 'Datum', key: 'datum', width: 12 },
+        { header: 'Dag', key: 'dag', width: 12 },
+        { header: 'Type', key: 'type', width: 8 },
+        { header: 'Start Tijd', key: 'startTijd', width: 12 },
+        { header: 'Eind Tijd', key: 'eindTijd', width: 12 },
+        { header: 'Voornaam', key: 'voornaam', width: 15 },
+        { header: 'Achternaam', key: 'achternaam', width: 15 },
+        { header: 'Status', key: 'status', width: 10 }
       ];
+      
+      // Style header row (must be done per cell)
+      const headerRow = worksheet.getRow(1);
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFE0E0E0' }
+        };
+      });
       
       // Add data rows
       for (const shift of sortedShifts) {
@@ -2554,78 +2576,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const type = shift.type === 'day' ? 'Dag' : 'Nacht';
         const status = shift.status === 'planned' ? 'Gepland' : 'Open';
         
-        excelData.push([
-          dateStr,
-          dayName,
-          type,
-          startTime,
-          endTime,
-          firstName,
-          lastName,
-          status
-        ]);
-      }
-      
-      // Create workbook and worksheet
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.aoa_to_sheet(excelData);
-      
-      // Set column widths
-      const colWidths = [
-        { wch: 12 }, // Datum
-        { wch: 12 }, // Dag
-        { wch: 8 },  // Type
-        { wch: 12 }, // Start Tijd
-        { wch: 12 }, // Eind Tijd
-        { wch: 15 }, // Voornaam
-        { wch: 15 }, // Achternaam
-        { wch: 10 }  // Status
-      ];
-      worksheet['!cols'] = colWidths;
-      
-      // Apply red background color to open shifts
-      // Start from row 1 (skip header row 0)
-      for (let rowIndex = 1; rowIndex < excelData.length; rowIndex++) {
-        const row = excelData[rowIndex];
-        const firstName = row[5]; // Voornaam column (index 5)
-        const lastName = row[6];  // Achternaam column (index 6)
+        const isOpenShift = !user || firstName === 'Open';
         
-        // Check if this is an open shift
-        if (firstName === 'Open' && lastName === 'Shift') {
-          // Color entire row red
-          const excelRowNum = rowIndex + 1; // Excel rows are 1-indexed
-          const columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-          
-          columns.forEach(col => {
-            const cellRef = `${col}${excelRowNum}`;
-            if (!worksheet[cellRef]) return;
-            
-            // Apply red background color
-            worksheet[cellRef].s = {
-              fill: {
-                fgColor: { rgb: "FFFF0000" } // Red background
-              },
-              font: {
-                color: { rgb: "FFFFFFFF" } // White text for better contrast
-              }
+        const row = worksheet.addRow({
+          datum: dateStr,
+          dag: dayName,
+          type: type,
+          startTijd: startTime,
+          eindTijd: endTime,
+          voornaam: firstName,
+          achternaam: lastName,
+          status: status
+        });
+        
+        // Apply red background and white text for open shifts (entire row)
+        if (isOpenShift) {
+          row.eachCell({ includeEmpty: true }, (cell) => {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFF0000' } // Red background
+            };
+            cell.font = {
+              color: { argb: 'FFFFFFFF' }, // White text
+              bold: true
             };
           });
         }
       }
       
-      // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Planning');
-      
-      // Generate XLSX buffer with cell styling enabled
-      const xlsxBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx', cellStyles: true });
+      // Generate XLSX buffer
+      const buffer = await workbook.xlsx.writeBuffer();
       
       // Set headers for XLSX download
       const filename = `planning_${targetMonth}_${targetYear}.xlsx`;
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Content-Length', xlsxBuffer.length);
+      res.setHeader('Content-Length', Buffer.byteLength(buffer));
       
-      res.end(xlsxBuffer);
+      res.end(buffer);
       
     } catch (error) {
       console.error("Error exporting XLSX schedule:", error);
