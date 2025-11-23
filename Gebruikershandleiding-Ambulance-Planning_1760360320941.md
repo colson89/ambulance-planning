@@ -488,10 +488,25 @@ Als admin ziet u extra knoppen:
 
 **Mogelijke Wijzigingen:**
 - Namen en contactgegevens
+- Email adres (optioneel)
+- **Telefoonnummer** ⭐ NIEUW: Voeg contactinformatie toe (optioneel, max 20 karakters)
+- **Profielfoto** ⭐ NIEUW: Upload een profielfoto (max 2MB, JPG/PNG/GIF)
 - Aantal werkuren aanpassen
 - Rol wijzigen (ambulancier ↔ admin)
 - Professional status wijzigen
-- Rijbewijs C status wijzigen ⭐ NIEUW
+- Rijbewijs C status wijzigen
+
+**Profielfoto Uploaden:**
+1. Klik bewerkknop (potlood icoon) naast gebruiker
+2. Klik op "Bestand kiezen" bij Profielfoto sectie
+3. Selecteer een foto (max 2MB)
+4. Bekijk de preview rechts van het upload veld
+5. Klik "Opslaan" om alle wijzigingen toe te passen
+
+**Telefoonnummer Toevoegen:**
+1. Klik bewerkknop (potlood icoon) naast gebruiker
+2. Vul het telefoonnummer in (bijvoorbeeld: +32 123 45 67 89)
+3. Klik "Opslaan"
 
 **Wachtwoord Wijzigen:**
 - Klik sleutel icoon naast gebruiker
