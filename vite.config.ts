@@ -37,6 +37,12 @@ export default defineConfig({
     },
   },
   root: path.resolve(__dirname, "client"),
+  server: {
+    // Add timestamp to module imports in development to prevent cache issues
+    hmr: {
+      overlay: true,
+    },
+  },
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
