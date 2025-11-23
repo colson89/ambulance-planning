@@ -63,3 +63,10 @@ waitForPort = 5000
 
 [agent]
 expertMode = true
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BAZu3RZPYS_xwP-VaSjvbUmK_Glyftw1CuJAOR7FqrIo7l9VaGGIqiqr-JI9Pc_iuDvsVvqpOIENOOhfrptOfbs"
+VAPID_PRIVATE_KEY = "wdoy3LIYtuyDU7L5rhMm_9QZi7_DUd04XWSDJanEa3M"
+VAPID_CONTACT_EMAIL = "mailto:planning@brandweerzonekempen.be"

@@ -329,3 +329,27 @@ export const insertVerdiShiftRegistrySchema = createInsertSchema(verdiShiftRegis
 });
 export type VerdiShiftRegistry = typeof verdiShiftRegistry.$inferSelect;
 export type InsertVerdiShiftRegistry = z.infer<typeof insertVerdiShiftRegistrySchema>;
+
+// Push Notification Subscriptions
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  // Notification preferences
+  notifyNewPlanningPublished: boolean("notify_new_planning_published").notNull().default(false),
+  notifyMyShiftChanged: boolean("notify_my_shift_changed").notNull().default(false),
+  notifyAvailabilityDeadline: boolean("notify_availability_deadline").notNull().default(true),
+  deadlineWarningDays: integer("deadline_warning_days").notNull().default(3), // Hoeveel dagen van tevoren waarschuwen
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
