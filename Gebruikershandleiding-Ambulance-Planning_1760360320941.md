@@ -2183,6 +2183,36 @@ Een hard refresh forceert de browser om de nieuwste versie te downloaden.
 
 ---
 
+### ⭐ Versie 2025.6 - 23 November 2025
+
+**Stabiliteit & Integraties:**
+- 🎯 **Integraties Management Pagina** - Nieuwe centrale hub voor externe diensten
+  - Toegang via "Integraties" in het hoofdmenu
+  - Overzicht van alle beschikbare externe koppelingen
+  - Verdi Alarm Software integratie nu via deze centrale pagina
+  - Ruimte voor toekomstige integraties (HR-systemen, andere alarmsoftware)
+  - Alleen toegankelijk voor admins en supervisors
+  - Navigatie: Dashboard → Integraties → Verdi Alarm Software
+
+- 🔧 **Verdi Sync Database Fix** - Split shift ondersteuning toegevoegd
+  - Nieuwe database kolommen voor split shift synchronisatie
+  - Voorkomt "column does not exist" errors bij Verdi sync
+  - Ondersteunt split_group, split_start_time en split_end_time
+  - Elimineerde frontend crashes ("Er is iets misgegaan")
+  - Stabiele API responses (geen 500 errors meer)
+
+- 🛡️ **Error Handling Verbeteringen** - Betere afhandeling van edge cases
+  - Verdi configuratie loading state correct afgehandeld
+  - Onderscheid tussen laden (undefined) en geen configuratie (null)
+  - Voorkomt null reference errors bij eerste gebruik
+  - Formulier reset werkt correct voor stations zonder Verdi configuratie
+
+**Gebruikerservaring:**
+- Soepelere navigatie naar Verdi instellingen via centrale Integraties hub
+- Minder crashes en error meldingen
+- Betere feedback bij ontbrekende configuratie
+- Stabielere Verdi synchronisatie
+
 ### ⭐ Versie 2025.5 - November 2025
 
 **Beveiliging & Performance:**
