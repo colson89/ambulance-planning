@@ -89,17 +89,6 @@ export default function Profile() {
   const [, setLocation] = useLocation();
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false);
 
-  // Guard: Wait for authentication to complete
-  if (!user) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex justify-center items-center h-64">
-          <p className="text-muted-foreground">Laden...</p>
-        </div>
-      </div>
-    );
-  }
-
   const preferencesForm = useForm({
     resolver: zodResolver(preferencesSchema),
     defaultValues: {
@@ -279,6 +268,17 @@ export default function Profile() {
       uploadPhotoMutation.mutate(file);
     }
   };
+
+  // Guard: Wait for authentication to complete (after all hooks)
+  if (!user) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex justify-center items-center h-64">
+          <p className="text-muted-foreground">Laden...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">
