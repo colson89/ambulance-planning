@@ -3128,6 +3128,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       }
       
       // Haal alle shifts van de gebruiker op (huidige maand + 2 maanden vooruit)
+      // BELANGRIJK: Cross-station support - haal shifts van ALLE stations op
       const now = new Date();
       const currentMonth = now.getMonth() + 1; // 1-12
       const currentYear = now.getFullYear();
@@ -3137,12 +3138,17 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         const date = addMonths(now, i);
         const month = date.getMonth() + 1;
         const year = date.getFullYear();
-        const monthShifts = await storage.getShiftsByMonth(month, year, user.stationId);
+        // Geen stationId filter - ophalen van alle stations voor cross-station users
+        const monthShifts = await storage.getShiftsByMonth(month, year);
         allShifts.push(...monthShifts);
       }
       
       // Filter alleen shifts van deze gebruiker
       const userShifts = allShifts.filter(shift => shift.userId === user.id);
+      
+      // Haal alle stations op voor station namen in events
+      const allStations = await storage.getAllStations();
+      const stationMap = new Map(allStations.map(s => [s.id, s.displayName]));
       
       // Genereer ICS bestand volgens RFC 5545
       const icsLines = [
@@ -3160,7 +3166,10 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         const startTime = new Date(shift.startTime);
         const endTime = new Date(shift.endTime);
         
-        // Hard-coded tijden op basis van shift type
+        // Haal station naam op voor deze shift (voor cross-station support)
+        const stationName = stationMap.get(shift.stationId) || 'Onbekend';
+        
+        // Hard-coded tijden op basis van shift type + station naam
         let summary = '';
         let description = '';
         
@@ -3168,19 +3177,19 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           if (shift.isSplitShift) {
             const startHour = startTime.getUTCHours();
             if (startHour === 7) {
-              summary = 'Dagshift (07:00-13:00)';
-              description = 'Ambulance dagshift - eerste helft';
+              summary = `Dagshift VM - ${stationName}`;
+              description = `Ambulance dagshift voormiddag (07:00-13:00) - ${stationName}`;
             } else {
-              summary = 'Dagshift (13:00-19:00)';
-              description = 'Ambulance dagshift - tweede helft';
+              summary = `Dagshift NM - ${stationName}`;
+              description = `Ambulance dagshift namiddag (13:00-19:00) - ${stationName}`;
             }
           } else {
-            summary = 'Dagshift (07:00-19:00)';
-            description = 'Ambulance dagshift - volledig';
+            summary = `Dagshift - ${stationName}`;
+            description = `Ambulance dagshift volledig (07:00-19:00) - ${stationName}`;
           }
         } else {
-          summary = 'Nachtshift (19:00-07:00)';
-          description = 'Ambulance nachtshift';
+          summary = `Nachtshift - ${stationName}`;
+          description = `Ambulance nachtshift (19:00-07:00) - ${stationName}`;
         }
         
         // Format datetime voor ICS (UTC format: YYYYMMDDTHHmmssZ)
