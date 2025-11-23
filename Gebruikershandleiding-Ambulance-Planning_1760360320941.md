@@ -69,7 +69,7 @@ Het planning systeem kan als een **native app** worden geïnstalleerd op uw smar
 
 ### Voordelen van Installatie
 
-✅ **Snelle toegang**: Icoon op uw startscherm, net als een gewone app  
+✅ **Snelle toegang**: Icoon op uw startscherm/desktop, net als een gewone app  
 ✅ **Beter prestaties**: Sneller laden door slimme caching  
 ✅ **Offline werken**: Bekijk uw planning zonder internetverbinding  
 ✅ **Geen app store nodig**: Installeer direct vanuit uw browser  
