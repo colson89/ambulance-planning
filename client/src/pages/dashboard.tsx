@@ -461,10 +461,10 @@ export default function Dashboard() {
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => setLocation("/verdi")}
+                onClick={() => setLocation("/integrations")}
               >
                 <LinkIcon className="h-4 w-4 mr-2" />
-                Verdi
+                Integraties
               </Button>
             </>
           )}

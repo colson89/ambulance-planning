@@ -22,6 +22,7 @@ const Statistics = lazy(() => import("@/pages/statistics"));
 const HolidaysManagement = lazy(() => import("@/pages/holidays-management"));
 const StationSelect = lazy(() => import("@/pages/station-select"));
 const VerdiSettings = lazy(() => import("@/pages/verdi-settings"));
+const Integrations = lazy(() => import("@/pages/integrations"));
 
 // Loading component for Suspense boundaries
 function PageLoader() {
@@ -46,6 +47,7 @@ function Router() {
         <ProtectedRoute path="/settings" component={WeekdaySettings} />
         <ProtectedRoute path="/statistics" component={Statistics} />
         <ProtectedRoute path="/holidays" component={HolidaysManagement} />
+        <ProtectedRoute path="/integrations" component={Integrations} />
         <ProtectedRoute path="/verdi" component={VerdiSettings} />
         <Route path="/station-select" component={StationSelect} />
         <Route path="/auth" component={AuthPage} />
