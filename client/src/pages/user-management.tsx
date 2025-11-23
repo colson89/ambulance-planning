@@ -13,7 +13,7 @@ import { z } from "zod";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2, UserPlus, KeyRound, Home, Users, Settings, Plus, Minus, X } from "lucide-react";
+import { Pencil, Trash2, UserPlus, KeyRound, Home, Users, Settings, Plus, Minus, X, Upload, Camera } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Calendar } from "@/components/ui/calendar";
@@ -31,6 +31,7 @@ const updateUserSchema = z.object({
   hours: z.number().min(0).max(168),
   isProfessional: z.boolean().optional(),
   hasDrivingLicenseC: z.boolean().optional(),
+  phoneNumber: z.string().max(20, "Telefoonnummer mag maximaal 20 karakters bevatten").regex(/^[+\d\s()-]*$/, "Telefoonnummer mag alleen cijfers, spaties en +()- bevatten").optional().or(z.literal("")),
 });
 
 type UpdateUserData = z.infer<typeof updateUserSchema>;
@@ -57,6 +58,8 @@ export default function UserManagement() {
   const [changePrimaryStationDialogOpen, setChangePrimaryStationDialogOpen] = useState(false);
   const [newPrimaryStationId, setNewPrimaryStationId] = useState<number | null>(null);
   const [maxHoursForOldStation, setMaxHoursForOldStation] = useState<number>(24);
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   
   // Query om stations op te halen (voor supervisors)
   const { data: stations = [] } = useQuery({
@@ -343,6 +346,73 @@ export default function UserManagement() {
       });
       changePasswordForm.reset();
       setChangePasswordDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePhoneNumberMutation = useMutation({
+    mutationFn: async ({ userId, phoneNumber }: { userId: number; phoneNumber: string | null }) => {
+      const res = await apiRequest("PATCH", `/api/users/${userId}/phone`, { phoneNumber });
+      return res.json();
+    },
+    onSuccess: () => {
+      if (user?.role === 'supervisor') {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/users/all"] });
+      toast({
+        title: "Succes",
+        description: "Telefoonnummer bijgewerkt",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const uploadProfilePhotoMutation = useMutation({
+    mutationFn: async ({ userId, file }: { userId: number; file: File }) => {
+      const formData = new FormData();
+      formData.append('photo', file);
+      
+      const res = await fetch(`/api/users/${userId}/profile-photo`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Kon foto niet uploaden");
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      if (user?.role === 'supervisor') {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/users/all"] });
+      toast({
+        title: "Succes",
+        description: "Profielfoto bijgewerkt",
+      });
+      setSelectedPhotoFile(null);
+      setPhotoPreviewUrl(null);
     },
     onError: (error: Error) => {
       toast({
@@ -943,8 +1013,14 @@ export default function UserManagement() {
                         role: u.role as "admin" | "ambulancier" | "supervisor",
                         hours: u.hours,
                         isProfessional: u.isProfessional || false,
-                        hasDrivingLicenseC: u.hasDrivingLicenseC ?? true
+                        hasDrivingLicenseC: u.hasDrivingLicenseC ?? true,
+                        phoneNumber: u.phoneNumber || ""
                       });
+                      setPhotoPreviewUrl(u.profilePhotoUrl || null);
+                      setSelectedPhotoFile(null);
+                    } else {
+                      setPhotoPreviewUrl(null);
+                      setSelectedPhotoFile(null);
                     }
                   }}>
                     <DialogTrigger asChild>
@@ -958,18 +1034,86 @@ export default function UserManagement() {
                       </DialogHeader>
                       <Form {...updateUserForm}>
                         <form 
-                          onSubmit={updateUserForm.handleSubmit((data) => {
+                          onSubmit={updateUserForm.handleSubmit(async (data) => {
                             if (!selectedUserId) return;
-                            updateUserMutation.mutate({ 
+                            
+                            // Update basic user data
+                            await updateUserMutation.mutateAsync({ 
                               userId: selectedUserId, 
                               data: {
-                                ...data,
-                                role: data.role as "admin" | "ambulancier" | "supervisor"
+                                firstName: data.firstName,
+                                lastName: data.lastName,
+                                email: data.email,
+                                role: data.role as "admin" | "ambulancier" | "supervisor",
+                                hours: data.hours,
+                                isProfessional: data.isProfessional,
+                                hasDrivingLicenseC: data.hasDrivingLicenseC
                               }
                             });
+                            
+                            // Update phone number if changed
+                            const currentUser = users?.find((u: User) => u.id === selectedUserId);
+                            if (data.phoneNumber !== (currentUser?.phoneNumber || "")) {
+                              await updatePhoneNumberMutation.mutateAsync({
+                                userId: selectedUserId,
+                                phoneNumber: data.phoneNumber || null
+                              });
+                            }
+                            
+                            // Upload profile photo if selected
+                            if (selectedPhotoFile) {
+                              await uploadProfilePhotoMutation.mutateAsync({
+                                userId: selectedUserId,
+                                file: selectedPhotoFile
+                              });
+                            }
                           })} 
                           className="space-y-4"
                         >
+                          {/* Profile Photo Section */}
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Profielfoto</label>
+                            <div className="flex items-center gap-4">
+                              <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
+                                {photoPreviewUrl || selectedPhotoFile ? (
+                                  <img 
+                                    src={selectedPhotoFile ? URL.createObjectURL(selectedPhotoFile) : photoPreviewUrl || undefined}
+                                    alt="Profile preview"
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                    <Camera className="w-8 h-8" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <Input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      if (file.size > 2 * 1024 * 1024) {
+                                        toast({
+                                          title: "Bestand te groot",
+                                          description: "De foto mag maximaal 2MB zijn",
+                                          variant: "destructive"
+                                        });
+                                        return;
+                                      }
+                                      setSelectedPhotoFile(file);
+                                    }
+                                  }}
+                                  className="cursor-pointer"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Maximaal 2MB, JPG, PNG of GIF
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <label className="text-sm font-medium">Voornaam</label>
@@ -995,6 +1139,16 @@ export default function UserManagement() {
                               placeholder="jan.smit@voorbeeld.be"
                               data-testid="input-email-update"
                               {...updateUserForm.register("email")}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Telefoonnummer (optioneel)</label>
+                            <p className="text-sm text-muted-foreground">Voor contactinformatie</p>
+                            <Input
+                              type="tel"
+                              placeholder="+32 123 45 67 89"
+                              {...updateUserForm.register("phoneNumber")}
                             />
                           </div>
 
