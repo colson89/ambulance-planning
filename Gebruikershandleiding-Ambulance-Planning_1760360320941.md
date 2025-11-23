@@ -12,6 +12,7 @@
 
 - [Inleiding](#inleiding)
 - [Inloggen en Navigatie](#inloggen-en-navigatie)
+- [App Installatie (Progressive Web App)](#-app-installatie-progressive-web-app) ⭐ NIEUW
 - [Handleiding voor Ambulanciers](#handleiding-voor-ambulanciers)
   - [Voorkeuren Opgeven](#-voorkeuren-opgeven)
   - [Planning Bekijken](#-uw-planning-bekijken)
@@ -59,6 +60,114 @@ Het systeem heeft een centrale dashboard met snelle toegang tot alle functies:
 - **Dashboard**: Overzicht van uw planning en beschikbare acties (homepagina)
 - **Voorkeuren Opgeven**: Uw beschikbaarheid voor komende maanden instellen
 - **Profiel**: Persoonlijke gegevens en instellingen bekijken/wijzigen
+
+---
+
+## 📱 App Installatie (Progressive Web App) ⭐ NIEUW
+
+Het planning systeem kan als een **native app** worden geïnstalleerd op uw smartphone, tablet of computer! Dit geeft u een snellere ervaring en werkt ook zonder internetverbinding.
+
+### Voordelen van Installatie
+
+✅ **Snelle toegang**: Icoon op uw startscherm, net als een gewone app  
+✅ **Beter prestaties**: Sneller laden door slimme caching  
+✅ **Offline werken**: Bekijk uw planning zonder internetverbinding  
+✅ **Geen app store nodig**: Installeer direct vanuit uw browser  
+✅ **Automatische updates**: Altijd de nieuwste versie  
+
+### 📲 Installeren op Android
+
+**Methode 1: Via Installatie Knop**
+1. Open het planning systeem in Chrome
+2. Klik op de **"Installeer App"** knop rechtsbovenin
+3. Klik op **"Installeren"** in de popup
+4. De app verschijnt nu op uw startscherm
+
+**Methode 2: Via Browser Menu**
+1. Open het planning systeem in Chrome
+2. Tik op het menu (⋮) rechtsboven
+3. Kies **"App installeren"** of **"Toevoegen aan startscherm"**
+4. Bevestig de installatie
+
+### 📲 Installeren op iPhone/iPad
+
+**Via Safari:**
+1. Open het planning systeem in Safari
+2. Tik op het **Deel** icoon (vierkant met pijl omhoog)
+3. Scroll naar beneden en kies **"Zet op beginscherm"**
+4. Geef de app een naam (bijvoorbeeld "APK Planning")
+5. Tik op **"Voeg toe"**
+6. De app verschijnt nu op uw beginscherm
+
+**Let op:** iOS ondersteunt alleen installatie via Safari, niet via Chrome.
+
+### 💻 Installeren op Computer (Windows/Mac/Linux)
+
+**Via Chrome/Edge:**
+1. Open het planning systeem in Chrome of Edge
+2. Klik op het **installatie icoon** in de adresbalk (rechtsboven)
+3. Klik op **"Installeren"**
+4. De app opent in een eigen venster
+
+**Via Browser Menu:**
+1. Klik op het menu (⋮) rechtsboven
+2. Kies **"Installeren Ambulance Planning..."**
+3. Bevestig de installatie
+
+### 🔄 Offline Functionaliteit
+
+**Wat werkt offline?**
+- ✅ Bekijken van uw planning (laatst geladen data)
+- ✅ Bekijken van uw profiel
+- ✅ Navigeren door de app
+
+**Wat werkt NIET offline?**
+- ❌ Wijzigen van voorkeuren (vereist internet)
+- ❌ Nieuwe shifts toevoegen
+- ❌ Planning updates ophalen
+
+**Hoe werkt het?**
+- De app slaat automatisch data op tijdens gebruik
+- Bij offline gebruik ziet u de laatst opgehaalde informatie
+- Zodra u weer online bent, worden nieuwe updates automatisch geladen
+- U krijgt een melding als een actie internet vereist
+
+### 🔧 App Beheer
+
+**App Verwijderen - Android:**
+1. Houd het app icoon ingedrukt
+2. Kies **"Verwijderen"** of sleep naar prullenbak
+
+**App Verwijderen - iOS:**
+1. Houd het app icoon ingedrukt
+2. Kies **"Verwijder app"**
+3. Bevestig met **"Verwijder van beginscherm"**
+
+**App Verwijderen - Computer:**
+1. Open de app
+2. Klik op het menu (⋮) rechtsboven
+3. Kies **"Ambulance Planning verwijderen..."**
+4. Bevestig de verwijdering
+
+### ❓ Veelgestelde Vragen PWA
+
+**Q: Waarom zie ik geen installatie knop?**  
+A: Controleer of:
+- U de website bezoekt via HTTPS (niet HTTP)
+- U een ondersteunde browser gebruikt (Chrome, Safari, Edge)
+- U de website nog niet heeft geïnstalleerd
+
+**Q: Verschilt de app van de website?**  
+A: Nee, het is exact dezelfde applicatie, maar dan met betere prestaties en offline functionaliteit.
+
+**Q: Neemt de app veel opslagruimte in?**  
+A: Nee, ongeveer 5-10 MB voor de app en cached data.
+
+**Q: Krijg ik automatisch updates?**  
+A: Ja! Bij het openen van de app worden updates automatisch gedownload en geïnstalleerd.
+
+**Q: Kan ik de app op meerdere apparaten installeren?**  
+A: Ja, u kunt de app op zoveel apparaten installeren als u wilt. Uw data is altijd gesynchroniseerd via uw account.
 
 ---
 
