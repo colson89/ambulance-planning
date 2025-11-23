@@ -1161,6 +1161,43 @@ Instelbaar tussen 1 en 60 dagen
 - **Eenvoudig systeem**: → PIT diensten/ZW diensten die hier voor kiezen → Enkel volledige dag en nacht shiften
 - **Uitgebreid systeem**: → Enkel voor ZW diensten: volledige dagshiften/halve dagshiften + nachtshiften
 
+### 🔌 Integraties Beheer
+
+⭐ **NIEUW - Centraal Overzicht**
+
+Het Ambulance Planning Systeem biedt nu een centraal overzicht van alle externe koppelingen via de **Integraties** pagina.
+
+#### Toegang tot Integraties
+
+**Wie kan integraties beheren?**
+- ✅ **Admins**: Toegang tot integraties voor hun station
+- ✅ **Supervisors**: Volledige toegang tot alle integraties van alle stations
+
+**Integraties Pagina Openen:**
+1. Klik op "Integraties" in het hoofdmenu van het dashboard
+2. U ziet een overzicht van alle beschikbare externe koppelingen
+
+**Beschikbare Integraties:**
+
+📱 **Verdi Alarm Software** (Actief)
+- Automatische shift synchronisatie naar Verdi alarmeringscentrale
+- Configureer URL, credentials en gebruikersmappings
+- Status: Volledig operationeel
+
+🔜 **Toekomstige Integraties**
+- Ruimte voor HR-systemen
+- Andere alarmsoftware
+- En meer externe diensten
+
+#### Waarom Integraties?
+
+Integraties verbinden het planning systeem met externe tools en diensten. Dit zorgt voor:
+
+- ✅ **Automatisering**: Geen handmatig overtypen van data
+- ✅ **Up-to-date informatie**: Data blijft gesynchroniseerd tussen systemen
+- ✅ **Tijdsbesparing**: Minder administratief werk
+- ✅ **Foutreductie**: Minder kans op tikfouten bij handmatige invoer
+
 ### 🔗 Verdi Integratie
 
 ⭐ **NIEUW - Volledig Operationeel**
@@ -1192,8 +1229,9 @@ Het Ambulance Planning Systeem kan nu automatisch shifts synchroniseren met Verd
 - ✅ **Supervisors**: Kunnen alle stations configureren
 
 **Configuratiepagina Openen:**
-1. Klik op "Verdi Integratie" in het hoofdmenu
-2. U ziet drie tabbladen: Configuratie, Gebruiker Mappings, Positie Mappings
+1. Klik op "Integraties" in het hoofdmenu
+2. Klik op de "Verdi Alarm Software" kaart
+3. U ziet drie tabbladen: Configuratie, Gebruiker Mappings, Positie Mappings
 
 **Tab 1: Station Configuratie**
 
