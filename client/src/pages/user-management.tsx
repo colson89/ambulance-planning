@@ -446,7 +446,7 @@ export default function UserManagement() {
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Gebruikersbeheer</h1>
+        <h1 className="text-3xl font-bold">Gebruikersbeheer - CACHE TEST ✓</h1>
         <Button
           variant="outline"
           onClick={() => setLocation("/dashboard")}
