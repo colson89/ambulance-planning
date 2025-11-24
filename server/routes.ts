@@ -173,6 +173,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get ALL users for cross-team management (supervisors only)
   app.get("/api/users/all", requireAdmin, async (req, res) => {
+    // Disable caching for dynamic user data (critical for supervisors switching stations)
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     try {
       console.log("Getting all users for cross-team management");
       
