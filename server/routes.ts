@@ -201,6 +201,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Get all users (admin only, filtered by station - supervisors see all stations)
   app.get("/api/users", requireAdmin, async (req, res) => {
+    // Disable caching for dynamic user data (critical for supervisors switching stations)
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     try {
       console.log("=== GET /api/users DEBUG ===");
       console.log("Admin user object:", JSON.stringify(req.user, null, 2));
