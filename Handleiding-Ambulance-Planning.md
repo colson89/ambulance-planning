@@ -30,6 +30,7 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
   - [Profiel Beheren](#-profiel-beheren)
   - [Kalender Synchronisatie](#-kalender-synchronisatie) ⭐ NIEUW
   - [Push Notificaties](#-push-notificaties) ⭐ NIEUW
+    - [Probleemoplossing Push Notificaties](#️-probleemoplossing-push-notificaties)
 - [Handleiding voor Admins](#handleiding-voor-admins)
   - [Verdi Integratie](#-verdi-integratie) ⭐ NIEUW
 - [Handleiding voor Supervisors](#handleiding-voor-supervisors)
@@ -615,6 +616,182 @@ A: Ja! U kunt kiezen tussen 1 tot 7 dagen van tevoren gewaarschuwd worden.
 - Gebruikt Web Push Protocol standaard (W3C)
 - End-to-end versleuteld tussen server en uw apparaat
 - VAPID authenticatie voor veilige verzending
+
+#### 🛠️ Probleemoplossing Push Notificaties
+
+Als u geen push notificaties ontvangt, controleer dan de volgende punten per platform:
+
+---
+
+##### 📱 Android - Probleemoplossing
+
+**Stap 1: Controleer Browser Notificatie Instellingen**
+1. Open Chrome op uw Android telefoon
+2. Tik op de **drie puntjes** rechtsboven → **Instellingen**
+3. Tik op **Site-instellingen** → **Notificaties**
+4. Zoek het planning systeem in de lijst
+5. Zorg dat het op **"Toestaan"** staat
+
+**Stap 2: Controleer Systeem Notificatie Instellingen**
+1. Ga naar **Instellingen** → **Apps** → **Chrome** (of uw browser)
+2. Tik op **Notificaties**
+3. Zorg dat notificaties zijn **ingeschakeld**
+4. Controleer dat **"Stil weergeven"** is **uitgeschakeld**
+
+**Stap 3: Controleer Batterij Optimalisatie**
+1. Ga naar **Instellingen** → **Apps** → **Chrome**
+2. Tik op **Batterij**
+3. Selecteer **"Niet beperken"** of **"Onbeperkt"**
+4. Dit voorkomt dat Android de browser op de achtergrond stopt
+
+**Stap 4: Controleer "Niet Storen" Modus**
+1. Open **Instellingen** → **Geluid** → **Niet storen**
+2. Zorg dat deze modus is **uitgeschakeld**, of
+3. Voeg Chrome toe aan de **uitzonderingen**
+
+**Stap 5: PWA Installatie (Aanbevolen)**
+1. Open de planning website in Chrome
+2. Tik op de **drie puntjes** rechtsboven
+3. Tik op **"Installeren"** of **"Toevoegen aan startscherm"**
+4. De app werkt nu betrouwbaarder op de achtergrond
+
+---
+
+##### 🍎 iPhone/iPad (iOS) - Probleemoplossing
+
+**BELANGRIJK: iOS vereist speciale stappen!**
+
+Push notificaties op iPhone/iPad werken ALLEEN als:
+- U **iOS 16.4 of nieuwer** heeft
+- U **Safari** gebruikt (niet Chrome of Firefox!)
+- U de app als **PWA installeert** (verplicht op iOS!)
+
+**Stap 1: Controleer iOS Versie**
+1. Ga naar **Instellingen** → **Algemeen** → **Info**
+2. Controleer dat de versie **16.4 of hoger** is
+3. Zo niet, update eerst uw iPhone/iPad
+
+**Stap 2: Installeer als PWA (VERPLICHT)**
+1. Open **Safari** (niet een andere browser!)
+2. Ga naar de planning website
+3. Tik op het **deel-icoon** (vierkant met pijl omhoog)
+4. Scroll naar beneden en tik op **"Zet op beginscherm"**
+5. Geef de app een naam en tik op **"Voeg toe"**
+6. Open nu de app vanaf uw beginscherm (NIET vanuit Safari)
+
+**Stap 3: Schakel Notificaties In (in de PWA)**
+1. Open de geïnstalleerde app vanaf uw beginscherm
+2. Ga naar uw **Profiel**
+3. Klik op **"Notificaties Inschakelen"**
+4. Tik op **"Sta toe"** wanneer iOS vraagt om toestemming
+
+**Stap 4: Controleer iOS Notificatie Instellingen**
+1. Ga naar **Instellingen** → **Notificaties**
+2. Zoek de planning app in de lijst
+3. Zorg dat **"Sta berichtgeving toe"** is ingeschakeld
+4. Kies hoe u notificaties wilt ontvangen (banner, geluid, badge)
+
+**Stap 5: Controleer Focus/Concentratie Modus**
+1. Ga naar **Instellingen** → **Focus**
+2. Controleer of een Focus modus actief is
+3. Zo ja, voeg de planning app toe aan de toegestane apps
+
+**Veelvoorkomende iOS Problemen:**
+- ❌ **Chrome/Firefox op iOS**: Ondersteunt GEEN push notificaties - gebruik Safari
+- ❌ **Niet geïnstalleerd als PWA**: Push werkt niet in de browser op iOS
+- ❌ **iOS ouder dan 16.4**: Push notificaties worden niet ondersteund
+- ❌ **Sluimerstand/Focus actief**: Notificaties worden geblokkeerd
+
+---
+
+##### 💻 Windows/Mac/Linux Desktop - Probleemoplossing
+
+**Stap 1: Controleer Browser Notificatie Toestemming**
+
+**Chrome:**
+1. Klik op het **slot-icoon** of **i-icoon** links van de URL
+2. Zoek **"Notificaties"** in het dropdown menu
+3. Zet op **"Toestaan"**
+4. Herlaad de pagina
+
+**Edge:**
+1. Klik op het **slot-icoon** links van de URL
+2. Klik op **"Machtigingen voor deze site"**
+3. Zet **"Notificaties"** op **"Toestaan"**
+
+**Firefox:**
+1. Klik op het **slot-icoon** links van de URL
+2. Klik op **"Verbinding beveiligd"** → **"Meer informatie"**
+3. Ga naar **"Machtigingen"** → **"Notificaties"**
+4. Verwijder blokkade en sta toe
+
+**Safari (Mac):**
+1. Ga naar **Safari** → **Voorkeuren** → **Websites** → **Notificaties**
+2. Zoek het planning systeem
+3. Selecteer **"Toestaan"**
+
+**Stap 2: Controleer Systeem Notificatie Instellingen**
+
+**Windows:**
+1. Ga naar **Instellingen** → **Systeem** → **Notificaties**
+2. Zorg dat notificaties zijn **ingeschakeld**
+3. Scroll naar beneden en zoek uw browser (Chrome/Edge/Firefox)
+4. Zorg dat deze **aan** staat
+5. Controleer **Focushulp** - zet uit of voeg browser toe
+
+**Mac:**
+1. Ga naar **Systeemvoorkeuren** → **Berichtgeving & Focus**
+2. Zoek uw browser in de lijst
+3. Zorg dat **"Sta berichtgeving toe"** is ingeschakeld
+4. Kies **"Banners"** of **"Meldingen"**
+
+**Stap 3: Houd Browser Open op Achtergrond**
+- Notificaties werken het beste als de browser op de achtergrond draait
+- Sluit de browser niet volledig af
+- Overweeg de browser te starten bij het opstarten van uw computer
+
+---
+
+##### ✅ Algemene Checklist
+
+Doorloop deze checklist als notificaties niet werken:
+
+| # | Controle | Actie |
+|---|----------|-------|
+| 1 | **Ingeschakeld in app?** | Ga naar Profiel → Push Notificaties sectie → Klik "Notificaties Inschakelen" |
+| 2 | **Toestemming gegeven?** | Browser vraagt toestemming → Klik "Toestaan" |
+| 3 | **Types ingeschakeld?** | Zet minstens één type AAN (groen) |
+| 4 | **Test notificatie werkt?** | Klik "Test Notificatie" → Ontvangt u een bericht? |
+| 5 | **Juiste browser?** | iOS: ALLEEN Safari. Android: Chrome aanbevolen |
+| 6 | **PWA geïnstalleerd?** | iOS: VERPLICHT. Android: Aanbevolen |
+| 7 | **Systeem notificaties aan?** | Check telefoon/computer instellingen |
+| 8 | **Niet storen uit?** | Zet Focus/Niet Storen modus uit |
+| 9 | **Batterij optimalisatie?** | Android: Zet op "Niet beperken" |
+| 10 | **Abonnement verlopen?** | Schakel uit en opnieuw in bij Profiel |
+
+---
+
+##### 🔄 Opnieuw Abonneren
+
+Als niets werkt, probeer opnieuw te abonneren:
+
+1. Ga naar uw **Profiel**
+2. Klik op **"Notificaties Uitschakelen"** (onderaan de sectie)
+3. Wacht 5 seconden
+4. Klik op **"Notificaties Inschakelen"**
+5. Geef opnieuw toestemming wanneer de browser vraagt
+6. Test met de **"Test Notificatie"** knop
+
+---
+
+##### 📞 Nog Steeds Problemen?
+
+Neem contact op met uw beheerder met de volgende informatie:
+- Welk apparaat gebruikt u? (bijv. iPhone 14, Samsung Galaxy S23)
+- Welke browser? (bijv. Safari, Chrome)
+- Welke versie van het besturingssysteem? (bijv. iOS 17.2, Android 14)
+- Welke foutmelding ziet u (indien van toepassing)?
+- Werkt de test notificatie?
 
 ---
 
