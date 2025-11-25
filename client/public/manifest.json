@@ -1,7 +1,7 @@
 {
-  "name": "Ambulance Planning Kempen",
-  "short_name": "APK Planning",
-  "description": "Intelligente shift planning voor ambulancediensten",
+  "name": "Planning BWZK",
+  "short_name": "Planning BWZK",
+  "description": "Shift planning voor Brandweerzone Kempen",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
