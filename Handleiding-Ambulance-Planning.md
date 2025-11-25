@@ -23,7 +23,8 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
 
 - [Inleiding](#inleiding)
 - [Inloggen en Navigatie](#inloggen-en-navigatie)
-- [App Installatie (Progressive Web App)](#-app-installatie-progressive-web-app) ⭐ NIEUW
+- [App Installatie (Progressive Web App)](#-app-installatie-progressive-web-app)
+- [Responsieve Weergave](#-responsieve-weergave) ⭐ NIEUW
 - [Handleiding voor Ambulanciers](#handleiding-voor-ambulanciers)
   - [Voorkeuren Opgeven](#-voorkeuren-opgeven)
   - [Planning Bekijken](#-uw-planning-bekijken)
@@ -181,6 +182,54 @@ A: Ja! Bij het openen van de app worden updates automatisch gedownload en geïns
 
 **Q: Kan ik de app op meerdere apparaten installeren?**  
 A: Ja, u kunt de app op zoveel apparaten installeren als u wilt. Uw data is altijd gesynchroniseerd via uw account.
+
+---
+
+## 📐 Responsieve Weergave ⭐ NIEUW
+
+Het planning systeem past zich **automatisch aan** aan de grootte van uw scherm. Of u nu werkt op een grote monitor, een tablet in de ambulance, of uw smartphone - de app toont altijd een optimale weergave.
+
+### Automatische Layout Aanpassing
+
+**Op grote schermen (computer/laptop):**
+- Volledige navigatiebalk met alle menu-opties zichtbaar
+- Tabellen met alle kolommen naast elkaar
+- Ruime kalenderweergave met volledige details
+
+**Op middelgrote schermen (tablet):**
+- Compactere navigatie
+- Tabellen passen zich aan met minder kolommen
+- Kalender toont essentiële informatie
+
+**Op kleine schermen (smartphone):**
+- **Hamburger menu** (☰) voor navigatie - tik om het menu te openen
+- **Kaart-weergave** in plaats van tabellen - makkelijker lezen op klein scherm
+- Compacte kalender met swipe-navigatie
+- Grotere knoppen voor eenvoudig tikken
+
+### Touch-Vriendelijke Bediening
+
+Alle knoppen en interactieve elementen zijn geoptimaliseerd voor touchscreens:
+- ✅ Minimaal 44 pixels groot (Apple/Google richtlijn)
+- ✅ Voldoende ruimte tussen knoppen
+- ✅ Duidelijke visuele feedback bij tikken
+
+### Tips voor Mobiel Gebruik
+
+1. **Draai uw scherm**: Sommige overzichten (zoals de maandkalender) zijn beter leesbaar in landscape modus
+2. **Installeer de app**: De geïnstalleerde PWA werkt sneller dan de browser
+3. **Zoom**: U kunt altijd in- en uitzoomen met twee vingers indien nodig
+
+### Hamburger Menu Uitleg
+
+Op kleine schermen ziet u rechtsboven een **☰ icoon** (drie horizontale streepjes). Dit is het "hamburger menu":
+
+1. **Tik op ☰** om het menu te openen
+2. Alle navigatie-opties verschijnen
+3. **Tik op een optie** om erheen te gaan
+4. Het menu sluit automatisch
+
+> 💡 **Tip**: Als admin of supervisor ziet u in dit menu ook de beheer-opties die normaal in de navigatiebalk staan.
 
 ---
 
