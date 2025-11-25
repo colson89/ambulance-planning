@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, BellOff, Send } from "lucide-react";
+import { Bell, BellOff, Send, ChevronDown, HelpCircle } from "lucide-react";
 import {
   isPushSupported,
   getPermissionStatus,
@@ -32,6 +33,7 @@ export function PushNotificationSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [settings, setSettings] = useState<PushSubscriptionSettings | null>(null);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   useEffect(() => {
     checkPushStatus();
@@ -324,6 +326,150 @@ export function PushNotificationSettings() {
             )}
           </div>
         )}
+
+        {/* Handleiding sectie - altijd zichtbaar */}
+        <div className="pt-4 border-t">
+          <Collapsible open={isHelpOpen} onOpenChange={setIsHelpOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between">
+                <span className="flex items-center gap-2">
+                  <HelpCircle className="h-4 w-4" />
+                  Handleiding: Problemen met notificaties oplossen
+                </span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${isHelpOpen ? 'rotate-180' : ''}`} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-6 mt-4">
+              
+              {/* Android */}
+              <div className="border-l-4 border-green-500 pl-4">
+                <h3 className="font-semibold text-base mb-2">📱 Android - Probleemoplossing</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="font-medium text-sm mb-1">Stap 1: Controleer Browser Instellingen</p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                      <li>Open Chrome → Tik op <strong>⋮</strong> → <strong>Instellingen</strong></li>
+                      <li>Ga naar <strong>Site-instellingen</strong> → <strong>Notificaties</strong></li>
+                      <li>Zoek deze website en zet op <strong>"Toestaan"</strong></li>
+                    </ol>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm mb-1">Stap 2: Controleer Systeem Notificaties</p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                      <li>Ga naar <strong>Instellingen</strong> → <strong>Apps</strong> → <strong>Chrome</strong></li>
+                      <li>Tik op <strong>Notificaties</strong> → Zet <strong>AAN</strong></li>
+                    </ol>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm mb-1">Stap 3: Controleer Batterij Optimalisatie</p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                      <li>Ga naar <strong>Instellingen</strong> → <strong>Apps</strong> → <strong>Chrome</strong></li>
+                      <li>Tik op <strong>Batterij</strong> → Selecteer <strong>"Niet beperken"</strong></li>
+                    </ol>
+                  </div>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p className="text-sm text-green-800">
+                      💡 <strong>Tip:</strong> Installeer de app via Chrome → <strong>⋮</strong> → <strong>"Installeren"</strong> voor de beste ervaring.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* iPhone/iPad */}
+              <div className="border-l-4 border-purple-500 pl-4">
+                <h3 className="font-semibold text-base mb-2">🍎 iPhone/iPad (iOS) - Probleemoplossing</h3>
+                <div className="space-y-3">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-amber-900 mb-1">⚠️ Belangrijk voor iOS</p>
+                    <ul className="text-sm text-amber-800 space-y-1">
+                      <li>• Vereist <strong>iOS 16.4</strong> of nieuwer</li>
+                      <li>• Werkt <strong>ALLEEN</strong> in Safari (niet Chrome/Firefox)</li>
+                      <li>• De app <strong>MOET</strong> worden geïnstalleerd als PWA</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm mb-1">App Installeren (verplicht voor iOS):</p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                      <li>Open deze website in <strong>Safari</strong></li>
+                      <li>Tik op het <strong>Deel-icoon</strong> (vierkant met pijl omhoog)</li>
+                      <li>Scroll naar beneden → <strong>"Zet op beginscherm"</strong></li>
+                      <li>Open de app vanaf je beginscherm</li>
+                      <li>Schakel notificaties in via Profiel</li>
+                    </ol>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm mb-1">Controleer iOS Instellingen:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                      <li>Ga naar <strong>Instellingen</strong> → <strong>Notificaties</strong></li>
+                      <li>Zoek de Planning app → Zet <strong>"Sta toe"</strong> AAN</li>
+                      <li>Check <strong>Focus</strong> modus → Voeg app toe aan uitzonderingen</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop */}
+              <div className="border-l-4 border-blue-500 pl-4">
+                <h3 className="font-semibold text-base mb-2">💻 Windows/Mac/Linux - Probleemoplossing</h3>
+                <div className="space-y-3">
+                  <div>
+                    <p className="font-medium text-sm mb-1">Browser Toestemming Controleren:</p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                      <li>Klik op het <strong>slot-icoon</strong> links van de URL</li>
+                      <li>Zoek <strong>"Notificaties"</strong></li>
+                      <li>Zet op <strong>"Toestaan"</strong></li>
+                      <li>Herlaad de pagina</li>
+                    </ol>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm mb-1">Systeem Notificaties (Windows):</p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                      <li>Ga naar <strong>Instellingen</strong> → <strong>Systeem</strong> → <strong>Notificaties</strong></li>
+                      <li>Zet notificaties <strong>AAN</strong></li>
+                      <li>Zoek je browser en zet die ook <strong>AAN</strong></li>
+                      <li>Controleer <strong>Focushulp</strong> - zet uit of voeg browser toe</li>
+                    </ol>
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm mb-1">Systeem Notificaties (Mac):</p>
+                    <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                      <li>Ga naar <strong>Systeemvoorkeuren</strong> → <strong>Berichtgeving</strong></li>
+                      <li>Zoek je browser in de lijst</li>
+                      <li>Zet <strong>"Sta berichtgeving toe"</strong> AAN</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+
+              {/* Algemene checklist */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 className="font-semibold text-sm mb-2">✅ Snelle Checklist</h3>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>☐ Notificaties ingeschakeld in de app (hierboven)</li>
+                  <li>☐ Browser toestemming gegeven (klik "Toestaan")</li>
+                  <li>☐ Minstens één notificatie type AAN gezet</li>
+                  <li>☐ Systeem notificaties aan voor browser</li>
+                  <li>☐ Niet storen / Focus modus UIT</li>
+                  <li>☐ (Android) Batterij optimalisatie uit voor browser</li>
+                  <li>☐ (iOS) App geïnstalleerd via Safari → Deel → Beginscherm</li>
+                </ul>
+              </div>
+
+              {/* Opnieuw proberen */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm font-medium text-blue-900 mb-1">🔄 Werkt het nog steeds niet?</p>
+                <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                  <li>Klik hierboven op <strong>"Uitschakelen"</strong></li>
+                  <li>Wacht 5 seconden</li>
+                  <li>Klik op <strong>"Notificaties Inschakelen"</strong></li>
+                  <li>Geef opnieuw toestemming</li>
+                  <li>Test met de <strong>"Test Notificatie"</strong> knop</li>
+                </ol>
+              </div>
+
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
       </CardContent>
     </Card>
   );
