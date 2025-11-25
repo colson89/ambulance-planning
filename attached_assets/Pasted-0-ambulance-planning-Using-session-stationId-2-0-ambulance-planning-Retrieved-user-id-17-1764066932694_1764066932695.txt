@@ -1,0 +1,223 @@
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | 11:34:41 AM [express] GET /api/user 200 in 4ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | 11:34:41 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=dy5-6Mi83Wk5YOl9v5BNM (resolved id: /src/main.tsx?v=dy5-6Mi83Wk5YOl9v5BNM). Does the file exist?
+PM2                   | App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2                   | App [ambulance-planning:0] starting in -fork mode-
+PM2                   | App [ambulance-planning:0] online
+0|ambulance-planning  | Using database URL: postgresql://ambulance_user:***@localhost:5432/ambulance_planning
+0|ambulance-planning  | 11:34:43 AM [express] 🔔 Running startup deadline check
+0|ambulance-planning  | 11:34:43 AM [express] 🔔 Running daily deadline notification check
+0|ambulance-planning  | 11:34:43 AM [express] 📅 Deadline check scheduler started (runs daily at 9:00 AM + on startup)
+0|ambulance-planning  | 11:34:43 AM [express] serving on port 5000 (host: 0.0.0.0)
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: false
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-26T10:34:45.734Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: undefined
+0|ambulance-planning  | 11:34:45 AM [express] GET /api/weekday-configs 401 in 8ms
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: false
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-26T10:34:45.742Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: undefined
+0|ambulance-planning  | 11:34:45 AM [express] GET /api/system/deadline-days 401 in 2ms
+0|ambulance-planning  | Admin access denied: { isAuthenticated: false, userRole: undefined, userId: undefined }
+0|ambulance-planning  | 11:34:45 AM [express] GET /api/preferences/all 403 in 2ms
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: false
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-26T10:34:45.747Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: undefined
+0|ambulance-planning  | 11:34:45 AM [express] GET /api/shifts 401 in 4ms
+0|ambulance-planning  | Admin access denied: { isAuthenticated: false, userRole: undefined, userId: undefined }
+0|ambulance-planning  | 11:34:45 AM [express] GET /api/users 403 in 1ms
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | 11:34:45 AM [express] GET /api/stations 200 in 5ms
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: false
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-26T10:34:45.827Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: undefined
+0|ambulance-planning  | 11:34:45 AM [express] GET /api/user/stations 401 in 1ms
+0|ambulance-planning  | 11:34:45 AM [express] GET /api/user 401 in 1ms
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | 11:34:45 AM [express] GET /api/stations 200 in 9ms
+0|ambulance-planning  | 11:34:45 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=sa-2kMZaBiURc13EqCZq8 (resolved id: /src/main.tsx?v=sa-2kMZaBiURc13EqCZq8). Does the file exist?
+PM2                   | App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2                   | App [ambulance-planning:0] starting in -fork mode-
+PM2                   | App [ambulance-planning:0] online
+0|ambulance-planning  | Using database URL: postgresql://ambulance_user:***@localhost:5432/ambulance_planning
+0|ambulance-planning  | 11:34:48 AM [express] 🔔 Running startup deadline check
+0|ambulance-planning  | 11:34:48 AM [express] 🔔 Running daily deadline notification check
+0|ambulance-planning  | 11:34:48 AM [express] 📅 Deadline check scheduler started (runs daily at 9:00 AM + on startup)
+0|ambulance-planning  | 11:34:48 AM [express] serving on port 5000 (host: 0.0.0.0)
+0|ambulance-planning  | 11:34:50 AM [express] GET /api/build-info 200 in 7ms

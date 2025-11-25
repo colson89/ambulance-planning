@@ -1,0 +1,45 @@
+PS C:\ambulance-planning> pm2 logs ambulance-planning --lines 20
+[TAILING] Tailing last 20 lines for [ambulance-planning] process (change the value with --lines option)
+C:\Users\jeva400\.pm2\logs\ambulance-planning-error.log last 20 lines:
+0|ambulanc | 11:41:32 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=OtgiUDR_3hagXtp6riY33 (resolved id: /src/main.tsx?v=OtgiUDR_3hagXtp6riY33). Does the file exist?
+0|ambulanc | 11:41:37 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=Ngv83TU_lq4Chp-19BswR (resolved id: /src/main.tsx?v=Ngv83TU_lq4Chp-19BswR). Does the file exist?
+0|ambulanc | 11:41:41 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=qOTak9E7GTvJzfYrTTgC_ (resolved id: /src/main.tsx?v=qOTak9E7GTvJzfYrTTgC_). Does the file exist?
+0|ambulanc | 11:41:44 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=qNQ3qqkhUbC31bLEPv1mK (resolved id: /src/main.tsx?v=qNQ3qqkhUbC31bLEPv1mK). Does the file exist?
+0|ambulanc | Error: Vapid subject is not a valid URL. jeroen.vanhoof@brandweerzonekempen.be
+0|ambulanc |     at Object.validateSubject (C:\ambulance-planning\node_modules\web-push\src\vapid-helper.js:82:11)
+0|ambulanc |     at WebPushLib.setVapidDetails (C:\ambulance-planning\node_modules\web-push\src\web-push-lib.js:59:17)
+0|ambulanc |     at server/push-notifications.ts (file:///C:/ambulance-planning/dist/index.js:3248:15)
+0|ambulanc |     at __init (file:///C:/ambulance-planning/dist/index.js:4:56)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:3429:1
+0|ambulanc |     at ModuleJob.run (node:internal/modules/esm/module_job:329:25)
+0|ambulanc |     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+0|ambulanc | Error: Vapid subject is not a valid URL. jeroen.vanhoof@brandweerzonekempen.be
+0|ambulanc |     at Object.validateSubject (C:\ambulance-planning\node_modules\web-push\src\vapid-helper.js:82:11)
+0|ambulanc |     at WebPushLib.setVapidDetails (C:\ambulance-planning\node_modules\web-push\src\web-push-lib.js:59:17)
+0|ambulanc |     at server/push-notifications.ts (file:///C:/ambulance-planning/dist/index.js:3248:15)
+0|ambulanc |     at __init (file:///C:/ambulance-planning/dist/index.js:4:56)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:3429:1
+0|ambulanc |     at ModuleJob.run (node:internal/modules/esm/module_job:329:25)
+0|ambulanc |     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+
+C:\Users\jeva400\.pm2\logs\ambulance-planning-out.log last 20 lines:
+0|ambulanc |   hasDrivingLicenseC: true,
+0|ambulanc |   hours: 24,
+0|ambulanc |   stationId: 2
+0|ambulanc | }
+0|ambulanc | 11:55:20 AM [express] GET /api/calendar/token 200 in 4ms
+0|ambulanc | === DESERIALIZE USER ===
+0|ambulanc | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulanc | === DESERIALIZE USER ===
+0|ambulanc | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulanc | Using session stationId: 2
+0|ambulanc | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulanc | Using session stationId: 2
+0|ambulanc | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulanc | 11:55:20 AM [express] GET /api/push/subscription 200 in 3ms
+0|ambulanc | === DESERIALIZE USER ===
+0|ambulanc | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulanc | Using session stationId: 2
+0|ambulanc | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulanc | ✓ Push notification sent to user 17
+0|ambulanc | 11:55:33 AM [express] POST /api/push/test 200 in 111ms

@@ -1,0 +1,56 @@
+PS C:\ambulance-planning> pm2 show ambulance-planning
+>>
+>>
+ Describing process with id 0 - name ambulance-planning
+┌───────────────────┬─────────────────────────────────────────────────────────┐
+│ status            │ online                                                  │
+│ name              │ ambulance-planning                                      │
+│ namespace         │ default                                                 │
+│ version           │ 1.0.0                                                   │
+│ restarts          │ 25                                                      │
+│ uptime            │ 78s                                                     │
+│ script path       │ C:\ambulance-planning\dist\index.js                     │
+│ script args       │ N/A                                                     │
+│ error log path    │ C:\Users\jeva400\.pm2\logs\ambulance-planning-error.log │
+│ out log path      │ C:\Users\jeva400\.pm2\logs\ambulance-planning-out.log   │
+│ pid path          │ C:\Users\jeva400\.pm2\pids\ambulance-planning-0.pid     │
+│ interpreter       │ node                                                    │
+│ interpreter args  │ N/A                                                     │
+│ script id         │ 0                                                       │
+│ exec cwd          │ C:\ambulance-planning                                   │
+│ exec mode         │ fork_mode                                               │
+│ node.js version   │ 22.17.0                                                 │
+│ node env          │ N/A                                                     │
+│ watch & reload    │ ✘                                                       │
+│ unstable restarts │ 0                                                       │
+│ created at        │ 2025-11-25T10:32:48.314Z                                │
+└───────────────────┴─────────────────────────────────────────────────────────┘
+ Actions available
+┌────────────────────────┐
+│ km:heapdump            │
+│ km:cpu:profiling:start │
+│ km:cpu:profiling:stop  │
+│ km:heap:sampling:start │
+│ km:heap:sampling:stop  │
+└────────────────────────┘
+ Trigger via: pm2 trigger ambulance-planning <action_name>
+
+ Code metrics value
+┌────────────────────────┬───────────┐
+│ Used Heap Size         │ 57.54 MiB │
+│ Heap Usage             │ 93.34 %   │
+│ Heap Size              │ 61.64 MiB │
+│ Event Loop Latency p95 │ 31.07 ms  │
+│ Event Loop Latency     │ 0.71 ms   │
+│ Active handles         │ 7         │
+│ Active requests        │ 0         │
+└────────────────────────┴───────────┘
+ Divergent env variables from local env
+
+
+ Add your own code metrics: http://bit.ly/code-metrics
+ Use `pm2 logs ambulance-planning [--lines 1000]` to display logs
+ Use `pm2 env 0` to display environment variables
+ Use `pm2 monit` to monitor CPU and Memory usage ambulance-planning
+PS C:\ambulance-planning>
+

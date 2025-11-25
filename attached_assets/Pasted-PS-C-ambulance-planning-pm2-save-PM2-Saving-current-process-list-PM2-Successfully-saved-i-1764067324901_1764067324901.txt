@@ -1,0 +1,271 @@
+PS C:\ambulance-planning> pm2 save
+[PM2] Saving current process list...
+[PM2] Successfully saved in C:\Users\jeva400\.pm2\dump.pm2
+PS C:\ambulance-planning> pm2 logs ambulance-planning --lines 20
+[TAILING] Tailing last 20 lines for [ambulance-planning] process (change the value with --lines option)
+C:\Users\jeva400\.pm2\logs\ambulance-planning-error.log last 20 lines:
+0|ambulanc | 11:33:24 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=4TuW6KY2aT_8qoWkgh_BA (resolved id: /src/main.tsx?v=4TuW6KY2aT_8qoWkgh_BA). Does the file exist?
+0|ambulanc | 11:33:29 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=4dVdIwCiOpnV-kf74f5xK (resolved id: /src/main.tsx?v=4dVdIwCiOpnV-kf74f5xK). Does the file exist?
+0|ambulanc | 11:33:33 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=vswBXjBJS8pW_2zsRklDT (resolved id: /src/main.tsx?v=vswBXjBJS8pW_2zsRklDT). Does the file exist?
+0|ambulanc | 11:33:44 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=S2VXhmEruihV9LkmJnNLK (resolved id: /src/main.tsx?v=S2VXhmEruihV9LkmJnNLK). Does the file exist?
+0|ambulanc | 11:33:48 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=PMMw8fd3GVzWG9HJnWVCT (resolved id: /src/main.tsx?v=PMMw8fd3GVzWG9HJnWVCT). Does the file exist?
+0|ambulanc | 11:34:14 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=CFn2rnbnz7y8Qvdjm47mD (resolved id: /src/main.tsx?v=CFn2rnbnz7y8Qvdjm47mD). Does the file exist?
+0|ambulanc | 11:34:41 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=dy5-6Mi83Wk5YOl9v5BNM (resolved id: /src/main.tsx?v=dy5-6Mi83Wk5YOl9v5BNM). Does the file exist?
+0|ambulanc | 11:34:45 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=sa-2kMZaBiURc13EqCZq8 (resolved id: /src/main.tsx?v=sa-2kMZaBiURc13EqCZq8). Does the file exist?
+0|ambulanc | 11:35:42 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=tPXKcFXapJxitlyaPpM1- (resolved id: /src/main.tsx?v=tPXKcFXapJxitlyaPpM1-). Does the file exist?
+0|ambulanc | 11:35:48 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=eQRRsO-N3O0S2SiOMJpjU (resolved id: /src/main.tsx?v=eQRRsO-N3O0S2SiOMJpjU). Does the file exist?
+0|ambulanc | 11:35:53 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=impI-IV67qbf8-xASFZxF (resolved id: /src/main.tsx?v=impI-IV67qbf8-xASFZxF). Does the file exist?
+0|ambulanc | 11:35:56 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=dVL3DYX0lVS_Lm-2kFViB (resolved id: /src/main.tsx?v=dVL3DYX0lVS_Lm-2kFViB). Does the file exist?
+0|ambulanc | 11:38:48 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=g4kIQzRiZPpyEtT7OGT5D (resolved id: /src/main.tsx?v=g4kIQzRiZPpyEtT7OGT5D). Does the file exist?
+0|ambulanc | 11:38:56 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=6_3eivaBFzbCFGMj-W_jt (resolved id: /src/main.tsx?v=6_3eivaBFzbCFGMj-W_jt). Does the file exist?
+0|ambulanc | 11:39:01 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=PxUJH7bTERVtLKDqeaucK (resolved id: /src/main.tsx?v=PxUJH7bTERVtLKDqeaucK). Does the file exist?
+0|ambulanc | 11:39:04 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=iG4JHCeT1Oz8E93lkJZRk (resolved id: /src/main.tsx?v=iG4JHCeT1Oz8E93lkJZRk). Does the file exist?
+0|ambulanc | 11:40:01 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=QZ4auJpPBar0xnSXFZx0B (resolved id: /src/main.tsx?v=QZ4auJpPBar0xnSXFZx0B). Does the file exist?
+0|ambulanc | 11:40:07 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=r3UvU-zWe1UkVwZWeb5Iz (resolved id: /src/main.tsx?v=r3UvU-zWe1UkVwZWeb5Iz). Does the file exist?
+0|ambulanc | 11:40:11 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=yolNqIa8NvnfAtBKfufee (resolved id: /src/main.tsx?v=yolNqIa8NvnfAtBKfufee). Does the file exist?
+0|ambulanc | 11:40:14 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=Z4KPGjcfDzcdxYQN9nDL3 (resolved id: /src/main.tsx?v=Z4KPGjcfDzcdxYQN9nDL3). Does the file exist?
+
+C:\Users\jeva400\.pm2\logs\ambulance-planning-out.log last 20 lines:
+0|ambulanc |     displayName: 'ZW Geel',
+0|ambulanc |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulanc |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulanc |   },
+0|ambulanc |   {
+0|ambulanc |     id: 4,
+0|ambulanc |     name: 'zwmol',
+0|ambulanc |     code: 'zwmol',
+0|ambulanc |     displayName: 'ZW Mol',
+0|ambulanc |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulanc |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulanc |   }
+0|ambulanc | ]
+0|ambulanc | 11:40:14 AM [express] GET /api/stations 200 in 57ms
+0|ambulanc | Using database URL: postgresql://ambulance_user:***@localhost:5432/ambulance_planning
+0|ambulanc | 11:40:17 AM [express] 🔔 Running startup deadline check
+0|ambulanc | 11:40:17 AM [express] 🔔 Running daily deadline notification check
+0|ambulanc | 11:40:17 AM [express] 📅 Deadline check scheduler started (runs daily at 9:00 AM + on startup)
+0|ambulanc | 11:40:17 AM [express] serving on port 5000 (host: 0.0.0.0)
+0|ambulanc | 11:40:17 AM [express] GET /api/build-info 200 in 6ms
+
+0|ambulance-planning  | 11:41:32 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=OtgiUDR_3hagXtp6riY33 (resolved id: /src/main.tsx?v=OtgiUDR_3hagXtp6riY33). Does the file exist?
+0|ambulance-planning  | Using database URL: postgresql://ambulance_user:***@localhost:5432/ambulance_planning
+0|ambulance-planning  | 11:41:34 AM [express] 🔔 Running startup deadline check
+0|ambulance-planning  | 11:41:34 AM [express] 🔔 Running daily deadline notification check
+0|ambulance-planning  | 11:41:34 AM [express] 📅 Deadline check scheduler started (runs daily at 9:00 AM + on startup)
+0|ambulance-planning  | 11:41:34 AM [express] serving on port 5000 (host: 0.0.0.0)
+0|ambulance-planning  | Login attempt for username: tvdd19
+0|ambulance-planning  | Login successful for user at station 2
+0|ambulance-planning  | === SERIALIZE USER ===
+0|ambulance-planning  | Serializing user: { id: 17, username: 'tvdd19', stationId: 2 }
+0|ambulance-planning  | 11:41:37 AM [express] POST /api/login 200 in 76ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | 11:41:37 AM [express] GET /api/user 200 in 3ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | 11:41:37 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=Ngv83TU_lq4Chp-19BswR (resolved id: /src/main.tsx?v=Ngv83TU_lq4Chp-19BswR). Does the file exist?
+0|ambulance-planning  | Using database URL: postgresql://ambulance_user:***@localhost:5432/ambulance_planning
+0|ambulance-planning  | 11:41:39 AM [express] 🔔 Running startup deadline check
+0|ambulance-planning  | 11:41:39 AM [express] 🔔 Running daily deadline notification check
+0|ambulance-planning  | 11:41:39 AM [express] 📅 Deadline check scheduler started (runs daily at 9:00 AM + on startup)
+0|ambulance-planning  | 11:41:39 AM [express] serving on port 5000 (host: 0.0.0.0)
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: false
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-26T10:41:41.281Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: undefined
+0|ambulance-planning  | 11:41:41 AM [express] GET /api/shifts 401 in 7ms
+0|ambulance-planning  | Admin access denied: { isAuthenticated: false, userRole: undefined, userId: undefined }
+0|ambulance-planning  | 11:41:41 AM [express] GET /api/users 403 in 1ms
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: false
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-26T10:41:41.290Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: undefined
+0|ambulance-planning  | 11:41:41 AM [express] GET /api/weekday-configs 401 in 2ms
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: false
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-11-26T10:41:41.293Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: undefined
+0|ambulance-planning  | 11:41:41 AM [express] GET /api/system/deadline-days 401 in 2ms
+0|ambulance-planning  | Admin access denied: { isAuthenticated: false, userRole: undefined, userId: undefined }
+0|ambulance-planning  | 11:41:41 AM [express] GET /api/preferences/all 403 in 1ms
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | 11:41:41 AM [express] GET /api/stations 200 in 6ms
+0|ambulance-planning  | 11:41:41 AM [express] GET /api/user 401 in 1ms
+0|ambulance-planning  | 11:41:41 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=qOTak9E7GTvJzfYrTTgC_ (resolved id: /src/main.tsx?v=qOTak9E7GTvJzfYrTTgC_). Does the file exist?
+0|ambulance-planning  | Using database URL: postgresql://ambulance_user:***@localhost:5432/ambulance_planning
+0|ambulance-planning  | 11:41:43 AM [express] 🔔 Running startup deadline check
+0|ambulance-planning  | 11:41:43 AM [express] 🔔 Running daily deadline notification check
+0|ambulance-planning  | 11:41:43 AM [express] 📅 Deadline check scheduler started (runs daily at 9:00 AM + on startup)
+0|ambulance-planning  | 11:41:43 AM [express] serving on port 5000 (host: 0.0.0.0)
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-07-09T05:48:13.637Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-09-11T00:39:55.202Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | 11:41:44 AM [express] GET /api/stations 200 in 13ms
+0|ambulance-planning  | 11:41:44 [vite] Pre-transform error: Failed to load url /src/main.tsx?v=qNQ3qqkhUbC31bLEPv1mK (resolved id: /src/main.tsx?v=qNQ3qqkhUbC31bLEPv1mK). Does the file exist?
+0|ambulance-planning  | Using database URL: postgresql://ambulance_user:***@localhost:5432/ambulance_planning
+0|ambulance-planning  | 11:41:46 AM [express] 🔔 Running startup deadline check
+0|ambulance-planning  | 11:41:46 AM [express] 🔔 Running daily deadline notification check
+0|ambulance-planning  | 11:41:46 AM [express] 📅 Deadline check scheduler started (runs daily at 9:00 AM + on startup)
+0|ambulance-planning  | 11:41:46 AM [express] serving on port 5000 (host: 0.0.0.0)
+0|ambulance-planning  | 11:41:47 AM [express] GET /api/build-info 200 in 6ms
