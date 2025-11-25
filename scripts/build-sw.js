@@ -65,6 +65,79 @@ writeFileSync(
 
 console.log(`✓ Build ID generated: ${BUILD_ID}`);
 
+// Push notification handlers to append to the generated service worker
+const pushHandlers = `
+// ==========================================
+// PUSH NOTIFICATION HANDLERS
+// ==========================================
+
+// Handle incoming push notifications
+self.addEventListener('push', (event) => {
+  console.log('[ServiceWorker] Push notification received');
+  
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || 'Nieuwe Planning';
+  const options = {
+    body: data.body || 'Er is een nieuwe planning beschikbaar',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    vibrate: [200, 100, 200],
+    data: data.url || '/',
+    actions: [
+      { action: 'view', title: 'Bekijken' },
+      { action: 'close', title: 'Sluiten' }
+    ],
+    tag: 'ambulance-planning-notification',
+    renotify: true
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+// Handle notification click
+self.addEventListener('notificationclick', (event) => {
+  console.log('[ServiceWorker] Notification clicked');
+  event.notification.close();
+
+  if (event.action === 'view' || !event.action) {
+    const urlToOpen = event.notification.data || '/';
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clientList) => {
+          // If a window tab is already open, focus it
+          for (const client of clientList) {
+            if (client.url.includes(self.registration.scope) && 'focus' in client) {
+              return client.focus();
+            }
+          }
+          // Otherwise open a new window
+          if (clients.openWindow) {
+            return clients.openWindow(urlToOpen);
+          }
+        })
+    );
+  }
+});
+
+// Handle push subscription change (when browser regenerates keys)
+self.addEventListener('pushsubscriptionchange', (event) => {
+  console.log('[ServiceWorker] Push subscription changed');
+  event.waitUntil(
+    self.registration.pushManager.subscribe(event.oldSubscription.options)
+      .then((subscription) => {
+        // Re-send subscription to server
+        return fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription)
+        });
+      })
+  );
+});
+`;
+
 async function buildServiceWorker() {
   try {
     const { count, size, warnings } = await generateSW({
@@ -140,6 +213,13 @@ async function buildServiceWorker() {
     if (warnings.length > 0) {
       console.warn('Warnings:', warnings);
     }
+
+    // Append push notification handlers to the generated service worker
+    const swPath = path.join(distDir, 'sw.js');
+    const swContent = readFileSync(swPath, 'utf-8');
+    writeFileSync(swPath, swContent + pushHandlers);
+    console.log('✓ Push notification handlers added to service worker');
+
   } catch (error) {
     console.error('Service worker generation failed:', error);
     throw error;
