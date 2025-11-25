@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.6 - November 2025**
+**Versie 2025.6 - Laatst bijgewerkt: 25 november 2025, 14:15**
 
 ---
 
