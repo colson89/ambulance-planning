@@ -434,29 +434,29 @@ export default function ShiftPlanner() {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Shift Planner</h1>
+    <div className="container mx-auto p-4 md:p-6">
+      <div className="flex justify-between items-center mb-4 md:mb-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Voorkeuren</h1>
         <Button
           variant="outline"
+          className="h-10"
           onClick={() => setLocation("/dashboard")}
         >
-          <Home className="h-4 w-4 mr-2" />
-          Dashboard
+          <Home className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Dashboard</span>
         </Button>
       </div>
 
-      <Alert className="mb-6">
-        <AlertDescription>
-          U geeft nu voorkeuren op voor {format(selectedMonth, "MMMM yyyy", { locale: nl })}.
-          <br />
-          <span className="text-xs mt-1 block">
-            Planning moet {deadlineDays} dag{deadlineDays !== 1 ? 'en' : ''} van tevoren worden ingediend (deadline: {format(isPastDeadline ? addMonths(currentMonthDeadline, 1) : currentMonthDeadline, "d MMMM HH:mm", { locale: nl })})
+      <Alert className="mb-4 md:mb-6">
+        <AlertDescription className="text-sm">
+          Voorkeuren voor <span className="font-medium">{format(selectedMonth, "MMMM yyyy", { locale: nl })}</span>
+          <span className="text-xs mt-1 block text-muted-foreground">
+            Deadline: {format(isPastDeadline ? addMonths(currentMonthDeadline, 1) : currentMonthDeadline, "d MMMM HH:mm", { locale: nl })}
           </span>
         </AlertDescription>
       </Alert>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           <Card>
             <CardHeader>

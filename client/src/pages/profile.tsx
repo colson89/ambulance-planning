@@ -282,19 +282,20 @@ export default function Profile() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-4 md:p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Profiel</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">Profiel</h1>
         <Button
           variant="outline"
+          className="h-10"
           onClick={() => setLocation("/dashboard")}
         >
-          <Home className="h-4 w-4 mr-2" />
-          Home
+          <Home className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Home</span>
         </Button>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-4 md:gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Persoonlijke Informatie</CardTitle>
@@ -303,11 +304,11 @@ export default function Profile() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-start gap-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
               <div className="flex flex-col items-center gap-3">
-                <Avatar className="h-24 w-24">
+                <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
                   <AvatarImage src={user?.profilePhotoUrl || undefined} alt={`${user?.firstName} ${user?.lastName}`} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xl sm:text-2xl">
                     {user?.firstName?.[0]}{user?.lastName?.[0]}
                   </AvatarFallback>
                 </Avatar>
@@ -321,6 +322,7 @@ export default function Profile() {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="h-10"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadPhotoMutation.isPending}
                 >
@@ -332,17 +334,17 @@ export default function Profile() {
                 </p>
               </div>
 
-              <div className="flex-1 space-y-4">
-                <div>
+              <div className="flex-1 w-full space-y-4">
+                <div className="text-center sm:text-left">
                   <label className="text-sm font-medium text-gray-600">Naam</label>
-                  <div className="text-lg font-medium text-gray-900 mt-1">
+                  <div className="text-base sm:text-lg font-medium text-gray-900 mt-1">
                     {user?.firstName} {user?.lastName}
                   </div>
                 </div>
 
-                <div>
+                <div className="text-center sm:text-left">
                   <label className="text-sm font-medium text-gray-600">Gebruikersnaam</label>
-                  <div className="text-lg text-gray-900 mt-1">
+                  <div className="text-base sm:text-lg text-gray-900 mt-1">
                     {user?.username}
                   </div>
                 </div>
@@ -355,18 +357,18 @@ export default function Profile() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Telefoonnummer</FormLabel>
-                          <div className="flex gap-2">
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <FormControl>
                               <Input 
                                 {...field} 
                                 placeholder="+32 xxx xx xx xx"
-                                className="flex-1"
+                                className="flex-1 h-10"
                               />
                             </FormControl>
                             <Button
                               type="submit"
                               variant="outline"
-                              size="sm"
+                              className="h-10 w-full sm:w-auto"
                               disabled={updatePhoneMutation.isPending}
                             >
                               <Phone className="h-4 w-4 mr-2" />

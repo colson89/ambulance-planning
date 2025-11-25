@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X } from "lucide-react";
 import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -41,6 +41,7 @@ export default function Dashboard() {
   const [showAvailabilityDialog, setShowAvailabilityDialog] = useState(false);
   const [selectedContactUser, setSelectedContactUser] = useState<UserType | null>(null);
   const [showContactDialog, setShowContactDialog] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { data: shifts = [], isLoading: shiftsLoading } = useQuery<Shift[]>({
     queryKey: ["/api/shifts", selectedMonth + 1, selectedYear],
@@ -396,96 +397,200 @@ export default function Dashboard() {
   };
   
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          {user && (
-            <div className="flex items-center gap-4 mt-1">
-              <div className="flex items-center gap-2">
-                <UserIcon className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Ingelogd als: <span className="font-medium text-foreground">{user.username}</span> ({user.firstName} {user.lastName})
-                </span>
-              </div>
-              {user && stations.length > 0 && (
+    <div className="container mx-auto p-4 md:p-6">
+      {/* Header - Responsive layout */}
+      <div className="flex flex-col gap-4 mb-6">
+        {/* Top row: Title + Mobile menu button */}
+        <div className="flex justify-between items-start">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+            {user && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    Post: <span className="font-medium text-foreground">
-                      {stations.find(s => s.id === user.stationId)?.displayName || 'Onbekend'}
-                    </span>
+                  <UserIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs sm:text-sm text-muted-foreground truncate">
+                    <span className="font-medium text-foreground">{user.username}</span>
+                    <span className="hidden sm:inline"> ({user.firstName} {user.lastName})</span>
                   </span>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {(user?.role === 'admin' || user?.role === 'supervisor') && (
-            <>
-              <Button 
-                variant="outline"
-                onClick={() => setLocation("/holidays")}
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Feestdagen
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setLocation("/users")}
-              >
-                <UserCog className="h-4 w-4 mr-2" />
-                Gebruikersbeheer
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setLocation("/statistics")}
-              >
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Statistieken
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setLocation("/schedule")}
-              >
-                <CalendarDays className="h-4 w-4 mr-2" />
-                Planning
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setLocation("/settings")}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Weekdag Instellingen
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setLocation("/integrations")}
-              >
-                <LinkIcon className="h-4 w-4 mr-2" />
-                Integraties
-              </Button>
-            </>
-          )}
-          {/* Shift Planner knop verwijderd, alleen "Voorkeuren Opgeven" behouden */}
-          <Button 
-            variant="outline"
-            onClick={() => setLocation("/profile")}
-          >
-            <UserIcon className="h-4 w-4 mr-2" />
-            Profiel
-          </Button>
-          <StationSwitcher />
+                {stations.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        {stations.find(s => s.id === user.stationId)?.displayName || 'Onbekend'}
+                      </span>
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Mobile menu button */}
           <Button 
             variant="outline" 
-            onClick={() => logoutMutation.mutate()}
-            disabled={logoutMutation.isPending}
+            size="icon"
+            className="lg:hidden flex-shrink-0"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <LogOut className="h-4 w-4 mr-2" />
-            Uitloggen
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
+          
+          {/* Desktop navigation */}
+          <div className="hidden lg:flex gap-2 flex-wrap justify-end">
+            {(user?.role === 'admin' || user?.role === 'supervisor') && (
+              <>
+                <Button 
+                  variant="outline"
+                  onClick={() => setLocation("/holidays")}
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Feestdagen
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setLocation("/users")}
+                >
+                  <UserCog className="h-4 w-4 mr-2" />
+                  Gebruikersbeheer
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setLocation("/statistics")}
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Statistieken
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setLocation("/schedule")}
+                >
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  Planning
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setLocation("/settings")}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Instellingen
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setLocation("/integrations")}
+                >
+                  <LinkIcon className="h-4 w-4 mr-2" />
+                  Integraties
+                </Button>
+              </>
+            )}
+            <Button 
+              variant="outline"
+              onClick={() => setLocation("/profile")}
+            >
+              <UserIcon className="h-4 w-4 mr-2" />
+              Profiel
+            </Button>
+            <StationSwitcher />
+            <Button 
+              variant="outline" 
+              onClick={() => logoutMutation.mutate()}
+              disabled={logoutMutation.isPending}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Uitloggen
+            </Button>
+          </div>
         </div>
+        
+        {/* Mobile navigation menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden bg-background border rounded-lg p-3 shadow-lg">
+            <div className="grid grid-cols-2 gap-2">
+              {(user?.role === 'admin' || user?.role === 'supervisor') && (
+                <>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/holidays"); setMobileMenuOpen(false); }}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Feestdagen
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/users"); setMobileMenuOpen(false); }}
+                  >
+                    <UserCog className="h-4 w-4 mr-2" />
+                    Gebruikers
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/statistics"); setMobileMenuOpen(false); }}
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Statistieken
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/schedule"); setMobileMenuOpen(false); }}
+                  >
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    Planning
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/settings"); setMobileMenuOpen(false); }}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Instellingen
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/integrations"); setMobileMenuOpen(false); }}
+                  >
+                    <LinkIcon className="h-4 w-4 mr-2" />
+                    Integraties
+                  </Button>
+                </>
+              )}
+              <Button 
+                variant="outline"
+                className="justify-start h-12"
+                onClick={() => { setLocation("/profile"); setMobileMenuOpen(false); }}
+              >
+                <UserIcon className="h-4 w-4 mr-2" />
+                Profiel
+              </Button>
+              <Button 
+                variant="outline"
+                className="justify-start h-12"
+                onClick={() => { setLocation("/shifts"); setMobileMenuOpen(false); }}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Voorkeuren
+              </Button>
+              <div className="col-span-2">
+                <StationSwitcher />
+              </div>
+              <Button 
+                variant="outline" 
+                className="justify-start h-12 col-span-2"
+                onClick={() => { logoutMutation.mutate(); setMobileMenuOpen(false); }}
+                disabled={logoutMutation.isPending}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Uitloggen
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Card className="mb-6">
@@ -537,167 +642,252 @@ export default function Dashboard() {
       
       {/* Planning section georganiseerd per maand/jaar */}
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Mijn Planning</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={prevMonth}>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <CardTitle className="text-lg md:text-xl">Mijn Planning</CardTitle>
+            <div className="flex items-center justify-center gap-2">
+              <Button variant="outline" size="sm" className="h-10 w-10 p-0" onClick={prevMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium min-w-[120px] text-center">
                 {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
               </span>
-              <Button variant="outline" size="sm" onClick={goToNextMonth}>
+              <Button variant="outline" size="sm" className="h-10 w-10 p-0" onClick={goToNextMonth}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 sm:px-6">
           {filteredShifts.length === 0 ? (
             <div className="text-center p-6 text-muted-foreground">
               Geen shifts gevonden voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
             </div>
           ) : (
-            <div className="max-h-[500px] overflow-y-auto pr-2">
-              <Table>
-                <TableCaption>
-                  Planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
-                </TableCaption>
-                <TableHeader className="sticky top-0 bg-white z-10">
-                  <TableRow>
-                    <TableHead>Datum</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Tijd</TableHead>
-                    <TableHead>Medewerker</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredShifts
-                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                    .map((shift) => {
-                      const shiftUser = users.find(u => u.id === shift.userId);
-                      const isCurrentUserShift = shift.userId === user?.id;
+            <>
+              {/* Mobile card view */}
+              <div className="md:hidden space-y-3 max-h-[500px] overflow-y-auto">
+                {filteredShifts
+                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                  .map((shift) => {
+                    const shiftUser = users.find(u => u.id === shift.userId);
+                    const isCurrentUserShift = shift.userId === user?.id;
+                    const openSlots = detectOpenTimeSlots(new Date(shift.date));
+                    const hasOpenSlots = openSlots.length > 0;
+                    
+                    const getShiftTime = () => {
+                      if (!shift.startTime || !shift.endTime) return "-";
+                      const startHour = new Date(shift.startTime).getUTCHours();
+                      const endHour = new Date(shift.endTime).getUTCHours();
                       
-                      // Detecteer open slots voor deze datum en shift type
-                      const openSlots = detectOpenTimeSlots(new Date(shift.date));
-                      const hasOpenSlots = openSlots.length > 0;
-                      
-                      const results = [];
-                      
-                      // Add the regular shift row
-                      results.push(
-                        <TableRow 
-                          key={shift.id}
-                          className={`${shift.status === "open" ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""} ${hasOpenSlots ? "border-l-4 border-l-orange-500" : ""}`}
-                        >
-                          <TableCell>
-                            <Button 
-                              variant="link" 
-                              className="p-0 h-auto font-normal text-left hover:no-underline"
-                              onClick={() => handleDateClick(new Date(shift.date), shift.type as "day" | "night")}
+                      if (shift.type === "night") {
+                        if (shift.isSplitShift) {
+                          if (startHour === 19 && endHour === 23) return "19:00-23:00";
+                          else if (startHour === 23 && endHour === 7) return "23:00-07:00";
+                          else return `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
+                        }
+                        return "19:00-07:00";
+                      } else {
+                        if (shift.isSplitShift) {
+                          if (startHour === 7 && endHour === 13) return "07:00-13:00";
+                          else if (startHour === 13 && endHour === 19) return "13:00-19:00";
+                          else return `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
+                        }
+                        return "07:00-19:00";
+                      }
+                    };
+
+                    return (
+                      <div 
+                        key={shift.id}
+                        className={`rounded-lg border p-3 ${shift.status === "open" ? "bg-red-50 border-red-200" : isCurrentUserShift ? "bg-green-50 border-green-200" : "bg-white"} ${hasOpenSlots ? "border-l-4 border-l-orange-500" : ""}`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <button 
+                            className="text-left font-medium text-sm hover:underline"
+                            onClick={() => handleDateClick(new Date(shift.date), shift.type as "day" | "night")}
+                          >
+                            {format(new Date(shift.date), "EEE d MMM", { locale: nl })}
+                          </button>
+                          <div className="flex items-center gap-1">
+                            {shift.status === "planned" ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <AlertCircle className="h-4 w-4 text-red-500" />
+                            )}
+                            <span className={`text-xs font-medium ${shift.status === "open" ? "text-red-600" : "text-green-600"}`}>
+                              {shift.status === "open" ? "Open" : "OK"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          <Badge variant="outline" className="font-normal">
+                            {shift.type === "day" ? "Dag" : "Nacht"}
+                          </Badge>
+                          <Badge variant="secondary" className="font-normal">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {getShiftTime()}
+                          </Badge>
+                        </div>
+                        <div className="mt-2 text-sm">
+                          {shift.status === "open" ? (
+                            <span className="text-red-500 font-medium">Niet ingevuld</span>
+                          ) : shiftUser ? (
+                            <button
+                              className={`text-left hover:underline ${isCurrentUserShift ? "font-bold text-green-600" : ""}`}
+                              onClick={() => {
+                                setSelectedContactUser(shiftUser);
+                                setShowContactDialog(true);
+                              }}
                             >
-                              {format(new Date(shift.date), "dd MMMM (EEEE)", { locale: nl })}
-                            </Button>
-                          </TableCell>
-                          <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
-                          <TableCell>
-                            {shift.startTime && shift.endTime ? (
-                              (() => {
-                                const startHour = new Date(shift.startTime).getUTCHours();
-                                const endHour = new Date(shift.endTime).getUTCHours();
-                                
-                                if (shift.type === "night") {
-                                  if (shift.isSplitShift) {
-                                    if (startHour === 19 && endHour === 23) {
-                                      return "19:00 - 23:00";
-                                    } else if (startHour === 23 && endHour === 7) {
-                                      return "23:00 - 07:00";
-                                    } else {
-                                      return `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
-                                    }
-                                  } else {
-                                    return "19:00 - 07:00";
-                                  }
-                                } else {
-                                  if (shift.isSplitShift) {
-                                    if (startHour === 7 && endHour === 13) {
-                                      return "07:00 - 13:00";
-                                    } else if (startHour === 13 && endHour === 19) {
-                                      return "13:00 - 19:00";
-                                    } else {
-                                      return `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
-                                    }
-                                  } else {
-                                    return "07:00 - 19:00";
-                                  }
-                                }
-                              })()
-                            ) : (
-                              "-"
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {shift.status === "open" ? (
-                              <span className="text-red-500 font-medium">Niet ingevuld</span>
-                            ) : shiftUser ? (
-                              <Button
-                                variant="link"
-                                className={`p-0 h-auto font-normal text-left hover:underline ${isCurrentUserShift ? "font-bold text-green-600" : ""}`}
-                                onClick={() => {
-                                  setSelectedContactUser(shiftUser);
-                                  setShowContactDialog(true);
-                                }}
-                              >
-                                {`${shiftUser.firstName} ${shiftUser.lastName}`}
-                              </Button>
-                            ) : (
-                              <span>Onbekend</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              {shift.status === "planned" ? (
-                                <Check className="h-4 w-4 text-green-500 mr-1" />
-                              ) : shift.status === "open" ? (
-                                <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
-                              ) : null}
-                              {shift.status === "open" ? "Open" : "Ingepland"}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                      
-                      // Add open slot warning row if needed
-                      if (hasOpenSlots) {
-                        // Get the weekday config for this date
-                        const shiftDate = new Date(shift.date);
-                        const dayOfWeek = shiftDate.getDay();
-                        const config = weekdayConfigs.find(c => c.dayOfWeek === dayOfWeek);
-                        const requiredNightStaff = config?.nightShiftCount || 2;
-                        const requiredDayStaff = config?.dayShiftCount || 2;
+                              {`${shiftUser.firstName} ${shiftUser.lastName}`}
+                            </button>
+                          ) : (
+                            <span className="text-muted-foreground">Onbekend</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {/* Desktop table view */}
+              <div className="hidden md:block max-h-[500px] overflow-y-auto pr-2">
+                <Table>
+                  <TableCaption>
+                    Planning voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+                  </TableCaption>
+                  <TableHeader className="sticky top-0 bg-white z-10">
+                    <TableRow>
+                      <TableHead>Datum</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Tijd</TableHead>
+                      <TableHead>Medewerker</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredShifts
+                      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                      .map((shift) => {
+                        const shiftUser = users.find(u => u.id === shift.userId);
+                        const isCurrentUserShift = shift.userId === user?.id;
+                        
+                        const openSlots = detectOpenTimeSlots(new Date(shift.date));
+                        const hasOpenSlots = openSlots.length > 0;
+                        
+                        const results = [];
                         
                         results.push(
-                          <TableRow key={`${shift.id}-warning`} className="bg-orange-50 border-l-4 border-l-orange-500">
-                            <TableCell colSpan={5} className="p-0">
-                              <OpenSlotWarning
-                                date={new Date(shift.date)}
-                                shifts={filteredShifts.filter(s => format(new Date(s.date), 'yyyy-MM-dd') === format(new Date(shift.date), 'yyyy-MM-dd'))}
-                                showAddButton={false}
-                                requiredStaff={requiredNightStaff}
-                                requiredDayStaff={requiredDayStaff}
-                              />
+                          <TableRow 
+                            key={shift.id}
+                            className={`${shift.status === "open" ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""} ${hasOpenSlots ? "border-l-4 border-l-orange-500" : ""}`}
+                          >
+                            <TableCell>
+                              <Button 
+                                variant="link" 
+                                className="p-0 h-auto font-normal text-left hover:no-underline"
+                                onClick={() => handleDateClick(new Date(shift.date), shift.type as "day" | "night")}
+                              >
+                                {format(new Date(shift.date), "dd MMMM (EEEE)", { locale: nl })}
+                              </Button>
+                            </TableCell>
+                            <TableCell>{shift.type === "day" ? "Dag" : "Nacht"}</TableCell>
+                            <TableCell>
+                              {shift.startTime && shift.endTime ? (
+                                (() => {
+                                  const startHour = new Date(shift.startTime).getUTCHours();
+                                  const endHour = new Date(shift.endTime).getUTCHours();
+                                  
+                                  if (shift.type === "night") {
+                                    if (shift.isSplitShift) {
+                                      if (startHour === 19 && endHour === 23) {
+                                        return "19:00 - 23:00";
+                                      } else if (startHour === 23 && endHour === 7) {
+                                        return "23:00 - 07:00";
+                                      } else {
+                                        return `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
+                                      }
+                                    } else {
+                                      return "19:00 - 07:00";
+                                    }
+                                  } else {
+                                    if (shift.isSplitShift) {
+                                      if (startHour === 7 && endHour === 13) {
+                                        return "07:00 - 13:00";
+                                      } else if (startHour === 13 && endHour === 19) {
+                                        return "13:00 - 19:00";
+                                      } else {
+                                        return `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
+                                      }
+                                    } else {
+                                      return "07:00 - 19:00";
+                                    }
+                                  }
+                                })()
+                              ) : (
+                                "-"
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {shift.status === "open" ? (
+                                <span className="text-red-500 font-medium">Niet ingevuld</span>
+                              ) : shiftUser ? (
+                                <Button
+                                  variant="link"
+                                  className={`p-0 h-auto font-normal text-left hover:underline ${isCurrentUserShift ? "font-bold text-green-600" : ""}`}
+                                  onClick={() => {
+                                    setSelectedContactUser(shiftUser);
+                                    setShowContactDialog(true);
+                                  }}
+                                >
+                                  {`${shiftUser.firstName} ${shiftUser.lastName}`}
+                                </Button>
+                              ) : (
+                                <span>Onbekend</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                {shift.status === "planned" ? (
+                                  <Check className="h-4 w-4 text-green-500 mr-1" />
+                                ) : shift.status === "open" ? (
+                                  <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
+                                ) : null}
+                                {shift.status === "open" ? "Open" : "Ingepland"}
+                              </div>
                             </TableCell>
                           </TableRow>
                         );
-                      }
-                      
-                      return results;
-                    })}
-                </TableBody>
-              </Table>
-            </div>
+                        
+                        if (hasOpenSlots) {
+                          const shiftDate = new Date(shift.date);
+                          const dayOfWeek = shiftDate.getDay();
+                          const config = weekdayConfigs.find(c => c.dayOfWeek === dayOfWeek);
+                          const requiredNightStaff = config?.nightShiftCount || 2;
+                          const requiredDayStaff = config?.dayShiftCount || 2;
+                          
+                          results.push(
+                            <TableRow key={`${shift.id}-warning`} className="bg-orange-50 border-l-4 border-l-orange-500">
+                              <TableCell colSpan={5} className="p-0">
+                                <OpenSlotWarning
+                                  date={new Date(shift.date)}
+                                  shifts={filteredShifts.filter(s => format(new Date(s.date), 'yyyy-MM-dd') === format(new Date(shift.date), 'yyyy-MM-dd'))}
+                                  showAddButton={false}
+                                  requiredStaff={requiredNightStaff}
+                                  requiredDayStaff={requiredDayStaff}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }
+                        
+                        return results;
+                      })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

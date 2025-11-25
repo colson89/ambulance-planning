@@ -74,40 +74,40 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
-      <div className="p-8 flex items-center justify-center">
+    <div className="min-h-screen grid lg:grid-cols-2">
+      <div className="p-4 sm:p-8 flex items-center justify-center">
         <Card className="w-full max-w-md">
-          <CardHeader>
+          <CardHeader className="px-4 sm:px-6">
             <div className="flex items-center justify-between mb-4">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setLocation("/station-select")}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground h-11"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Andere post
               </Button>
             </div>
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-4 sm:mb-6">
               <img 
                 src={logoUrl} 
                 alt="Brandweer Zone Kempen" 
-                className="h-24 w-24 object-contain"
+                className="h-20 w-20 sm:h-24 sm:w-24 object-contain"
               />
             </div>
             {selectedStation && (
               <div className="text-center mb-4">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Building2 className="h-5 w-5 text-blue-600" />
-                  <span className="text-lg font-semibold">{selectedStation.displayName}</span>
+                  <span className="text-base sm:text-lg font-semibold">{selectedStation.displayName}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Log in om door te gaan naar het planning systeem
+                  Log in om door te gaan
                 </p>
               </div>
             )}
-            <CardTitle className="text-center">Inloggen</CardTitle>
+            <CardTitle className="text-center text-xl sm:text-2xl">Inloggen</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...loginForm}>
@@ -127,7 +127,7 @@ export default function AuthPage() {
                     <Input
                       placeholder="Gebruikersnaam"
                       {...loginForm.register("username")}
-                      className={loginMutation.isError ? "border-destructive" : ""}
+                      className={`h-12 text-base ${loginMutation.isError ? "border-destructive" : ""}`}
                       disabled={loginMutation.isPending}
                     />
                   </div>
@@ -137,22 +137,22 @@ export default function AuthPage() {
                         type={showPassword ? "text" : "password"}
                         placeholder="Wachtwoord"
                         {...loginForm.register("password")}
-                        className={`pr-10 ${loginMutation.isError ? "border-destructive" : ""}`}
+                        className={`h-12 text-base pr-12 ${loginMutation.isError ? "border-destructive" : ""}`}
                         disabled={loginMutation.isPending}
                       />
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        size="icon"
+                        className="absolute right-0.5 top-0.5 h-11 w-11 hover:bg-muted"
                         onClick={togglePasswordVisibility}
                         disabled={loginMutation.isPending}
                         title={showPassword ? "Wachtwoord verbergen" : "Wachtwoord 5 sec. tonen"}
                       >
                         {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          <EyeOff className="h-5 w-5 text-muted-foreground" />
                         ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
+                          <Eye className="h-5 w-5 text-muted-foreground" />
                         )}
                       </Button>
                     </div>
@@ -164,7 +164,7 @@ export default function AuthPage() {
                   </div>
                   <Button 
                     type="submit"
-                    className="w-full"
+                    className="w-full h-12 text-base"
                     disabled={loginMutation.isPending}
                   >
                     {loginMutation.isPending ? (
@@ -184,7 +184,7 @@ export default function AuthPage() {
         </Card>
       </div>
 
-      <div className="hidden md:block bg-primary/10 p-8 relative overflow-hidden">
+      <div className="hidden lg:block bg-primary/10 p-8 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent z-10"></div>
         <img 
           src="/ambulance-hero.jpg" 
