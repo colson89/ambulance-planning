@@ -1,12 +1,53 @@
 import { generateSW } from 'workbox-build';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, copyFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const distDir = path.join(__dirname, '../dist/public');
+const clientPublicDir = path.join(__dirname, '../client/public');
+
+// Copy PWA files (manifest.json, service-worker.js, icons) to dist/public
+function copyPWAFiles() {
+  // Copy manifest.json
+  const manifestSrc = path.join(clientPublicDir, 'manifest.json');
+  const manifestDest = path.join(distDir, 'manifest.json');
+  if (existsSync(manifestSrc)) {
+    copyFileSync(manifestSrc, manifestDest);
+    console.log('✓ Copied manifest.json');
+  }
+
+  // Copy service-worker.js (development fallback)
+  const swSrc = path.join(clientPublicDir, 'service-worker.js');
+  const swDest = path.join(distDir, 'service-worker.js');
+  if (existsSync(swSrc)) {
+    copyFileSync(swSrc, swDest);
+    console.log('✓ Copied service-worker.js');
+  }
+
+  // Copy icons folder
+  const iconsSrc = path.join(clientPublicDir, 'icons');
+  const iconsDest = path.join(distDir, 'icons');
+  if (existsSync(iconsSrc)) {
+    if (!existsSync(iconsDest)) {
+      mkdirSync(iconsDest, { recursive: true });
+    }
+    const files = readdirSync(iconsSrc);
+    for (const file of files) {
+      const srcFile = path.join(iconsSrc, file);
+      const destFile = path.join(iconsDest, file);
+      if (statSync(srcFile).isFile()) {
+        copyFileSync(srcFile, destFile);
+      }
+    }
+    console.log(`✓ Copied ${files.length} icon files`);
+  }
+}
+
+// Run PWA file copy first
+copyPWAFiles();
 
 // Generate unique BUILD_ID using timestamp
 const BUILD_ID = Date.now().toString();
