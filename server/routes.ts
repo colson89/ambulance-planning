@@ -4330,6 +4330,23 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   const { emailService } = await import('./email-service');
   const { reportageScheduler } = await import('./reportage-scheduler');
 
+  async function initializeEmailServiceFromDb() {
+    const config = await storage.getReportageConfig();
+    if (config && config.smtpHost && config.smtpUser && config.smtpPassword) {
+      emailService.configureFromDatabase({
+        smtpHost: config.smtpHost,
+        smtpPort: config.smtpPort,
+        smtpUser: config.smtpUser,
+        smtpPassword: config.smtpPassword,
+        smtpFromAddress: config.smtpFromAddress,
+        smtpFromName: config.smtpFromName,
+        smtpSecure: config.smtpSecure
+      });
+    }
+  }
+  
+  initializeEmailServiceFromDb().catch(console.error);
+
   // Get email configuration status
   app.get("/api/reportage/email-status", async (req, res) => {
     if (!req.isAuthenticated() || !req.user) {
@@ -4341,6 +4358,96 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     
     const status = emailService.getConfigStatus();
     res.json(status);
+  });
+  
+  // Get SMTP configuration (without password)
+  app.get("/api/reportage/smtp-config", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const config = await storage.getReportageConfig();
+      if (!config) {
+        return res.json({
+          smtpHost: '',
+          smtpPort: 587,
+          smtpUser: '',
+          smtpFromAddress: '',
+          smtpFromName: 'Planning BWZK',
+          smtpSecure: false,
+          hasPassword: false
+        });
+      }
+      res.json({
+        smtpHost: config.smtpHost || '',
+        smtpPort: config.smtpPort || 587,
+        smtpUser: config.smtpUser || '',
+        smtpFromAddress: config.smtpFromAddress || '',
+        smtpFromName: config.smtpFromName || 'Planning BWZK',
+        smtpSecure: config.smtpSecure || false,
+        hasPassword: !!config.smtpPassword
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to get SMTP config", error: error.message });
+    }
+  });
+  
+  // Save SMTP configuration
+  app.put("/api/reportage/smtp-config", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const { smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromAddress, smtpFromName, smtpSecure } = req.body;
+      
+      const updateData: any = {
+        smtpHost: smtpHost || null,
+        smtpPort: smtpPort || 587,
+        smtpUser: smtpUser || null,
+        smtpFromAddress: smtpFromAddress || null,
+        smtpFromName: smtpFromName || 'Planning BWZK',
+        smtpSecure: smtpSecure || false
+      };
+      
+      if (smtpPassword !== undefined && smtpPassword !== '') {
+        updateData.smtpPassword = smtpPassword;
+      }
+      
+      const config = await storage.createOrUpdateReportageConfig(updateData);
+      
+      if (config.smtpHost && config.smtpUser && config.smtpPassword) {
+        emailService.configureFromDatabase({
+          smtpHost: config.smtpHost,
+          smtpPort: config.smtpPort,
+          smtpUser: config.smtpUser,
+          smtpPassword: config.smtpPassword,
+          smtpFromAddress: config.smtpFromAddress,
+          smtpFromName: config.smtpFromName,
+          smtpSecure: config.smtpSecure
+        });
+      }
+      
+      res.json({ 
+        success: true,
+        smtpHost: config.smtpHost || '',
+        smtpPort: config.smtpPort || 587,
+        smtpUser: config.smtpUser || '',
+        smtpFromAddress: config.smtpFromAddress || '',
+        smtpFromName: config.smtpFromName || 'Planning BWZK',
+        smtpSecure: config.smtpSecure || false,
+        hasPassword: !!config.smtpPassword
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to save SMTP config", error: error.message });
+    }
   });
 
   // Test email connection

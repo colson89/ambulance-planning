@@ -3751,7 +3751,14 @@ export class DatabaseStorage implements IStorage {
       enabled: config.enabled ?? false,
       daysAfterMonthEnd: config.daysAfterMonthEnd ?? 5,
       emailSubject: config.emailSubject,
-      emailBody: config.emailBody
+      emailBody: config.emailBody,
+      smtpHost: config.smtpHost,
+      smtpPort: config.smtpPort,
+      smtpUser: config.smtpUser,
+      smtpPassword: config.smtpPassword,
+      smtpFromAddress: config.smtpFromAddress,
+      smtpFromName: config.smtpFromName,
+      smtpSecure: config.smtpSecure
     }).returning();
     return result[0];
   }
