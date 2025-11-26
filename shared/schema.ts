@@ -363,6 +363,13 @@ export const reportageConfig = pgTable("reportage_config", {
   emailBody: text("email_body").notNull().default("Beste,\n\nIn bijlage vindt u de maandelijkse shift rapportage voor alle stations.\n\nMet vriendelijke groeten,\nPlanning BWZK"),
   lastSentMonth: integer("last_sent_month"),
   lastSentYear: integer("last_sent_year"),
+  smtpHost: text("smtp_host"),
+  smtpPort: integer("smtp_port").default(587),
+  smtpUser: text("smtp_user"),
+  smtpPassword: text("smtp_password"),
+  smtpFromAddress: text("smtp_from_address"),
+  smtpFromName: text("smtp_from_name").default("Planning BWZK"),
+  smtpSecure: boolean("smtp_secure").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
