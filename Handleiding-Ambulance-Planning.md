@@ -34,6 +34,7 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
     - [Probleemoplossing Push Notificaties](#️-probleemoplossing-push-notificaties)
 - [Handleiding voor Admins](#handleiding-voor-admins)
   - [Verdi Integratie](#-verdi-integratie) ⭐ NIEUW
+  - [Reportage Personeelsdienst](#-reportage-personeelsdienst) ⭐ NIEUW
 - [Handleiding voor Supervisors](#handleiding-voor-supervisors)
 - [Handleiding voor IT Beheerders](#handleiding-voor-it-beheerders)
 - [Veelgestelde Vragen](#veelgestelde-vragen)
@@ -1585,19 +1586,37 @@ Het Ambulance Planning Systeem biedt nu een centraal overzicht van alle externe 
 - Configureer URL, credentials en gebruikersmappings
 - Status: Volledig operationeel
 
+📧 **Reportage Personeelsdienst** (Actief)
+- Automatische maandelijkse shift rapportages via email
+- Excel bestand met overzicht van alle shifts per station
+- SMTP configuratie via UI (self-service)
+- Export Excel functie als backup
+- Status: Volledig operationeel
+
 🔜 **Toekomstige Integraties**
 - Ruimte voor HR-systemen
 - Andere alarmsoftware
 - En meer externe diensten
 
-#### Waarom Integraties?
+#### Over Integraties
 
-Integraties verbinden het planning systeem met externe tools en diensten. Dit zorgt voor:
+Integraties verbinden het Ambulance Planning Systeem met externe diensten zoals alarmeringssoftware, HR-systemen, en andere tools. Deze koppelingen automatiseren workflows en zorgen ervoor dat data up-to-date blijft tussen verschillende systemen.
+
+**Beschikbare Koppelingen:**
+
+📱 **Verdi**: Synchroniseert ingeplande shifts automatisch naar de Verdi alarmeringscentrale, zodat de juiste medewerkers bereikbaar zijn tijdens noodsituaties.
+
+📧 **Reportage**: Automatische maandelijkse shift rapportages via email met Excel overzichten voor de personeelsdienst.
+
+**Voordelen van Integraties:**
 
 - ✅ **Automatisering**: Geen handmatig overtypen van data
 - ✅ **Up-to-date informatie**: Data blijft gesynchroniseerd tussen systemen
 - ✅ **Tijdsbesparing**: Minder administratief werk
 - ✅ **Foutreductie**: Minder kans op tikfouten bij handmatige invoer
+
+**Toekomstige Uitbreidingen:**
+- Ruimte voor extra koppelingen met HR-systemen, andere alarmsoftware, en meer
 
 ### 🔗 Verdi Integratie
 
@@ -1930,6 +1949,152 @@ A: Wijzig gewoon de shift in het planningssysteem en klik op "Sync naar Verdi" �
 - Contact Verdi beheerder voor GUIDs en credentials
 - Contact systeembeheerder voor technische problemen
 - Check sync logs voor foutmeldingen
+
+---
+
+### 📧 Reportage Personeelsdienst
+
+⭐ **NIEUW - Volledig Operationeel**
+
+Het Ambulance Planning Systeem kan automatisch maandelijkse shift rapportages versturen via email. Dit bespaart tijd en zorgt dat de personeelsdienst altijd actuele gegevens ontvangt.
+
+#### 📋 Wat is Reportage Personeelsdienst?
+
+**Reportage Personeelsdienst** is een geautomatiseerd rapportagesysteem dat:
+
+- **Automatische Verzending**: Maandelijkse rapporten worden automatisch verstuurd na afloop van de maand
+- **Excel Bijlage**: Volledig overzicht van alle shifts per station in Excel formaat
+- **Meerdere Ontvangers**: Configureer meerdere email adressen voor verschillende afdelingen
+- **Handmatige Verzending**: Verstuur rapporten op elk moment voor elke maand
+- **Export Backup**: Download Excel direct als backup wanneer email niet werkt
+
+#### 🔧 Reportage Configuratie
+
+**Toegang:**
+- ✅ **Admins**: Kunnen rapportage beheren voor hun station
+- ✅ **Supervisors**: Volledige toegang tot alle rapportage instellingen
+
+**Reportage Pagina Openen:**
+1. Klik op "Integraties" in het hoofdmenu
+2. Klik op de "Reportage Personeelsdienst" kaart
+3. U ziet vier tabbladen: SMTP Instellingen, Rapportage, Ontvangers, Verzendlog
+
+#### ⚙️ Tab 1: SMTP Instellingen
+
+⭐ **NIEUW - Self-Service Configuratie**
+
+U kunt nu zelf de email server configureren via de webinterface, zonder hulp van IT.
+
+**SMTP Configuratie:**
+
+1. **SMTP Server**: Het adres van uw mailserver
+   - Office 365: `smtp.office365.com`
+   - Gmail: `smtp.gmail.com`
+   - Eigen server: vraag uw IT afdeling
+
+2. **SMTP Poort**: De poort voor de verbinding
+   - Standaard TLS: `587` (aanbevolen)
+   - SSL: `465`
+   - Onbeveiligd: `25` (niet aanbevolen)
+
+3. **Gebruikersnaam**: Meestal uw volledige email adres
+
+4. **Wachtwoord**: Het wachtwoord voor de email account
+   - Wordt versleuteld opgeslagen in de database
+   - Na opslaan niet meer zichtbaar (toont "(opgeslagen)")
+
+5. **Afzender Email**: Het email adres dat als afzender wordt getoond
+   - Moet vaak overeenkomen met de gebruikersnaam
+
+6. **Afzender Naam**: De naam die bij de afzender wordt getoond
+   - Bijvoorbeeld: "Planning BWZK"
+
+7. **Beveiligde Verbinding (TLS)**: Schakel in voor versleutelde verbinding
+   - Aanbevolen voor Office 365 en Gmail
+
+**Verbinding Testen:**
+- Klik "Test Verbinding" om te controleren of de instellingen correct zijn
+- Bij succes: groene melding "Verbinding succesvol"
+- Bij fout: rode melding met uitleg wat er mis is
+
+**Test Email Versturen:**
+- Vul een email adres in
+- Klik "Verstuur Test Email"
+- Controleer of de test email aankomt
+
+#### 📊 Tab 2: Rapportage
+
+**Instellingen:**
+
+1. **Rapportage inschakelen**: Schakelaar om automatische verzending aan/uit te zetten
+
+2. **Verzenddag**: Hoeveel dagen na het einde van de maand wordt de rapportage verstuurd
+   - Standaard: Dag 5 van de volgende maand
+   - Instelbaar van 1 tot 28 dagen
+
+3. **Email Onderwerp**: Pas het onderwerp van de email aan
+   - Gebruik `{maand}` en `{jaar}` als placeholders
+   - Voorbeeld: "Shift Rapportage - {maand} {jaar}"
+
+4. **Email Inhoud**: Pas de tekst van de email aan
+   - Gebruik dezelfde placeholders
+
+**Handmatig Versturen en Export:**
+
+1. Selecteer maand en jaar
+2. Klik "Verstuur Rapportage" om direct te verzenden via email
+3. Klik "Export Excel" om het bestand direct te downloaden (backup optie)
+
+**Export Excel - Backup Functie:** ⭐ NIEUW
+
+Als backup wanneer email niet beschikbaar is, kunt u het Excel rapport direct downloaden:
+- Selecteer de gewenste maand en jaar
+- Klik op "Export Excel"
+- Het bestand wordt automatisch gedownload
+- Bestandsnaam: `Shift_Rapportage_[Maand]_[Jaar].xlsx`
+
+**Excel Inhoud:**
+- **Samenvatting Tab**: Overzicht van alle stations met totalen
+- **Per Station Tab**: Gedetailleerde lijst van alle shifts (datum, medewerker, type, tijden, status)
+
+#### 👥 Tab 3: Ontvangers
+
+**Ontvangers Beheren:**
+
+1. **Toevoegen**: Klik "Ontvanger Toevoegen"
+   - Vul email adres in
+   - Optioneel: voeg naam toe
+   - Klik "Toevoegen"
+
+2. **Actief/Inactief**: Gebruik de schakelaar om ontvangers tijdelijk uit te schakelen zonder te verwijderen
+
+3. **Verwijderen**: Klik op het prullenbak icoon om een ontvanger permanent te verwijderen
+
+#### 📜 Tab 4: Verzendlog
+
+**Logs Bekijken:**
+- Overzicht van alle verstuurde rapportages
+- Datum en tijd van verzending
+- Status: Succesvol of Mislukt
+- Aantal ontvangers
+- Eventuele foutmeldingen
+
+#### ❓ Veelgestelde Vragen Reportage
+
+**Q: De email wordt niet verstuurd, wat nu?**
+A: Controleer de SMTP instellingen en test de verbinding. Gebruik "Export Excel" als tijdelijke oplossing.
+
+**Q: Kan ik rapporten voor oudere maanden versturen?**
+A: Ja, selecteer de gewenste maand en jaar bij "Handmatig Versturen" en klik "Verstuur Rapportage".
+
+**Q: Wie ontvangt de automatische rapportages?**
+A: Alle ontvangers die als "Actief" staan in het Ontvangers tabblad.
+
+**Q: Hoe vaak worden automatische rapportages verstuurd?**
+A: Eenmaal per maand, op de ingestelde dag na het einde van de maand.
+
+**Q: Kan ik het Excel formaat aanpassen?**
+A: Nee, het formaat is standaard. Het bevat alle relevante shift informatie per station.
 
 ---
 
