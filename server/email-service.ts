@@ -71,17 +71,26 @@ class EmailService {
   private createTransporter() {
     if (!this.config) return;
 
+    const isPort587 = this.config.port === 587;
+    const isPort465 = this.config.port === 465;
+    
     this.transporter = nodemailer.createTransport({
       host: this.config.host,
       port: this.config.port,
-      secure: this.config.secure,
+      secure: isPort465,
+      requireTLS: isPort587,
       auth: {
         user: this.config.user,
         pass: this.config.password
       },
       tls: {
-        rejectUnauthorized: false
-      }
+        minVersion: 'TLSv1.2',
+        rejectUnauthorized: false,
+        ciphers: 'SSLv3'
+      },
+      connectionTimeout: 30000,
+      greetingTimeout: 30000,
+      socketTimeout: 60000
     });
   }
 
@@ -114,7 +123,22 @@ class EmailService {
       return { success: true };
     } catch (error: any) {
       console.error('SMTP verification failed:', error);
-      return { success: false, error: error.message };
+      
+      let friendlyError = error.message;
+      
+      if (error.code === 'ETIMEDOUT') {
+        friendlyError = `Verbinding timeout naar ${this.config?.host}:${this.config?.port}. Controleer of de firewall uitgaande verbindingen toestaat.`;
+      } else if (error.code === 'ECONNRESET') {
+        friendlyError = `Verbinding afgesloten door server. Controleer of de poort (${this.config?.port}) en TLS instellingen correct zijn.`;
+      } else if (error.code === 'ECONNREFUSED') {
+        friendlyError = `Verbinding geweigerd door ${this.config?.host}:${this.config?.port}. Controleer of de server en poort correct zijn.`;
+      } else if (error.code === 'EAUTH' || error.responseCode === 535) {
+        friendlyError = 'Authenticatie mislukt. Controleer gebruikersnaam en wachtwoord. Voor Office 365 kan een App-wachtwoord nodig zijn.';
+      } else if (error.code === 'ESOCKET') {
+        friendlyError = `Socket error naar ${this.config?.host}. Mogelijk een TLS/SSL probleem.`;
+      }
+      
+      return { success: false, error: friendlyError };
     }
   }
 
