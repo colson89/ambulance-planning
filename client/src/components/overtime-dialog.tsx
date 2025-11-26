@@ -90,7 +90,12 @@ export function OvertimeDialog({ open, onOpenChange, shift, existingOvertime = [
         title: "Overuren opgeslagen",
         description: "Je overuren zijn succesvol geregistreerd.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/overtime"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.startsWith('/api/overtime');
+        }
+      });
       resetForm();
     },
     onError: (error: Error) => {
@@ -116,7 +121,12 @@ export function OvertimeDialog({ open, onOpenChange, shift, existingOvertime = [
         title: "Overuren verwijderd",
         description: "De overuren zijn verwijderd.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/overtime"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.startsWith('/api/overtime');
+        }
+      });
     },
     onError: (error: Error) => {
       toast({

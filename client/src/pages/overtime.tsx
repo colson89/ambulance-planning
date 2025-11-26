@@ -122,7 +122,12 @@ export default function OvertimePage() {
         title: "Overuren verwijderd",
         description: "De overuren zijn succesvol verwijderd.",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/overtime"] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && key.startsWith('/api/overtime');
+        }
+      });
       setDeleteId(null);
     },
     onError: (error: Error) => {
