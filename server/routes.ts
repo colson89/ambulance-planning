@@ -4866,7 +4866,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       }
       
       // Get the shift to verify ownership and get stationId
-      const shift = await storage.getShiftById(shiftId);
+      const shift = await storage.getShift(shiftId);
       if (!shift) {
         return res.status(404).json({ message: "Shift niet gevonden" });
       }
