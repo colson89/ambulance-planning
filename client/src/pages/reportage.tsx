@@ -41,6 +41,7 @@ interface SmtpConfig {
   smtpFromName: string;
   smtpSecure: boolean;
   hasPassword: boolean;
+  passwordNeedsReentry?: boolean;
 }
 
 interface ReportageRecipient {
@@ -463,15 +464,16 @@ export default function Reportage() {
                       
                       <div className="space-y-2">
                         <Label htmlFor="smtpPassword">
-                          Wachtwoord {smtpConfig?.hasPassword ? "(opgeslagen)" : "*"}
+                          Wachtwoord {smtpConfig?.hasPassword ? "(opgeslagen)" : smtpConfig?.passwordNeedsReentry ? "(moet opnieuw ingevoerd)" : "*"}
                         </Label>
                         <div className="relative">
                           <Input
                             id="smtpPassword"
                             type={showPassword ? "text" : "password"}
-                            placeholder={smtpConfig?.hasPassword ? "••••••••" : "Wachtwoord invoeren"}
+                            placeholder={smtpConfig?.hasPassword ? "••••••••" : smtpConfig?.passwordNeedsReentry ? "Voer wachtwoord opnieuw in" : "Wachtwoord invoeren"}
                             value={smtpPassword}
                             onChange={(e) => setSmtpPassword(e.target.value)}
+                            className={smtpConfig?.passwordNeedsReentry ? "border-orange-400" : ""}
                           />
                           <Button
                             type="button"
@@ -483,7 +485,12 @@ export default function Reportage() {
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </Button>
                         </div>
-                        {smtpConfig?.hasPassword && (
+                        {smtpConfig?.passwordNeedsReentry && (
+                          <p className="text-xs text-orange-600">
+                            Het wachtwoord moet opnieuw worden ingevoerd vanwege een beveiligingsupdate.
+                          </p>
+                        )}
+                        {smtpConfig?.hasPassword && !smtpConfig?.passwordNeedsReentry && (
                           <p className="text-xs text-gray-500">
                             Laat leeg om het huidige wachtwoord te behouden
                           </p>
@@ -534,7 +541,7 @@ export default function Reportage() {
                     <div className="flex flex-wrap gap-3 pt-4 border-t">
                       <Button 
                         onClick={handleSaveSmtpConfig}
-                        disabled={!smtpHost || !smtpUser || (!smtpConfig?.hasPassword && !smtpPassword) || saveSmtpConfigMutation.isPending}
+                        disabled={!smtpHost || !smtpUser || ((!smtpConfig?.hasPassword || smtpConfig?.passwordNeedsReentry) && !smtpPassword) || saveSmtpConfigMutation.isPending}
                       >
                         {saveSmtpConfigMutation.isPending ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

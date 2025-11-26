@@ -60,7 +60,8 @@ Documentation Files:
   - **Excel Attachments**: Complete shift overview per station with summary and detailed per-station tabs
   - **Recipient Management**: Add/remove email recipients with active/inactive toggle
   - **Manual Sending**: Option to send reports for any month/year on demand
-  - **SMTP Configuration**: Requires environment variables: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_ADDRESS` (optional), `SMTP_FROM_NAME` (optional)
+  - **SMTP Configuration**: Fully configurable via UI at `/reportage` page (SMTP Instellingen tab). Settings stored securely in database with AES-256-GCM encrypted passwords. Requires `SESSION_SECRET` environment variable (min 32 characters) for password encryption. Supports SMTP servers including Office 365, Gmail, and custom mail servers.
+  - **Self-Service**: Customers can configure their own SMTP settings without server access - IT only needs to set `SESSION_SECRET` environment variable
   - **Send Logging**: Complete history of sent reports with success/failure status
   - **Windows Server Compatible**: Works with Office 365, Gmail, and any SMTP server
 - **Verdi Integration**: Full shift synchronization to Verdi alarm software via REST API. Station-scoped configuration stored in database (verdiStationConfig table) with URL, authentication credentials (authId/authSecret), and ShiftSheet GUID. Person GUID mappings are global (cross-station), position mappings are station-specific. Comprehensive sync logging with status tracking. Admin users can configure their station and map users; supervisors have full access to all stations and configurations. Accessed via Integrations page (`/integrations`).

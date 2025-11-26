@@ -4329,19 +4329,25 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
 
   const { emailService } = await import('./email-service');
   const { reportageScheduler } = await import('./reportage-scheduler');
+  const { encryptPassword, decryptPassword, isEncryptionAvailable } = await import('./crypto-utils');
 
   async function initializeEmailServiceFromDb() {
     const config = await storage.getReportageConfig();
     if (config && config.smtpHost && config.smtpUser && config.smtpPassword) {
-      emailService.configureFromDatabase({
-        smtpHost: config.smtpHost,
-        smtpPort: config.smtpPort,
-        smtpUser: config.smtpUser,
-        smtpPassword: config.smtpPassword,
-        smtpFromAddress: config.smtpFromAddress,
-        smtpFromName: config.smtpFromName,
-        smtpSecure: config.smtpSecure
-      });
+      const decryptedPassword = decryptPassword(config.smtpPassword);
+      if (decryptedPassword) {
+        emailService.configureFromDatabase({
+          smtpHost: config.smtpHost,
+          smtpPort: config.smtpPort,
+          smtpUser: config.smtpUser,
+          smtpPassword: decryptedPassword,
+          smtpFromAddress: config.smtpFromAddress,
+          smtpFromName: config.smtpFromName,
+          smtpSecure: config.smtpSecure
+        });
+      } else {
+        console.warn('SMTP password could not be decrypted - email service not initialized. Please re-enter the SMTP password.');
+      }
     }
   }
   
@@ -4382,6 +4388,12 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           hasPassword: false
         });
       }
+      let hasValidPassword = false;
+      if (config.smtpPassword) {
+        const decrypted = decryptPassword(config.smtpPassword);
+        hasValidPassword = decrypted !== null;
+      }
+      
       res.json({
         smtpHost: config.smtpHost || '',
         smtpPort: config.smtpPort || 587,
@@ -4389,7 +4401,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         smtpFromAddress: config.smtpFromAddress || '',
         smtpFromName: config.smtpFromName || 'Planning BWZK',
         smtpSecure: config.smtpSecure || false,
-        hasPassword: !!config.smtpPassword
+        hasPassword: hasValidPassword,
+        passwordNeedsReentry: !!config.smtpPassword && !hasValidPassword
       });
     } catch (error: any) {
       res.status(500).json({ message: "Failed to get SMTP config", error: error.message });
@@ -4418,21 +4431,29 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       };
       
       if (smtpPassword !== undefined && smtpPassword !== '') {
-        updateData.smtpPassword = smtpPassword;
+        if (!isEncryptionAvailable()) {
+          return res.status(500).json({ 
+            message: "SMTP wachtwoord kan niet worden opgeslagen - SESSION_SECRET is niet geconfigureerd op de server. Neem contact op met uw IT-beheerder." 
+          });
+        }
+        updateData.smtpPassword = encryptPassword(smtpPassword);
       }
       
       const config = await storage.createOrUpdateReportageConfig(updateData);
       
       if (config.smtpHost && config.smtpUser && config.smtpPassword) {
-        emailService.configureFromDatabase({
-          smtpHost: config.smtpHost,
-          smtpPort: config.smtpPort,
-          smtpUser: config.smtpUser,
-          smtpPassword: config.smtpPassword,
-          smtpFromAddress: config.smtpFromAddress,
-          smtpFromName: config.smtpFromName,
-          smtpSecure: config.smtpSecure
-        });
+        const decryptedPassword = decryptPassword(config.smtpPassword);
+        if (decryptedPassword) {
+          emailService.configureFromDatabase({
+            smtpHost: config.smtpHost,
+            smtpPort: config.smtpPort,
+            smtpUser: config.smtpUser,
+            smtpPassword: decryptedPassword,
+            smtpFromAddress: config.smtpFromAddress,
+            smtpFromName: config.smtpFromName,
+            smtpSecure: config.smtpSecure
+          });
+        }
       }
       
       res.json({ 
