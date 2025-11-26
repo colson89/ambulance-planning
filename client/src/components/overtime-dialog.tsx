@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -54,6 +54,20 @@ export function OvertimeDialog({ open, onOpenChange, shift, existingOvertime = [
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [reason, setReason] = useState("");
+  
+  useEffect(() => {
+    if (open && shift) {
+      if (shift.endTime) {
+        const endTimeDate = new Date(shift.endTime);
+        const formattedTime = format(endTimeDate, "HH:mm");
+        setStartTime(formattedTime);
+      } else {
+        setStartTime(shift.type === "day" ? "19:00" : "07:00");
+      }
+      setEndTime("");
+      setReason("");
+    }
+  }, [open, shift]);
   
   const createMutation = useMutation({
     mutationFn: async (data: { shiftId: number; date: string; startTime: string; durationMinutes: number; reason: string }) => {
