@@ -4667,6 +4667,40 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     res.json(reportageScheduler.getStatus());
   });
 
+  // Export Excel report (download)
+  app.get("/api/reportage/export-excel", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const month = parseInt(req.query.month as string);
+      const year = parseInt(req.query.year as string);
+      
+      if (!month || !year || month < 1 || month > 12) {
+        return res.status(400).json({ message: "Ongeldige maand of jaar" });
+      }
+      
+      const excelBuffer = await reportageScheduler.generateExcelReport(month, year);
+      
+      const monthNames = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 
+                          'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+      const monthName = monthNames[month - 1];
+      const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+      const filename = `Shift_Rapportage_${capitalizedMonth}_${year}.xlsx`;
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(excelBuffer);
+    } catch (error: any) {
+      console.error('Excel export error:', error);
+      res.status(500).json({ message: "Fout bij genereren Excel", error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft, Mail, Settings, Plus, Trash2, Send, 
   CheckCircle, XCircle, AlertCircle, Clock, RefreshCw,
-  Loader2, Server, Eye, EyeOff, Save
+  Loader2, Server, Eye, EyeOff, Save, Download
 } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -74,6 +74,7 @@ export default function Reportage() {
   const [testEmail, setTestEmail] = useState("");
   const [sendMonth, setSendMonth] = useState<number>(new Date().getMonth());
   const [sendYear, setSendYear] = useState<number>(new Date().getFullYear());
+  const [isExporting, setIsExporting] = useState(false);
   
   const [smtpHost, setSmtpHost] = useState("");
   const [smtpPort, setSmtpPort] = useState(587);
@@ -251,6 +252,38 @@ export default function Reportage() {
       toast({ title: "Fout", description: error.message, variant: "destructive" });
     }
   });
+
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    try {
+      const response = await fetch(`/api/reportage/export-excel?month=${sendMonth + 1}&year=${sendYear}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Export mislukt');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+      a.download = filenameMatch ? filenameMatch[1] : `Shift_Rapportage_${sendMonth + 1}_${sendYear}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({ title: "Excel geëxporteerd", description: "Het bestand wordt gedownload" });
+    } catch (error: any) {
+      toast({ title: "Export mislukt", description: error.message, variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleSaveSmtpConfig = () => {
     saveSmtpConfigMutation.mutate({
@@ -706,6 +739,18 @@ export default function Reportage() {
                         <Send className="mr-2 h-4 w-4" />
                       )}
                       Verstuur Rapportage
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleExportExcel}
+                      disabled={isExporting}
+                    >
+                      {isExporting ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="mr-2 h-4 w-4" />
+                      )}
+                      Export Excel
                     </Button>
                   </div>
                   {recipients.filter(r => r.isActive).length === 0 && (
