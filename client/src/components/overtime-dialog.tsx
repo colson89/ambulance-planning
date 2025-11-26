@@ -58,9 +58,16 @@ export function OvertimeDialog({ open, onOpenChange, shift, existingOvertime = [
   useEffect(() => {
     if (open && shift) {
       if (shift.endTime) {
-        const endTimeDate = new Date(shift.endTime);
-        const formattedTime = format(endTimeDate, "HH:mm");
-        setStartTime(formattedTime);
+        const endTimeStr = String(shift.endTime);
+        if (endTimeStr.includes('T')) {
+          const timePart = endTimeStr.split('T')[1];
+          const formattedTime = timePart.substring(0, 5);
+          setStartTime(formattedTime);
+        } else {
+          const endTimeDate = new Date(shift.endTime);
+          const formattedTime = format(endTimeDate, "HH:mm");
+          setStartTime(formattedTime);
+        }
       } else {
         setStartTime(shift.type === "day" ? "19:00" : "07:00");
       }
