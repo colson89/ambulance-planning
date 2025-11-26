@@ -413,3 +413,33 @@ export type ReportageRecipient = typeof reportageRecipients.$inferSelect;
 export type InsertReportageRecipient = z.infer<typeof insertReportageRecipientSchema>;
 
 export type ReportageLog = typeof reportageLogs.$inferSelect;
+
+// Overuren registratie
+export const overtime = pgTable("overtime", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  shiftId: integer("shift_id").notNull().references(() => shifts.id),
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  date: timestamp("date").notNull(),
+  startTime: timestamp("start_time").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(),
+  reason: text("reason").notNull(),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertOvertimeSchema = createInsertSchema(overtime, {
+  date: z.coerce.date(),
+  startTime: z.coerce.date(),
+  durationMinutes: z.number().min(1, "Duur moet minimaal 1 minuut zijn"),
+  reason: z.string().min(1, "Reden is verplicht"),
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export type Overtime = typeof overtime.$inferSelect;
+export type InsertOvertime = z.infer<typeof insertOvertimeSchema>;

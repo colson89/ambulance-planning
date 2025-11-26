@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -3808,6 +3808,77 @@ export class DatabaseStorage implements IStorage {
         .set({ lastSentMonth: month, lastSentYear: year, updatedAt: new Date() })
         .where(eq(reportageConfig.id, config.id));
     }
+  }
+
+  // Overtime (Overuren) Methods
+  async createOvertime(data: InsertOvertime): Promise<Overtime> {
+    const result = await db.insert(overtime).values(data).returning();
+    return result[0];
+  }
+
+  async getOvertimeById(id: number): Promise<Overtime | undefined> {
+    const result = await db.select().from(overtime).where(eq(overtime.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getOvertimeByUser(userId: number): Promise<Overtime[]> {
+    return db.select().from(overtime)
+      .where(eq(overtime.userId, userId))
+      .orderBy(desc(overtime.date));
+  }
+
+  async getOvertimeByUserAndMonth(userId: number, month: number, year: number): Promise<Overtime[]> {
+    return db.select().from(overtime)
+      .where(and(
+        eq(overtime.userId, userId),
+        eq(overtime.month, month),
+        eq(overtime.year, year)
+      ))
+      .orderBy(desc(overtime.date));
+  }
+
+  async getOvertimeByStation(stationId: number): Promise<Overtime[]> {
+    return db.select().from(overtime)
+      .where(eq(overtime.stationId, stationId))
+      .orderBy(desc(overtime.date));
+  }
+
+  async getOvertimeByStationAndMonth(stationId: number, month: number, year: number): Promise<Overtime[]> {
+    return db.select().from(overtime)
+      .where(and(
+        eq(overtime.stationId, stationId),
+        eq(overtime.month, month),
+        eq(overtime.year, year)
+      ))
+      .orderBy(desc(overtime.date));
+  }
+
+  async getOvertimeByShift(shiftId: number): Promise<Overtime[]> {
+    return db.select().from(overtime)
+      .where(eq(overtime.shiftId, shiftId))
+      .orderBy(asc(overtime.startTime));
+  }
+
+  async getAllOvertimeByMonth(month: number, year: number): Promise<Overtime[]> {
+    return db.select().from(overtime)
+      .where(and(
+        eq(overtime.month, month),
+        eq(overtime.year, year)
+      ))
+      .orderBy(desc(overtime.date));
+  }
+
+  async updateOvertime(id: number, data: Partial<InsertOvertime>): Promise<Overtime> {
+    const result = await db
+      .update(overtime)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(overtime.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteOvertime(id: number): Promise<void> {
+    await db.delete(overtime).where(eq(overtime.id, id));
   }
 }
 
