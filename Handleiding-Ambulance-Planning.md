@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.6 - Laatst bijgewerkt: 25 november 2025, 14:15**
+**Versie 2025.7 - Laatst bijgewerkt: 26 november 2025, 17:30**
 
 ---
 
@@ -32,6 +32,7 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
   - [Kalender Synchronisatie](#-kalender-synchronisatie) ⭐ NIEUW
   - [Push Notificaties](#-push-notificaties) ⭐ NIEUW
     - [Probleemoplossing Push Notificaties](#️-probleemoplossing-push-notificaties)
+  - [Overuren Registreren](#-overuren-registreren) ⭐ NIEUW
 - [Handleiding voor Admins](#handleiding-voor-admins)
   - [Verdi Integratie](#-verdi-integratie) ⭐ NIEUW
   - [Reportage Personeelsdienst](#-reportage-personeelsdienst) ⭐ NIEUW
@@ -842,6 +843,59 @@ Neem contact op met uw beheerder met de volgende informatie:
 - Welke versie van het besturingssysteem? (bijv. iOS 17.2, Android 14)
 - Welke foutmelding ziet u (indien van toepassing)?
 - Werkt de test notificatie?
+
+---
+
+### ⏱️ Overuren Registreren
+
+⭐ **NIEUWE FUNCTIE**
+
+U kunt extra gewerkte uren registreren die gekoppeld zijn aan een specifieke shift.
+
+#### Wanneer Overuren Registreren?
+
+- Extra tijd gewerkt na uw normale shift
+- Onverwachte verlengingen van diensten
+- Aanvullende taken buiten reguliere werktijden
+
+#### Hoe Overuren Invoeren?
+
+**Via het Dashboard:**
+
+1. Ga naar uw **Dashboard**
+2. Zoek de shift waarvoor u overuren wilt registreren
+3. Klik op de **"Overuren"** knop (klok icoon) naast uw shift
+4. Vul in:
+   - **Starttijd**: Wanneer begonnen de overuren
+   - **Duur**: Aantal minuten overwerk
+   - **Reden**: Korte omschrijving waarom overuren gemaakt zijn
+5. Klik **"Toevoegen"**
+
+**Let Op - Invoerperiode:**
+- U kunt overuren invoeren voor de **huidige maand**
+- En tot **7 dagen na het einde van de vorige maand**
+- Na deze periode kunnen geen overuren meer worden toegevoegd
+
+#### Overuren Overzicht Bekijken
+
+**Via het Menu:**
+
+1. Klik op **"Overuren"** in het navigatiemenu
+2. Selecteer de gewenste maand/jaar
+3. Bekijk al uw geregistreerde overuren
+4. U kunt hier ook overuren verwijderen (binnen de invoerperiode)
+
+#### Overuren Verwijderen
+
+- Klik op het prullenbak icoon naast de overuren
+- Bevestig de verwijdering
+- Let op: Dit kan alleen binnen de invoerperiode (huidige maand + 7 dagen na vorige maand)
+
+#### Overuren in Rapportages
+
+Overuren worden automatisch meegenomen in de maandelijkse Excel rapportages:
+- **Samenvatting Tab**: Toont totaal overuren per station (in minuten en uren)
+- **Overuren Tab**: Gedetailleerd overzicht van alle overuren met datum, medewerker, duur en reden
 
 ---
 

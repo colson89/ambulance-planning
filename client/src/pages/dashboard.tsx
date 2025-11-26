@@ -1,8 +1,9 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer } from "lucide-react";
 import { OpenSlotWarning } from "@/components/open-slot-warning";
+import { OvertimeDialog } from "@/components/overtime-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -42,6 +43,8 @@ export default function Dashboard() {
   const [selectedContactUser, setSelectedContactUser] = useState<UserType | null>(null);
   const [showContactDialog, setShowContactDialog] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [overtimeDialogOpen, setOvertimeDialogOpen] = useState(false);
+  const [selectedOvertimeShift, setSelectedOvertimeShift] = useState<Shift | null>(null);
 
   const { data: shifts = [], isLoading: shiftsLoading } = useQuery<Shift[]>({
     queryKey: ["/api/shifts", selectedMonth + 1, selectedYear],
@@ -72,6 +75,15 @@ export default function Dashboard() {
       const data = await res.json();
       console.log("📊 Weekday configs loaded for stationId:", user?.stationId, data);
       return data;
+    },
+  });
+
+  const { data: myOvertime = [] } = useQuery<any[]>({
+    queryKey: ["/api/overtime/my", selectedMonth + 1, selectedYear],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/overtime/my/${selectedYear}/${selectedMonth + 1}`);
+      if (!res.ok) return [];
+      return res.json();
     },
   });
 
@@ -576,6 +588,14 @@ export default function Dashboard() {
                 <Calendar className="h-4 w-4 mr-2" />
                 Voorkeuren
               </Button>
+              <Button 
+                variant="outline"
+                className="justify-start h-12"
+                onClick={() => { setLocation("/overtime"); setMobileMenuOpen(false); }}
+              >
+                <Timer className="h-4 w-4 mr-2" />
+                Overuren
+              </Button>
               <div className="col-span-2">
                 <StationSwitcher />
               </div>
@@ -729,21 +749,42 @@ export default function Dashboard() {
                             {getShiftTime()}
                           </Badge>
                         </div>
-                        <div className="mt-2 text-sm">
-                          {shift.status === "open" ? (
-                            <span className="text-red-500 font-medium">Niet ingevuld</span>
-                          ) : shiftUser ? (
-                            <button
-                              className={`text-left hover:underline ${isCurrentUserShift ? "font-bold text-green-600" : ""}`}
+                        <div className="mt-2 text-sm flex items-center justify-between">
+                          <div>
+                            {shift.status === "open" ? (
+                              <span className="text-red-500 font-medium">Niet ingevuld</span>
+                            ) : shiftUser ? (
+                              <button
+                                className={`text-left hover:underline ${isCurrentUserShift ? "font-bold text-green-600" : ""}`}
+                                onClick={() => {
+                                  setSelectedContactUser(shiftUser);
+                                  setShowContactDialog(true);
+                                }}
+                              >
+                                {`${shiftUser.firstName} ${shiftUser.lastName}`}
+                              </button>
+                            ) : (
+                              <span className="text-muted-foreground">Onbekend</span>
+                            )}
+                          </div>
+                          {isCurrentUserShift && shift.status === "planned" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
                               onClick={() => {
-                                setSelectedContactUser(shiftUser);
-                                setShowContactDialog(true);
+                                setSelectedOvertimeShift(shift);
+                                setOvertimeDialogOpen(true);
                               }}
                             >
-                              {`${shiftUser.firstName} ${shiftUser.lastName}`}
-                            </button>
-                          ) : (
-                            <span className="text-muted-foreground">Onbekend</span>
+                              <Timer className="h-3 w-3 mr-1" />
+                              Overuren
+                              {myOvertime.filter(o => o.shiftId === shift.id).length > 0 && (
+                                <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
+                                  {myOvertime.filter(o => o.shiftId === shift.id).length}
+                                </Badge>
+                              )}
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -764,6 +805,7 @@ export default function Dashboard() {
                       <TableHead>Tijd</TableHead>
                       <TableHead>Medewerker</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Overuren</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -857,6 +899,29 @@ export default function Dashboard() {
                                 {shift.status === "open" ? "Open" : "Ingepland"}
                               </div>
                             </TableCell>
+                            <TableCell className="text-right">
+                              {isCurrentUserShift && shift.status === "planned" ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2"
+                                  onClick={() => {
+                                    setSelectedOvertimeShift(shift);
+                                    setOvertimeDialogOpen(true);
+                                  }}
+                                >
+                                  <Timer className="h-3 w-3 mr-1" />
+                                  {myOvertime.filter(o => o.shiftId === shift.id).length > 0 && (
+                                    <Badge variant="secondary" className="mr-1 h-4 px-1 text-[10px]">
+                                      {myOvertime.filter(o => o.shiftId === shift.id).length}
+                                    </Badge>
+                                  )}
+                                  Registreren
+                                </Button>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">-</span>
+                              )}
+                            </TableCell>
                           </TableRow>
                         );
                         
@@ -869,7 +934,7 @@ export default function Dashboard() {
                           
                           results.push(
                             <TableRow key={`${shift.id}-warning`} className="bg-orange-50 border-l-4 border-l-orange-500">
-                              <TableCell colSpan={5} className="p-0">
+                              <TableCell colSpan={6} className="p-0">
                                 <OpenSlotWarning
                                   date={new Date(shift.date)}
                                   shifts={filteredShifts.filter(s => format(new Date(s.date), 'yyyy-MM-dd') === format(new Date(shift.date), 'yyyy-MM-dd'))}
@@ -1168,6 +1233,14 @@ export default function Dashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Overtime Dialog */}
+      <OvertimeDialog
+        open={overtimeDialogOpen}
+        onOpenChange={setOvertimeDialogOpen}
+        shift={selectedOvertimeShift}
+        existingOvertime={selectedOvertimeShift ? myOvertime.filter(o => o.shiftId === selectedOvertimeShift.id) : []}
+      />
     </div>
   );
 }

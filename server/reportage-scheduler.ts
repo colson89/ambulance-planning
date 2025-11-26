@@ -169,6 +169,7 @@ class ReportageScheduler {
     const stations = await storage.getAllStations();
     const shifts = await storage.getShiftsByMonth(month, year);
     const allUsers = await storage.getAllUsers();
+    const allOvertime = await storage.getAllOvertimeByMonth(month, year);
     
     const summarySheet = workbook.addWorksheet('Samenvatting');
     
@@ -178,7 +179,9 @@ class ReportageScheduler {
       { header: 'Dagdiensten', key: 'dayShifts', width: 15 },
       { header: 'Nachtdiensten', key: 'nightShifts', width: 15 },
       { header: 'Split Diensten', key: 'splitShifts', width: 15 },
-      { header: 'Unieke Medewerkers', key: 'uniqueUsers', width: 20 }
+      { header: 'Unieke Medewerkers', key: 'uniqueUsers', width: 20 },
+      { header: 'Overuren (min)', key: 'overtimeMinutes', width: 15 },
+      { header: 'Overuren (uur)', key: 'overtimeHours', width: 15 }
     ];
     
     summarySheet.getRow(1).font = { bold: true };
@@ -198,13 +201,19 @@ class ReportageScheduler {
       const splitShifts = stationShifts.filter(s => s.isSplitShift);
       const uniqueUserIds = new Set(stationShifts.map(s => s.userId));
       
+      const stationOvertime = allOvertime.filter(o => o.stationId === station.id);
+      const totalOvertimeMinutes = stationOvertime.reduce((sum, o) => sum + o.durationMinutes, 0);
+      const totalOvertimeHours = (totalOvertimeMinutes / 60).toFixed(1);
+      
       summarySheet.addRow({
         station: station.displayName,
         totalShifts: stationShifts.length,
         dayShifts: dayShifts.length,
         nightShifts: nightShifts.length,
         splitShifts: splitShifts.length,
-        uniqueUsers: uniqueUserIds.size
+        uniqueUsers: uniqueUserIds.size,
+        overtimeMinutes: totalOvertimeMinutes,
+        overtimeHours: totalOvertimeHours
       });
     }
     
@@ -246,6 +255,64 @@ class ReportageScheduler {
           split: shift.isSplitShift ? 'Ja' : 'Nee',
           status: shift.status === 'planned' ? 'Gepland' : 'Open'
         });
+      }
+    }
+    
+    if (allOvertime.length > 0) {
+      const overtimeSheet = workbook.addWorksheet('Overuren');
+      
+      overtimeSheet.columns = [
+        { header: 'Datum', key: 'date', width: 15 },
+        { header: 'Station', key: 'station', width: 20 },
+        { header: 'Medewerker', key: 'user', width: 25 },
+        { header: 'Starttijd', key: 'startTime', width: 12 },
+        { header: 'Duur (min)', key: 'duration', width: 12 },
+        { header: 'Duur (uur)', key: 'durationHours', width: 12 },
+        { header: 'Reden', key: 'reason', width: 40 }
+      ];
+      
+      overtimeSheet.getRow(1).font = { bold: true };
+      overtimeSheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF70AD47' }
+      };
+      overtimeSheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      
+      const sortedOvertime = allOvertime.sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      
+      for (const overtime of sortedOvertime) {
+        const user = allUsers.find(u => u.id === overtime.userId);
+        const station = stations.find(s => s.id === overtime.stationId);
+        
+        overtimeSheet.addRow({
+          date: format(new Date(overtime.date), 'dd-MM-yyyy'),
+          station: station?.displayName || 'Onbekend',
+          user: user ? `${user.firstName} ${user.lastName}` : 'Onbekend',
+          startTime: format(new Date(overtime.startTime), 'HH:mm'),
+          duration: overtime.durationMinutes,
+          durationHours: (overtime.durationMinutes / 60).toFixed(1),
+          reason: overtime.reason
+        });
+      }
+      
+      const totalMinutes = allOvertime.reduce((sum, o) => sum + o.durationMinutes, 0);
+      overtimeSheet.addRow({});
+      overtimeSheet.addRow({
+        date: 'TOTAAL',
+        station: '',
+        user: '',
+        startTime: '',
+        duration: totalMinutes,
+        durationHours: (totalMinutes / 60).toFixed(1),
+        reason: ''
+      });
+      
+      const lastRow = overtimeSheet.lastRow;
+      if (lastRow) {
+        lastRow.font = { bold: true };
       }
     }
     

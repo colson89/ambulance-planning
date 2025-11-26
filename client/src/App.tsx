@@ -24,6 +24,7 @@ const StationSelect = lazy(() => import("@/pages/station-select"));
 const VerdiSettings = lazy(() => import("@/pages/verdi-settings"));
 const Integrations = lazy(() => import("@/pages/integrations"));
 const Reportage = lazy(() => import("@/pages/reportage"));
+const Overtime = lazy(() => import("@/pages/overtime"));
 
 // Loading component for Suspense boundaries
 function PageLoader() {
@@ -51,6 +52,7 @@ function Router() {
         <ProtectedRoute path="/integrations" component={Integrations} />
         <ProtectedRoute path="/verdi" component={VerdiSettings} />
         <ProtectedRoute path="/reportage" component={Reportage} />
+        <ProtectedRoute path="/overtime" component={Overtime} />
         <Route path="/station-select" component={StationSelect} />
         <Route path="/auth" component={AuthPage} />
         <Route component={NotFound} />
