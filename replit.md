@@ -54,7 +54,15 @@ Documentation Files:
   - **Cache Strategy**: JavaScript modules are NEVER cached in development (timestamp-based versioning) and use NetworkFirst with 5-min max in production to prevent stale module errors
   - **Update Notifications**: Automatic detection of new versions with user-friendly banner ("Nieuwe Versie Beschikbaar") and one-click reload functionality
   - **Module Loading Fix**: Prevents "Failed to fetch dynamically imported module" errors through intelligent cache exclusion of .js/.mjs files and Vite dev server paths
-- **Integrations Management**: Centralized dashboard (`/integrations`) for managing external service integrations, designed for future extensibility. Accessible only to admin and supervisor roles. Currently supports Verdi alarm software integration with placeholders for future integrations (HR systems, additional alarm software, etc.).
+- **Integrations Management**: Centralized dashboard (`/integrations`) for managing external service integrations, designed for future extensibility. Accessible only to admin and supervisor roles. Currently supports Verdi alarm software integration and Reportage Personeelsdienst (automated monthly email reports).
+- **Reportage Personeelsdienst**: Automated monthly shift reporting via SMTP email. Features:
+  - **Automatic Scheduling**: Reports are sent automatically on configurable day after month-end (default: day 5)
+  - **Excel Attachments**: Complete shift overview per station with summary and detailed per-station tabs
+  - **Recipient Management**: Add/remove email recipients with active/inactive toggle
+  - **Manual Sending**: Option to send reports for any month/year on demand
+  - **SMTP Configuration**: Requires environment variables: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM_ADDRESS` (optional), `SMTP_FROM_NAME` (optional)
+  - **Send Logging**: Complete history of sent reports with success/failure status
+  - **Windows Server Compatible**: Works with Office 365, Gmail, and any SMTP server
 - **Verdi Integration**: Full shift synchronization to Verdi alarm software via REST API. Station-scoped configuration stored in database (verdiStationConfig table) with URL, authentication credentials (authId/authSecret), and ShiftSheet GUID. Person GUID mappings are global (cross-station), position mappings are station-specific. Comprehensive sync logging with status tracking. Admin users can configure their station and map users; supervisors have full access to all stations and configurations. Accessed via Integrations page (`/integrations`).
   - **Staging Environment**: `https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning` (free for testing)
   - **Production Environment**: Implementation fee of €1,380 excl. BTW (one-time)
@@ -94,6 +102,7 @@ Documentation Files:
   - `nanoid`: Unique ID generation.
   - `zod`, `drizzle-zod`: Schema validation.
   - `vite`, `@vitejs/plugin-react`: Build tool.
-  - `xlsx`: Excel file generation.
+  - `xlsx`, `exceljs`: Excel file generation.
   - `ws`: WebSocket support.
   - `dotenv`: Environment variable management.
+  - `nodemailer`: SMTP email sending for automated reports.

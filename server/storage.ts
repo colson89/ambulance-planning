@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -3729,6 +3729,78 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(pushSubscriptions)
       .where(eq(pushSubscriptions.userId, userId));
+  }
+
+  // Reportage Personeelsdienst Methods
+  async getReportageConfig(): Promise<ReportageConfig | null> {
+    const result = await db.select().from(reportageConfig).limit(1);
+    return result[0] || null;
+  }
+
+  async createOrUpdateReportageConfig(config: Partial<ReportageConfig>): Promise<ReportageConfig> {
+    const existing = await this.getReportageConfig();
+    if (existing) {
+      const result = await db
+        .update(reportageConfig)
+        .set({ ...config, updatedAt: new Date() })
+        .where(eq(reportageConfig.id, existing.id))
+        .returning();
+      return result[0];
+    }
+    const result = await db.insert(reportageConfig).values({
+      enabled: config.enabled ?? false,
+      daysAfterMonthEnd: config.daysAfterMonthEnd ?? 5,
+      emailSubject: config.emailSubject,
+      emailBody: config.emailBody
+    }).returning();
+    return result[0];
+  }
+
+  async getReportageRecipients(): Promise<ReportageRecipient[]> {
+    return db.select().from(reportageRecipients).orderBy(asc(reportageRecipients.name));
+  }
+
+  async getActiveReportageRecipients(): Promise<ReportageRecipient[]> {
+    return db.select().from(reportageRecipients)
+      .where(eq(reportageRecipients.isActive, true))
+      .orderBy(asc(reportageRecipients.name));
+  }
+
+  async createReportageRecipient(recipient: InsertReportageRecipient): Promise<ReportageRecipient> {
+    const result = await db.insert(reportageRecipients).values(recipient).returning();
+    return result[0];
+  }
+
+  async updateReportageRecipient(id: number, updateData: Partial<ReportageRecipient>): Promise<ReportageRecipient> {
+    const result = await db
+      .update(reportageRecipients)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(reportageRecipients.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteReportageRecipient(id: number): Promise<void> {
+    await db.delete(reportageRecipients).where(eq(reportageRecipients.id, id));
+  }
+
+  async getReportageLogs(limit: number = 20): Promise<ReportageLog[]> {
+    return db.select().from(reportageLogs).orderBy(desc(reportageLogs.sentAt)).limit(limit);
+  }
+
+  async createReportageLog(log: { month: number; year: number; recipientCount: number; status: 'success' | 'partial' | 'failed'; errorMessage?: string }): Promise<ReportageLog> {
+    const result = await db.insert(reportageLogs).values(log).returning();
+    return result[0];
+  }
+
+  async updateReportageLastSent(month: number, year: number): Promise<void> {
+    const config = await this.getReportageConfig();
+    if (config) {
+      await db
+        .update(reportageConfig)
+        .set({ lastSentMonth: month, lastSentYear: year, updatedAt: new Date() })
+        .where(eq(reportageConfig.id, config.id));
+    }
   }
 }
 

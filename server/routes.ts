@@ -4323,6 +4323,222 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // =====================
+  // Reportage Personeelsdienst API
+  // =====================
+
+  const { emailService } = await import('./email-service');
+  const { reportageScheduler } = await import('./reportage-scheduler');
+
+  // Get email configuration status
+  app.get("/api/reportage/email-status", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    const status = emailService.getConfigStatus();
+    res.json(status);
+  });
+
+  // Test email connection
+  app.post("/api/reportage/test-connection", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const result = await emailService.verifyConnection();
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Send test email
+  app.post("/api/reportage/test-email", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email adres is verplicht" });
+      }
+      const result = await emailService.sendTestEmail(email);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Get reportage configuration
+  app.get("/api/reportage/config", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const config = await storage.getReportageConfig();
+      res.json(config || { enabled: false, daysAfterMonthEnd: 5 });
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to get config", error: error.message });
+    }
+  });
+
+  // Update reportage configuration
+  app.put("/api/reportage/config", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const config = await storage.createOrUpdateReportageConfig(req.body);
+      res.json(config);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to update config", error: error.message });
+    }
+  });
+
+  // Get reportage recipients
+  app.get("/api/reportage/recipients", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const recipients = await storage.getReportageRecipients();
+      res.json(recipients);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to get recipients", error: error.message });
+    }
+  });
+
+  // Add reportage recipient
+  app.post("/api/reportage/recipients", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const { email, name } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email adres is verplicht" });
+      }
+      const recipient = await storage.createReportageRecipient({ email, name, isActive: true });
+      res.json(recipient);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to add recipient", error: error.message });
+    }
+  });
+
+  // Update reportage recipient
+  app.patch("/api/reportage/recipients/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const id = parseInt(req.params.id);
+      const recipient = await storage.updateReportageRecipient(id, req.body);
+      res.json(recipient);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to update recipient", error: error.message });
+    }
+  });
+
+  // Delete reportage recipient
+  app.delete("/api/reportage/recipients/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteReportageRecipient(id);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to delete recipient", error: error.message });
+    }
+  });
+
+  // Get reportage logs
+  app.get("/api/reportage/logs", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const logs = await storage.getReportageLogs();
+      res.json(logs);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to get logs", error: error.message });
+    }
+  });
+
+  // Manually trigger reportage send
+  app.post("/api/reportage/send", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const { month, year } = req.body;
+      if (!month || !year) {
+        return res.status(400).json({ message: "Maand en jaar zijn verplicht" });
+      }
+      const result = await reportageScheduler.sendMonthlyReportage(month, year);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to send reportage", error: error.message });
+    }
+  });
+
+  // Get scheduler status
+  app.get("/api/reportage/scheduler-status", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    res.json(reportageScheduler.getStatus());
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

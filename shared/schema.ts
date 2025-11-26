@@ -353,3 +353,56 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 });
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+
+// Reportage Personeelsdienst - Configuratie
+export const reportageConfig = pgTable("reportage_config", {
+  id: serial("id").primaryKey(),
+  enabled: boolean("enabled").notNull().default(false),
+  daysAfterMonthEnd: integer("days_after_month_end").notNull().default(5),
+  emailSubject: text("email_subject").notNull().default("Maandelijkse Shift Rapportage - {maand} {jaar}"),
+  emailBody: text("email_body").notNull().default("Beste,\n\nIn bijlage vindt u de maandelijkse shift rapportage voor alle stations.\n\nMet vriendelijke groeten,\nPlanning BWZK"),
+  lastSentMonth: integer("last_sent_month"),
+  lastSentYear: integer("last_sent_year"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Reportage ontvangers (email adressen)
+export const reportageRecipients = pgTable("reportage_recipients", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  name: text("name"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Reportage verzendlog
+export const reportageLogs = pgTable("reportage_logs", {
+  id: serial("id").primaryKey(),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  recipientCount: integer("recipient_count").notNull(),
+  status: text("status", { enum: ["success", "partial", "failed"] }).notNull(),
+  errorMessage: text("error_message"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const insertReportageConfigSchema = createInsertSchema(reportageConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type ReportageConfig = typeof reportageConfig.$inferSelect;
+export type InsertReportageConfig = z.infer<typeof insertReportageConfigSchema>;
+
+export const insertReportageRecipientSchema = createInsertSchema(reportageRecipients).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type ReportageRecipient = typeof reportageRecipients.$inferSelect;
+export type InsertReportageRecipient = z.infer<typeof insertReportageRecipientSchema>;
+
+export type ReportageLog = typeof reportageLogs.$inferSelect;

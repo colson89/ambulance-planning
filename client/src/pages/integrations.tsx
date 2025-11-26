@@ -2,8 +2,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link as LinkIcon, ArrowLeft, Settings } from "lucide-react";
+import { Link as LinkIcon, ArrowLeft, Settings, Mail } from "lucide-react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Integrations() {
   const { user } = useAuth();
@@ -11,6 +12,12 @@ export default function Integrations() {
 
   // Alleen admins en supervisors kunnen integraties beheren
   const canManageIntegrations = user?.role === "admin" || user?.role === "supervisor";
+
+  // Check email configuration status
+  const { data: emailStatus } = useQuery<{ configured: boolean; host?: string; user?: string }>({
+    queryKey: ['/api/reportage/email-status'],
+    enabled: canManageIntegrations
+  });
 
   if (!canManageIntegrations) {
     return (
@@ -92,29 +99,42 @@ export default function Integrations() {
             </CardContent>
           </Card>
 
-          {/* Placeholder for future integrations */}
-          <Card className="border-dashed border-2 border-gray-300 opacity-60">
+          {/* Reportage Personeelsdienst Card */}
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+            onClick={() => setLocation("/reportage")}
+          >
             <CardHeader className="text-center">
-              <div className="mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit">
-                <LinkIcon className="h-8 w-8 text-gray-400" />
+              <div className="mx-auto mb-4 p-3 bg-purple-100 rounded-full w-fit">
+                <Mail className="h-8 w-8 text-purple-600" />
               </div>
-              <CardTitle className="text-xl text-gray-500">Toekomstige Integratie</CardTitle>
+              <CardTitle className="text-xl">Reportage Personeelsdienst</CardTitle>
               <CardDescription className="mb-2">
-                Ruimte voor extra koppelingen
+                Automatische maandelijkse shift rapportages via email
               </CardDescription>
-              <Badge variant="secondary" className="mx-auto">Binnenkort</Badge>
+              <Badge 
+                variant="default" 
+                className={emailStatus?.configured ? "mx-auto bg-green-600" : "mx-auto bg-orange-500"}
+              >
+                {emailStatus?.configured ? "Geconfigureerd" : "Configuratie Nodig"}
+              </Badge>
             </CardHeader>
             <CardContent className="text-center">
               <Button 
                 variant="outline" 
-                className="w-full"
-                disabled
+                className="w-full group"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLocation("/reportage");
+                }}
               >
-                Nog niet beschikbaar
+                Configureren
+                <Settings className="ml-2 h-4 w-4 group-hover:rotate-90 transition-transform" />
               </Button>
             </CardContent>
           </Card>
 
+          {/* Placeholder for future integrations */}
           <Card className="border-dashed border-2 border-gray-300 opacity-60">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit">
