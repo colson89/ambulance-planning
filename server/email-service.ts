@@ -23,34 +23,49 @@ interface EmailOptions {
   }>;
 }
 
+interface SmtpDbConfig {
+  smtpHost: string | null;
+  smtpPort: number | null;
+  smtpUser: string | null;
+  smtpPassword: string | null;
+  smtpFromAddress: string | null;
+  smtpFromName: string | null;
+  smtpSecure: boolean | null;
+}
+
 class EmailService {
   private transporter: Transporter | null = null;
   private config: EmailConfig | null = null;
 
   constructor() {
-    this.initializeFromEnv();
   }
 
-  private initializeFromEnv() {
-    const host = process.env.SMTP_HOST;
-    const port = parseInt(process.env.SMTP_PORT || '587');
-    const user = process.env.SMTP_USER;
-    const password = process.env.SMTP_PASSWORD;
-    const fromAddress = process.env.SMTP_FROM_ADDRESS || user;
-    const fromName = process.env.SMTP_FROM_NAME || 'Planning BWZK';
+  configureFromDatabase(dbConfig: SmtpDbConfig): boolean {
+    const host = dbConfig.smtpHost;
+    const port = dbConfig.smtpPort || 587;
+    const user = dbConfig.smtpUser;
+    const password = dbConfig.smtpPassword;
+    const fromAddress = dbConfig.smtpFromAddress || user;
+    const fromName = dbConfig.smtpFromName || 'Planning BWZK';
+    const secure = dbConfig.smtpSecure ?? (port === 465);
 
     if (host && user && password) {
       this.config = {
         host,
         port,
-        secure: port === 465,
+        secure,
         user,
         password,
         fromAddress: fromAddress || user,
         fromName
       };
       this.createTransporter();
+      return true;
     }
+    
+    this.config = null;
+    this.transporter = null;
+    return false;
   }
 
   private createTransporter() {
@@ -74,20 +89,24 @@ class EmailService {
     return this.transporter !== null && this.config !== null;
   }
 
-  getConfigStatus(): { configured: boolean; host?: string; user?: string } {
+  getConfigStatus(): { configured: boolean; host?: string; user?: string; fromAddress?: string; fromName?: string; port?: number; secure?: boolean } {
     if (!this.config) {
       return { configured: false };
     }
     return {
       configured: true,
       host: this.config.host,
-      user: this.config.user
+      user: this.config.user,
+      fromAddress: this.config.fromAddress,
+      fromName: this.config.fromName,
+      port: this.config.port,
+      secure: this.config.secure
     };
   }
 
   async verifyConnection(): Promise<{ success: boolean; error?: string }> {
     if (!this.transporter) {
-      return { success: false, error: 'Email service is not configured' };
+      return { success: false, error: 'Email service is niet geconfigureerd. Configureer eerst de SMTP instellingen.' };
     }
 
     try {
@@ -101,7 +120,7 @@ class EmailService {
 
   async sendEmail(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
     if (!this.transporter || !this.config) {
-      return { success: false, error: 'Email service is not configured' };
+      return { success: false, error: 'Email service is niet geconfigureerd. Configureer eerst de SMTP instellingen.' };
     }
 
     try {
@@ -140,10 +159,6 @@ class EmailService {
     });
 
     return result;
-  }
-
-  refreshConfig() {
-    this.initializeFromEnv();
   }
 }
 
