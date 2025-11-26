@@ -79,34 +79,50 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    // In production, wrap setHeader to enforce caching policy
+    // In production, set proper cache headers for all static files
     app.use((req, res, next) => {
-      const originalSetHeader = res.setHeader.bind(res);
+      const path = req.path;
       
-      res.setHeader = function(name: string, value: string | number | readonly string[]) {
-        // Force correct cache headers based on file type, override whatever serveStatic tries to set
-        if (name.toLowerCase() === 'cache-control') {
-          // HTML files: never cache
-          if (req.path.endsWith('.html') || req.path === '/' || (!req.path.includes('.') && !req.path.startsWith('/api'))) {
-            return originalSetHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-          }
-          // Hashed assets (JS/CSS/fonts with hash in filename like index-a1b2c3d4.js): cache for 1 year
-          // Vite adds hash to filenames, look for pattern like: -[hash].ext or .[hash].ext
-          else if (req.path.match(/\.(js|css|woff|woff2|ttf|eot|otf)$/) && 
-                   req.path.match(/[-.]([0-9a-f]{8,}|[A-Za-z0-9_-]{8,})\.(js|css|woff|woff2|ttf|eot|otf)$/)) {
-            return originalSetHeader('Cache-Control', 'public, max-age=31536000, immutable');
-          }
-          // Images (always safe to cache long-term): cache for 1 year
-          else if (req.path.match(/\.(jpg|jpeg|png|gif|svg|ico|webp|avif)$/)) {
-            return originalSetHeader('Cache-Control', 'public, max-age=31536000, immutable');
-          }
-          // Non-hashed JS/CSS files: short cache to allow updates
-          else if (req.path.match(/\.(js|css)$/)) {
-            return originalSetHeader('Cache-Control', 'public, max-age=300'); // 5 minutes
-          }
-        }
-        return originalSetHeader(name, value);
-      };
+      // Service Worker: NEVER cache (critical for update detection)
+      if (path === '/service-worker.js' || path === '/sw.js') {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        return next();
+      }
+      
+      // manifest.json: short cache (allows PWA updates)
+      if (path === '/manifest.json') {
+        res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+        return next();
+      }
+      
+      // HTML files and SPA routes: never cache
+      if (path.endsWith('.html') || path === '/' || (!path.includes('.') && !path.startsWith('/api'))) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        return next();
+      }
+      
+      // Hashed assets (JS/CSS/fonts with hash in filename): cache for 1 year
+      // Vite adds hash to filenames, pattern like: index-a1b2c3d4.js
+      if (path.match(/[-.]([0-9a-f]{8,}|[A-Za-z0-9_-]{8,})\.(js|css|woff|woff2|ttf|eot|otf)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        return next();
+      }
+      
+      // Images: cache for 1 year (safe to cache long-term)
+      if (path.match(/\.(jpg|jpeg|png|gif|svg|ico|webp|avif)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        return next();
+      }
+      
+      // Non-hashed JS/CSS files: short cache to allow updates
+      if (path.match(/\.(js|css)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=60, must-revalidate'); // 1 minute
+        return next();
+      }
       
       next();
     });
