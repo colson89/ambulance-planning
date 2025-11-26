@@ -4701,6 +4701,282 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // Overtime (Overuren) API
+  
+  // Helper function to check if overtime can be submitted for a given month/year
+  function canSubmitOvertime(month: number, year: number): boolean {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    const currentDay = now.getDate();
+    
+    // Can submit for current month
+    if (year === currentYear && month === currentMonth) {
+      return true;
+    }
+    
+    // Can submit for previous month until day 7
+    const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+    
+    if (year === previousYear && month === previousMonth && currentDay <= 7) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // Get all overtime for the current user
+  app.get("/api/overtime/my", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    
+    try {
+      const overtimeList = await storage.getOvertimeByUser(req.user.id);
+      res.json(overtimeList);
+    } catch (error: any) {
+      console.error('Error getting user overtime:', error);
+      res.status(500).json({ message: "Fout bij ophalen overuren", error: error.message });
+    }
+  });
+  
+  // Get overtime for a specific month (current user)
+  app.get("/api/overtime/my/:year/:month", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    
+    try {
+      const month = parseInt(req.params.month);
+      const year = parseInt(req.params.year);
+      
+      if (!month || !year || month < 1 || month > 12) {
+        return res.status(400).json({ message: "Ongeldige maand of jaar" });
+      }
+      
+      const overtimeList = await storage.getOvertimeByUserAndMonth(req.user.id, month, year);
+      res.json(overtimeList);
+    } catch (error: any) {
+      console.error('Error getting user overtime:', error);
+      res.status(500).json({ message: "Fout bij ophalen overuren", error: error.message });
+    }
+  });
+  
+  // Get overtime by station (for admins/supervisors)
+  app.get("/api/overtime/station/:stationId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const stationId = parseInt(req.params.stationId);
+      
+      // Admins can only see their own station, supervisors can see all
+      if (req.user.role === 'admin' && req.user.stationId !== stationId) {
+        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      }
+      
+      const overtimeList = await storage.getOvertimeByStation(stationId);
+      res.json(overtimeList);
+    } catch (error: any) {
+      console.error('Error getting station overtime:', error);
+      res.status(500).json({ message: "Fout bij ophalen overuren", error: error.message });
+    }
+  });
+  
+  // Get overtime by station and month (for admins/supervisors)
+  app.get("/api/overtime/station/:stationId/:year/:month", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const month = parseInt(req.params.month);
+      const year = parseInt(req.params.year);
+      
+      if (!month || !year || month < 1 || month > 12) {
+        return res.status(400).json({ message: "Ongeldige maand of jaar" });
+      }
+      
+      // Admins can only see their own station, supervisors can see all
+      if (req.user.role === 'admin' && req.user.stationId !== stationId) {
+        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      }
+      
+      const overtimeList = await storage.getOvertimeByStationAndMonth(stationId, month, year);
+      res.json(overtimeList);
+    } catch (error: any) {
+      console.error('Error getting station overtime:', error);
+      res.status(500).json({ message: "Fout bij ophalen overuren", error: error.message });
+    }
+  });
+  
+  // Get overtime for a specific shift
+  app.get("/api/overtime/shift/:shiftId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    
+    try {
+      const shiftId = parseInt(req.params.shiftId);
+      const overtimeList = await storage.getOvertimeByShift(shiftId);
+      
+      // Filter: users can only see their own overtime, admins/supervisors can see all
+      const filteredList = req.user.role === 'ambulancier' 
+        ? overtimeList.filter(o => o.userId === req.user.id)
+        : overtimeList;
+      
+      res.json(filteredList);
+    } catch (error: any) {
+      console.error('Error getting shift overtime:', error);
+      res.status(500).json({ message: "Fout bij ophalen overuren", error: error.message });
+    }
+  });
+  
+  // Get all overtime for a month (supervisors only - for reports)
+  app.get("/api/overtime/all/:year/:month", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    if (req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Alleen supervisors kunnen alle overuren bekijken" });
+    }
+    
+    try {
+      const month = parseInt(req.params.month);
+      const year = parseInt(req.params.year);
+      
+      if (!month || !year || month < 1 || month > 12) {
+        return res.status(400).json({ message: "Ongeldige maand of jaar" });
+      }
+      
+      const overtimeList = await storage.getAllOvertimeByMonth(month, year);
+      res.json(overtimeList);
+    } catch (error: any) {
+      console.error('Error getting all overtime:', error);
+      res.status(500).json({ message: "Fout bij ophalen overuren", error: error.message });
+    }
+  });
+  
+  // Create new overtime entry
+  app.post("/api/overtime", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    
+    try {
+      const { shiftId, date, startTime, durationMinutes, reason } = req.body;
+      
+      if (!shiftId || !date || !startTime || !durationMinutes || !reason) {
+        return res.status(400).json({ message: "Alle velden zijn verplicht" });
+      }
+      
+      // Get the shift to verify ownership and get stationId
+      const shift = await storage.getShiftById(shiftId);
+      if (!shift) {
+        return res.status(404).json({ message: "Shift niet gevonden" });
+      }
+      
+      // Users can only add overtime to their own shifts
+      if (shift.userId !== req.user.id) {
+        return res.status(403).json({ message: "Je kunt alleen overuren toevoegen aan je eigen shifts" });
+      }
+      
+      // Check if overtime can be submitted for this month
+      const shiftDate = new Date(shift.date);
+      const shiftMonth = shiftDate.getMonth() + 1;
+      const shiftYear = shiftDate.getFullYear();
+      
+      if (!canSubmitOvertime(shiftMonth, shiftYear)) {
+        return res.status(400).json({ 
+          message: "Je kunt alleen overuren invoeren voor de huidige maand of tot 7 dagen na het einde van de vorige maand" 
+        });
+      }
+      
+      const overtime = await storage.createOvertime({
+        userId: req.user.id,
+        shiftId,
+        stationId: shift.stationId,
+        date: new Date(date),
+        startTime: new Date(startTime),
+        durationMinutes: parseInt(durationMinutes),
+        reason,
+        month: shiftMonth,
+        year: shiftYear
+      });
+      
+      res.status(201).json(overtime);
+    } catch (error: any) {
+      console.error('Error creating overtime:', error);
+      res.status(500).json({ message: "Fout bij aanmaken overuren", error: error.message });
+    }
+  });
+  
+  // Update overtime entry
+  app.patch("/api/overtime/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    
+    try {
+      const id = parseInt(req.params.id);
+      const existing = await storage.getOvertimeById(id);
+      
+      if (!existing) {
+        return res.status(404).json({ message: "Overuren niet gevonden" });
+      }
+      
+      // Users can only edit their own overtime
+      if (existing.userId !== req.user.id) {
+        return res.status(403).json({ message: "Je kunt alleen je eigen overuren bewerken" });
+      }
+      
+      // Check if overtime can still be edited
+      if (!canSubmitOvertime(existing.month, existing.year)) {
+        return res.status(400).json({ 
+          message: "Je kunt alleen overuren bewerken voor de huidige maand of tot 7 dagen na het einde van de vorige maand" 
+        });
+      }
+      
+      const { startTime, durationMinutes, reason } = req.body;
+      
+      const updated = await storage.updateOvertime(id, {
+        ...(startTime && { startTime: new Date(startTime) }),
+        ...(durationMinutes && { durationMinutes: parseInt(durationMinutes) }),
+        ...(reason && { reason })
+      });
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating overtime:', error);
+      res.status(500).json({ message: "Fout bij bewerken overuren", error: error.message });
+    }
+  });
+  
+  // Delete overtime entry
+  app.delete("/api/overtime/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    
+    try {
+      const id = parseInt(req.params.id);
+      const existing = await storage.getOvertimeById(id);
+      
+      if (!existing) {
+        return res.status(404).json({ message: "Overuren niet gevonden" });
+      }
+      
+      // Users can only delete their own overtime
+      if (existing.userId !== req.user.id) {
+        return res.status(403).json({ message: "Je kunt alleen je eigen overuren verwijderen" });
+      }
+      
+      // Check if overtime can still be deleted
+      if (!canSubmitOvertime(existing.month, existing.year)) {
+        return res.status(400).json({ 
+          message: "Je kunt alleen overuren verwijderen voor de huidige maand of tot 7 dagen na het einde van de vorige maand" 
+        });
+      }
+      
+      await storage.deleteOvertime(id);
+      res.json({ message: "Overuren verwijderd" });
+    } catch (error: any) {
+      console.error('Error deleting overtime:', error);
+      res.status(500).json({ message: "Fout bij verwijderen overuren", error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
