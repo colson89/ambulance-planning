@@ -52,7 +52,7 @@ export function OvertimeDialog({ open, onOpenChange, shift, existingOvertime = [
   const queryClient = useQueryClient();
   
   const [startTime, setStartTime] = useState("");
-  const [durationMinutes, setDurationMinutes] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [reason, setReason] = useState("");
   
   const createMutation = useMutation({
@@ -108,18 +108,43 @@ export function OvertimeDialog({ open, onOpenChange, shift, existingOvertime = [
   
   const resetForm = () => {
     setStartTime("");
-    setDurationMinutes("");
+    setEndTime("");
     setReason("");
+  };
+  
+  const calculateDurationMinutes = (start: string, end: string): number => {
+    const [startHours, startMins] = start.split(":").map(Number);
+    const [endHours, endMins] = end.split(":").map(Number);
+    
+    const startTotalMins = startHours * 60 + startMins;
+    let endTotalMins = endHours * 60 + endMins;
+    
+    if (endTotalMins <= startTotalMins) {
+      endTotalMins += 24 * 60;
+    }
+    
+    return endTotalMins - startTotalMins;
   };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!shift) return;
-    if (!startTime || !durationMinutes || !reason.trim()) {
+    if (!startTime || !endTime || !reason.trim()) {
       toast({
         title: "Velden ontbreken",
         description: "Vul alle velden in.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const durationMinutes = calculateDurationMinutes(startTime, endTime);
+    
+    if (durationMinutes <= 0 || durationMinutes > 480) {
+      toast({
+        title: "Ongeldige tijden",
+        description: "Controleer de start- en eindtijd. Maximum 8 uur overuren.",
         variant: "destructive",
       });
       return;
@@ -133,7 +158,7 @@ export function OvertimeDialog({ open, onOpenChange, shift, existingOvertime = [
       shiftId: shift.id,
       date: typeof shift.date === 'string' ? shift.date : shift.date.toISOString(),
       startTime: startDateTime.toISOString(),
-      durationMinutes: parseInt(durationMinutes),
+      durationMinutes,
       reason: reason.trim(),
     });
   };
@@ -207,19 +232,22 @@ export function OvertimeDialog({ open, onOpenChange, shift, existingOvertime = [
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="duration">Duur (minuten)</Label>
+              <Label htmlFor="endTime">Eindtijd</Label>
               <Input
-                id="duration"
-                type="number"
-                min="1"
-                max="480"
-                value={durationMinutes}
-                onChange={(e) => setDurationMinutes(e.target.value)}
-                placeholder="bijv. 30"
+                id="endTime"
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
                 required
               />
             </div>
           </div>
+          
+          {startTime && endTime && (
+            <div className="text-sm text-muted-foreground">
+              Berekende duur: {formatDuration(calculateDurationMinutes(startTime, endTime))}
+            </div>
+          )}
           
           <div className="space-y-2">
             <Label htmlFor="reason">Reden</Label>
