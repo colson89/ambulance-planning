@@ -1301,20 +1301,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId, month, year } = req.params;
       const currentUser = req.user as any;
+      const targetUserId = parseInt(userId);
       
       // SECURITY: Check if user belongs to admin's station (supervisors can see all stations)
-      const targetUser = await storage.getUser(parseInt(userId));
+      const targetUser = await storage.getUser(targetUserId);
       if (!targetUser) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Supervisors can view all users, admins can only view their own station
-      if (currentUser.role !== 'supervisor' && targetUser.stationId !== currentUser.stationId) {
-        return res.status(404).json({ message: "User not found" });
+      // Supervisors can view all users, admins can only view their own station OR cross-team users
+      if (currentUser.role !== 'supervisor') {
+        // Check if target user has access to admin's station (home station OR cross-team assignment)
+        const userHasAccess = await storage.userHasAccessToStation(targetUserId, currentUser.stationId);
+        if (!userHasAccess) {
+          return res.status(404).json({ message: "User not found" });
+        }
       }
 
       const preferences = await storage.getUserShiftPreferences(
-        parseInt(userId),
+        targetUserId,
         parseInt(month),
         parseInt(year)
       );
@@ -1329,15 +1334,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/preferences/clearMonth/:userId/:month/:year", requireAdmin, async (req, res) => {
     try {
       const { userId, month, year } = req.params;
+      const currentUser = req.user as any;
+      const targetUserId = parseInt(userId);
       
-      // SECURITY: Check if user belongs to admin's station
-      const targetUser = await storage.getUser(parseInt(userId));
-      if (!targetUser || targetUser.stationId !== (req.user as any).stationId) {
+      // SECURITY: Check if user belongs to admin's station (including cross-team users)
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
         return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Supervisors can manage all users, admins can only manage their station OR cross-team users
+      if (currentUser.role !== 'supervisor') {
+        const userHasAccess = await storage.userHasAccessToStation(targetUserId, currentUser.stationId);
+        if (!userHasAccess) {
+          return res.status(404).json({ message: "User not found" });
+        }
       }
 
       const userPrefs = await storage.getUserShiftPreferences(
-        parseInt(userId),
+        targetUserId,
         parseInt(month),
         parseInt(year)
       );
