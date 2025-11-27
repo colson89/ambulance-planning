@@ -552,12 +552,16 @@ function ScheduleGenerator() {
       const usersWithPreferenceForThisShiftType = new Set<number>();
       
       preferencesForDate.forEach(pref => {
+        // BUG FIX: Check zowel type='unavailable' ALS notes='Niet beschikbaar'
+        // Sommige voorkeuren gebruiken notes veld om onbeschikbaarheid aan te geven
+        const isUnavailable = pref.type === "unavailable" || pref.notes === "Niet beschikbaar";
+        
         // Track users who have THIS specific shift type preference (day/night) OR unavailable for this date
-        if (pref.type === shiftType || pref.type === "unavailable") {
+        if (pref.type === shiftType || isUnavailable) {
           usersWithPreferenceForThisShiftType.add(pref.userId);
         }
         
-        if (pref.type === "unavailable") {
+        if (isUnavailable) {
           unavailableUserIds.add(pref.userId);
         } else if (pref.type === shiftType) {
           availableUserIds.add(pref.userId);
