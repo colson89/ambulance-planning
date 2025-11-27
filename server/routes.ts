@@ -508,12 +508,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Permission check
+      // Permission check - includes cross-team users
       const isOwnProfile = currentUserId === targetUserId;
       const isAdmin = userRole === 'admin' || userRole === 'supervisor';
-      const isSameStation = targetUser.stationId === userStationId;
+      const isSupervisor = userRole === 'supervisor';
+      
+      // For admins: check if target user has access to admin's station (home OR cross-team)
+      const userHasAccessToAdminStation = await storage.userHasAccessToStation(targetUserId, userStationId);
 
-      if (!isOwnProfile && !(isAdmin && (userRole === 'supervisor' || isSameStation))) {
+      if (!isOwnProfile && !(isAdmin && (isSupervisor || userHasAccessToAdminStation))) {
         return res.status(403).json({ message: "Je hebt geen toestemming om deze foto bij te werken" });
       }
 
@@ -546,12 +549,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Permission check
+      // Permission check - includes cross-team users
       const isOwnProfile = currentUserId === targetUserId;
       const isAdmin = userRole === 'admin' || userRole === 'supervisor';
-      const isSameStation = targetUser.stationId === userStationId;
+      const isSupervisor = userRole === 'supervisor';
+      
+      // For admins: check if target user has access to admin's station (home OR cross-team)
+      const userHasAccessToAdminStation = await storage.userHasAccessToStation(targetUserId, userStationId);
 
-      if (!isOwnProfile && !(isAdmin && (userRole === 'supervisor' || isSameStation))) {
+      if (!isOwnProfile && !(isAdmin && (isSupervisor || userHasAccessToAdminStation))) {
         return res.status(403).json({ message: "Je hebt geen toestemming om dit telefoonnummer bij te werken" });
       }
 
