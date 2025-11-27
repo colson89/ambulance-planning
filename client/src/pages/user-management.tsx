@@ -61,6 +61,9 @@ export default function UserManagement() {
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   
+  // State for create user photo
+  const [createUserPhotoFile, setCreateUserPhotoFile] = useState<File | null>(null);
+  
   // Query om stations op te halen (voor supervisors)
   const { data: stations = [] } = useQuery({
     queryKey: ["/api/user/stations", "includeSupervisor"],
@@ -257,6 +260,7 @@ export default function UserManagement() {
       firstName: "",
       lastName: "",
       email: "",
+      phoneNumber: "",
       role: "ambulancier" as "admin" | "ambulancier" | "supervisor",
       isAdmin: false,
       isProfessional: false,
@@ -284,17 +288,55 @@ export default function UserManagement() {
       const res = await apiRequest("POST", "/api/users", data);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: async (newUser) => {
       if (user?.role === 'supervisor') {
         queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
       } else {
         queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
       }
+      
+      // Upload profile photo if selected
+      if (createUserPhotoFile && newUser?.id) {
+        try {
+          const formData = new FormData();
+          formData.append('photo', createUserPhotoFile);
+          
+          const res = await fetch(`/api/users/${newUser.id}/profile-photo`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+          });
+          
+          if (!res.ok) {
+            const errorData = await res.json();
+            toast({
+              title: "Let op",
+              description: "Gebruiker aangemaakt, maar foto uploaden mislukt: " + (errorData.message || "Onbekende fout"),
+              variant: "destructive"
+            });
+          } else {
+            // Refresh user list to show new photo
+            if (user?.role === 'supervisor') {
+              queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
+            } else {
+              queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
+            }
+          }
+        } catch (error) {
+          toast({
+            title: "Let op",
+            description: "Gebruiker aangemaakt, maar foto uploaden mislukt",
+            variant: "destructive"
+          });
+        }
+      }
+      
       toast({
         title: "Succes",
         description: "Gebruiker aangemaakt",
       });
       createUserForm.reset();
+      setCreateUserPhotoFile(null);
     },
     onError: (error: Error) => {
       toast({
@@ -526,6 +568,50 @@ export default function UserManagement() {
                   }
                   createUserMutation.mutate(data);
                 })} className="space-y-4">
+                  {/* Profile Photo Section */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Profielfoto (optioneel)</label>
+                    <div className="flex items-center gap-4">
+                      <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
+                        {createUserPhotoFile ? (
+                          <img 
+                            src={URL.createObjectURL(createUserPhotoFile)}
+                            alt="Profile preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <Camera className="w-8 h-8" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 2 * 1024 * 1024) {
+                                toast({
+                                  title: "Bestand te groot",
+                                  description: "De foto mag maximaal 2MB zijn",
+                                  variant: "destructive"
+                                });
+                                return;
+                              }
+                              setCreateUserPhotoFile(file);
+                            }
+                          }}
+                          className="cursor-pointer"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Maximaal 2MB, JPG, PNG of GIF
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Gebruikersnaam</label>
                     <p className="text-sm text-muted-foreground">De unieke login naam voor deze gebruiker</p>
@@ -570,6 +656,16 @@ export default function UserManagement() {
                       placeholder="jan.smit@voorbeeld.be"
                       data-testid="input-email"
                       {...createUserForm.register("email")}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Telefoonnummer (optioneel)</label>
+                    <p className="text-sm text-muted-foreground">Voor contactinformatie</p>
+                    <Input
+                      type="tel"
+                      placeholder="+32 123 45 67 89"
+                      {...createUserForm.register("phoneNumber")}
                     />
                   </div>
 

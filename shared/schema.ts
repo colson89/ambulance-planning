@@ -69,6 +69,7 @@ export const insertUserSchema = createInsertSchema(users, {
   lastName: z.string().min(1, "Achternaam is verplicht"),
   email: z.string().email("Ongeldig email adres").optional(),
   role: z.enum(["admin", "ambulancier", "supervisor"]),
+  phoneNumber: z.string().max(20, "Telefoonnummer mag maximaal 20 karakters bevatten").regex(/^[+\d\s()-]*$/, "Telefoonnummer mag alleen cijfers, spaties en +()- bevatten").optional().or(z.literal("")),
 }).pick({
   username: true,
   password: true,
@@ -80,7 +81,8 @@ export const insertUserSchema = createInsertSchema(users, {
   isProfessional: true,
   hasDrivingLicenseC: true,
   hours: true,
-  stationId: true
+  stationId: true,
+  phoneNumber: true
 });
 
 export const insertShiftSchema = createInsertSchema(shifts);
