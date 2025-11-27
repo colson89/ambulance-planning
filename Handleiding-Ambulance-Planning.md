@@ -1027,11 +1027,24 @@ Als admin kunt u op elke datum in de planning klikken om te zien wie beschikbaar
 **Hoe Gebruiken:**
 
 1. **Klik op een datum** in de planning kalender
-2. **Zie het beschikbaarheidsscherm** met drie belangrijke kolommen:
+2. **Zie het beschikbaarheidsscherm** met de volgende kolommen:
    - **Naam**: Naam van de ambulancier
-   - **Status**: Beschikbaar (groen), Toegewezen (blauw), of Niet beschikbaar (grijs)
+   - **Status**: Zie status badges hieronder
    - **Uren**: Hoeveel uur deze persoon wil werken deze maand
-   - **Ingepland**: ⭐ NIEUW - Hoeveel uur deze persoon al is ingepland
+   - **Ingepland**: Hoeveel uur deze persoon al is ingepland
+
+**Status Badges:**
+
+| Badge | Kleur | Betekenis |
+|-------|-------|-----------|
+| **Toegewezen** | Blauw | Reeds ingepland voor deze shift |
+| **Ingepland elders** | Paars | Cross-team gebruiker is ingepland bij een ander station op dit moment |
+| **Beschikbaar** | Groen | Heeft voorkeur opgegeven en kan worden ingepland |
+| **Geen voorkeur** | Oranje | Geen voorkeur ingediend voor deze specifieke shift (dag OF nacht) |
+| **Werkt geen uren** | Grijs | Medewerker heeft 0 uur als maximum ingesteld |
+| **Niet beschikbaar** | Rood | Heeft aangegeven niet beschikbaar te zijn |
+
+⚠️ **Let op Cross-team Gebruikers:** Wanneer een medewerker die bij meerdere stations werkt al is ingepland op een ander station, ziet u "Ingepland elders" (paars). Dit voorkomt dat u dezelfde persoon dubbel inplant!
 
 **De "Ingepland" Kolom:**
 
