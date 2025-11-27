@@ -1,0 +1,48 @@
+mbulance-planning  | DEBUG: Adding additional user kuwu580:42 to results
+0|ambulance-planning  | DEBUG: Adding additional user jeva400:87 to results
+0|ambulance-planning  | DEBUG: Adding additional user stry334:48 to results
+0|ambulance-planning  | DEBUG: Adding additional user kepe505:176 to results
+0|ambulance-planning  | DEBUG: Adding additional user stra614:177 to results
+0|ambulance-planning  | DEBUG: Total 35 users returned for station 1
+0|ambulance-planning  | Admin gets users for station 1: 35 users (including cross-station)
+0|ambulance-planning  | 10:02:27 AM [express] GET /api/users 200 in 11ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 16, sessionStationId: 1 }
+0|ambulance-planning  | Using session stationId: 1
+0|ambulance-planning  | Retrieved user: { id: 16, username: 'rove319', stationId: 1, role: 'admin' }
+0|ambulance-planning  | 10:02:29 AM [express] GET /api/preferences/176/12/2025 404 in 3ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 16, sessionStationId: 1 }
+0|ambulance-planning  | Using session stationId: 1
+0|ambulance-planning  | Retrieved user: { id: 16, username: 'rove319', stationId: 1, role: 'admin' }
+0|ambulance-planning  | 10:02:32 AM [express] GET /api/preferences/176/12/2025 404 in 4ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 16, sessionStationId: 1 }
+0|ambulance-planning  | Using session stationId: 1
+0|ambulance-planning  | Retrieved user: { id: 16, username: 'rove319', stationId: 1, role: 'admin' }
+0|ambulance-planning  | 10:02:34 AM [express] GET /api/preferences/176/12/2025 404 in 4ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 16, sessionStationId: 1 }
+0|ambulance-planning  | Using session stationId: 1
+0|ambulance-planning  | Retrieved user: { id: 16, username: 'rove319', stationId: 1, role: 'admin' }
+0|ambulance-planning  | 10:02:37 AM [express] GET /api/preferences/176/12/2025 404 in 4ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 16, sessionStationId: 1 }
+0|ambulance-planning  | Using session stationId: 1
+0|ambulance-planning  | Retrieved user: { id: 16, username: 'rove319', stationId: 1, role: 'admin' }
+0|ambulance-planning  | 10:02:53 AM [express] GET /api/preferences/48/12/2025 404 in 4ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 16, sessionStationId: 1 }
+0|ambulance-planning  | Using session stationId: 1
+0|ambulance-planning  | Retrieved user: { id: 16, username: 'rove319', stationId: 1, role: 'admin' }
+0|ambulance-planning  | 10:02:55 AM [express] GET /api/preferences/48/12/2025 404 in 3ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 16, sessionStationId: 1 }
+0|ambulance-planning  | Using session stationId: 1
+0|ambulance-planning  | Retrieved user: { id: 16, username: 'rove319', stationId: 1, role: 'admin' }
+0|ambulance-planning  | 10:02:58 AM [express] GET /api/preferences/48/12/2025 404 in 3ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 16, sessionStationId: 1 }
+0|ambulance-planning  | Using session stationId: 1
+0|ambulance-planning  | Retrieved user: { id: 16, username: 'rove319', stationId: 1, role: 'admin' }
+0|ambulance-planning  | 10:03:12 AM [express] GET /api/preferences/27/12/2025 200 in 5ms
