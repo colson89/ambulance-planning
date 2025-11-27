@@ -272,6 +272,32 @@ function ScheduleGenerator() {
     enabled: !!user && ((user.role === "admin") || (user.role === "supervisor" && !!effectiveStationId)),
   });
 
+  // Haal cross-team shifts op (shifts van gebruikers op ANDERE stations)
+  // Dit is nodig om "Ingepland elders" te detecteren voor cross-team users
+  interface CrossTeamShift {
+    shiftId: number;
+    userId: number;
+    stationId: number;
+    date: string;
+    type: string;
+    startTime: string;
+    endTime: string;
+  }
+  
+  const { data: crossTeamShifts = [] } = useQuery<CrossTeamShift[]>({
+    queryKey: ["/api/cross-team-shifts", selectedMonth + 1, selectedYear, effectiveStationId],
+    queryFn: async () => {
+      if (!effectiveStationId) return [];
+      const url = `/api/cross-team-shifts?month=${selectedMonth + 1}&year=${selectedYear}&stationId=${effectiveStationId}`;
+      const res = await apiRequest("GET", url);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
+    staleTime: 0,
+    gcTime: 0,
+  });
+
   // Haal Verdi sync status op voor shifts in deze maand
   const { data: verdiSyncStatus = [] } = useQuery<any[]>({
     queryKey: ["/api/verdi/sync-status", selectedMonth + 1, selectedYear, effectiveStationId],
@@ -448,9 +474,6 @@ function ScheduleGenerator() {
     // Veiligheidsmaatregel: returnt een lege array als de datum null is
     if (!date) return [];
     
-    console.log("Zoeken naar beschikbare medewerkers voor datum:", date);
-    console.log("Shift type:", shiftType);
-    
     try {
       const result: Array<{
         userId: number;
@@ -460,6 +483,7 @@ function ScheduleGenerator() {
         preferenceType: string;
         canSplit: boolean;
         isAssigned: boolean;
+        isAssignedElsewhere: boolean; // NIEUW: Ingepland op ander station
         isAvailable: boolean;
         hasNoPreference: boolean;
         hours: number;
@@ -471,8 +495,6 @@ function ScheduleGenerator() {
       const month = date.getMonth() + 1; // JavaScript maanden zijn 0-11
       const day = date.getDate();
       const gezochteYMD = `${year}-${month}-${day}`;
-      
-      console.log(`Zoeken naar shifts voor datum: ${gezochteYMD}`);
       
       // In plaats van te zoeken in voorkeuren, kijken we direct naar de shifts
       // om te zien wie er gepland staat voor deze datum
@@ -489,30 +511,40 @@ function ScheduleGenerator() {
         return shiftYMD === gezochteYMD && isTypeMatch;
       });
       
-      console.log(`Gevonden aantal shifts voor deze datum en type: ${matchingShifts.length}`);
-      
       // Voor elke gevonden shift, zoek de toegewezen medewerker
-      const assignedUserIds = new Set();
+      const assignedUserIds = new Set<number>();
       matchingShifts.forEach(shift => {
         if (shift.userId > 0) {
           assignedUserIds.add(shift.userId);
         }
       });
       
-      console.log(`Aantal toegewezen gebruikers: ${assignedUserIds.size}`);
+      // NIEUW: Check cross-team shifts - wie is ingepland op een ANDER station vandaag?
+      const usersScheduledElsewhere = new Set<number>();
+      crossTeamShifts.forEach(ctShift => {
+        const ctShiftDate = new Date(ctShift.date);
+        const ctShiftYMD = `${ctShiftDate.getFullYear()}-${ctShiftDate.getMonth() + 1}-${ctShiftDate.getDate()}`;
+        
+        // Controleer het shift type (dag of nacht) - beide shifts blokkeren elkaar
+        const isTypeMatch = (shiftType === "day" && ctShift.type === "day") || 
+                           (shiftType === "night" && ctShift.type === "night");
+        
+        if (ctShiftYMD === gezochteYMD && isTypeMatch) {
+          usersScheduledElsewhere.add(ctShift.userId);
+        }
+      });
       
       // Haal alle ambulanciers EN admins op die shifts kunnen draaien
       const ambulanciers = users.filter(u => u.role === "ambulancier" || u.role === "admin");
       
       // Filter voorkeuren voor de geselecteerde datum
+      // BELANGRIJK: We zoeken voorkeuren van ALLE stations voor cross-team users
       const preferencesForDate = preferences.filter(pref => {
         if (!pref || !pref.date) return false;
         const prefDate = new Date(pref.date);
         const prefYMD = `${prefDate.getFullYear()}-${prefDate.getMonth() + 1}-${prefDate.getDate()}`;
         return prefYMD === gezochteYMD;
       });
-      
-      console.log(`Gevonden voorkeuren voor datum ${gezochteYMD}:`, preferencesForDate.length);
       
       // Maak Sets voor gebruikers die beschikbaar zijn en die expliciet niet beschikbaar zijn
       const availableUserIds = new Set<number>();
@@ -529,13 +561,13 @@ function ScheduleGenerator() {
           unavailableUserIds.add(pref.userId);
         } else if (pref.type === shiftType) {
           availableUserIds.add(pref.userId);
-          console.log(`Gebruiker ${pref.userId} is beschikbaar voor ${shiftType} shift op ${gezochteYMD}`);
         }
       });
       
       // Toon ALLE ambulanciers en markeer op basis van beschikbaarheid en toewijzing
       ambulanciers.forEach(ambulancier => {
         const isAssigned = assignedUserIds.has(ambulancier.id);
+        const isAssignedElsewhere = usersScheduledElsewhere.has(ambulancier.id);
         const hasExplicitAvailability = availableUserIds.has(ambulancier.id);
         const hasExplicitUnavailability = unavailableUserIds.has(ambulancier.id);
         const hasPreferenceForThisShift = usersWithPreferenceForThisShiftType.has(ambulancier.id);
@@ -545,15 +577,18 @@ function ScheduleGenerator() {
         
         // GEEN voorkeur ingediend voor deze specifieke shift (dag of nacht)
         // Ook geen voorkeur als ze al zijn toegewezen maar geen expliciete voorkeur hebben
-        const hasNoPreference = !hasPreferenceForThisShift && !isAssigned;
+        const hasNoPreference = !hasPreferenceForThisShift && !isAssigned && !isAssignedElsewhere;
         
         // isAvailable is ALLEEN true als ze expliciet beschikbaar zijn EN uren willen werken
-        const isAvailable = hasExplicitAvailability && wantsToWork;
+        // EN niet ingepland elders
+        const isAvailable = hasExplicitAvailability && wantsToWork && !isAssignedElsewhere;
         
         // Bepaal het preferentietype
         let preferenceType = "no_preference";
         if (isAssigned) {
           preferenceType = "assigned";
+        } else if (isAssignedElsewhere) {
+          preferenceType = "assigned_elsewhere"; // NIEUW: Ingepland op ander station
         } else if (isAvailable) {
           preferenceType = "available";
         } else if (hasExplicitAvailability && !wantsToWork) {
@@ -573,6 +608,7 @@ function ScheduleGenerator() {
           preferenceType: preferenceType,
           canSplit: false, // Niet relevant voor weergave
           isAssigned: isAssigned,
+          isAssignedElsewhere: isAssignedElsewhere, // NIEUW
           isAvailable: isAvailable, // ALLEEN true als expliciet beschikbaar + uren > 0
           hasNoPreference: hasNoPreference, // Geen expliciete voorkeur voor dit shift type
           hours: ambulancier.hours || 0,
@@ -580,15 +616,16 @@ function ScheduleGenerator() {
         });
       });
       
-      // Sorteer de resultaten: eerst toegewezen, dan beschikbaar, dan geen voorkeur, dan niet beschikbaar
+      // Sorteer de resultaten: eerst toegewezen, dan beschikbaar, dan geen voorkeur, dan ingepland elders, dan niet beschikbaar
       result.sort((a, b) => {
-        // Sorteer volgorde: assigned > available > no_preference > unavailable > no_hours
+        // Sorteer volgorde: assigned > available > no_preference > assigned_elsewhere > unavailable > no_hours
         const order = (item: typeof result[0]) => {
           if (item.isAssigned) return 0;
           if (item.isAvailable) return 1;
           if (item.hasNoPreference) return 2;
-          if (item.preferenceType === "unavailable") return 3;
-          return 4;
+          if (item.isAssignedElsewhere) return 3; // NIEUW: Ingepland elders komt na geen voorkeur
+          if (item.preferenceType === "unavailable") return 4;
+          return 5;
         };
         
         const orderDiff = order(a) - order(b);
@@ -2301,6 +2338,8 @@ function ScheduleGenerator() {
                               <TableCell>
                                 {u.isAssigned ? (
                                   <Badge className="bg-blue-500 hover:bg-blue-600">Toegewezen</Badge>
+                                ) : u.isAssignedElsewhere ? (
+                                  <Badge variant="outline" className="text-purple-600 border-purple-600 bg-purple-50">Ingepland elders</Badge>
                                 ) : u.isAvailable ? (
                                   <Badge className="bg-green-500 hover:bg-green-600">Beschikbaar</Badge>
                                 ) : u.hasNoPreference ? (
@@ -2360,6 +2399,8 @@ function ScheduleGenerator() {
                             <TableCell>
                               {u.isAssigned ? (
                                 <Badge className="bg-blue-500 hover:bg-blue-600">Toegewezen</Badge>
+                              ) : u.isAssignedElsewhere ? (
+                                <Badge variant="outline" className="text-purple-600 border-purple-600 bg-purple-50">Ingepland elders</Badge>
                               ) : u.isAvailable ? (
                                 <Badge className="bg-green-500 hover:bg-green-600">Beschikbaar</Badge>
                               ) : u.hasNoPreference ? (

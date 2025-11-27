@@ -7,7 +7,7 @@ import { z } from "zod";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
 import { db } from "./db";
-import { and, gte, lte, asc, ne, eq } from "drizzle-orm";
+import { and, gte, lte, asc, ne, eq, inArray } from "drizzle-orm";
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import multer from 'multer';
@@ -1037,6 +1037,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error validating cross-team schedule:", error);
       res.status(500).json({ message: "Failed to validate schedule" });
+    }
+  });
+
+  // Get shifts of cross-team users on OTHER stations (for detecting "Ingepland elders")
+  // This helps prevent double-booking cross-team users
+  app.get("/api/cross-team-shifts", requireAdmin, async (req, res) => {
+    try {
+      const { month, year, stationId } = req.query;
+      
+      if (!month || !year || !stationId) {
+        return res.status(400).json({ message: "Month, year, and stationId are required" });
+      }
+      
+      const targetMonth = parseInt(month as string);
+      const targetYear = parseInt(year as string);
+      const currentStationId = parseInt(stationId as string);
+      
+      // Get all users who have access to this station (both primary and cross-team)
+      const stationUsers = await storage.getUsersByStation(currentStationId);
+      const userIds = stationUsers.map(u => u.id);
+      
+      // Get all shifts for these users in this month/year on OTHER stations
+      const allShifts = await db.select()
+        .from(shifts)
+        .where(
+          and(
+            inArray(shifts.userId, userIds),
+            ne(shifts.stationId, currentStationId), // Only shifts on OTHER stations
+            eq(shifts.month, targetMonth),
+            eq(shifts.year, targetYear)
+          )
+        );
+      
+      // Return shifts grouped by userId and date for easy lookup
+      const crossStationShifts = allShifts.map(shift => ({
+        shiftId: shift.id,
+        userId: shift.userId,
+        stationId: shift.stationId,
+        date: shift.date,
+        type: shift.type,
+        startTime: shift.startTime,
+        endTime: shift.endTime
+      }));
+      
+      res.json(crossStationShifts);
+    } catch (error) {
+      console.error("Error getting cross-team shifts:", error);
+      res.status(500).json({ message: "Failed to get cross-team shifts" });
     }
   });
 
