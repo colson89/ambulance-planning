@@ -50,6 +50,9 @@ export interface IStorage {
   canUserReceiveSplitShift(userId: number, targetStationId: number): Promise<boolean>;
   hasConflictingCrossTeamShift(userId: number, proposedDate: Date, proposedStartTime: Date, proposedEndTime: Date, targetStationId: number, month: number, year: number): Promise<boolean>;
   
+  // Cross-team access control for admins
+  userHasAccessToStation(userId: number, stationId: number): Promise<boolean>;
+  
   // Unified preferences functionality
   syncUserPreferencesToAllStations(userId: number, month: number, year: number): Promise<void>;
   getUnifiedUserShiftPreferences(userId: number, month: number, year: number): Promise<ShiftPreference[]>;
@@ -674,6 +677,13 @@ export class DatabaseStorage implements IStorage {
     }
     
     return stationIds;
+  }
+
+  // Helper voor cross-team toegangscontrole: controleert of een gebruiker toegang heeft tot een specifiek station
+  // (via home station OF cross-team toewijzing)
+  async userHasAccessToStation(userId: number, stationId: number): Promise<boolean> {
+    const allUserStations = await this.getUserAllStations(userId);
+    return allUserStations.includes(stationId);
   }
 
   // Validatie functie: controleert of een cross-team gebruiker alleen volledige shifts krijgt in eenvoudige systemen
