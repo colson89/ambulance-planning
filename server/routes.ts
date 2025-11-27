@@ -508,15 +508,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Permission check - includes cross-team users
+      // Permission check: only home station admins can edit profiles, not cross-team admins
       const isOwnProfile = currentUserId === targetUserId;
       const isAdmin = userRole === 'admin' || userRole === 'supervisor';
       const isSupervisor = userRole === 'supervisor';
-      
-      // For admins: check if target user has access to admin's station (home OR cross-team)
-      const userHasAccessToAdminStation = await storage.userHasAccessToStation(targetUserId, userStationId);
+      const isSameHomeStation = targetUser.stationId === userStationId;
 
-      if (!isOwnProfile && !(isAdmin && (isSupervisor || userHasAccessToAdminStation))) {
+      if (!isOwnProfile && !(isAdmin && (isSupervisor || isSameHomeStation))) {
         return res.status(403).json({ message: "Je hebt geen toestemming om deze foto bij te werken" });
       }
 
@@ -549,15 +547,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Permission check - includes cross-team users
+      // Permission check: only home station admins can edit profiles, not cross-team admins
       const isOwnProfile = currentUserId === targetUserId;
       const isAdmin = userRole === 'admin' || userRole === 'supervisor';
       const isSupervisor = userRole === 'supervisor';
-      
-      // For admins: check if target user has access to admin's station (home OR cross-team)
-      const userHasAccessToAdminStation = await storage.userHasAccessToStation(targetUserId, userStationId);
+      const isSameHomeStation = targetUser.stationId === userStationId;
 
-      if (!isOwnProfile && !(isAdmin && (isSupervisor || userHasAccessToAdminStation))) {
+      if (!isOwnProfile && !(isAdmin && (isSupervisor || isSameHomeStation))) {
         return res.status(403).json({ message: "Je hebt geen toestemming om dit telefoonnummer bij te werken" });
       }
 
