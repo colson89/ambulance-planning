@@ -461,6 +461,7 @@ function ScheduleGenerator() {
         canSplit: boolean;
         isAssigned: boolean;
         isAvailable: boolean;
+        hasNoPreference: boolean;
         hours: number;
         scheduledHours: number;
       }> = [];
@@ -503,7 +504,7 @@ function ScheduleGenerator() {
       // Haal alle ambulanciers EN admins op die shifts kunnen draaien
       const ambulanciers = users.filter(u => u.role === "ambulancier" || u.role === "admin");
       
-      // Filter voorkeuren voor de geselecteerde datum en shift type
+      // Filter voorkeuren voor de geselecteerde datum
       const preferencesForDate = preferences.filter(pref => {
         if (!pref || !pref.date) return false;
         const prefDate = new Date(pref.date);
@@ -513,65 +514,85 @@ function ScheduleGenerator() {
       
       console.log(`Gevonden voorkeuren voor datum ${gezochteYMD}:`, preferencesForDate.length);
       
-      // Maak een Set van gebruikers die beschikbaar zijn volgens voorkeur
-      const availableUserIds = new Set();
+      // Maak Sets voor gebruikers die beschikbaar zijn en die expliciet niet beschikbaar zijn
+      const availableUserIds = new Set<number>();
+      const unavailableUserIds = new Set<number>();
+      const usersWithPreferenceForThisShiftType = new Set<number>();
+      
       preferencesForDate.forEach(pref => {
-        // Als de voorkeur niet 'unavailable' is en het shift type komt overeen
-        if (pref.type !== "unavailable" && pref.type === shiftType) {
+        // Track users who have THIS specific shift type preference (day/night) OR unavailable for this date
+        if (pref.type === shiftType || pref.type === "unavailable") {
+          usersWithPreferenceForThisShiftType.add(pref.userId);
+        }
+        
+        if (pref.type === "unavailable") {
+          unavailableUserIds.add(pref.userId);
+        } else if (pref.type === shiftType) {
           availableUserIds.add(pref.userId);
           console.log(`Gebruiker ${pref.userId} is beschikbaar voor ${shiftType} shift op ${gezochteYMD}`);
         }
       });
       
-      // Toon alle ambulanciers en markeer op basis van beschikbaarheid en toewijzing
+      // Toon ALLE ambulanciers en markeer op basis van beschikbaarheid en toewijzing
       ambulanciers.forEach(ambulancier => {
         const isAssigned = assignedUserIds.has(ambulancier.id);
-        const isAvailable = availableUserIds.has(ambulancier.id);
+        const hasExplicitAvailability = availableUserIds.has(ambulancier.id);
+        const hasExplicitUnavailability = unavailableUserIds.has(ambulancier.id);
+        const hasPreferenceForThisShift = usersWithPreferenceForThisShiftType.has(ambulancier.id);
         
         // Controleer of de ambulancier uren wil werken (hours > 0)
         const wantsToWork = ambulancier.hours > 0;
         
-        // AANGEPAST: Toon ALLE ambulanciers die zich beschikbaar hebben gesteld
-        // Dit helpt bij het vinden van vervangingen
-        const hasPreference = isAvailable || isAssigned;
+        // GEEN voorkeur ingediend voor deze specifieke shift (dag of nacht)
+        // Ook geen voorkeur als ze al zijn toegewezen maar geen expliciete voorkeur hebben
+        const hasNoPreference = !hasPreferenceForThisShift && !isAssigned;
+        
+        // isAvailable is ALLEEN true als ze expliciet beschikbaar zijn EN uren willen werken
+        const isAvailable = hasExplicitAvailability && wantsToWork;
         
         // Bepaal het preferentietype
-        let preferenceType = "unavailable";
+        let preferenceType = "no_preference";
         if (isAssigned) {
           preferenceType = "assigned";
-        } else if (isAvailable && wantsToWork) {
+        } else if (isAvailable) {
           preferenceType = "available";
-        } else if (isAvailable && !wantsToWork) {
+        } else if (hasExplicitAvailability && !wantsToWork) {
           preferenceType = "available_no_hours";
+        } else if (hasExplicitUnavailability) {
+          preferenceType = "unavailable";
+        } else {
+          preferenceType = "no_preference";
         }
         
-        // Voeg toe aan resultaat als ze zich beschikbaar hebben gesteld OF al zijn toegewezen
-        if (hasPreference) {
-          result.push({
-            userId: ambulancier.id,
-            username: ambulancier.username || "Onbekend",
-            firstName: ambulancier.firstName || "",
-            lastName: ambulancier.lastName || "",
-            preferenceType: preferenceType,
-            canSplit: false, // Niet relevant voor weergave
-            isAssigned: isAssigned, // Extra veld om snel te kunnen checken of deze gebruiker al is toegewezen
-            isAvailable: isAvailable && wantsToWork, // Of de gebruiker beschikbaar is en uren wil werken
-            hours: ambulancier.hours || 0, // Hoeveel uren deze persoon wil werken
-            scheduledHours: countUserShiftsHours(ambulancier.id) // Hoeveel uren deze persoon al is ingepland deze maand
-          });
-        }
+        // Voeg ALLE ambulanciers toe aan resultaat (niet alleen die met voorkeur)
+        result.push({
+          userId: ambulancier.id,
+          username: ambulancier.username || "Onbekend",
+          firstName: ambulancier.firstName || "",
+          lastName: ambulancier.lastName || "",
+          preferenceType: preferenceType,
+          canSplit: false, // Niet relevant voor weergave
+          isAssigned: isAssigned,
+          isAvailable: isAvailable, // ALLEEN true als expliciet beschikbaar + uren > 0
+          hasNoPreference: hasNoPreference, // Geen expliciete voorkeur voor dit shift type
+          hours: ambulancier.hours || 0,
+          scheduledHours: countUserShiftsHours(ambulancier.id)
+        });
       });
       
-      // Sorteer de resultaten: eerst beschikbare niet-toegewezen, dan toegewezen, dan rest
+      // Sorteer de resultaten: eerst toegewezen, dan beschikbaar, dan geen voorkeur, dan niet beschikbaar
       result.sort((a, b) => {
-        // Eerst sorteren op basis van beschikbaarheid en toewijzing
-        if (a.isAvailable !== b.isAvailable) {
-          return a.isAvailable ? -1 : 1; // Beschikbare gebruikers eerst
-        }
+        // Sorteer volgorde: assigned > available > no_preference > unavailable > no_hours
+        const order = (item: typeof result[0]) => {
+          if (item.isAssigned) return 0;
+          if (item.isAvailable) return 1;
+          if (item.hasNoPreference) return 2;
+          if (item.preferenceType === "unavailable") return 3;
+          return 4;
+        };
         
-        if (a.isAssigned !== b.isAssigned) {
-          return a.isAssigned ? 1 : -1; // Niet-toegewezen gebruikers eerder
-        }
+        const orderDiff = order(a) - order(b);
+        if (orderDiff !== 0) return orderDiff;
         
         // Daarna op naam
         const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
@@ -2282,6 +2303,8 @@ function ScheduleGenerator() {
                                   <Badge className="bg-blue-500 hover:bg-blue-600">Toegewezen</Badge>
                                 ) : u.isAvailable ? (
                                   <Badge className="bg-green-500 hover:bg-green-600">Beschikbaar</Badge>
+                                ) : u.hasNoPreference ? (
+                                  <Badge variant="outline" className="text-orange-500 border-orange-500">Geen voorkeur</Badge>
                                 ) : u.hours === 0 ? (
                                   <Badge variant="outline" className="text-gray-500">Werkt geen uren</Badge>
                                 ) : (
@@ -2305,7 +2328,7 @@ function ScheduleGenerator() {
                           {getUsersAvailableForDate(selectedDate, "day").length === 0 && (
                             <TableRow>
                               <TableCell colSpan={4} className="text-center py-4">
-                                Geen beschikbare ambulanciers gevonden
+                                Geen ambulanciers gevonden
                               </TableCell>
                             </TableRow>
                           )}
@@ -2339,6 +2362,8 @@ function ScheduleGenerator() {
                                 <Badge className="bg-blue-500 hover:bg-blue-600">Toegewezen</Badge>
                               ) : u.isAvailable ? (
                                 <Badge className="bg-green-500 hover:bg-green-600">Beschikbaar</Badge>
+                              ) : u.hasNoPreference ? (
+                                <Badge variant="outline" className="text-orange-500 border-orange-500">Geen voorkeur</Badge>
                               ) : u.hours === 0 ? (
                                 <Badge variant="outline" className="text-gray-500">Werkt geen uren</Badge>
                               ) : (
@@ -2362,7 +2387,7 @@ function ScheduleGenerator() {
                         {getUsersAvailableForDate(selectedDate, "night").length === 0 && (
                           <TableRow>
                             <TableCell colSpan={4} className="text-center py-4">
-                              Geen beschikbare ambulanciers gevonden
+                              Geen ambulanciers gevonden
                             </TableCell>
                           </TableRow>
                         )}
