@@ -2329,7 +2329,6 @@ function ScheduleGenerator() {
                           <TableRow>
                             <TableHead>Naam</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead>Uren</TableHead>
                             <TableHead>Ingepland</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -2354,7 +2353,6 @@ function ScheduleGenerator() {
                                   <Badge variant="outline" className="text-red-500">Niet beschikbaar</Badge>
                                 )}
                               </TableCell>
-                              <TableCell>{u.hours}</TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-1">
                                   <span>{u.scheduledHours}</span>
@@ -2370,7 +2368,7 @@ function ScheduleGenerator() {
                           
                           {getUsersAvailableForDate(selectedDate, "day").length === 0 && (
                             <TableRow>
-                              <TableCell colSpan={4} className="text-center py-4">
+                              <TableCell colSpan={3} className="text-center py-4">
                                 Geen ambulanciers gevonden
                               </TableCell>
                             </TableRow>
@@ -2390,7 +2388,6 @@ function ScheduleGenerator() {
                         <TableRow>
                           <TableHead>Naam</TableHead>
                           <TableHead>Status</TableHead>
-                          <TableHead>Uren</TableHead>
                           <TableHead>Ingepland</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -2415,7 +2412,6 @@ function ScheduleGenerator() {
                                 <Badge variant="outline" className="text-red-500">Niet beschikbaar</Badge>
                               )}
                             </TableCell>
-                            <TableCell>{u.hours}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
                                 <span>{u.scheduledHours}</span>
@@ -2431,7 +2427,7 @@ function ScheduleGenerator() {
                         
                         {getUsersAvailableForDate(selectedDate, "night").length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center py-4">
+                            <TableCell colSpan={3} className="text-center py-4">
                               Geen ambulanciers gevonden
                             </TableCell>
                           </TableRow>
