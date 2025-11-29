@@ -1868,11 +1868,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           typeLabel += ` (${pref.splitType === 'morning' ? 'Ochtend' : 'Middag'})`;
         }
 
-        // Format time
+        // Format time - use UTC hours to avoid timezone shift
         let timeLabel = pref.type === 'day' ? '07:00 - 19:00' : '19:00 - 07:00';
         if (pref.startTime && pref.endTime) {
-          const startTime = format(new Date(pref.startTime), 'HH:mm');
-          const endTime = format(new Date(pref.endTime), 'HH:mm');
+          const startDate = new Date(pref.startTime);
+          const endDate = new Date(pref.endTime);
+          const startTime = `${String(startDate.getUTCHours()).padStart(2, '0')}:${String(startDate.getUTCMinutes()).padStart(2, '0')}`;
+          const endTime = `${String(endDate.getUTCHours()).padStart(2, '0')}:${String(endDate.getUTCMinutes()).padStart(2, '0')}`;
           timeLabel = `${startTime} - ${endTime}`;
         }
 
