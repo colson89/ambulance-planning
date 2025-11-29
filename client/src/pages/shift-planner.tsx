@@ -8,7 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, Moon, Sun } from "lucide-react";
+import { Home, Loader2, Moon, Sun, Download } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -270,6 +270,48 @@ export default function ShiftPlanner() {
       });
     },
   });
+
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPreferences = async () => {
+    try {
+      setIsExporting(true);
+      const month = selectedMonth.getMonth() + 1;
+      const year = selectedMonth.getFullYear();
+      
+      const response = await fetch(`/api/preferences/export?month=${month}&year=${year}`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Kon voorkeuren niet exporteren");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Mijn_Beschikbaarheden_${format(selectedMonth, 'MMMM_yyyy', { locale: nl })}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Succes",
+        description: "Uw beschikbaarheden zijn geëxporteerd naar Excel",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Fout",
+        description: error.message || "Kon voorkeuren niet exporteren",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>, date: Date, shiftType: ShiftType) => {
     const newValue = event.target.value as PreferenceType;
@@ -750,6 +792,46 @@ export default function ShiftPlanner() {
                     </span>
                   </AlertDescription>
                 </Alert>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Export sectie */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Exporteer Beschikbaarheden
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Exporteer uw beschikbaarheden voor {format(selectedMonth, "MMMM yyyy", { locale: nl })} naar een Excel-bestand.
+              </p>
+              <Button
+                onClick={handleExportPreferences}
+                disabled={isExporting || preferences.filter(p => p.type !== 'unavailable').length === 0}
+                className="w-full"
+                variant="outline"
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Bezig met exporteren...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Exporteer naar Excel
+                  </>
+                )}
+              </Button>
+              {preferences.filter(p => p.type !== 'unavailable').length === 0 && (
+                <p className="text-sm text-amber-600">
+                  U heeft nog geen beschikbaarheden opgegeven voor deze maand.
+                </p>
               )}
             </div>
           </CardContent>

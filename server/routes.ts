@@ -1765,6 +1765,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export user's own preferences to Excel
+  app.get("/api/preferences/export", requireAuth, async (req, res) => {
+    try {
+      const { month, year } = req.query;
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+
+      const targetMonth = parseInt(month as string);
+      const targetYear = parseInt(year as string);
+      const user = req.user!;
+
+      // Get user's preferences for the specified month
+      const preferences = await storage.getUserShiftPreferences(
+        user.id,
+        targetMonth,
+        targetYear
+      );
+
+      // Filter only available preferences (not unavailable)
+      const availablePreferences = preferences.filter(pref => pref.type !== 'unavailable');
+
+      if (availablePreferences.length === 0) {
+        return res.status(404).json({ message: "Geen beschikbaarheden gevonden voor deze maand" });
+      }
+
+      // Create workbook using ExcelJS
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'Planning BWZK';
+      workbook.created = new Date();
+
+      const worksheet = workbook.addWorksheet('Mijn Beschikbaarheden');
+
+      // Month names in Dutch
+      const monthNames = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 
+                          'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+      const monthName = monthNames[targetMonth - 1];
+      const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+
+      // Add title row
+      worksheet.mergeCells('A1:E1');
+      const titleCell = worksheet.getCell('A1');
+      titleCell.value = `Mijn Beschikbaarheden - ${capitalizedMonth} ${targetYear}`;
+      titleCell.font = { bold: true, size: 16 };
+      titleCell.alignment = { horizontal: 'center' };
+
+      // Add user info row
+      worksheet.mergeCells('A2:E2');
+      const userCell = worksheet.getCell('A2');
+      userCell.value = `${user.firstName} ${user.lastName}`;
+      userCell.font = { italic: true, size: 12 };
+      userCell.alignment = { horizontal: 'center' };
+
+      // Add empty row
+      worksheet.addRow([]);
+
+      // Add header row
+      worksheet.columns = [
+        { header: 'Datum', key: 'datum', width: 15 },
+        { header: 'Dag', key: 'dag', width: 12 },
+        { header: 'Type Shift', key: 'type', width: 15 },
+        { header: 'Tijd', key: 'tijd', width: 20 },
+        { header: 'Opmerkingen', key: 'opmerkingen', width: 30 }
+      ];
+
+      const headerRow = worksheet.getRow(4);
+      headerRow.values = ['Datum', 'Dag', 'Type Shift', 'Tijd', 'Opmerkingen'];
+      headerRow.font = { bold: true };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF3B82F6' }
+      };
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.alignment = { horizontal: 'center' };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+
+      // Sort preferences by date
+      const sortedPrefs = availablePreferences.sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+
+      // Day names in Dutch
+      const dayNames = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+
+      // Add data rows
+      sortedPrefs.forEach((pref, index) => {
+        const prefDate = new Date(pref.date);
+        const dayOfWeek = dayNames[prefDate.getDay()];
+        
+        // Format type
+        let typeLabel = pref.type === 'day' ? 'Dag' : 'Nacht';
+        if (pref.canSplit && pref.splitType) {
+          typeLabel += ` (${pref.splitType === 'morning' ? 'Ochtend' : 'Middag'})`;
+        }
+
+        // Format time
+        let timeLabel = pref.type === 'day' ? '07:00 - 19:00' : '19:00 - 07:00';
+        if (pref.startTime && pref.endTime) {
+          const startTime = format(new Date(pref.startTime), 'HH:mm');
+          const endTime = format(new Date(pref.endTime), 'HH:mm');
+          timeLabel = `${startTime} - ${endTime}`;
+        }
+
+        const row = worksheet.addRow({
+          datum: format(prefDate, 'dd-MM-yyyy'),
+          dag: dayOfWeek,
+          type: typeLabel,
+          tijd: timeLabel,
+          opmerkingen: pref.notes || ''
+        });
+
+        // Alternate row colors
+        if (index % 2 === 1) {
+          row.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFF3F4F6' }
+          };
+        }
+
+        row.eachCell((cell) => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+        });
+      });
+
+      // Add summary row
+      worksheet.addRow([]);
+      const summaryRow = worksheet.addRow([`Totaal: ${sortedPrefs.length} beschikbaarheden`]);
+      summaryRow.font = { bold: true, italic: true };
+
+      // Generate buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      // Set headers for download
+      const filename = `Mijn_Beschikbaarheden_${capitalizedMonth}_${targetYear}.xlsx`;
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', Buffer.byteLength(buffer));
+
+      res.end(buffer);
+    } catch (error) {
+      console.error('Error exporting preferences:', error);
+      res.status(500).json({ message: "Kon voorkeuren niet exporteren" });
+    }
+  });
+
 
   // Get all shifts - optionally filter by month/year
   app.get("/api/shifts", requireAuth, async (req, res) => {
