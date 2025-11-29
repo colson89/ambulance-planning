@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link as LinkIcon, ArrowLeft, Settings, Mail } from "lucide-react";
+import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
@@ -133,6 +133,38 @@ export default function Integrations() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Activiteitenlog Card - Only for supervisors */}
+          {user?.role === 'supervisor' && (
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+              onClick={() => setLocation("/activity-logs")}
+            >
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 p-3 bg-amber-100 rounded-full w-fit">
+                  <FileText className="h-8 w-8 text-amber-600" />
+                </div>
+                <CardTitle className="text-xl">Activiteitenlog</CardTitle>
+                <CardDescription className="mb-2">
+                  Bekijk alle gebruikersactiviteiten en systeemgebeurtenissen
+                </CardDescription>
+                <Badge variant="default" className="mx-auto bg-amber-600">Supervisor</Badge>
+              </CardHeader>
+              <CardContent className="text-center">
+                <Button 
+                  variant="outline" 
+                  className="w-full group"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLocation("/activity-logs");
+                  }}
+                >
+                  Bekijken
+                  <FileText className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Placeholder for future integrations */}
           <Card className="border-dashed border-2 border-gray-300 opacity-60">
