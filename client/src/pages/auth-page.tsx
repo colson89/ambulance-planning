@@ -14,19 +14,30 @@ const logoUrl = "/logo.png";
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
-  const [selectedStation, setSelectedStation] = useState<Station | null>(null);
+  const [selectedStation, setSelectedStation] = useState<Station | null>(() => {
+    // Initialize station from sessionStorage on first render
+    const stationData = sessionStorage.getItem("selectedStation");
+    if (stationData) {
+      try {
+        return JSON.parse(stationData);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [passwordTimer, setPasswordTimer] = useState<number | null>(null);
 
   useEffect(() => {
-    // Check if station was selected
-    const stationData = sessionStorage.getItem("selectedStation");
-    if (!stationData) {
-      setLocation("/station-select");
-      return;
+    // Only redirect if no station is selected and we're not in an error state
+    if (!selectedStation && !loginMutation.isError) {
+      const stationData = sessionStorage.getItem("selectedStation");
+      if (!stationData) {
+        setLocation("/station-select");
+      }
     }
-    setSelectedStation(JSON.parse(stationData));
-  }, [setLocation]);
+  }, [selectedStation, setLocation, loginMutation.isError]);
 
   useEffect(() => {
     if (user) {
