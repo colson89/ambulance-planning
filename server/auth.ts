@@ -1,11 +1,12 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { loginRateLimiter, getClientIp } from "./rate-limiter";
 
 declare global {
   namespace Express {
@@ -190,8 +191,67 @@ export function setupAuth(app: Express) {
     });
   });
 
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post("/api/login", (req: Request, res: Response, next: NextFunction) => {
+    const ip = getClientIp(req);
+    const rawUsername = (req.body.username || '').toString().toLowerCase().trim();
+    const rawStationId = parseInt(req.body.stationId);
+    
+    if (!rawUsername) {
+      return res.status(400).json({
+        message: "Gebruikersnaam is verplicht."
+      });
+    }
+    
+    if (!rawStationId || isNaN(rawStationId) || rawStationId <= 0) {
+      return res.status(400).json({
+        message: "Selecteer eerst een geldig station."
+      });
+    }
+    
+    const username = rawUsername;
+    const stationId = rawStationId;
+
+    const blockStatus = loginRateLimiter.isBlocked(ip, username, stationId);
+    if (blockStatus.blocked) {
+      console.log(`[Auth] 🚫 Login blocked for ${username}@station${stationId} from ${ip} - ${blockStatus.remainingMinutes} minuten resterend`);
+      return res.status(429).json({
+        message: `Te veel mislukte inlogpogingen. Probeer opnieuw over ${blockStatus.remainingMinutes} ${blockStatus.remainingMinutes === 1 ? 'minuut' : 'minuten'}.`,
+        blockedUntil: Date.now() + blockStatus.remainingMs,
+        remainingMinutes: blockStatus.remainingMinutes
+      });
+    }
+
+    passport.authenticate("local", (err: any, user: Express.User | false, info: any) => {
+      if (err) {
+        return next(err);
+      }
+
+      if (!user) {
+        const result = loginRateLimiter.recordFailedAttempt(ip, username, stationId);
+        
+        if (result.blocked) {
+          return res.status(429).json({
+            message: `Te veel mislukte inlogpogingen. U bent geblokkeerd voor ${result.blockedForMinutes} minuten.`,
+            blockedUntil: Date.now() + (result.blockedForMinutes * 60 * 1000),
+            remainingMinutes: result.blockedForMinutes
+          });
+        }
+
+        return res.status(401).json({
+          message: `Ongeldige gebruikersnaam of wachtwoord. Nog ${result.attemptsRemaining} ${result.attemptsRemaining === 1 ? 'poging' : 'pogingen'} over.`,
+          attemptsRemaining: result.attemptsRemaining
+        });
+      }
+
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          return next(loginErr);
+        }
+        
+        loginRateLimiter.recordSuccessfulLogin(ip, username, stationId);
+        return res.status(200).json(user);
+      });
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res, next) => {

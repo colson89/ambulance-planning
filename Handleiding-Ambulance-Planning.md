@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.8 - Laatst bijgewerkt: 29 november 2025, 12:30**
+**Versie 2025.9 - Laatst bijgewerkt: 29 november 2025, 16:20**
 
 ---
 
@@ -2843,6 +2843,30 @@ Een hard refresh forceert de browser om de nieuwste versie te downloaden.
 - Als nieuwe functies niet zichtbaar zijn
 - Als bestaande functies opeens niet meer werken
 - Bij twijfel - een hard refresh kan geen kwaad!
+
+---
+
+### ⭐ Versie 2025.9 - 29 November 2025
+
+**Beveiliging:**
+- 🛡️ **Brute-Force Bescherming** - Bescherming tegen ongeautoriseerde inlogpogingen
+  - Na 5 mislukte inlogpogingen wordt het account tijdelijk geblokkeerd voor 15 minuten
+  - Gebruikers zien duidelijke Nederlandse foutmeldingen met resterende pogingen
+  - Bij blokkade: "Te veel mislukte inlogpogingen. Probeer opnieuw over X minuten."
+  - Automatische reset na succesvolle login
+  - Logging van alle geblokkeerde pogingen voor security monitoring
+  - Beschermt tegen wachtwoord-raden aanvallen via internet
+
+- 📥 **Exporteer Beschikbaarheden naar Excel** - Persoonlijke export functie
+  - Ambulanciers kunnen hun opgegeven beschikbaarheden exporteren
+  - Excel bestand bevat: datum, dag, type shift, tijden en opmerkingen
+  - Bestandsnaam: `Mijn_Beschikbaarheden_[Maand]_[Jaar].xlsx`
+  - Inclusief export timestamp
+  - Knop uitgeschakeld wanneer geen voorkeuren opgegeven
+
+**Technisch:**
+- Timezone correctie voor shift tijden (Europe/Brussels)
+- Verbeterde error handling voor login foutmeldingen
 
 ---
 

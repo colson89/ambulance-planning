@@ -61,15 +61,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         
         const res = await apiRequest("POST", "/api/login", loginData);
-        if (res.status === 401) {
-          throw new Error("Gebruikersnaam of wachtwoord onjuist voor dit station.");
-        }
+        
         if (!res.ok) {
-          throw new Error(`Login mislukt (${res.status})`);
+          const errorData = await res.json().catch(() => ({}));
+          
+          if (res.status === 429) {
+            throw new Error(errorData.message || "Te veel inlogpogingen. Probeer later opnieuw.");
+          }
+          if (res.status === 401) {
+            throw new Error(errorData.message || "Gebruikersnaam of wachtwoord onjuist voor dit station.");
+          }
+          throw new Error(errorData.message || `Login mislukt (${res.status})`);
         }
         return await res.json();
       } catch (error: any) {
-        // Gedetailleerde error afhandelen
         const errorMessage = error.message || "Onbekende fout tijdens inloggen";
         throw new Error(errorMessage);
       }
