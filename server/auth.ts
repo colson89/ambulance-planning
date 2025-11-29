@@ -90,11 +90,21 @@ export function setupAuth(app: Express) {
     }, async (req, username, password, done) => {
       try {
         console.log(`Login attempt for username: ${username}`);
+        const clientInfo = getClientInfo(req);
         
         // Get selected station from request body
         const selectedStationId = req.body.stationId;
         if (!selectedStationId) {
           console.log(`Login failed: No station selected`);
+          // Log failed attempt - no station
+          await logActivity({
+            userId: null,
+            stationId: null,
+            action: ActivityActions.LOGIN.FAILED,
+            category: 'LOGIN',
+            details: `Mislukte login: geen station geselecteerd (gebruiker: ${username})`,
+            ipAddress: clientInfo.ipAddress
+          }).catch(err => console.error('Error logging failed login:', err));
           return done(null, false);
         }
         
@@ -102,6 +112,15 @@ export function setupAuth(app: Express) {
         
         if (!user) {
           console.log(`Login failed: User not found for station ${selectedStationId}`);
+          // Log failed attempt - user not found
+          await logActivity({
+            userId: null,
+            stationId: selectedStationId,
+            action: ActivityActions.LOGIN.FAILED,
+            category: 'LOGIN',
+            details: `Mislukte login: gebruiker '${username}' niet gevonden voor dit station`,
+            ipAddress: clientInfo.ipAddress
+          }).catch(err => console.error('Error logging failed login:', err));
           return done(null, false);
         }
         
@@ -115,10 +134,28 @@ export function setupAuth(app: Express) {
           }
         } catch (err) {
           console.error("Error comparing passwords:", err);
+          // Log failed attempt - password comparison error
+          await logActivity({
+            userId: user.id,
+            stationId: selectedStationId,
+            action: ActivityActions.LOGIN.FAILED,
+            category: 'LOGIN',
+            details: `Mislukte login: wachtwoord verificatie fout`,
+            ipAddress: clientInfo.ipAddress
+          }).catch(err => console.error('Error logging failed login:', err));
           return done(null, false);
         }
         
         console.log(`Login failed: Incorrect password`);
+        // Log failed attempt - incorrect password
+        await logActivity({
+          userId: user.id,
+          stationId: selectedStationId,
+          action: ActivityActions.LOGIN.FAILED,
+          category: 'LOGIN',
+          details: `Mislukte login: onjuist wachtwoord`,
+          ipAddress: clientInfo.ipAddress
+        }).catch(err => console.error('Error logging failed login:', err));
         return done(null, false);
       } catch (error) {
         console.error("Login error:", error);

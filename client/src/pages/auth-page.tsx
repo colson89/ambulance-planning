@@ -14,8 +14,12 @@ const logoUrl = "/logo.png";
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
-  const [selectedStation, setSelectedStation] = useState<Station | null>(() => {
-    // Initialize station from sessionStorage on first render
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordTimer, setPasswordTimer] = useState<number | null>(null);
+  const [hasCheckedStation, setHasCheckedStation] = useState(false);
+
+  // Get station from sessionStorage on every render to ensure it's always current
+  const getSelectedStation = (): Station | null => {
     const stationData = sessionStorage.getItem("selectedStation");
     if (stationData) {
       try {
@@ -25,19 +29,19 @@ export default function AuthPage() {
       }
     }
     return null;
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [passwordTimer, setPasswordTimer] = useState<number | null>(null);
+  };
+
+  const selectedStation = getSelectedStation();
 
   useEffect(() => {
-    // Only redirect if no station is selected and we're not in an error state
-    if (!selectedStation && !loginMutation.isError) {
-      const stationData = sessionStorage.getItem("selectedStation");
-      if (!stationData) {
+    // Only check once on initial mount, and only redirect if no station exists
+    if (!hasCheckedStation) {
+      setHasCheckedStation(true);
+      if (!selectedStation) {
         setLocation("/station-select");
       }
     }
-  }, [selectedStation, setLocation, loginMutation.isError]);
+  }, [hasCheckedStation, selectedStation, setLocation]);
 
   useEffect(() => {
     if (user) {
