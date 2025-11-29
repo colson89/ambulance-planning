@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.9 - Laatst bijgewerkt: 29 november 2025, 16:20**
+**Versie 2025.10 - Laatst bijgewerkt: 29 november 2025**
 
 ---
 
@@ -37,6 +37,7 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
 - [Handleiding voor Admins](#handleiding-voor-admins)
   - [Verdi Integratie](#-verdi-integratie) ⭐ NIEUW
   - [Reportage Personeelsdienst](#-reportage-personeelsdienst) ⭐ NIEUW
+  - [Activiteitenlog](#-activiteitenlog) ⭐ NIEUW
 - [Handleiding voor Supervisors](#handleiding-voor-supervisors)
 - [Handleiding voor IT Beheerders](#handleiding-voor-it-beheerders)
 - [Veelgestelde Vragen](#veelgestelde-vragen)
@@ -2195,6 +2196,73 @@ A: Nee, het formaat is standaard. Het bevat alle relevante shift informatie per 
 
 ---
 
+### 📋 Activiteitenlog
+
+⭐ **NIEUW - Security & Audit Trail**
+
+De Activiteitenlog biedt een uitgebreid overzicht van alle belangrijke acties in het systeem. Dit is essentieel voor security monitoring en het traceren van wijzigingen.
+
+#### 📋 Wat wordt gelogd?
+
+**Categorieën:**
+- **LOGIN** - Succesvolle en mislukte inlogpogingen
+- **LOGOUT** - Wanneer gebruikers uitloggen
+- **PREFERENCE** - Wijzigingen in beschikbaarheidsvoorkeuren
+- **SCHEDULE** - Planning generatie en wijzigingen
+- **USER_MANAGEMENT** - Aanmaken, wijzigen en verwijderen van gebruikers
+- **OVERTIME** - Registratie van overuren
+
+**Details per Log Entry:**
+- Datum en tijdstip
+- Gebruiker die de actie uitvoerde
+- Type actie (bijv. "Succesvol ingelogd")
+- Beschrijving met details
+- IP-adres van de gebruiker
+- Station van de gebruiker
+
+#### 🔧 Activiteitenlog Gebruiken
+
+**Toegang:**
+- Navigeer naar Dashboard → Menu → Activiteitenlog
+- Of direct via `/activity-logs` in de URL
+
+**Filters:**
+1. **Datumbereik** - Van/tot datum selecteren
+2. **Categorie** - Filter op type actie (alle, LOGIN, PREFERENCE, etc.)
+3. **Gebruiker** - Zoek naar specifieke gebruiker
+4. **Station** - Filter op station (alleen supervisors)
+
+**Excel Export:**
+- Klik "Export naar Excel" om gefilterde logs te downloaden
+- Bestandsnaam: `activiteitenlog_[van-datum]_[tot-datum].xlsx`
+
+#### 👥 Toegangsrechten
+
+**Admins:**
+- Zien alleen activiteiten van hun eigen station
+- Kunnen logs filteren en exporteren
+
+**Supervisors:**
+- Zien activiteiten van alle stations
+- Kunnen filteren op elk station
+- Volledige export mogelijkheden
+
+#### ❓ Veelgestelde Vragen Activiteitenlog
+
+**Q: Hoe lang worden logs bewaard?**
+A: Logs worden permanent opgeslagen voor volledige audittrail.
+
+**Q: Kan ik zien wie mijn wachtwoord heeft gewijzigd?**
+A: Ja, zoek op USER_MANAGEMENT categorie en filter op uw gebruikersnaam.
+
+**Q: Worden mislukte inlogpogingen ook gelogd?**
+A: De rate limiter houdt mislukte pogingen bij. Succesvolle logins worden gelogd in de activiteitenlog.
+
+**Q: Kan ik logs verwijderen?**
+A: Nee, logs kunnen niet worden verwijderd om de integriteit van de audittrail te waarborgen.
+
+---
+
 ## 👑 Handleiding voor Supervisors
 
 **Supervisors hebben alle Admin rechten PLUS cross-station functionaliteit**
@@ -2846,6 +2914,20 @@ Een hard refresh forceert de browser om de nieuwste versie te downloaden.
 
 ---
 
+### ⭐ Versie 2025.10 - 29 November 2025
+
+**Audit & Security:**
+- 📋 **Activiteitenlog** - Volledig audit trail systeem
+  - Nieuwe centrale pagina voor het bekijken van alle systeemactiviteiten
+  - Logging van logins, uitloggen, voorkeurwijzigingen, planning generatie, gebruikersbeheer en overuren
+  - Filtermogelijkheden op datum, categorie, gebruiker en station
+  - IP-adres tracking voor security monitoring
+  - Excel export van gefilterde logs
+  - Toegangscontrole: supervisors zien alle stations, admins alleen hun eigen station
+  - Navigatie link toegevoegd in dashboard menu
+
+---
+
 ### ⭐ Versie 2025.9 - 29 November 2025
 
 **Beveiliging:**
@@ -2856,6 +2938,15 @@ Een hard refresh forceert de browser om de nieuwste versie te downloaden.
   - Automatische reset na succesvolle login
   - Logging van alle geblokkeerde pogingen voor security monitoring
   - Beschermt tegen wachtwoord-raden aanvallen via internet
+
+- 📋 **Activiteitenlog** - Uitgebreid audit trail voor beheerders
+  - Centrale pagina voor het bekijken van alle systeemactiviteiten
+  - Filtermogelijkheden op datum, categorie, gebruiker en station
+  - Gelogde acties: logins, uitloggen, voorkeur wijzigingen, planning generatie, gebruikersbeheer, overuren
+  - IP-adres tracking voor security monitoring
+  - Excel export van gefilterde logs
+  - Toegang alleen voor admins en supervisors
+  - Supervisors zien alle stations, admins zien alleen hun eigen station
 
 - 📥 **Exporteer Beschikbaarheden naar Excel** - Persoonlijke export functie
   - Ambulanciers kunnen hun opgegeven beschikbaarheden exporteren

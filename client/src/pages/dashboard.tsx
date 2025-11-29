@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer, FileText } from "lucide-react";
 import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { OvertimeDialog } from "@/components/overtime-dialog";
 import { Button } from "@/components/ui/button";
@@ -569,6 +569,14 @@ export default function Dashboard() {
                   >
                     <LinkIcon className="h-4 w-4 mr-2" />
                     Integraties
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/activity-logs"); setMobileMenuOpen(false); }}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Activiteitenlog
                   </Button>
                 </>
               )}

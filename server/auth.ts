@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { loginRateLimiter, getClientIp } from "./rate-limiter";
+import { logActivity, getClientInfo, ActivityActions } from "./activity-logger";
 
 declare global {
   namespace Express {
@@ -243,20 +244,45 @@ export function setupAuth(app: Express) {
         });
       }
 
-      req.login(user, (loginErr) => {
+      req.login(user, async (loginErr) => {
         if (loginErr) {
           return next(loginErr);
         }
         
         loginRateLimiter.recordSuccessfulLogin(ip, username, stationId);
+        
+        await logActivity({
+          userId: user.id,
+          stationId: user.stationId,
+          action: ActivityActions.LOGIN.SUCCESSFUL,
+          category: 'LOGIN',
+          details: `Succesvol ingelogd via station ${stationId}`,
+          ipAddress: ip
+        });
+        
         return res.status(200).json(user);
       });
     })(req, res, next);
   });
 
-  app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
+  app.post("/api/logout", async (req, res, next) => {
+    const user = req.user;
+    const ip = getClientIp(req);
+    
+    req.logout(async (err) => {
       if (err) return next(err);
+      
+      if (user) {
+        await logActivity({
+          userId: user.id,
+          stationId: user.stationId,
+          action: ActivityActions.LOGOUT,
+          category: 'LOGOUT',
+          details: 'Gebruiker uitgelogd',
+          ipAddress: ip
+        });
+      }
+      
       res.sendStatus(200);
     });
   });

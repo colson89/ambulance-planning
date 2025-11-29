@@ -13,6 +13,7 @@ import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import multer from 'multer';
 import { sendPlanningPublishedNotification, sendShiftChangedNotification } from "./push-notifications";
+import { logActivity, getActivityLogs, getActivityLogsCount, getClientInfo, ActivityActions, type ActivityCategory } from "./activity-logger";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -304,6 +305,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const user = await storage.createUser(userData);
       
+      // Log activity
+      await logActivity({
+        userId: req.user!.id,
+        stationId: req.user!.stationId,
+        action: ActivityActions.USER_MANAGEMENT.CREATED,
+        category: 'USER_MANAGEMENT',
+        details: `Nieuwe gebruiker aangemaakt: ${user.firstName} ${user.lastName} (${user.username}) - rol: ${user.role}`,
+        targetUserId: user.id,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
       // SECURITY FIX: Remove password from response
       const { password, ...userWithoutPassword } = user;
       console.log("Created user (password removed):", JSON.stringify(userWithoutPassword, null, 2));
@@ -368,6 +380,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = await storage.updateUser(parseInt(req.params.id), updateData);
+      
+      // Log activity
+      await logActivity({
+        userId: req.user!.id,
+        stationId: req.user!.stationId,
+        action: ActivityActions.USER_MANAGEMENT.UPDATED,
+        category: 'USER_MANAGEMENT',
+        details: `Gebruiker bijgewerkt: ${user.firstName} ${user.lastName} (${user.username})`,
+        targetUserId: parseInt(req.params.id),
+        ipAddress: getClientInfo(req).ipAddress
+      });
       
       // SECURITY FIX: Remove password from response
       const { password, ...userWithoutPassword } = user;
@@ -482,6 +505,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Log activity before deletion (capture user details)
+      await logActivity({
+        userId: req.user!.id,
+        stationId: req.user!.stationId,
+        action: ActivityActions.USER_MANAGEMENT.DELETED,
+        category: 'USER_MANAGEMENT',
+        details: `Gebruiker verwijderd: ${targetUser.firstName} ${targetUser.lastName} (${targetUser.username})`,
+        targetUserId: targetUserId,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
       await storage.deleteUser(targetUserId);
       res.sendStatus(200);
     } catch (error) {
@@ -1220,6 +1254,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Auto-sync to all assigned stations
       await storage.syncUserPreferencesToAllStations(req.user!.id, preferenceData.month, preferenceData.year);
       console.log('Preferences synced to all stations');
+
+      // Log activity
+      const dateStr = format(preferenceData.date, 'dd-MM-yyyy');
+      const typeStr = preferenceData.type === 'available' ? 'beschikbaar' : 
+                      preferenceData.type === 'unavailable' ? 'niet beschikbaar' : 
+                      preferenceData.type === 'partial' ? 'deels beschikbaar' : preferenceData.type;
+      await logActivity({
+        userId: req.user!.id,
+        stationId: req.user!.stationId,
+        action: ActivityActions.PREFERENCE.SAVED,
+        category: 'PREFERENCE',
+        details: `Voorkeur opgeslagen voor ${dateStr}: ${typeStr}`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
 
       res.status(201).json(preference);
     } catch (error) {
@@ -2150,6 +2198,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const timestamp = now.toISOString();
       const key = `last_schedule_generated_${month}_${year}`;
       await storage.setSystemSetting(key, timestamp);
+      
+      // Log activity
+      await logActivity({
+        userId: req.user!.id,
+        stationId: userStationId,
+        action: ActivityActions.SCHEDULE.GENERATED,
+        category: 'SCHEDULE',
+        details: `Planning gegenereerd voor ${month}/${year} - ${Array.isArray(generatedShifts) ? generatedShifts.length : 0} shifts aangemaakt`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
       
       // Send push notification to all users with subscriptions enabled
       console.log(`📱 Sending planning published notifications for ${month}/${year} at station ${userStationId}`);
@@ -5132,6 +5190,16 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         year: shiftYear
       });
       
+      // Log activity
+      await logActivity({
+        userId: req.user.id,
+        stationId: shift.stationId,
+        action: ActivityActions.OVERTIME.CREATED,
+        category: 'OVERTIME',
+        details: `Overuren geregistreerd: ${durationMinutes} minuten - ${reason}`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
       res.status(201).json(overtime);
     } catch (error: any) {
       console.error('Error creating overtime:', error);
@@ -5207,6 +5275,177 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     } catch (error: any) {
       console.error('Error deleting overtime:', error);
       res.status(500).json({ message: "Fout bij verwijderen overuren", error: error.message });
+    }
+  });
+
+  // ==================== ACTIVITY LOGS ====================
+
+  // Get activity logs (admin/supervisor only)
+  app.get("/api/activity-logs", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    
+    const user = req.user as User;
+    if (user.role !== 'admin' && user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang. Alleen admins en supervisors kunnen activiteitenlogs bekijken." });
+    }
+
+    try {
+      const { stationId, userId, category, startDate, endDate, limit, offset } = req.query;
+      
+      const targetStationId = user.role === 'supervisor' 
+        ? (stationId ? parseInt(stationId as string) : undefined)
+        : user.stationId;
+
+      const logs = await getActivityLogs({
+        stationId: targetStationId,
+        userId: userId ? parseInt(userId as string) : undefined,
+        category: category as ActivityCategory | undefined,
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+        limit: limit ? parseInt(limit as string) : 100,
+        offset: offset ? parseInt(offset as string) : 0,
+      });
+
+      const count = await getActivityLogsCount({
+        stationId: targetStationId,
+        userId: userId ? parseInt(userId as string) : undefined,
+        category: category as ActivityCategory | undefined,
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+      });
+
+      const usersMap = new Map<number, { firstName: string; lastName: string; username: string }>();
+      const userIds = Array.from(new Set(logs.flatMap(l => [l.userId, l.targetUserId].filter(Boolean) as number[])));
+      
+      if (userIds.length > 0) {
+        const usersList = await db.select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          username: users.username
+        }).from(users).where(inArray(users.id, userIds));
+        
+        for (const u of usersList) {
+          usersMap.set(u.id, { firstName: u.firstName, lastName: u.lastName, username: u.username });
+        }
+      }
+
+      const enrichedLogs = logs.map(log => ({
+        ...log,
+        user: log.userId ? usersMap.get(log.userId) : null,
+        targetUser: log.targetUserId ? usersMap.get(log.targetUserId) : null,
+      }));
+
+      res.json({
+        logs: enrichedLogs,
+        total: count,
+        limit: limit ? parseInt(limit as string) : 100,
+        offset: offset ? parseInt(offset as string) : 0,
+      });
+    } catch (error: any) {
+      console.error('Error getting activity logs:', error);
+      res.status(500).json({ message: "Fout bij ophalen activiteitenlogs", error: error.message });
+    }
+  });
+
+  // Export activity logs to Excel (admin/supervisor only)
+  app.get("/api/activity-logs/export", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
+    
+    const user = req.user as User;
+    if (user.role !== 'admin' && user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+
+    try {
+      const { stationId, userId, category, startDate, endDate } = req.query;
+      
+      const targetStationId = user.role === 'supervisor' 
+        ? (stationId ? parseInt(stationId as string) : undefined)
+        : user.stationId;
+
+      const logs = await getActivityLogs({
+        stationId: targetStationId,
+        userId: userId ? parseInt(userId as string) : undefined,
+        category: category as ActivityCategory | undefined,
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+        limit: 10000,
+        offset: 0,
+      });
+
+      const userIds = Array.from(new Set(logs.flatMap(l => [l.userId, l.targetUserId].filter(Boolean) as number[])));
+      const usersMap = new Map<number, { firstName: string; lastName: string; username: string }>();
+      
+      if (userIds.length > 0) {
+        const usersList = await db.select({
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          username: users.username
+        }).from(users).where(inArray(users.id, userIds));
+        
+        for (const u of usersList) {
+          usersMap.set(u.id, { firstName: u.firstName, lastName: u.lastName, username: u.username });
+        }
+      }
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Activiteitenlog');
+
+      worksheet.columns = [
+        { header: 'Datum/Tijd', key: 'createdAt', width: 20 },
+        { header: 'Gebruiker', key: 'user', width: 25 },
+        { header: 'Categorie', key: 'category', width: 15 },
+        { header: 'Actie', key: 'action', width: 30 },
+        { header: 'Details', key: 'details', width: 40 },
+        { header: 'Doelgebruiker', key: 'targetUser', width: 25 },
+        { header: 'IP-adres', key: 'ipAddress', width: 15 },
+      ];
+
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = { bold: true };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1a1a2e' }
+      };
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+      const categoryLabels: Record<string, string> = {
+        auth: 'Authenticatie',
+        preferences: 'Voorkeuren',
+        schedule: 'Planning',
+        users: 'Gebruikers',
+        settings: 'Instellingen',
+        verdi: 'Verdi',
+        overtime: 'Overuren',
+        other: 'Overig',
+      };
+
+      for (const log of logs) {
+        const userData = log.userId ? usersMap.get(log.userId) : null;
+        const targetUserData = log.targetUserId ? usersMap.get(log.targetUserId) : null;
+
+        worksheet.addRow({
+          createdAt: log.createdAt ? format(toZonedTime(log.createdAt, 'Europe/Brussels'), 'dd-MM-yyyy HH:mm:ss') : '',
+          user: userData ? `${userData.firstName} ${userData.lastName}` : 'Systeem',
+          category: categoryLabels[log.category] || log.category,
+          action: log.action,
+          details: log.details || '',
+          targetUser: targetUserData ? `${targetUserData.firstName} ${targetUserData.lastName}` : '',
+          ipAddress: log.ipAddress || '',
+        });
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=Activiteitenlog_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+      res.send(buffer);
+    } catch (error: any) {
+      console.error('Error exporting activity logs:', error);
+      res.status(500).json({ message: "Fout bij exporteren activiteitenlogs", error: error.message });
     }
   });
 

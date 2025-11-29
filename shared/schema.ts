@@ -445,3 +445,27 @@ export const insertOvertimeSchema = createInsertSchema(overtime, {
 
 export type Overtime = typeof overtime.$inferSelect;
 export type InsertOvertime = z.infer<typeof insertOvertimeSchema>;
+
+// Activiteitenlogs voor audit trail
+export const activityLogs = pgTable("activity_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  stationId: integer("station_id").references(() => stations.id),
+  action: text("action").notNull(),
+  category: text("category", { 
+    enum: ["auth", "preferences", "schedule", "users", "settings", "verdi", "overtime", "other"] 
+  }).notNull(),
+  details: text("details"),
+  targetUserId: integer("target_user_id").references(() => users.id),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
+  id: true,
+  createdAt: true
+});
+
+export type ActivityLog = typeof activityLogs.$inferSelect;
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
