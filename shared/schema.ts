@@ -459,6 +459,9 @@ export const activityLogs = pgTable("activity_logs", {
   targetUserId: integer("target_user_id").references(() => users.id),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
+  deviceType: text("device_type"),
+  deviceOS: text("device_os"),
+  location: text("location"),
   createdAt: timestamp("created_at").defaultNow()
 });
 
