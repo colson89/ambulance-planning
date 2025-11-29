@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.7 - Laatst bijgewerkt: 26 november 2025, 17:30**
+**Versie 2025.8 - Laatst bijgewerkt: 29 november 2025, 12:30**
 
 ---
 
@@ -27,6 +27,7 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
 - [Responsieve Weergave](#-responsieve-weergave) ⭐ NIEUW
 - [Handleiding voor Ambulanciers](#handleiding-voor-ambulanciers)
   - [Voorkeuren Opgeven](#-voorkeuren-opgeven)
+  - [Exporteer Beschikbaarheden naar Excel](#-exporteer-beschikbaarheden-naar-excel) ⭐ NIEUW
   - [Planning Bekijken](#-uw-planning-bekijken)
   - [Profiel Beheren](#-profiel-beheren)
   - [Kalender Synchronisatie](#-kalender-synchronisatie) ⭐ NIEUW
@@ -344,6 +345,35 @@ Als u bij **1 station** werkt:
 - **Let op deadlines** - Na de deadline kunt u geen voorkeuren meer wijzigen
 - **Multi-station**: Geef altijd beide shifts op (dag + nacht) voor optimale planning bij alle stations
 - **Split shifts** - Halve shifts zijn handig als u beperkt beschikbaar bent. Het programma geeft wel de voorkeur aan personen die een volledige dag kunnen.
+
+### 📥 Exporteer Beschikbaarheden naar Excel ⭐ NIEUW
+
+U kunt uw opgegeven beschikbaarheden exporteren naar een Excel bestand voor uw eigen administratie.
+
+**Hoe exporteren:**
+
+1. Ga naar **Voorkeuren Opgeven** (Shift Planner pagina)
+2. Selecteer de **maand** waarvoor u wilt exporteren
+3. Scroll naar beneden naar de sectie **"Exporteer Beschikbaarheden"**
+4. Klik op **"Exporteer naar Excel"**
+
+**Excel Inhoud:**
+
+Het Excel bestand bevat:
+- **Datum**: De datum van elke opgegeven beschikbaarheid
+- **Dag**: De weekdag (Maandag, Dinsdag, etc.)
+- **Type Shift**: Dag of Nacht (met eventueel Ochtend/Middag bij halve shifts)
+- **Tijd**: De exacte tijden (bijv. 07:00 - 19:00)
+- **Opmerkingen**: Eventuele notities die u heeft toegevoegd
+- **Totaal**: Aantal opgegeven beschikbaarheden
+- **Timestamp**: Datum en tijd van de export
+
+**Bestandsnaam:**
+`Mijn_Beschikbaarheden_[Maand]_[Jaar].xlsx`
+
+Bijvoorbeeld: `Mijn_Beschikbaarheden_Januari_2026.xlsx`
+
+> 💡 **Tip**: De knop is uitgeschakeld als u nog geen beschikbaarheden heeft opgegeven voor de geselecteerde maand.
 
 ### 📋 Uw Planning Bekijken
 
