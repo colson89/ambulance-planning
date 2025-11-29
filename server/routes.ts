@@ -1908,6 +1908,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const summaryRow = worksheet.addRow([`Totaal: ${sortedPrefs.length} beschikbaarheden`]);
       summaryRow.font = { bold: true, italic: true };
 
+      // Add timestamp row
+      const now = new Date();
+      const timestampRow = worksheet.addRow([`Geëxporteerd op: ${format(now, 'dd-MM-yyyy HH:mm')}`]);
+      timestampRow.font = { italic: true, color: { argb: 'FF666666' } };
+
       // Generate buffer
       const buffer = await workbook.xlsx.writeBuffer();
 
