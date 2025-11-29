@@ -6,6 +6,7 @@ import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shift
 import { z } from "zod";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
+import { toZonedTime, format as formatTz } from 'date-fns-tz';
 import { db } from "./db";
 import { and, gte, lte, asc, ne, eq, inArray } from "drizzle-orm";
 import * as XLSX from 'xlsx';
@@ -1868,13 +1869,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           typeLabel += ` (${pref.splitType === 'morning' ? 'Ochtend' : 'Middag'})`;
         }
 
-        // Format time - use UTC hours to avoid timezone shift
+        // Format time - convert UTC to Belgian timezone (Europe/Brussels)
         let timeLabel = pref.type === 'day' ? '07:00 - 19:00' : '19:00 - 07:00';
         if (pref.startTime && pref.endTime) {
-          const startDate = new Date(pref.startTime);
-          const endDate = new Date(pref.endTime);
-          const startTime = `${String(startDate.getUTCHours()).padStart(2, '0')}:${String(startDate.getUTCMinutes()).padStart(2, '0')}`;
-          const endTime = `${String(endDate.getUTCHours()).padStart(2, '0')}:${String(endDate.getUTCMinutes()).padStart(2, '0')}`;
+          const belgianTimezone = 'Europe/Brussels';
+          const startZoned = toZonedTime(new Date(pref.startTime), belgianTimezone);
+          const endZoned = toZonedTime(new Date(pref.endTime), belgianTimezone);
+          const startTime = formatTz(startZoned, 'HH:mm', { timeZone: belgianTimezone });
+          const endTime = formatTz(endZoned, 'HH:mm', { timeZone: belgianTimezone });
           timeLabel = `${startTime} - ${endTime}`;
         }
 
