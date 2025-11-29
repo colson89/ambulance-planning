@@ -95,6 +95,8 @@ export default function ActivityLogsPage() {
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [selectedStationId, setSelectedStationId] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(0);
+  const [userSearchText, setUserSearchText] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const limit = 50;
   
   const isSupervisor = user?.role === 'supervisor';
@@ -301,24 +303,99 @@ export default function ActivityLogsPage() {
                 </Select>
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label className="flex items-center gap-1">
                   <User className="h-4 w-4" />
                   Gebruiker
                 </Label>
-                <Select value={selectedUserId} onValueChange={(v) => { setSelectedUserId(v); setCurrentPage(0); }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Alle gebruikers" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle gebruikers</SelectItem>
-                    {users.map((u) => (
-                      <SelectItem key={u.id} value={u.id.toString()}>
-                        {u.firstName} {u.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="relative">
+                  <div className="flex gap-1">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Zoek gebruiker..."
+                        value={userSearchText}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setUserSearchText(value);
+                          setShowUserDropdown(true);
+                          if (value.trim() === "") {
+                            setSelectedUserId("all");
+                            setCurrentPage(0);
+                          }
+                        }}
+                        onFocus={() => setShowUserDropdown(true)}
+                        className="pl-8"
+                      />
+                    </div>
+                    {(selectedUserId !== "all" || userSearchText.trim() !== "") && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-10 w-10 shrink-0"
+                        onClick={() => {
+                          setUserSearchText("");
+                          setSelectedUserId("all");
+                          setShowUserDropdown(false);
+                          setCurrentPage(0);
+                        }}
+                      >
+                        <span className="text-lg">&times;</span>
+                      </Button>
+                    )}
+                  </div>
+                  {showUserDropdown && userSearchText.trim().length > 0 && (() => {
+                    const normalize = (str: string) => str.toLowerCase().trim().replace(/\s+/g, ' ');
+                    const searchTerms = normalize(userSearchText).split(' ').filter(t => t.length > 0);
+                    
+                    const filteredUsers = users.filter(u => {
+                      const fullName = normalize(`${u.firstName} ${u.lastName}`);
+                      const reverseName = normalize(`${u.lastName} ${u.firstName}`);
+                      const username = normalize(u.username);
+                      
+                      return searchTerms.every(term => 
+                        fullName.includes(term) || 
+                        reverseName.includes(term) || 
+                        username.includes(term)
+                      );
+                    });
+                    
+                    return (
+                      <div 
+                        className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto"
+                        onMouseDown={(e) => e.preventDefault()}
+                      >
+                        {filteredUsers.slice(0, 20).map((u) => (
+                          <div
+                            key={u.id}
+                            className="px-3 py-2 hover:bg-accent cursor-pointer text-sm"
+                            onClick={() => {
+                              setSelectedUserId(u.id.toString());
+                              setUserSearchText(`${u.firstName} ${u.lastName}`);
+                              setShowUserDropdown(false);
+                              setCurrentPage(0);
+                            }}
+                          >
+                            {u.firstName} {u.lastName}
+                            <span className="text-muted-foreground ml-2 text-xs">({u.username})</span>
+                          </div>
+                        ))}
+                        {filteredUsers.length === 0 && (
+                          <div className="px-3 py-2 text-sm text-muted-foreground">
+                            Geen gebruikers gevonden
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+                {showUserDropdown && (
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setShowUserDropdown(false)}
+                  />
+                )}
               </div>
               
               {isSupervisor && (
