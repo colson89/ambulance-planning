@@ -5280,13 +5280,13 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
 
   // ==================== ACTIVITY LOGS ====================
 
-  // Get activity logs (admin/supervisor only)
+  // Get activity logs (supervisor only)
   app.get("/api/activity-logs", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
     
     const user = req.user as User;
-    if (user.role !== 'admin' && user.role !== 'supervisor') {
-      return res.status(403).json({ message: "Geen toegang. Alleen admins en supervisors kunnen activiteitenlogs bekijken." });
+    if (user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang. Alleen supervisors kunnen activiteitenlogs bekijken." });
     }
 
     try {
@@ -5348,12 +5348,12 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
-  // Export activity logs to Excel (admin/supervisor only)
+  // Export activity logs to Excel (supervisor only)
   app.get("/api/activity-logs/export", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).json({ message: "Niet ingelogd" });
     
     const user = req.user as User;
-    if (user.role !== 'admin' && user.role !== 'supervisor') {
+    if (user.role !== 'supervisor') {
       return res.status(403).json({ message: "Geen toegang" });
     }
 

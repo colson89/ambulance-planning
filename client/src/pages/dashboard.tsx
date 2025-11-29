@@ -497,6 +497,15 @@ export default function Dashboard() {
                 </Button>
               </>
             )}
+            {user?.role === 'supervisor' && (
+              <Button 
+                variant="outline"
+                onClick={() => setLocation("/activity-logs")}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Activiteitenlog
+              </Button>
+            )}
             <Button 
               variant="outline"
               onClick={() => setLocation("/profile")}
@@ -570,15 +579,17 @@ export default function Dashboard() {
                     <LinkIcon className="h-4 w-4 mr-2" />
                     Integraties
                   </Button>
-                  <Button 
-                    variant="outline"
-                    className="justify-start h-12"
-                    onClick={() => { setLocation("/activity-logs"); setMobileMenuOpen(false); }}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Activiteitenlog
-                  </Button>
                 </>
+              )}
+              {user?.role === 'supervisor' && (
+                <Button 
+                  variant="outline"
+                  className="justify-start h-12"
+                  onClick={() => { setLocation("/activity-logs"); setMobileMenuOpen(false); }}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Activiteitenlog
+                </Button>
               )}
               <Button 
                 variant="outline"

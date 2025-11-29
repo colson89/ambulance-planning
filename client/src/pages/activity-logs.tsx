@@ -98,16 +98,15 @@ export default function ActivityLogsPage() {
   const limit = 50;
   
   const isSupervisor = user?.role === 'supervisor';
-  const isAdmin = user?.role === 'admin';
 
-  if (!isAdmin && !isSupervisor) {
+  if (!isSupervisor) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Geen Toegang</CardTitle>
             <CardDescription>
-              U heeft geen toegang tot deze pagina. Alleen admins en supervisors kunnen activiteitenlogs bekijken.
+              U heeft geen toegang tot deze pagina. Alleen supervisors kunnen activiteitenlogs bekijken.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -2238,14 +2238,12 @@ De Activiteitenlog biedt een uitgebreid overzicht van alle belangrijke acties in
 
 #### 👥 Toegangsrechten
 
-**Admins:**
-- Zien alleen activiteiten van hun eigen station
-- Kunnen logs filteren en exporteren
+**⚠️ Let op:** De Activiteitenlog is **alleen beschikbaar voor supervisors**.
 
 **Supervisors:**
 - Zien activiteiten van alle stations
-- Kunnen filteren op elk station
-- Volledige export mogelijkheden
+- Kunnen filteren op station, gebruiker, categorie en datumbereik
+- Volledige export mogelijkheden naar Excel
 
 #### ❓ Veelgestelde Vragen Activiteitenlog
 
@@ -2939,14 +2937,13 @@ Een hard refresh forceert de browser om de nieuwste versie te downloaden.
   - Logging van alle geblokkeerde pogingen voor security monitoring
   - Beschermt tegen wachtwoord-raden aanvallen via internet
 
-- 📋 **Activiteitenlog** - Uitgebreid audit trail voor beheerders
+- 📋 **Activiteitenlog** - Uitgebreid audit trail voor supervisors
   - Centrale pagina voor het bekijken van alle systeemactiviteiten
   - Filtermogelijkheden op datum, categorie, gebruiker en station
   - Gelogde acties: logins, uitloggen, voorkeur wijzigingen, planning generatie, gebruikersbeheer, overuren
   - IP-adres tracking voor security monitoring
   - Excel export van gefilterde logs
-  - Toegang alleen voor admins en supervisors
-  - Supervisors zien alle stations, admins zien alleen hun eigen station
+  - Toegang alleen voor supervisors (volledige inzage over alle stations)
 
 - 📥 **Exporteer Beschikbaarheden naar Excel** - Persoonlijke export functie
   - Ambulanciers kunnen hun opgegeven beschikbaarheden exporteren
