@@ -452,9 +452,7 @@ export const activityLogs = pgTable("activity_logs", {
   userId: integer("user_id").references(() => users.id),
   stationId: integer("station_id").references(() => stations.id),
   action: text("action").notNull(),
-  category: text("category", { 
-    enum: ["auth", "preferences", "schedule", "users", "settings", "verdi", "overtime", "other"] 
-  }).notNull(),
+  category: text("category").notNull(),
   details: text("details"),
   targetUserId: integer("target_user_id").references(() => users.id),
   ipAddress: text("ip_address"),

@@ -37,6 +37,9 @@ interface ActivityLog {
   targetUserId: number | null;
   ipAddress: string | null;
   userAgent: string | null;
+  deviceType: string | null;
+  deviceOS: string | null;
+  location: string | null;
   createdAt: string;
   user: { firstName: string; lastName: string; username: string } | null;
   targetUser: { firstName: string; lastName: string; username: string } | null;
@@ -64,6 +67,17 @@ interface Station {
 }
 
 const categoryLabels: Record<string, string> = {
+  LOGIN: "Inloggen",
+  LOGOUT: "Uitloggen",
+  PREFERENCE: "Voorkeuren",
+  SCHEDULE: "Planning",
+  USER_MANAGEMENT: "Gebruikersbeheer",
+  SETTINGS: "Instellingen",
+  VERDI: "Verdi",
+  OVERTIME: "Overuren",
+  PROFILE: "Profiel",
+  OTHER: "Overig",
+  // Legacy lowercase categories
   auth: "Authenticatie",
   preferences: "Voorkeuren",
   schedule: "Planning",
@@ -75,6 +89,17 @@ const categoryLabels: Record<string, string> = {
 };
 
 const categoryColors: Record<string, string> = {
+  LOGIN: "bg-blue-100 text-blue-800",
+  LOGOUT: "bg-blue-100 text-blue-800",
+  PREFERENCE: "bg-green-100 text-green-800",
+  SCHEDULE: "bg-purple-100 text-purple-800",
+  USER_MANAGEMENT: "bg-orange-100 text-orange-800",
+  SETTINGS: "bg-gray-100 text-gray-800",
+  VERDI: "bg-cyan-100 text-cyan-800",
+  OVERTIME: "bg-yellow-100 text-yellow-800",
+  PROFILE: "bg-pink-100 text-pink-800",
+  OTHER: "bg-slate-100 text-slate-800",
+  // Legacy lowercase categories
   auth: "bg-blue-100 text-blue-800",
   preferences: "bg-green-100 text-green-800",
   schedule: "bg-purple-100 text-purple-800",
@@ -476,6 +501,8 @@ export default function ActivityLogsPage() {
                       <TableHead>Actie</TableHead>
                       <TableHead>Details</TableHead>
                       <TableHead>Doelgebruiker</TableHead>
+                      <TableHead>Toestel</TableHead>
+                      <TableHead>Locatie</TableHead>
                       <TableHead className="w-[120px]">IP-adres</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -498,6 +525,14 @@ export default function ActivityLogsPage() {
                           {log.details || "-"}
                         </TableCell>
                         <TableCell>{getTargetUserName(log)}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {log.deviceType && log.deviceOS 
+                            ? `${log.deviceType} (${log.deviceOS})`
+                            : log.deviceType || log.deviceOS || "-"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {log.location || "-"}
+                        </TableCell>
                         <TableCell className="text-sm text-muted-foreground font-mono">
                           {log.ipAddress || "-"}
                         </TableCell>

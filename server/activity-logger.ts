@@ -20,10 +20,167 @@ interface LogActivityParams {
   targetUserId?: number | null;
   ipAddress?: string | null;
   userAgent?: string | null;
+  deviceType?: string | null;
+  deviceOS?: string | null;
+  location?: string | null;
+}
+
+interface DeviceInfo {
+  deviceType: string;
+  deviceOS: string;
+}
+
+function parseUserAgent(userAgent: string): DeviceInfo {
+  let deviceType = 'Onbekend';
+  let deviceOS = 'Onbekend';
+
+  if (!userAgent || userAgent === 'unknown') {
+    return { deviceType, deviceOS };
+  }
+
+  const ua = userAgent.toLowerCase();
+
+  // Detect specific mobile devices first
+  if (/pixel\s*(\d+\s*\w*)/i.test(userAgent)) {
+    const match = userAgent.match(/pixel\s*(\d+\s*\w*)/i);
+    deviceType = `Google Pixel ${match?.[1] || ''}`.trim();
+  } else if (/sm-[a-z]\d+/i.test(userAgent)) {
+    // Samsung Galaxy devices
+    const match = userAgent.match(/sm-([a-z]\d+)/i);
+    deviceType = `Samsung Galaxy ${match?.[1]?.toUpperCase() || ''}`.trim();
+  } else if (/samsung/i.test(userAgent)) {
+    deviceType = 'Samsung';
+  } else if (/iphone/i.test(userAgent)) {
+    deviceType = 'iPhone';
+  } else if (/ipad/i.test(userAgent)) {
+    deviceType = 'iPad';
+  } else if (/huawei/i.test(userAgent)) {
+    deviceType = 'Huawei';
+  } else if (/xiaomi|redmi|poco/i.test(userAgent)) {
+    deviceType = 'Xiaomi';
+  } else if (/oneplus/i.test(userAgent)) {
+    deviceType = 'OnePlus';
+  } else if (/oppo/i.test(userAgent)) {
+    deviceType = 'Oppo';
+  } else if (/vivo/i.test(userAgent)) {
+    deviceType = 'Vivo';
+  } else if (/nokia/i.test(userAgent)) {
+    deviceType = 'Nokia';
+  } else if (/motorola|moto\s/i.test(userAgent)) {
+    deviceType = 'Motorola';
+  } else if (ua.includes('android') && ua.includes('mobile')) {
+    deviceType = 'Android Telefoon';
+  } else if (ua.includes('android') && ua.includes('tablet')) {
+    deviceType = 'Android Tablet';
+  } else if (ua.includes('android')) {
+    deviceType = 'Android Toestel';
+  } else if (ua.includes('macintosh') || ua.includes('mac os')) {
+    deviceType = 'Mac';
+  } else if (ua.includes('windows')) {
+    deviceType = 'Windows PC';
+  } else if (ua.includes('linux')) {
+    deviceType = 'Linux PC';
+  } else if (ua.includes('cros')) {
+    deviceType = 'Chromebook';
+  }
+
+  // Detect OS
+  if (/android\s*([\d.]+)?/i.test(userAgent)) {
+    const match = userAgent.match(/android\s*([\d.]+)?/i);
+    deviceOS = `Android ${match?.[1] || ''}`.trim();
+  } else if (/iphone os\s*([\d_]+)/i.test(userAgent) || /cpu os\s*([\d_]+)/i.test(userAgent)) {
+    const match = userAgent.match(/(?:iphone os|cpu os)\s*([\d_]+)/i);
+    const version = match?.[1]?.replace(/_/g, '.') || '';
+    deviceOS = `iOS ${version}`.trim();
+  } else if (/mac os x\s*([\d_]+)?/i.test(userAgent)) {
+    const match = userAgent.match(/mac os x\s*([\d_]+)?/i);
+    const version = match?.[1]?.replace(/_/g, '.') || '';
+    deviceOS = `macOS ${version}`.trim();
+  } else if (/windows nt\s*([\d.]+)?/i.test(userAgent)) {
+    const match = userAgent.match(/windows nt\s*([\d.]+)?/i);
+    const ntVersion = match?.[1];
+    const winVersion = ntVersion === '10.0' ? '10/11' : ntVersion === '6.3' ? '8.1' : ntVersion === '6.2' ? '8' : ntVersion === '6.1' ? '7' : ntVersion || '';
+    deviceOS = `Windows ${winVersion}`.trim();
+  } else if (/linux/i.test(userAgent)) {
+    deviceOS = 'Linux';
+  } else if (/cros/i.test(userAgent)) {
+    deviceOS = 'Chrome OS';
+  }
+
+  return { deviceType, deviceOS };
+}
+
+function isPrivateIP(ip: string): boolean {
+  if (!ip || ip === 'unknown') return true;
+  
+  // Localhost
+  if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('127.')) return true;
+  
+  // Private IPv4 ranges (RFC1918)
+  if (ip.startsWith('10.')) return true;
+  if (ip.startsWith('192.168.')) return true;
+  
+  // 172.16.0.0 - 172.31.255.255 (172.16.0.0/12)
+  if (ip.startsWith('172.')) {
+    const secondOctet = parseInt(ip.split('.')[1], 10);
+    if (secondOctet >= 16 && secondOctet <= 31) return true;
+  }
+  
+  // Link-local
+  if (ip.startsWith('169.254.')) return true;
+  
+  // IPv6 private/link-local
+  if (ip.startsWith('fc') || ip.startsWith('fd') || ip.startsWith('fe80:')) return true;
+  
+  return false;
+}
+
+async function getLocationFromIP(ipAddress: string): Promise<string> {
+  if (isPrivateIP(ipAddress)) {
+    return 'Lokaal netwerk';
+  }
+
+  try {
+    // Use ip-api.com free service (no API key needed, 45 requests per minute)
+    const response = await fetch(`http://ip-api.com/json/${ipAddress}?fields=status,city,country,message`, {
+      signal: AbortSignal.timeout(3000), // 3 second timeout
+    });
+    
+    if (!response.ok) {
+      return 'Onbekend';
+    }
+
+    const data = await response.json();
+    
+    if (data.status === 'success' && data.city && data.country) {
+      return `${data.city}, ${data.country}`;
+    }
+    
+    return 'Onbekend';
+  } catch (error) {
+    console.error('[ActivityLogger] Failed to get location from IP:', error);
+    return 'Onbekend';
+  }
 }
 
 export async function logActivity(params: LogActivityParams): Promise<void> {
   try {
+    // Parse device info from User-Agent if not provided
+    let deviceType = params.deviceType ?? null;
+    let deviceOS = params.deviceOS ?? null;
+    
+    if (params.userAgent && (!deviceType || !deviceOS)) {
+      const deviceInfo = parseUserAgent(params.userAgent);
+      deviceType = deviceType ?? deviceInfo.deviceType;
+      deviceOS = deviceOS ?? deviceInfo.deviceOS;
+    }
+
+    // Get location from IP if not provided (async, but don't block)
+    let location = params.location ?? null;
+    if (!location && params.ipAddress) {
+      location = await getLocationFromIP(params.ipAddress);
+    }
+
     const logEntry: InsertActivityLog = {
       userId: params.userId ?? null,
       stationId: params.stationId ?? null,
@@ -33,6 +190,9 @@ export async function logActivity(params: LogActivityParams): Promise<void> {
       targetUserId: params.targetUserId ?? null,
       ipAddress: params.ipAddress ?? null,
       userAgent: params.userAgent ?? null,
+      deviceType,
+      deviceOS,
+      location,
     };
 
     await db.insert(activityLogs).values(logEntry);
