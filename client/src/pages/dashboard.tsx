@@ -11,7 +11,7 @@ import type { Shift, ShiftPreference, User as UserType } from "@shared/schema";
 import { useLocation } from "wouter";
 import { format, addMonths, parse, setMonth, setYear, getMonth, getYear, isEqual, parseISO, isWeekend, addDays } from "date-fns";
 import { nl } from "date-fns/locale";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { StationSwitcher } from "@/components/station-switcher";
 
 export default function Dashboard() {
@@ -45,6 +47,15 @@ export default function Dashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [overtimeDialogOpen, setOvertimeDialogOpen] = useState(false);
   const [selectedOvertimeShift, setSelectedOvertimeShift] = useState<Shift | null>(null);
+  const [showOnlyMyShifts, setShowOnlyMyShifts] = useState(() => {
+    const saved = localStorage.getItem('dashboard_showOnlyMyShifts');
+    return saved === 'true';
+  });
+
+  // Persist "only my shifts" preference
+  useEffect(() => {
+    localStorage.setItem('dashboard_showOnlyMyShifts', showOnlyMyShifts.toString());
+  }, [showOnlyMyShifts]);
 
   const { data: shifts = [], isLoading: shiftsLoading } = useQuery<Shift[]>({
     queryKey: ["/api/shifts", selectedMonth + 1, selectedYear],
@@ -314,18 +325,27 @@ export default function Dashboard() {
     }
   };
   
-  // Filter shifts voor de geselecteerde maand en jaar
-  const filteredShifts = useMemo(() => {
+  // Filter shifts voor de geselecteerde maand en jaar (voor open-slot detectie)
+  const monthYearFilteredShifts = useMemo(() => {
     return shifts.filter(shift => {
       const shiftDate = new Date(shift.date);
       return getMonth(shiftDate) === selectedMonth && getYear(shiftDate) === selectedYear;
     });
   }, [shifts, selectedMonth, selectedYear]);
+  
+  // Filter shifts voor weergave (optioneel alleen eigen shifts)
+  const filteredShifts = useMemo(() => {
+    if (showOnlyMyShifts) {
+      return monthYearFilteredShifts.filter(shift => shift.userId === user?.id);
+    }
+    return monthYearFilteredShifts;
+  }, [monthYearFilteredShifts, showOnlyMyShifts, user?.id]);
 
   // Functie om open tijdslots te detecteren voor een specifieke datum
+  // Gebruik monthYearFilteredShifts zodat open slots correct worden gedetecteerd, ook als "alleen mijn shiften" aan staat
   const detectOpenTimeSlots = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    const nightShifts = filteredShifts.filter(shift => 
+    const nightShifts = monthYearFilteredShifts.filter(shift => 
       format(new Date(shift.date), 'yyyy-MM-dd') === dateStr && shift.type === 'night'
     );
 
@@ -677,11 +697,27 @@ export default function Dashboard() {
               </Button>
             </div>
           </div>
+          <div className="flex items-center space-x-2 mt-2">
+            <Checkbox 
+              id="showOnlyMyShifts" 
+              checked={showOnlyMyShifts}
+              onCheckedChange={(checked) => setShowOnlyMyShifts(checked === true)}
+            />
+            <Label 
+              htmlFor="showOnlyMyShifts" 
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              Alleen mijn shiften tonen
+            </Label>
+          </div>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">
           {filteredShifts.length === 0 ? (
             <div className="text-center p-6 text-muted-foreground">
-              Geen shifts gevonden voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+              {showOnlyMyShifts 
+                ? `Je hebt geen geplande shiften in ${format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}`
+                : `Geen shifts gevonden voor ${format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}`
+              }
             </div>
           ) : (
             <>
