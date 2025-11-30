@@ -193,6 +193,7 @@ export async function logActivity(params: LogActivityParams): Promise<void> {
       deviceType,
       deviceOS,
       location,
+      createdAt: new Date(),
     };
 
     await db.insert(activityLogs).values(logEntry);

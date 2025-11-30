@@ -460,12 +460,11 @@ export const activityLogs = pgTable("activity_logs", {
   deviceType: text("device_type"),
   deviceOS: text("device_os"),
   location: text("location"),
-  createdAt: timestamp("created_at").defaultNow()
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow()
 });
 
 export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
-  id: true,
-  createdAt: true
+  id: true
 });
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
