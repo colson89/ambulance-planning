@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { nl } from "date-fns/locale";
 import { FileText, ChevronLeft, ChevronRight, ArrowLeft, Download, Filter, Search, Calendar, User, Building2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -228,7 +229,8 @@ export default function ActivityLogsPage() {
   };
 
   const formatDateTime = (dateStr: string) => {
-    return format(new Date(dateStr), "dd MMM yyyy HH:mm", { locale: nl });
+    // Format UTC timestamp directly to Europe/Brussels timezone
+    return formatInTimeZone(new Date(dateStr), 'Europe/Brussels', "dd MMM yyyy HH:mm", { locale: nl });
   };
 
   const getUserName = (log: ActivityLog) => {
