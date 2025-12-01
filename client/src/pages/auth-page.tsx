@@ -139,12 +139,17 @@ export default function AuthPage() {
                     </div>
                   )}
                   <div className="space-y-2">
-                    <Input
-                      placeholder="Gebruikersnaam"
-                      {...loginForm.register("username")}
-                      className={`h-12 text-base ${loginMutation.isError ? "border-destructive" : ""}`}
-                      disabled={loginMutation.isPending}
-                    />
+                    <div className="flex items-center">
+                      <Input
+                        placeholder="jeva400"
+                        {...loginForm.register("username")}
+                        className={`h-12 text-base rounded-r-none border-r-0 ${loginMutation.isError ? "border-destructive" : ""}`}
+                        disabled={loginMutation.isPending}
+                      />
+                      <span className="h-12 px-3 flex items-center bg-muted border border-l-0 border-input rounded-r-md text-muted-foreground text-sm font-medium">
+                        @bwzk.be
+                      </span>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <div className="relative">

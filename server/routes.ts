@@ -448,6 +448,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'password' in data ? data.password : data.newPassword
       );
 
+      // Log activity for password change
+      const isSelfChange = currentUserId === targetUserId;
+      await logActivity({
+        userId: currentUserId,
+        stationId: req.user!.stationId,
+        action: ActivityActions.USER_MANAGEMENT.PASSWORD_CHANGED,
+        category: 'USER_MANAGEMENT',
+        details: isSelfChange 
+          ? `Eigen wachtwoord gewijzigd`
+          : `Wachtwoord gewijzigd voor: ${user.firstName} ${user.lastName} (${user.username})`,
+        targetUserId: isSelfChange ? null : targetUserId,
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: req.headers['user-agent'] || 'unknown'
+      });
+
       // SECURITY FIX: Remove password from response
       const { password, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
@@ -1170,6 +1185,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Sync preferences from primary station to all assigned stations
       await storage.syncUserPreferencesToAllStations(userId, validatedData.month, validatedData.year);
+
+      // Log activity for preference sync/submission
+      const monthNames = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 
+                          'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+      const monthName = monthNames[validatedData.month - 1];
+      
+      await logActivity({
+        userId: userId,
+        stationId: req.user!.stationId,
+        action: ActivityActions.PREFERENCE.SYNCED,
+        category: 'PREFERENCE',
+        details: `Beschikbaarheden ingediend voor ${monthName} ${validatedData.year}`,
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: req.headers['user-agent'] || 'unknown'
+      });
 
       res.json({ 
         message: `Voorkeuren gesynchroniseerd voor ${validatedData.month}/${validatedData.year} naar alle toegewezen stations`
