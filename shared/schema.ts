@@ -449,12 +449,12 @@ export type InsertOvertime = z.infer<typeof insertOvertimeSchema>;
 // Activiteitenlogs voor audit trail
 export const activityLogs = pgTable("activity_logs", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'set null' }),
   stationId: integer("station_id").references(() => stations.id),
   action: text("action").notNull(),
   category: text("category").notNull(),
   details: text("details"),
-  targetUserId: integer("target_user_id").references(() => users.id),
+  targetUserId: integer("target_user_id").references(() => users.id, { onDelete: 'set null' }),
   ipAddress: text("ip_address"),
   userAgent: text("user_agent"),
   deviceType: text("device_type"),

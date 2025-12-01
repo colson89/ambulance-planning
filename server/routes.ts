@@ -536,11 +536,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("❌ DELETE USER ERROR:", error);
       console.error("Error details:", {
-        targetUserId,
+        targetUserId: req.params.id,
         message: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined
       });
-      res.status(500).json({ message: "Failed to delete user" });
+      res.status(500).json({ message: "Kon gebruiker niet verwijderen. Probeer het opnieuw." });
     }
   });
 
