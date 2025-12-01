@@ -343,11 +343,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Supervisors can update users in any station except supervisor station (8)
+      // Supervisors can update users in any station including supervisor station (8)
       if (adminRole === 'supervisor') {
-        if (targetUser.stationId === 8) {
-          return res.status(403).json({ message: "Cannot modify supervisor station users" });
-        }
+        // Supervisors have full access to all users including other supervisors
       } else {
         // Regular admins - only their station
         if (targetUser.stationId !== adminStationId) {
@@ -839,7 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate body input
       const schema = z.object({
         stationId: z.number().min(1),
-        maxHours: z.number().min(1).max(160) // Max 160 hours per month
+        maxHours: z.number().min(0).max(160) // Max 160 hours per month, 0 allowed for statistics
       });
       
       const validatedData = schema.parse({ stationId, maxHours });
@@ -954,7 +952,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate body input
       const schema = z.object({
         newPrimaryStationId: z.number().min(1),
-        maxHoursForOldStation: z.number().min(1).max(160).default(24)
+        maxHoursForOldStation: z.number().min(0).max(160).default(24) // 0 allowed for statistics
       });
       
       const validatedData = schema.parse({ newPrimaryStationId, maxHoursForOldStation });
@@ -1039,7 +1037,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validate body input
       const schema = z.object({
-        maxHours: z.number().min(1).max(160)
+        maxHours: z.number().min(0).max(160) // 0 allowed for statistics
       });
       
       const validatedData = schema.parse({ maxHours });
