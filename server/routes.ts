@@ -476,6 +476,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete user (admin only)
+  // Supervisors can fully delete users
+  // Regular admins can only remove users from their station:
+  //   - If user has other stations, they continue there
+  //   - If user only has admin's station (single-station user), admin can fully delete
   app.delete("/api/users/:id", requireAdmin, async (req, res) => {
     try {
       const targetUserId = parseInt(req.params.id);
@@ -494,45 +498,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Check if target user is cross-team (assigned to multiple stations)
-      const isCrossTeamUser = await storage.isUserCrossTeam(targetUserId);
-      
       // Supervisors can delete users in any station except supervisor station (8)
       if (adminRole === 'supervisor') {
         if (targetUser.stationId === 8) {
           return res.status(403).json({ message: "Cannot access supervisor station users" });
         }
-      } else {
-        // SECURITY: Regular admins cannot delete cross-team users
-        if (isCrossTeamUser) {
-          return res.status(403).json({ 
-            message: "Deze gebruiker is toegewezen aan meerdere stations (cross-team). Alleen supervisors kunnen cross-team gebruikers verwijderen." 
-          });
-        }
         
-        // Regular admins - check if they have access to target user's primary station
-        // This includes both their primary station AND cross-team stations
-        const adminAccessibleStations = await storage.getUserAccessibleStations(currentUserId);
-        const hasAccessToTargetStation = adminAccessibleStations.some(s => s.id === targetUser.stationId);
+        // Supervisor: fully delete the user
+        await logActivity({
+          userId: req.user!.id,
+          stationId: req.user!.stationId,
+          action: ActivityActions.USER_MANAGEMENT.DELETED,
+          category: 'USER_MANAGEMENT',
+          details: `Gebruiker verwijderd: ${targetUser.firstName} ${targetUser.lastName} (${targetUser.username})`,
+          targetUserId: targetUserId,
+          ipAddress: getClientInfo(req).ipAddress
+        });
         
-        if (!hasAccessToTargetStation) {
-          return res.status(404).json({ message: "User not found" });
-        }
+        await storage.deleteUser(targetUserId);
+        return res.json({ message: `${targetUser.firstName} ${targetUser.lastName} is volledig verwijderd uit het systeem.` });
       }
-
-      // Log activity before deletion (capture user details)
+      
+      // Regular admin logic - use atomic helper function
+      const result = await storage.removeUserFromStationWithReassignment(targetUserId, adminStationId);
+      
+      if (!result.success) {
+        return res.status(400).json({ message: result.error || "Kon gebruiker niet verwijderen" });
+      }
+      
+      const adminStation = await storage.getStation(adminStationId);
+      
+      // Case: User should be fully deleted (only had this station)
+      if (result.fullyDeleted) {
+        await logActivity({
+          userId: req.user!.id,
+          stationId: req.user!.stationId,
+          action: ActivityActions.USER_MANAGEMENT.DELETED,
+          category: 'USER_MANAGEMENT',
+          details: `Gebruiker verwijderd: ${targetUser.firstName} ${targetUser.lastName} (${targetUser.username})`,
+          targetUserId: targetUserId,
+          ipAddress: getClientInfo(req).ipAddress
+        });
+        
+        await storage.deleteUser(targetUserId);
+        return res.json({ message: `${targetUser.firstName} ${targetUser.lastName} is volledig verwijderd uit het systeem.` });
+      }
+      
+      // Case: Primary station was changed
+      if (result.newPrimaryStationId) {
+        const newStation = await storage.getStation(result.newPrimaryStationId);
+        
+        await logActivity({
+          userId: req.user!.id,
+          stationId: req.user!.stationId,
+          action: ActivityActions.USER_MANAGEMENT.DELETED,
+          category: 'USER_MANAGEMENT',
+          details: `Gebruiker verwijderd van station: ${targetUser.firstName} ${targetUser.lastName} (${targetUser.username}) - verwijderd van ${adminStation?.displayName}, nieuw primair station: ${newStation?.displayName}`,
+          targetUserId: targetUserId,
+          ipAddress: getClientInfo(req).ipAddress
+        });
+        
+        return res.json({ 
+          message: `${targetUser.firstName} ${targetUser.lastName} is verwijderd van ${adminStation?.displayName}. Het nieuwe primaire station is nu ${newStation?.displayName}.`,
+          removedFromStation: true,
+          newPrimaryStation: newStation?.displayName
+        });
+      }
+      
+      // Case: Cross-team access was removed
       await logActivity({
         userId: req.user!.id,
         stationId: req.user!.stationId,
         action: ActivityActions.USER_MANAGEMENT.DELETED,
         category: 'USER_MANAGEMENT',
-        details: `Gebruiker verwijderd: ${targetUser.firstName} ${targetUser.lastName} (${targetUser.username})`,
+        details: `Gebruiker verwijderd van cross-team station: ${targetUser.firstName} ${targetUser.lastName} (${targetUser.username}) - verwijderd van ${adminStation?.displayName}`,
         targetUserId: targetUserId,
         ipAddress: getClientInfo(req).ipAddress
       });
       
-      await storage.deleteUser(targetUserId);
-      res.sendStatus(200);
+      return res.json({ 
+        message: `${targetUser.firstName} ${targetUser.lastName} is verwijderd van ${adminStation?.displayName}. De gebruiker blijft actief bij andere stations.`,
+        removedFromStation: true
+      });
     } catch (error) {
       console.error("❌ DELETE USER ERROR:", error);
       console.error("Error details:", {
@@ -975,6 +1022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user's hour limit for a specific station
+  // Supervisors can update any station, admins can only update for their own station
   app.put("/api/users/:userId/stations/:stationId/hours", requireAdmin, async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
@@ -996,10 +1044,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = schema.parse({ maxHours });
       
-      // Authorization: Only supervisors can update station hours
       const currentUser = req.user;
-      if (!currentUser || currentUser.role !== 'supervisor') {
-        return res.status(403).json({ message: "Alleen supervisors kunnen uren limieten aanpassen" });
+      if (!currentUser) {
+        return res.status(401).json({ message: "Niet ingelogd" });
+      }
+      
+      const isSupervisor = currentUser.role === 'supervisor';
+      const isAdminForThisStation = currentUser.stationId === stationId;
+      
+      // Authorization: Supervisors can update any station, admins only their own station
+      if (!isSupervisor && !isAdminForThisStation) {
+        return res.status(403).json({ message: "Je kunt alleen uren limieten aanpassen voor je eigen station" });
       }
       
       // Verify user exists
@@ -1014,12 +1069,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Station not found" });
       }
       
-      // Check if supervisor has access to target station
-      const accessibleStations = await storage.getUserAccessibleStations(currentUser.id);
-      const hasStationAccess = accessibleStations.some(s => s.id === stationId);
+      // For supervisors, check if they have access to target station
+      if (isSupervisor) {
+        const accessibleStations = await storage.getUserAccessibleStations(currentUser.id);
+        const hasStationAccess = accessibleStations.some(s => s.id === stationId);
+        
+        if (!hasStationAccess) {
+          return res.status(403).json({ message: "Geen toegang tot dit station" });
+        }
+      }
       
-      if (!hasStationAccess) {
-        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      // Verify target user has cross-team access to this station (only applicable for cross-team hours)
+      const targetUserCrossTeamStations = await storage.getUserCrossTeamStations(userId);
+      const hasUserCrossTeamAccess = targetUserCrossTeamStations.some(s => s.stationId === stationId);
+      
+      if (!hasUserCrossTeamAccess) {
+        return res.status(400).json({ message: `${targetUser.firstName} ${targetUser.lastName} heeft geen cross-team toegang tot dit station` });
       }
       
       await storage.updateUserStationHours(userId, stationId, validatedData.maxHours);

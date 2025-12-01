@@ -386,6 +386,18 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(userStations.userId, userId), eq(userStations.stationId, stationId)));
   }
 
+  async getUserCrossTeamStations(userId: number): Promise<Array<{stationId: number, maxHours: number | null}>> {
+    const crossTeamStations = await db
+      .select({
+        stationId: userStations.stationId,
+        maxHours: userStations.maxHours
+      })
+      .from(userStations)
+      .where(eq(userStations.userId, userId));
+    
+    return crossTeamStations;
+  }
+
   async changePrimaryStation(userId: number, newPrimaryStationId: number, maxHoursForOldStation: number = 24): Promise<User> {
     // Get current user to find old primary station
     const user = await this.getUser(userId);
@@ -435,6 +447,87 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedUser;
+  }
+
+  async removeUserFromStationWithReassignment(
+    userId: number, 
+    removeStationId: number
+  ): Promise<{ success: boolean; newPrimaryStationId?: number; fullyDeleted?: boolean; error?: string }> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      return { success: false, error: "Gebruiker niet gevonden" };
+    }
+    
+    const crossTeamStations = await this.getUserCrossTeamStations(userId);
+    const isPrimaryStation = user.stationId === removeStationId;
+    const isCrossTeamStation = crossTeamStations.some(s => s.stationId === removeStationId);
+    
+    // User has no relationship with this station
+    if (!isPrimaryStation && !isCrossTeamStation) {
+      return { success: false, error: "Gebruiker heeft geen toegang tot dit station" };
+    }
+    
+    // Calculate total stations: primary + cross-team stations
+    const totalStations = 1 + crossTeamStations.length;
+    
+    // Case 1: User only has this one station - can be fully deleted
+    if (totalStations === 1 && isPrimaryStation) {
+      return { success: true, fullyDeleted: true };
+    }
+    
+    // Case 2: User has multiple stations
+    if (isPrimaryStation) {
+      // Find a new primary station from cross-team (excluding the one being removed)
+      const validNewPrimaries = crossTeamStations.filter(s => s.stationId !== removeStationId);
+      if (validNewPrimaries.length === 0) {
+        return { success: false, error: "Geen ander station beschikbaar om primair te maken" };
+      }
+      
+      const newPrimary = validNewPrimaries[0];
+      const maxHoursForOldPrimary = newPrimary.maxHours || 24;
+      
+      // Use transaction to ensure atomicity
+      await db.transaction(async (tx) => {
+        // Step 1: Update primary station
+        await tx
+          .update(users)
+          .set({ stationId: newPrimary.stationId })
+          .where(eq(users.id, userId));
+        
+        // Step 2: Remove new primary from userStations (it's now primary)
+        await tx
+          .delete(userStations)
+          .where(and(eq(userStations.userId, userId), eq(userStations.stationId, newPrimary.stationId)));
+        
+        // Step 3: Add old primary to userStations (it's now cross-team)
+        const existingOldStation = await tx
+          .select()
+          .from(userStations)
+          .where(and(eq(userStations.userId, userId), eq(userStations.stationId, removeStationId)));
+        
+        if (existingOldStation.length === 0) {
+          await tx.insert(userStations).values({ 
+            userId, 
+            stationId: removeStationId, 
+            maxHours: maxHoursForOldPrimary 
+          });
+        }
+        
+        // Step 4: Remove the old primary (now in userStations) 
+        await tx
+          .delete(userStations)
+          .where(and(eq(userStations.userId, userId), eq(userStations.stationId, removeStationId)));
+      });
+      
+      return { success: true, newPrimaryStationId: newPrimary.stationId };
+    } else {
+      // Just removing cross-team access
+      await db
+        .delete(userStations)
+        .where(and(eq(userStations.userId, userId), eq(userStations.stationId, removeStationId)));
+      
+      return { success: true };
+    }
   }
 
   async getUsersByStation(stationId: number): Promise<User[]> {
