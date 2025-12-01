@@ -135,6 +135,7 @@ export default function UserManagement() {
       return res.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users/all'] });
       refetchAssignments();
       toast({
         title: "Succes",
@@ -161,6 +162,7 @@ export default function UserManagement() {
       return res.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users/all'] });
       refetchAssignments();
       toast({
         title: "Succes",
@@ -183,6 +185,7 @@ export default function UserManagement() {
       return res.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users/all'] });
       refetchAssignments();
       toast({
         title: "Succes",
