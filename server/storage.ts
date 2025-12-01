@@ -484,14 +484,17 @@ export class DatabaseStorage implements IStorage {
       }
       
       const newPrimary = validNewPrimaries[0];
-      const maxHoursForOldPrimary = newPrimary.maxHours || 24;
+      const newPrimaryMaxHours = newPrimary.maxHours || user.hours || 24;
       
       // Use transaction to ensure atomicity
       await db.transaction(async (tx) => {
-        // Step 1: Update primary station
+        // Step 1: Update primary station AND migrate maxHours to users.hours
         await tx
           .update(users)
-          .set({ stationId: newPrimary.stationId })
+          .set({ 
+            stationId: newPrimary.stationId,
+            hours: newPrimaryMaxHours
+          })
           .where(eq(users.id, userId));
         
         // Step 2: Remove new primary from userStations (it's now primary)
@@ -499,21 +502,7 @@ export class DatabaseStorage implements IStorage {
           .delete(userStations)
           .where(and(eq(userStations.userId, userId), eq(userStations.stationId, newPrimary.stationId)));
         
-        // Step 3: Add old primary to userStations (it's now cross-team)
-        const existingOldStation = await tx
-          .select()
-          .from(userStations)
-          .where(and(eq(userStations.userId, userId), eq(userStations.stationId, removeStationId)));
-        
-        if (existingOldStation.length === 0) {
-          await tx.insert(userStations).values({ 
-            userId, 
-            stationId: removeStationId, 
-            maxHours: maxHoursForOldPrimary 
-          });
-        }
-        
-        // Step 4: Remove the old primary (now in userStations) 
+        // Step 3: Remove old primary from userStations (user loses access to this station)
         await tx
           .delete(userStations)
           .where(and(eq(userStations.userId, userId), eq(userStations.stationId, removeStationId)));
