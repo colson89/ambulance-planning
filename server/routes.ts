@@ -225,9 +225,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const requestedStationId = req.query.stationId ? parseInt(req.query.stationId as string) : null;
         
         if (requestedStationId) {
-          // Supervisor requested specific station (including supervisor station for read-only viewing)
-          filteredUsers = allUsers.filter(user => user.stationId === requestedStationId);
-          console.log(`Supervisor requested station ${requestedStationId}, returning ${filteredUsers.length} users`);
+          // Supervisor requested specific station - include both primary AND cross-team users
+          filteredUsers = await storage.getUsersByStation(requestedStationId);
+          console.log(`Supervisor requested station ${requestedStationId}, returning ${filteredUsers.length} users (including cross-team)`);
         } else {
           // Return all users including supervisor station for viewing
           filteredUsers = allUsers;
