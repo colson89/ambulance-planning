@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.10 - Laatst bijgewerkt: 29 november 2025**
+**Versie 2025.11 - Laatst bijgewerkt: 1 december 2025**
 
 ---
 
@@ -39,6 +39,8 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
   - [Reportage Personeelsdienst](#-reportage-personeelsdienst) ⭐ NIEUW
   - [Activiteitenlog](#-activiteitenlog) ⭐ NIEUW
 - [Handleiding voor Supervisors](#handleiding-voor-supervisors)
+  - [Supervisor Gebruikersbeheer](#-supervisor-gebruikersbeheer) ⭐ NIEUW
+  - [Cross-Team Beheer](#-cross-team-beheer)
 - [Handleiding voor IT Beheerders](#handleiding-voor-it-beheerders)
 - [Veelgestelde Vragen](#veelgestelde-vragen)
 - [Problemen Oplossen](#problemen-oplossen)
@@ -2265,6 +2267,21 @@ A: Nee, logs kunnen niet worden verwijderd om de integriteit van de audittrail t
 
 **Supervisors hebben alle Admin rechten PLUS cross-station functionaliteit**
 
+### 👤 Supervisor Gebruikersbeheer ⭐ NIEUW
+
+#### Supervisors Bewerken
+
+Supervisors hebben nu volledige toegang om **andere supervisors** te bewerken:
+
+**Wat is gewijzigd:**
+- Supervisors kunnen nu gebruikers op het **Supervisor Station (station 8)** bewerken
+- Dit maakt het mogelijk om uren, rollen en andere gegevens van mede-supervisors aan te passen
+- Reguliere admins hebben nog steeds alleen toegang tot hun eigen station
+
+**Praktisch voorbeeld:**
+- Joris Boeckx (supervisor) heeft 0 uur nodig in het systeem voor statistieken
+- Een andere supervisor kan nu zijn uren aanpassen zonder 403 foutmelding
+
 ### 🏢 Multi-Station Overzicht
 
 #### Station Wisselen
@@ -2289,8 +2306,9 @@ A: Nee, logs kunnen niet worden verwijderd om de integriteit van de audittrail t
 
 **Functionaliteit:**
 - Medewerkers aan meerdere stations koppelen
-- Uur limieten instellen per station
+- Uur limieten instellen per station (inclusief 0 uur voor statistieken)
 - Flexibele inzet over posten heen
+- **Automatische UI updates**: Wijzigingen worden direct zichtbaar zonder pagina vernieuwen ⭐ NIEUW
 
 #### Gebruiker Koppelen aan Station
 
@@ -2300,8 +2318,13 @@ A: Nee, logs kunnen niet worden verwijderd om de integriteit van de audittrail t
 
 **Station Toewijzing:**
 - Selecteer extra station
-- Stel uur limiet in (bijv. 24 uur/maand)
+- Stel uur limiet in (bijv. 24 uur/maand, of 0 uur voor supervisors die geen shifts werken)
 - Klik "Koppelen"
+
+**Nul Uren Toewijzing:** ⭐ NIEUW
+- Het is nu mogelijk om **0 uur** in te stellen voor een station toewijzing
+- Dit is handig voor supervisors die wel systeemtoegang nodig hebben maar geen shifts draaien
+- Zorgt voor nauwkeurigere statistieken
 
 **Beheer Toewijzingen:**
 - Bekijk alle station toewijzingen van een gebruiker
