@@ -5320,16 +5320,35 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
 
     try {
-      const { stationId, userId, category, startDate, endDate, limit, offset } = req.query;
+      const { stationId, stationIds, userId, category, categories, startDate, endDate, limit, offset } = req.query;
       
-      const targetStationId = user.role === 'supervisor' 
-        ? (stationId ? parseInt(stationId as string) : undefined)
-        : user.stationId;
+      // Parse stationIds - can be comma-separated string or single value
+      let parsedStationIds: number[] | undefined;
+      if (stationIds) {
+        parsedStationIds = (stationIds as string).split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+        if (parsedStationIds.length === 0) parsedStationIds = undefined;
+      } else if (stationId && user.role === 'supervisor') {
+        parsedStationIds = [parseInt(stationId as string)];
+      }
+      
+      // Parse categories - can be comma-separated string or single value
+      let parsedCategories: ActivityCategory[] | undefined;
+      if (categories) {
+        parsedCategories = (categories as string).split(',').map(s => s.trim()) as ActivityCategory[];
+        if (parsedCategories.length === 0) parsedCategories = undefined;
+      } else if (category) {
+        parsedCategories = [category as ActivityCategory];
+      }
+      
+      // Non-supervisor users are limited to their own station
+      if (user.role !== 'supervisor') {
+        parsedStationIds = [user.stationId];
+      }
 
       const logs = await getActivityLogs({
-        stationId: targetStationId,
+        stationIds: parsedStationIds,
         userId: userId ? parseInt(userId as string) : undefined,
-        category: category as ActivityCategory | undefined,
+        categories: parsedCategories,
         startDate: startDate ? new Date(startDate as string) : undefined,
         endDate: endDate ? new Date(endDate as string) : undefined,
         limit: limit ? parseInt(limit as string) : 100,
@@ -5337,9 +5356,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       });
 
       const count = await getActivityLogsCount({
-        stationId: targetStationId,
+        stationIds: parsedStationIds,
         userId: userId ? parseInt(userId as string) : undefined,
-        category: category as ActivityCategory | undefined,
+        categories: parsedCategories,
         startDate: startDate ? new Date(startDate as string) : undefined,
         endDate: endDate ? new Date(endDate as string) : undefined,
       });
@@ -5388,16 +5407,35 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
 
     try {
-      const { stationId, userId, category, startDate, endDate } = req.query;
+      const { stationId, stationIds, userId, category, categories, startDate, endDate } = req.query;
       
-      const targetStationId = user.role === 'supervisor' 
-        ? (stationId ? parseInt(stationId as string) : undefined)
-        : user.stationId;
+      // Parse stationIds - can be comma-separated string or single value
+      let parsedStationIds: number[] | undefined;
+      if (stationIds) {
+        parsedStationIds = (stationIds as string).split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+        if (parsedStationIds.length === 0) parsedStationIds = undefined;
+      } else if (stationId && user.role === 'supervisor') {
+        parsedStationIds = [parseInt(stationId as string)];
+      }
+      
+      // Parse categories - can be comma-separated string or single value
+      let parsedCategories: ActivityCategory[] | undefined;
+      if (categories) {
+        parsedCategories = (categories as string).split(',').map(s => s.trim()) as ActivityCategory[];
+        if (parsedCategories.length === 0) parsedCategories = undefined;
+      } else if (category) {
+        parsedCategories = [category as ActivityCategory];
+      }
+      
+      // Non-supervisor users are limited to their own station
+      if (user.role !== 'supervisor') {
+        parsedStationIds = [user.stationId];
+      }
 
       const logs = await getActivityLogs({
-        stationId: targetStationId,
+        stationIds: parsedStationIds,
         userId: userId ? parseInt(userId as string) : undefined,
-        category: category as ActivityCategory | undefined,
+        categories: parsedCategories,
         startDate: startDate ? new Date(startDate as string) : undefined,
         endDate: endDate ? new Date(endDate as string) : undefined,
         limit: 10000,

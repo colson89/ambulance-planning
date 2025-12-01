@@ -5,12 +5,13 @@ import { useLocation } from "wouter";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { nl } from "date-fns/locale";
-import { FileText, ChevronLeft, ChevronRight, ArrowLeft, Download, Filter, Search, Calendar, User, Building2 } from "lucide-react";
+import { FileText, ChevronLeft, ChevronRight, ArrowLeft, Download, Filter, Search, Calendar, User, Building2, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -20,12 +21,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { apiRequest } from "@/lib/queryClient";
 
 interface ActivityLog {
@@ -117,13 +116,76 @@ export default function ActivityLogsPage() {
   
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("all");
-  const [selectedStationId, setSelectedStationId] = useState<string>("all");
+  const [selectedStationIds, setSelectedStationIds] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [userSearchText, setUserSearchText] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const limit = 50;
+
+  const allCategories = [
+    { id: "LOGIN", label: "Inloggen", legacy: "auth" },
+    { id: "LOGOUT", label: "Uitloggen", legacy: "auth" },
+    { id: "PREFERENCE", label: "Voorkeuren", legacy: "preferences" },
+    { id: "SCHEDULE", label: "Planning", legacy: "schedule" },
+    { id: "USER_MANAGEMENT", label: "Gebruikersbeheer", legacy: "users" },
+    { id: "SETTINGS", label: "Instellingen", legacy: "settings" },
+    { id: "VERDI", label: "Verdi", legacy: "verdi" },
+    { id: "OVERTIME", label: "Overuren", legacy: "overtime" },
+    { id: "PROFILE", label: "Profiel", legacy: null },
+    { id: "OTHER", label: "Overig", legacy: "other" },
+  ];
+
+  const getCategoriesWithLegacy = (selectedCats: string[]) => {
+    const result: string[] = [];
+    for (const cat of selectedCats) {
+      result.push(cat);
+      const catDef = allCategories.find(c => c.id === cat);
+      if (catDef?.legacy && !result.includes(catDef.legacy)) {
+        result.push(catDef.legacy);
+      }
+    }
+    return result;
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(categoryId) 
+        ? prev.filter(c => c !== categoryId)
+        : [...prev, categoryId]
+    );
+    setCurrentPage(0);
+  };
+
+  const toggleStation = (stationId: number) => {
+    setSelectedStationIds(prev => 
+      prev.includes(stationId) 
+        ? prev.filter(s => s !== stationId)
+        : [...prev, stationId]
+    );
+    setCurrentPage(0);
+  };
+
+  const selectAllCategories = () => {
+    setSelectedCategories(allCategories.map(c => c.id));
+    setCurrentPage(0);
+  };
+
+  const clearAllCategories = () => {
+    setSelectedCategories([]);
+    setCurrentPage(0);
+  };
+
+  const selectAllStations = (stationsList: Station[]) => {
+    setSelectedStationIds(stationsList.map(s => s.id));
+    setCurrentPage(0);
+  };
+
+  const clearAllStations = () => {
+    setSelectedStationIds([]);
+    setCurrentPage(0);
+  };
   
   const isSupervisor = user?.role === 'supervisor';
 
@@ -165,14 +227,15 @@ export default function ActivityLogsPage() {
     if (endDate) {
       params.append('endDate', endOfDay(new Date(endDate)).toISOString());
     }
-    if (selectedCategory !== "all") {
-      params.append('category', selectedCategory);
+    if (selectedCategories.length > 0) {
+      const categoriesWithLegacy = getCategoriesWithLegacy(selectedCategories);
+      params.append('categories', categoriesWithLegacy.join(','));
     }
     if (selectedUserId !== "all") {
       params.append('userId', selectedUserId);
     }
-    if (isSupervisor && selectedStationId !== "all") {
-      params.append('stationId', selectedStationId);
+    if (isSupervisor && selectedStationIds.length > 0) {
+      params.append('stationIds', selectedStationIds.join(','));
     }
     
     params.append('limit', limit.toString());
@@ -182,7 +245,7 @@ export default function ActivityLogsPage() {
   };
 
   const { data: logsData, isLoading, error } = useQuery<ActivityLogsResponse>({
-    queryKey: ["/api/activity-logs", startDate, endDate, selectedCategory, selectedUserId, selectedStationId, currentPage],
+    queryKey: ["/api/activity-logs", startDate, endDate, selectedCategories, selectedUserId, selectedStationIds, currentPage],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/activity-logs?${buildQueryParams()}`);
       if (!res.ok) {
@@ -202,9 +265,12 @@ export default function ActivityLogsPage() {
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startOfDay(new Date(startDate)).toISOString());
       if (endDate) params.append('endDate', endOfDay(new Date(endDate)).toISOString());
-      if (selectedCategory !== "all") params.append('category', selectedCategory);
+      if (selectedCategories.length > 0) {
+        const categoriesWithLegacy = getCategoriesWithLegacy(selectedCategories);
+        params.append('categories', categoriesWithLegacy.join(','));
+      }
       if (selectedUserId !== "all") params.append('userId', selectedUserId);
-      if (isSupervisor && selectedStationId !== "all") params.append('stationId', selectedStationId);
+      if (isSupervisor && selectedStationIds.length > 0) params.append('stationIds', selectedStationIds.join(','));
 
       const response = await fetch(`/api/activity-logs/export?${params.toString()}`, {
         credentials: 'include',
@@ -311,23 +377,50 @@ export default function ActivityLogsPage() {
               </div>
               
               <div className="space-y-2">
-                <Label>Categorie</Label>
-                <Select value={selectedCategory} onValueChange={(v) => { setSelectedCategory(v); setCurrentPage(0); }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Alle categorieën" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle categorieën</SelectItem>
-                    <SelectItem value="auth">Authenticatie</SelectItem>
-                    <SelectItem value="preferences">Voorkeuren</SelectItem>
-                    <SelectItem value="schedule">Planning</SelectItem>
-                    <SelectItem value="users">Gebruikers</SelectItem>
-                    <SelectItem value="settings">Instellingen</SelectItem>
-                    <SelectItem value="verdi">Verdi</SelectItem>
-                    <SelectItem value="overtime">Overuren</SelectItem>
-                    <SelectItem value="other">Overig</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Categorieën</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between h-10 font-normal">
+                      <span className="truncate">
+                        {selectedCategories.length === 0 
+                          ? "Alle categorieën"
+                          : selectedCategories.length === allCategories.length
+                            ? "Alle categorieën"
+                            : `${selectedCategories.length} geselecteerd`}
+                      </span>
+                      <Filter className="h-4 w-4 ml-2 shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2" align="start">
+                    <div className="flex gap-1 mb-2 pb-2 border-b">
+                      <Button variant="outline" size="sm" onClick={selectAllCategories} className="flex-1 h-7 text-xs">
+                        <Check className="h-3 w-3 mr-1" />
+                        Alles
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={clearAllCategories} className="flex-1 h-7 text-xs">
+                        <X className="h-3 w-3 mr-1" />
+                        Niets
+                      </Button>
+                    </div>
+                    <div className="space-y-1 max-h-60 overflow-y-auto">
+                      {allCategories.map((cat) => (
+                        <div key={cat.id} className="flex items-center space-x-2 py-1">
+                          <Checkbox
+                            id={`cat-${cat.id}`}
+                            checked={selectedCategories.includes(cat.id)}
+                            onCheckedChange={() => toggleCategory(cat.id)}
+                          />
+                          <label
+                            htmlFor={`cat-${cat.id}`}
+                            className="text-sm cursor-pointer flex-1"
+                          >
+                            {cat.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
               
               <div className="space-y-2 relative">
@@ -429,21 +522,51 @@ export default function ActivityLogsPage() {
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1">
                     <Building2 className="h-4 w-4" />
-                    Station
+                    Stations
                   </Label>
-                  <Select value={selectedStationId} onValueChange={(v) => { setSelectedStationId(v); setCurrentPage(0); }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Alle stations" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Alle stations</SelectItem>
-                      {stations.map((s) => (
-                        <SelectItem key={s.id} value={s.id.toString()}>
-                          {s.displayName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between h-10 font-normal">
+                        <span className="truncate">
+                          {selectedStationIds.length === 0 
+                            ? "Alle stations"
+                            : selectedStationIds.length === stations.length
+                              ? "Alle stations"
+                              : `${selectedStationIds.length} geselecteerd`}
+                        </span>
+                        <Building2 className="h-4 w-4 ml-2 shrink-0" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-56 p-2" align="start">
+                      <div className="flex gap-1 mb-2 pb-2 border-b">
+                        <Button variant="outline" size="sm" onClick={() => selectAllStations(stations)} className="flex-1 h-7 text-xs">
+                          <Check className="h-3 w-3 mr-1" />
+                          Alles
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={clearAllStations} className="flex-1 h-7 text-xs">
+                          <X className="h-3 w-3 mr-1" />
+                          Niets
+                        </Button>
+                      </div>
+                      <div className="space-y-1 max-h-60 overflow-y-auto">
+                        {stations.map((station) => (
+                          <div key={station.id} className="flex items-center space-x-2 py-1">
+                            <Checkbox
+                              id={`station-${station.id}`}
+                              checked={selectedStationIds.includes(station.id)}
+                              onCheckedChange={() => toggleStation(station.id)}
+                            />
+                            <label
+                              htmlFor={`station-${station.id}`}
+                              className="text-sm cursor-pointer flex-1"
+                            >
+                              {station.displayName}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               )}
             </div>

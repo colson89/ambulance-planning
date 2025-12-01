@@ -7,7 +7,7 @@
 
 import { db } from "./db";
 import { activityLogs, type InsertActivityLog } from "@shared/schema";
-import { desc, eq, and, gte, lte, sql } from "drizzle-orm";
+import { desc, eq, and, gte, lte, sql, inArray } from "drizzle-orm";
 
 export type ActivityCategory = "LOGIN" | "LOGOUT" | "PREFERENCE" | "SCHEDULE" | "USER_MANAGEMENT" | "SETTINGS" | "VERDI" | "OVERTIME" | "PROFILE" | "OTHER";
 
@@ -227,8 +227,10 @@ export function getClientInfo(req: {
 
 interface GetActivityLogsParams {
   stationId?: number;
+  stationIds?: number[];
   userId?: number;
   category?: ActivityCategory;
+  categories?: ActivityCategory[];
   startDate?: Date;
   endDate?: Date;
   limit?: number;
@@ -236,11 +238,13 @@ interface GetActivityLogsParams {
 }
 
 export async function getActivityLogs(params: GetActivityLogsParams = {}) {
-  const { stationId, userId, category, startDate, endDate, limit = 100, offset = 0 } = params;
+  const { stationId, stationIds, userId, category, categories, startDate, endDate, limit = 100, offset = 0 } = params;
 
   const conditions = [];
 
-  if (stationId) {
+  if (stationIds && stationIds.length > 0) {
+    conditions.push(inArray(activityLogs.stationId, stationIds));
+  } else if (stationId) {
     conditions.push(eq(activityLogs.stationId, stationId));
   }
 
@@ -248,7 +252,9 @@ export async function getActivityLogs(params: GetActivityLogsParams = {}) {
     conditions.push(eq(activityLogs.userId, userId));
   }
 
-  if (category) {
+  if (categories && categories.length > 0) {
+    conditions.push(inArray(activityLogs.category, categories));
+  } else if (category) {
     conditions.push(eq(activityLogs.category, category));
   }
 
@@ -272,11 +278,13 @@ export async function getActivityLogs(params: GetActivityLogsParams = {}) {
 }
 
 export async function getActivityLogsCount(params: Omit<GetActivityLogsParams, 'limit' | 'offset'> = {}) {
-  const { stationId, userId, category, startDate, endDate } = params;
+  const { stationId, stationIds, userId, category, categories, startDate, endDate } = params;
 
   const conditions = [];
 
-  if (stationId) {
+  if (stationIds && stationIds.length > 0) {
+    conditions.push(inArray(activityLogs.stationId, stationIds));
+  } else if (stationId) {
     conditions.push(eq(activityLogs.stationId, stationId));
   }
 
@@ -284,7 +292,9 @@ export async function getActivityLogsCount(params: Omit<GetActivityLogsParams, '
     conditions.push(eq(activityLogs.userId, userId));
   }
 
-  if (category) {
+  if (categories && categories.length > 0) {
+    conditions.push(inArray(activityLogs.category, categories));
+  } else if (category) {
     conditions.push(eq(activityLogs.category, category));
   }
 
