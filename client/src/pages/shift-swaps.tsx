@@ -339,6 +339,8 @@ export default function ShiftSwapsPage() {
               <div className="md:hidden space-y-4">
                 {requests.map((request) => {
                   const shiftInfo = getShiftInfo(request.requesterShiftId);
+                  const targetShiftInfo = request.targetShiftId ? getShiftInfo(request.targetShiftId) : null;
+                  const isSwap = request.targetShiftId !== null;
                   return (
                     <div
                       key={request.id}
@@ -359,7 +361,14 @@ export default function ShiftSwapsPage() {
                             {getStationName(request.stationId)}
                           </div>
                         </div>
-                        {getStatusBadge(request.status)}
+                        <div className="flex items-center gap-2">
+                          {isSwap && (
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                              Ruilen
+                            </Badge>
+                          )}
+                          {getStatusBadge(request.status)}
+                        </div>
                       </div>
 
                       <div className="bg-white/50 rounded p-2 mb-3">
@@ -372,9 +381,20 @@ export default function ShiftSwapsPage() {
                       </div>
 
                       <div className="text-sm mb-3">
-                        <span className="font-medium">Overnemen door:</span>{" "}
+                        <span className="font-medium">{isSwap ? "Ruilen met" : "Overnemen door"}:</span>{" "}
                         {getUserName(request.targetUserId)}
                       </div>
+
+                      {isSwap && targetShiftInfo && (
+                        <div className="bg-purple-50/50 rounded p-2 mb-3 border border-purple-200">
+                          <div className="text-sm">
+                            <span className="font-medium">In ruil voor:</span> {targetShiftInfo.date}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {targetShiftInfo.type} ({targetShiftInfo.time})
+                          </div>
+                        </div>
+                      )}
 
                       {request.requesterNote && (
                         <div className="text-sm text-muted-foreground mb-3">
@@ -421,7 +441,8 @@ export default function ShiftSwapsPage() {
                     <TableRow>
                       <TableHead>Aanvrager</TableHead>
                       <TableHead>Shift</TableHead>
-                      <TableHead>Overnemer</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Collega / In Ruil</TableHead>
                       <TableHead>Station</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Datum</TableHead>
@@ -431,6 +452,8 @@ export default function ShiftSwapsPage() {
                   <TableBody>
                     {requests.map((request) => {
                       const shiftInfo = getShiftInfo(request.requesterShiftId);
+                      const targetShiftInfo = request.targetShiftId ? getShiftInfo(request.targetShiftId) : null;
+                      const isSwap = request.targetShiftId !== null;
                       return (
                         <TableRow
                           key={request.id}
@@ -458,7 +481,25 @@ export default function ShiftSwapsPage() {
                               {shiftInfo.type} ({shiftInfo.time})
                             </div>
                           </TableCell>
-                          <TableCell>{getUserName(request.targetUserId)}</TableCell>
+                          <TableCell>
+                            {isSwap ? (
+                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                Ruilen
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                Overnemen
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium">{getUserName(request.targetUserId)}</div>
+                            {isSwap && targetShiftInfo && (
+                              <div className="text-xs text-purple-600">
+                                {targetShiftInfo.date} - {targetShiftInfo.type}
+                              </div>
+                            )}
+                          </TableCell>
                           <TableCell>{getStationName(request.stationId)}</TableCell>
                           <TableCell>{getStatusBadge(request.status)}</TableCell>
                           <TableCell>

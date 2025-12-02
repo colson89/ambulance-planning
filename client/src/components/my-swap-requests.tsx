@@ -159,6 +159,8 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
             <h4 className="text-sm font-medium text-muted-foreground">In behandeling</h4>
             {pendingRequests.map((request) => {
               const shiftInfo = getShiftInfo(request.requesterShiftId);
+              const targetShiftInfo = request.targetShiftId ? getShiftInfo(request.targetShiftId) : null;
+              const isSwap = request.targetShiftId !== null;
               return (
                 <div
                   key={request.id}
@@ -170,8 +172,13 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
                         {shiftInfo ? `${shiftInfo.date} - ${shiftInfo.type}` : "Shift niet gevonden"}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Overnemen door: <span className="font-medium">{getUserName(request.targetUserId)}</span>
+                        {isSwap ? "Ruilen met" : "Overnemen door"}: <span className="font-medium">{getUserName(request.targetUserId)}</span>
                       </div>
+                      {isSwap && targetShiftInfo && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          In ruil voor: <span className="font-medium">{targetShiftInfo.date} - {targetShiftInfo.type}</span>
+                        </div>
+                      )}
                       {request.requesterNote && (
                         <div className="text-xs text-muted-foreground mt-1">
                           Reden: {request.requesterNote}
@@ -179,6 +186,11 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
+                      {isSwap && (
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                          Ruilen
+                        </Badge>
+                      )}
                       {getStatusBadge(request.status)}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -226,6 +238,8 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
             <h4 className="text-sm font-medium text-muted-foreground">Afgehandeld</h4>
             {otherRequests.slice(0, 5).map((request) => {
               const shiftInfo = getShiftInfo(request.requesterShiftId);
+              const targetShiftInfo = request.targetShiftId ? getShiftInfo(request.targetShiftId) : null;
+              const isSwap = request.targetShiftId !== null;
               return (
                 <div
                   key={request.id}
@@ -243,8 +257,16 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
                         {shiftInfo ? `${shiftInfo.date} - ${shiftInfo.type}` : "Shift niet gevonden"}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {request.status === "approved" ? "Overgenomen door" : "Zou worden overgenomen door"}: <span className="font-medium">{getUserName(request.targetUserId)}</span>
+                        {isSwap 
+                          ? (request.status === "approved" ? "Geruild met" : "Zou worden geruild met")
+                          : (request.status === "approved" ? "Overgenomen door" : "Zou worden overgenomen door")
+                        }: <span className="font-medium">{getUserName(request.targetUserId)}</span>
                       </div>
+                      {isSwap && targetShiftInfo && (
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {request.status === "approved" ? "In ruil voor" : "Zou worden geruild voor"}: <span className="font-medium">{targetShiftInfo.date} - {targetShiftInfo.type}</span>
+                        </div>
+                      )}
                       {request.adminNote && (
                         <div className="text-xs text-muted-foreground mt-1 flex items-start gap-1">
                           <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
@@ -253,6 +275,11 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
+                      {isSwap && (
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                          Ruilen
+                        </Badge>
+                      )}
                       {getStatusBadge(request.status)}
                     </div>
                   </div>
