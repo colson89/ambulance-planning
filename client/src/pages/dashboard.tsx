@@ -474,16 +474,9 @@ export default function Dashboard() {
           </Button>
           
           {/* Desktop navigation */}
-          <div className="hidden lg:flex gap-2 flex-wrap justify-end">
+          <div className="hidden lg:flex gap-2 flex-wrap justify-end items-center">
             {(user?.role === 'admin' || user?.role === 'supervisor') && (
               <>
-                <Button 
-                  variant="outline"
-                  onClick={() => setLocation("/holidays")}
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Feestdagen
-                </Button>
                 <Button 
                   variant="outline"
                   onClick={() => setLocation("/users")}
@@ -505,6 +498,7 @@ export default function Dashboard() {
                   <CalendarDays className="h-4 w-4 mr-2" />
                   Planning
                 </Button>
+                <div className="w-px h-6 bg-border mx-1" />
                 <Button 
                   variant="outline"
                   onClick={() => setLocation("/settings")}
@@ -526,6 +520,7 @@ export default function Dashboard() {
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Ruilverzoeken
                 </Button>
+                <div className="w-px h-6 bg-border mx-1" />
               </>
             )}
             <Button 
@@ -553,14 +548,6 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-2">
               {(user?.role === 'admin' || user?.role === 'supervisor') && (
                 <>
-                  <Button 
-                    variant="outline"
-                    className="justify-start h-12"
-                    onClick={() => { setLocation("/holidays"); setMobileMenuOpen(false); }}
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Feestdagen
-                  </Button>
                   <Button 
                     variant="outline"
                     className="justify-start h-12"
