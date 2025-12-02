@@ -332,6 +332,12 @@ export const ActivityActions = {
     SHIFT_REMOVED: "Shift verwijderd",
     SHIFT_SWAPPED: "Shift gewisseld",
   },
+  SHIFT_SWAP: {
+    REQUESTED: "Ruilverzoek ingediend",
+    APPROVED: "Ruilverzoek goedgekeurd",
+    REJECTED: "Ruilverzoek afgewezen",
+    CANCELLED: "Ruilverzoek geannuleerd",
+  },
   USER_MANAGEMENT: {
     CREATED: "Gebruiker aangemaakt",
     UPDATED: "Gebruiker gewijzigd",

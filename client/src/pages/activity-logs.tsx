@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { nl } from "date-fns/locale";
-import { FileText, ChevronLeft, ChevronRight, ArrowLeft, Download, Filter, Search, Calendar, User, Building2, Check, X } from "lucide-react";
+import { FileText, ChevronLeft, ChevronRight, ArrowLeft, Download, Filter, Search, Calendar, User, Building2, Check, X, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { apiRequest } from "@/lib/queryClient";
 
 interface ActivityLog {
@@ -71,6 +77,7 @@ const categoryLabels: Record<string, string> = {
   LOGOUT: "Uitloggen",
   PREFERENCE: "Voorkeuren",
   SCHEDULE: "Planning",
+  SHIFT_SWAP: "Shift Ruilen",
   USER_MANAGEMENT: "Gebruikersbeheer",
   SETTINGS: "Instellingen",
   VERDI: "Verdi",
@@ -93,6 +100,7 @@ const categoryColors: Record<string, string> = {
   LOGOUT: "bg-blue-100 text-blue-800",
   PREFERENCE: "bg-green-100 text-green-800",
   SCHEDULE: "bg-purple-100 text-purple-800",
+  SHIFT_SWAP: "bg-indigo-100 text-indigo-800",
   USER_MANAGEMENT: "bg-orange-100 text-orange-800",
   SETTINGS: "bg-gray-100 text-gray-800",
   VERDI: "bg-cyan-100 text-cyan-800",
@@ -129,6 +137,7 @@ export default function ActivityLogsPage() {
     { id: "LOGOUT", label: "Uitloggen", legacy: "auth" },
     { id: "PREFERENCE", label: "Voorkeuren", legacy: "preferences" },
     { id: "SCHEDULE", label: "Planning", legacy: "schedule" },
+    { id: "SHIFT_SWAP", label: "Shift Ruilen", legacy: null },
     { id: "USER_MANAGEMENT", label: "Gebruikersbeheer", legacy: "users" },
     { id: "SETTINGS", label: "Instellingen", legacy: "settings" },
     { id: "VERDI", label: "Verdi", legacy: "verdi" },
@@ -646,8 +655,24 @@ export default function ActivityLogsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>{log.action}</TableCell>
-                        <TableCell className="max-w-[300px] truncate text-sm text-muted-foreground">
-                          {log.details || "-"}
+                        <TableCell className="max-w-[300px] text-sm text-muted-foreground">
+                          {log.details ? (
+                            <TooltipProvider>
+                              <Tooltip delayDuration={200}>
+                                <TooltipTrigger asChild>
+                                  <span className="block truncate cursor-help">
+                                    {log.details}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent 
+                                  side="top" 
+                                  className="max-w-[400px] whitespace-pre-wrap break-words"
+                                >
+                                  {log.details}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ) : "-"}
                         </TableCell>
                         <TableCell>{getTargetUserName(log)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
