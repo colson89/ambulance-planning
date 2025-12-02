@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.11 - Laatst bijgewerkt: 1 december 2025**
+**Versie 2025.12 - Laatst bijgewerkt: 2 december 2025**
 
 ---
 
@@ -335,7 +335,7 @@ Werkt u bij **1 station**?
 
 **Split Shifts (Halve Diensten):**
 
-⭐ **NIEUW: Cross-team Gebruikers en Halve Dagshiften**
+**Cross-team Gebruikers en Halve Dagshiften**
 
 Als u bij **meerdere stations** werkt:
 - ✅ U kunt **altijd** halve dagshiften opgeven (ochtend 7-13u / middag 13-19u)
@@ -892,7 +892,7 @@ Neem contact op met uw beheerder met de volgende informatie:
 
 ### ⏱️ Overuren Registreren
 
-⭐ **NIEUWE FUNCTIE**
+**Functie:**
 
 U kunt extra gewerkte uren registreren die gekoppeld zijn aan een specifieke shift.
 
@@ -1126,7 +1126,7 @@ Als admin ziet u extra knoppen:
 - Klik op shift om handmatig toe te wijzen
 - Selecteer beschikbare medewerker
 
-#### 👥 Beschikbaarheid Bekijken per Datum (NIEUW)
+#### 👥 Beschikbaarheid Bekijken per Datum 
 
 Als admin kunt u op elke datum in de planning klikken om te zien wie beschikbaar is voor die specifieke shift. Dit helpt u om:
 - Snel te zien wie nog kan worden ingepland
@@ -1774,7 +1774,7 @@ Als admin/supervisor vindt u een nieuwe **"Ruilverzoeken"** knop in het dashboar
 
 ### 🔌 Integraties Beheer
 
-⭐ **NIEUW - Centraal Overzicht**
+**Centraal Overzicht**
 
 Het Ambulance Planning Systeem biedt nu een centraal overzicht van alle externe koppelingen via de **Integraties** pagina.
 
@@ -1829,7 +1829,7 @@ Integraties verbinden het Ambulance Planning Systeem met externe diensten zoals 
 
 ### 🔗 Verdi Integratie
 
-⭐ **NIEUW - Volledig Operationeel**
+**Volledig Operationeel**
 
 Het Ambulance Planning Systeem kan nu automatisch shifts synchroniseren met Verdi alarmsoftware. Hierdoor hoeft u shifts niet meer handmatig over te typen - één druk op de knop synchroniseert alles!
 
@@ -1924,7 +1924,7 @@ Planning Gebruiker ←→ Verdi Person GUID
    - Formaat: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
 5. **Klik "Opslaan"** naast elke gebruiker
 
-**📥 Excel Import Functie (NIEUW)**
+**📥 Excel Import Functie **
 
 Voor snelle bulk import van Person GUIDs:
 
@@ -2015,7 +2015,7 @@ Het systeem werkt flexibel met variabel aantal personen per shift:
 - Selecteer de juiste maand en station
 - Klik op "Sync naar Verdi" knop (alleen zichtbaar voor admins en supervisors)
 
-**💡 Visuele Status Indicator (NIEUW)**
+**💡 Visuele Status Indicator **
 
 De "Sync naar Verdi" knop toont automatisch de synchronisatiestatus met kleurcodering:
 
@@ -2163,7 +2163,7 @@ A: Wijzig gewoon de shift in het planningssysteem en klik op "Sync naar Verdi" �
 
 ### 📧 Reportage Personeelsdienst
 
-⭐ **NIEUW - Volledig Operationeel**
+**Volledig Operationeel**
 
 Het Ambulance Planning Systeem kan automatisch maandelijkse shift rapportages versturen via email. Dit bespaart tijd en zorgt dat de personeelsdienst altijd actuele gegevens ontvangt.
 
@@ -2190,7 +2190,7 @@ Het Ambulance Planning Systeem kan automatisch maandelijkse shift rapportages ve
 
 #### ⚙️ Tab 1: SMTP Instellingen
 
-⭐ **NIEUW - Self-Service Configuratie**
+**Self-Service Configuratie**
 
 U kunt nu zelf de email server configureren via de webinterface, zonder hulp van IT.
 
@@ -2702,6 +2702,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 
 | Versie | Datum | Belangrijkste Verbeteringen |
 |--------|-------|----------------------------|
+| **2025.12** | Dec 2025 | Handleiding herstructurering, verbeterde documentatie |
 | **2025.11** | Dec 2025 | Shift Ruilen/Overnemen systeem, Activiteitenlog uitbreiding |
 | **2025.10** | Nov 2025 | Activiteitenlog met audit trail, IP-tracking |
 | **2025.9** | Nov 2025 | Brute-force bescherming, Excel export beschikbaarheden |
