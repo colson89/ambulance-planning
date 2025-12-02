@@ -938,27 +938,43 @@ Het Shift Ruilen systeem stelt ambulanciers in staat om onderling van shift te w
 
 #### Wat is Shift Ruilen?
 
-- Wanneer u verhinderd bent voor een geplande shift, kunt u een collega vragen om uw shift over te nemen
-- Het verzoek moet goedgekeurd worden door een admin of supervisor voordat de ruil definitief is
-- Bij goedkeuring wordt de shift automatisch overgedragen naar de overnemer
+Er zijn twee manieren om shifts te wisselen:
 
-#### Hoe een Ruilverzoek Indienen?
+1. **Overnemen** - Een collega neemt uw shift over (eenrichtingsverkeer)
+   - Wanneer u verhinderd bent, vraagt u een collega om uw shift over te nemen
+   - Uw collega krijgt uw shift, u heeft dan geen shift meer op die dag
+
+2. **Ruilen** - U wisselt shifts met een collega (tweerichtingsverkeer)
+   - U en uw collega wisselen van shift
+   - U krijgt de shift van uw collega, en uw collega krijgt uw shift
+
+Bij beide opties moet het verzoek goedgekeurd worden door een admin of supervisor.
+
+#### Hoe een Verzoek Indienen?
 
 1. Ga naar uw **Dashboard**
-2. Zoek de shift die u wilt ruilen in de planning sectie
+2. Zoek de shift die u wilt overdragen of ruilen in de planning sectie
 3. Klik op de **"Ruilen"** knop (🔄 icoon) naast uw shift
-4. Selecteer een collega die de shift kan overnemen
-5. Voeg optioneel een reden toe (bijv. "vakantie", "afspraak")
-6. Klik **"Verzoek Indienen"**
+4. **Kies het type verzoek:**
+   - **Overnemen**: Uw collega neemt uw shift over
+   - **Ruilen**: U wisselt shifts met uw collega
+5. Selecteer een collega
+6. **Bij Ruilen**: Selecteer de shift van uw collega waarmee u wilt ruilen
+7. Voeg optioneel een reden toe (bijv. "vakantie", "afspraak")
+8. Klik **"Verzoek Indienen"**
 
-#### Mijn Ruilverzoeken Bekijken
+#### Mijn Verzoeken Bekijken
 
-Op uw dashboard ziet u een overzicht van uw ingediende ruilverzoeken:
+Op uw dashboard ziet u een overzicht van uw ingediende verzoeken:
 - **In behandeling** (geel): Wacht op goedkeuring
-- **Goedgekeurd** (groen): Shift is overgedragen
+- **Goedgekeurd** (groen): Shift is overgedragen of geruild
 - **Afgewezen** (rood): Verzoek is afgewezen
 
-#### Ruilverzoek Annuleren
+Bij ruilverzoeken ziet u ook:
+- Een paarse **"Ruilen"** badge
+- De shift van uw collega waarmee wordt geruild
+
+#### Verzoek Annuleren
 
 - U kunt een lopend verzoek annuleren zolang het nog niet is goedgekeurd
 - Klik op het X icoon naast uw verzoek
@@ -966,17 +982,18 @@ Op uw dashboard ziet u een overzicht van uw ingediende ruilverzoeken:
 
 #### Push Notificaties
 
-Bij shift ruilen ontvangt u automatisch meldingen (indien ingeschakeld):
+Bij shift verzoeken ontvangt u automatisch meldingen (indien ingeschakeld):
 - **Aanvrager**: Melding bij goedkeuring of afwijzing
-- **Overnemer**: Melding wanneer de shift is toegewezen
-- **Admins/Supervisors**: Melding bij nieuwe ruilverzoeken
+- **Overnemer/Ruilpartner**: Melding wanneer de shift is toegewezen
+- **Admins/Supervisors**: Melding bij nieuwe verzoeken
 
 #### Let Op
 
 - Shift ruilen moet eerst ingeschakeld zijn door de admin voor uw station
-- De overnemer moet dezelfde station hebben als de shift
-- U kunt alleen uw eigen shifts ruilen
-- Goedgekeurde ruilen kunnen niet ongedaan gemaakt worden
+- De collega moet dezelfde station hebben als de shift
+- U kunt alleen uw eigen shifts ruilen of overdragen
+- Bij ruilen: beide shifts moeten in de toekomst liggen
+- Goedgekeurde verzoeken kunnen niet ongedaan gemaakt worden
 
 ---
 
@@ -1720,17 +1737,27 @@ In de Weekdag Instellingen kunt u de shift ruil functionaliteit inschakelen:
 3. Schakel de toggle in om shift ruilen toe te staan
 4. Ambulanciers kunnen nu ruilverzoeken indienen
 
-**Ruilverzoeken Beheren:**
+**Verzoeken Beheren:**
 
 Als admin/supervisor vindt u een nieuwe **"Ruilverzoeken"** knop in het dashboard menu. Hier kunt u:
 
-- Alle openstaande ruilverzoeken bekijken
+- Alle openstaande verzoeken bekijken (overname én ruil)
+- Het type verzoek zien via badges:
+  - **Paars "Ruilen"**: Gebruiker wil shifts uitwisselen
+  - **Blauw "Overnemen"**: Collega neemt shift over
+- Bij ruilverzoeken: beide shifts zichtbaar in het overzicht
 - Verzoeken goedkeuren (shifts worden automatisch gewisseld)
 - Verzoeken afwijzen met een optionele reden
 - Gefilterd bekijken op status (in behandeling / alle)
 
-**Bij Goedkeuring:**
+**Bij Goedkeuring van Overname:**
 - De shift wordt automatisch overgedragen naar de overnemer
+- Beide gebruikers ontvangen een push notificatie (indien ingeschakeld)
+- De wijziging is direct zichtbaar in de planning
+
+**Bij Goedkeuring van Ruil:**
+- Beide shifts worden automatisch uitgewisseld
+- De aanvrager krijgt de shift van de collega, en vice versa
 - Beide gebruikers ontvangen een push notificatie (indien ingeschakeld)
 - De ruil is direct zichtbaar in de planning
 
