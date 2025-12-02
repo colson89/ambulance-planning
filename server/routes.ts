@@ -5777,6 +5777,40 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         // Don't fail the request if push notification fails
       }
 
+      // Log activity
+      try {
+        const targetUser = await storage.getUser(targetUserId);
+        const targetShift = targetShiftId ? await storage.getShift(targetShiftId) : null;
+        const shiftDate = new Date(shift.date).toLocaleDateString('nl-BE');
+        const shiftType = shift.type.startsWith('day') ? 'dagdienst' : 'nachtdienst';
+        const swapType = targetShiftId ? 'Ruilen' : 'Overnemen';
+        
+        let details = `${swapType}: ${shiftType} op ${shiftDate}`;
+        if (targetUser) {
+          details += ` met ${targetUser.firstName} ${targetUser.lastName}`;
+        }
+        if (targetShift) {
+          const targetShiftDate = new Date(targetShift.date).toLocaleDateString('nl-BE');
+          const targetShiftType = targetShift.type.startsWith('day') ? 'dagdienst' : 'nachtdienst';
+          details += ` (ruil voor ${targetShiftType} op ${targetShiftDate})`;
+        }
+        if (requesterNote) {
+          details += ` - Reden: ${requesterNote}`;
+        }
+
+        await logActivity({
+          userId: user.id,
+          stationId: shift.stationId,
+          action: ActivityActions.SHIFT_SWAP.REQUESTED,
+          category: 'SHIFT_SWAP',
+          details,
+          targetUserId,
+          ipAddress: getClientInfo(req).ipAddress
+        });
+      } catch (logError) {
+        console.error("Failed to log shift swap request activity:", logError);
+      }
+
       res.status(201).json(swapRequest);
     } catch (error: any) {
       console.error("Error creating shift swap request:", error);
@@ -5891,7 +5925,36 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(400).json({ message: "Dit verzoek kan niet meer geannuleerd worden" });
       }
 
+      // Get shift info for logging before cancelling
+      const requesterShift = await storage.getShift(request.requesterShiftId);
+      const targetUser = await storage.getUser(request.targetUserId);
+
       const cancelled = await storage.cancelShiftSwapRequest(id);
+
+      // Log activity
+      try {
+        const shiftDate = requesterShift ? new Date(requesterShift.date).toLocaleDateString('nl-BE') : 'onbekend';
+        const shiftType = requesterShift?.type.startsWith('day') ? 'dagdienst' : 'nachtdienst';
+        const swapType = request.targetShiftId ? 'Ruilen' : 'Overnemen';
+        
+        let details = `${swapType} geannuleerd: ${shiftType} op ${shiftDate}`;
+        if (targetUser) {
+          details += ` met ${targetUser.firstName} ${targetUser.lastName}`;
+        }
+
+        await logActivity({
+          userId: user.id,
+          stationId: request.stationId,
+          action: ActivityActions.SHIFT_SWAP.CANCELLED,
+          category: 'SHIFT_SWAP',
+          details,
+          targetUserId: request.targetUserId,
+          ipAddress: getClientInfo(req).ipAddress
+        });
+      } catch (logError) {
+        console.error("Failed to log shift swap cancellation activity:", logError);
+      }
+
       res.json(cancelled);
     } catch (error: any) {
       console.error("Error cancelling shift swap request:", error);
@@ -5920,7 +5983,36 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(400).json({ message: "Dit verzoek kan niet meer geannuleerd worden" });
       }
 
+      // Get shift info for logging before cancelling
+      const requesterShift = await storage.getShift(request.requesterShiftId);
+      const targetUser = await storage.getUser(request.targetUserId);
+
       const cancelled = await storage.cancelShiftSwapRequest(id);
+
+      // Log activity
+      try {
+        const shiftDate = requesterShift ? new Date(requesterShift.date).toLocaleDateString('nl-BE') : 'onbekend';
+        const shiftType = requesterShift?.type.startsWith('day') ? 'dagdienst' : 'nachtdienst';
+        const swapType = request.targetShiftId ? 'Ruilen' : 'Overnemen';
+        
+        let details = `${swapType} geannuleerd: ${shiftType} op ${shiftDate}`;
+        if (targetUser) {
+          details += ` met ${targetUser.firstName} ${targetUser.lastName}`;
+        }
+
+        await logActivity({
+          userId: user.id,
+          stationId: request.stationId,
+          action: ActivityActions.SHIFT_SWAP.CANCELLED,
+          category: 'SHIFT_SWAP',
+          details,
+          targetUserId: request.targetUserId,
+          ipAddress: getClientInfo(req).ipAddress
+        });
+      } catch (logError) {
+        console.error("Failed to log shift swap cancellation activity:", logError);
+      }
+
       res.json(cancelled);
     } catch (error: any) {
       console.error("Error cancelling shift swap request:", error);
@@ -5966,6 +6058,44 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         }
       }
 
+      // Log activity
+      try {
+        const requester = await storage.getUser(request.requesterId);
+        const targetUser = await storage.getUser(request.targetUserId);
+        const targetShift = request.targetShiftId ? await storage.getShift(request.targetShiftId) : null;
+        const shiftDate = requesterShift ? new Date(requesterShift.date).toLocaleDateString('nl-BE') : 'onbekend';
+        const shiftType = requesterShift?.type.startsWith('day') ? 'dagdienst' : 'nachtdienst';
+        const swapType = request.targetShiftId ? 'Ruilen' : 'Overnemen';
+        
+        let details = `${swapType} goedgekeurd: ${shiftType} op ${shiftDate}`;
+        if (requester) {
+          details += ` van ${requester.firstName} ${requester.lastName}`;
+        }
+        if (targetUser) {
+          details += ` naar ${targetUser.firstName} ${targetUser.lastName}`;
+        }
+        if (targetShift) {
+          const targetShiftDate = new Date(targetShift.date).toLocaleDateString('nl-BE');
+          const targetShiftType = targetShift.type.startsWith('day') ? 'dagdienst' : 'nachtdienst';
+          details += ` (geruild voor ${targetShiftType} op ${targetShiftDate})`;
+        }
+        if (adminNote) {
+          details += ` - Opmerking: ${adminNote}`;
+        }
+
+        await logActivity({
+          userId: user.id,
+          stationId: request.stationId,
+          action: ActivityActions.SHIFT_SWAP.APPROVED,
+          category: 'SHIFT_SWAP',
+          details,
+          targetUserId: request.requesterId,
+          ipAddress: getClientInfo(req).ipAddress
+        });
+      } catch (logError) {
+        console.error("Failed to log shift swap approval activity:", logError);
+      }
+
       res.json(approved);
     } catch (error: any) {
       console.error("Error approving shift swap request:", error);
@@ -6008,6 +6138,38 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         } catch (pushError) {
           console.error("Failed to send push notification for shift swap rejection:", pushError);
         }
+      }
+
+      // Log activity
+      try {
+        const requester = await storage.getUser(request.requesterId);
+        const targetUser = await storage.getUser(request.targetUserId);
+        const shiftDate = requesterShift ? new Date(requesterShift.date).toLocaleDateString('nl-BE') : 'onbekend';
+        const shiftType = requesterShift?.type.startsWith('day') ? 'dagdienst' : 'nachtdienst';
+        const swapType = request.targetShiftId ? 'Ruilen' : 'Overnemen';
+        
+        let details = `${swapType} afgewezen: ${shiftType} op ${shiftDate}`;
+        if (requester) {
+          details += ` van ${requester.firstName} ${requester.lastName}`;
+        }
+        if (targetUser) {
+          details += ` naar ${targetUser.firstName} ${targetUser.lastName}`;
+        }
+        if (adminNote) {
+          details += ` - Reden: ${adminNote}`;
+        }
+
+        await logActivity({
+          userId: user.id,
+          stationId: request.stationId,
+          action: ActivityActions.SHIFT_SWAP.REJECTED,
+          category: 'SHIFT_SWAP',
+          details,
+          targetUserId: request.requesterId,
+          ipAddress: getClientInfo(req).ipAddress
+        });
+      } catch (logError) {
+        console.error("Failed to log shift swap rejection activity:", logError);
       }
 
       res.json(rejected);
