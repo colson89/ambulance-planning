@@ -24,22 +24,22 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
 - [Inleiding](#inleiding)
 - [Inloggen en Navigatie](#inloggen-en-navigatie)
 - [App Installatie (Progressive Web App)](#-app-installatie-progressive-web-app)
-- [Responsieve Weergave](#-responsieve-weergave) ⭐ NIEUW
+- [Responsieve Weergave](#-responsieve-weergave)
 - [Handleiding voor Ambulanciers](#handleiding-voor-ambulanciers)
   - [Voorkeuren Opgeven](#-voorkeuren-opgeven)
-  - [Exporteer Beschikbaarheden naar Excel](#-exporteer-beschikbaarheden-naar-excel) ⭐ NIEUW
+  - [Exporteer Beschikbaarheden naar Excel](#-exporteer-beschikbaarheden-naar-excel)
   - [Planning Bekijken](#-uw-planning-bekijken)
   - [Profiel Beheren](#-profiel-beheren)
-  - [Kalender Synchronisatie](#-kalender-synchronisatie) ⭐ NIEUW
-  - [Push Notificaties](#-push-notificaties) ⭐ NIEUW
+  - [Kalender Synchronisatie](#-kalender-synchronisatie)
+  - [Push Notificaties](#-push-notificaties)
     - [Probleemoplossing Push Notificaties](#️-probleemoplossing-push-notificaties)
-  - [Overuren Registreren](#-overuren-registreren) ⭐ NIEUW
+  - [Overuren Registreren](#-overuren-registreren)
 - [Handleiding voor Admins](#handleiding-voor-admins)
-  - [Verdi Integratie](#-verdi-integratie) ⭐ NIEUW
-  - [Reportage Personeelsdienst](#-reportage-personeelsdienst) ⭐ NIEUW
-  - [Activiteitenlog](#-activiteitenlog) ⭐ NIEUW
+  - [Verdi Integratie](#-verdi-integratie)
+  - [Reportage Personeelsdienst](#-reportage-personeelsdienst)
+  - [Activiteitenlog](#-activiteitenlog)
 - [Handleiding voor Supervisors](#handleiding-voor-supervisors)
-  - [Supervisor Gebruikersbeheer](#-supervisor-gebruikersbeheer) ⭐ NIEUW
+  - [Supervisor Gebruikersbeheer](#-supervisor-gebruikersbeheer)
   - [Cross-Team Beheer](#-cross-team-beheer)
 - [Handleiding voor IT Beheerders](#handleiding-voor-it-beheerders)
 - [Veelgestelde Vragen](#veelgestelde-vragen)
@@ -83,7 +83,7 @@ Het systeem heeft een centrale dashboard met snelle toegang tot alle functies:
 
 ---
 
-## 📱 App Installatie (Progressive Web App) ⭐ NIEUW
+## 📱 App Installatie (Progressive Web App)
 
 Het planning systeem kan als een **native app** worden geïnstalleerd op uw smartphone, tablet of computer! Dit geeft u een snellere ervaring en werkt ook zonder internetverbinding.
 
@@ -191,7 +191,7 @@ A: Ja, u kunt de app op zoveel apparaten installeren als u wilt. Uw data is alti
 
 ---
 
-## 📐 Responsieve Weergave ⭐ NIEUW
+## 📐 Responsieve Weergave
 
 Het planning systeem past zich **automatisch aan** aan de grootte van uw scherm. Of u nu werkt op een grote monitor, een tablet in de ambulance, of uw smartphone - de app toont altijd een optimale weergave.
 
@@ -349,7 +349,7 @@ Als u bij **1 station** werkt:
 - **Multi-station**: Geef altijd beide shifts op (dag + nacht) voor optimale planning bij alle stations
 - **Split shifts** - Halve shifts zijn handig als u beperkt beschikbaar bent. Het programma geeft wel de voorkeur aan personen die een volledige dag kunnen.
 
-### 📥 Exporteer Beschikbaarheden naar Excel ⭐ NIEUW
+### 📥 Exporteer Beschikbaarheden naar Excel
 
 U kunt uw opgegeven beschikbaarheden exporteren naar een Excel bestand voor uw eigen administratie.
 
@@ -932,7 +932,7 @@ Overuren worden automatisch meegenomen in de maandelijkse Excel rapportages:
 
 ---
 
-### 🔄 Shift Ruilen ⭐ NIEUW
+### 🔄 Shift Ruilen
 
 Het Shift Ruilen systeem stelt ambulanciers in staat om onderling van shift te wisselen, mits goedkeuring van een admin of supervisor.
 
@@ -1027,7 +1027,7 @@ Als admin ziet u extra knoppen:
 - **Rol**: Ambulancier of Admin
 - **Werkuren**: Max aantal uren per maand dat je automatisch word ingepland (bijv. 24). Steeds met meervouden van 12h instellen
 - **Beroepspersoneel**: Aanvinken voor beroeps personeel (max 1 shift/week). Dit zorgt ervoor dat mensen met opt-out max 1 keer per week worden ingepland
-- **Heeft rijbewijs C** ⭐ NIEUW: Aanvinken als de ambulancier rijbewijs C heeft. Standaard staat dit **AAN**. Vink **UIT** voor ambulanciers zonder rijbewijs C.
+- **Heeft rijbewijs C**: Aanvinken als de ambulancier rijbewijs C heeft. Standaard staat dit **AAN**. Vink **UIT** voor ambulanciers zonder rijbewijs C.
 
 **Opslaan en Testen:**
 - Klik "Aanmaken"
@@ -1043,8 +1043,8 @@ Als admin ziet u extra knoppen:
 **Mogelijke Wijzigingen:**
 - Namen en contactgegevens
 - Email adres (optioneel)
-- **Telefoonnummer** ⭐ NIEUW: Voeg contactinformatie toe (optioneel, max 20 karakters)
-- **Profielfoto** ⭐ NIEUW: Upload een profielfoto (max 2MB, JPG/PNG/GIF)
+- **Telefoonnummer**: Voeg contactinformatie toe (optioneel, max 20 karakters)
+- **Profielfoto**: Upload een profielfoto (max 2MB, JPG/PNG/GIF)
 - Aantal werkuren aanpassen
 - Rol wijzigen (ambulancier ↔ admin)
 - Professional status wijzigen
@@ -1398,7 +1398,7 @@ Woensdag 7:00-19:00 (Dag)
 - Maximum 1 shift per week
 - Systeem houdt automatisch rekening met deze beperking
 
-#### 🚗 Rijbewijs C Validatie ⭐ NIEUW
+#### 🚗 Rijbewijs C Validatie
 
 **Veiligheidsregel:**
 
@@ -1728,7 +1728,7 @@ Instelbaar tussen 1 en 60 dagen
 - **Eenvoudig systeem**: → PIT diensten/ZW diensten die hier voor kiezen → Enkel volledige dag en nacht shiften
 - **Uitgebreid systeem**: → Enkel voor ZW diensten: volledige dagshiften/halve dagshiften + nachtshiften
 
-**Shift Ruilen Inschakelen:** ⭐ NIEUW
+**Shift Ruilen Inschakelen:**
 
 In de Weekdag Instellingen kunt u de shift ruil functionaliteit inschakelen:
 
@@ -2090,7 +2090,7 @@ A: Nee! Na configuratie synchroniseert het systeem automatisch. U drukt alleen o
 **Q: Wat gebeurt er als ik een shift aanpas na synchronisatie?**
 A: Gebruik "Alleen Wijzigingen" sync optie - het systeem detecteert automatisch of een shift moet worden aangemaakt (CREATE) of bijgewerkt (UPDATE) in Verdi. Gewijzigde shifts krijgen status "pending" en worden bij de volgende sync automatisch bijgewerkt.
 
-**Q: Hoe werkt de automatische UPDATE detectie?** ⭐ NIEUW
+**Q: Hoe werkt de automatische UPDATE detectie?**
 A: Het systeem is intelligent:
 - **Eerste keer**: Shift wordt aangemaakt in Verdi (CREATE operatie)
 - **Wijziging**: Als u een shift aanpast, wordt de status "pending"
@@ -2119,7 +2119,7 @@ A: Nee, synchronisatie gebeurt alleen on-demand via de sync knop. U behoudt voll
 **Q: Kan ik een sync ongedaan maken?**
 A: Synchronisatie is eenrichtingsverkeer (planning → Verdi). Voor verwijdering moet u Verdi zelf gebruiken.
 
-**Q: Wat gebeurt er als ik een shift verwijder die al naar Verdi is gestuurd?** ⭐ NIEUW
+**Q: Wat gebeurt er als ik een shift verwijder die al naar Verdi is gestuurd?**
 A: Volgens de Verdi API specificaties kunnen shifts NIET volledig worden verwijderd uit Verdi. In plaats daarvan:
 - Wanneer u een shift verwijdert in het planningssysteem, worden **alle personen uit de shift verwijderd** in Verdi (alle posities krijgen `person: null`)
 - De shift zelf blijft **leeg** in Verdi staan (als placeholder zonder toegewezen personen)
@@ -2243,7 +2243,7 @@ U kunt nu zelf de email server configureren via de webinterface, zonder hulp van
 2. Klik "Verstuur Rapportage" om direct te verzenden via email
 3. Klik "Export Excel" om het bestand direct te downloaden (backup optie)
 
-**Export Excel - Backup Functie:** ⭐ NIEUW
+**Export Excel - Backup Functie:**
 
 Als backup wanneer email niet beschikbaar is, kunt u het Excel rapport direct downloaden:
 - Selecteer de gewenste maand en jaar
@@ -2365,7 +2365,7 @@ A: Nee, logs kunnen niet worden verwijderd om de integriteit van de audittrail t
 
 **Supervisors hebben alle Admin rechten PLUS cross-station functionaliteit**
 
-### 👤 Supervisor Gebruikersbeheer ⭐ NIEUW
+### 👤 Supervisor Gebruikersbeheer
 
 #### Supervisors Bewerken
 
@@ -2406,7 +2406,7 @@ Supervisors hebben nu volledige toegang om **andere supervisors** te bewerken:
 - Medewerkers aan meerdere stations koppelen
 - Uur limieten instellen per station (inclusief 0 uur voor statistieken)
 - Flexibele inzet over posten heen
-- **Automatische UI updates**: Wijzigingen worden direct zichtbaar zonder pagina vernieuwen ⭐ NIEUW
+- **Automatische UI updates**: Wijzigingen worden direct zichtbaar zonder pagina vernieuwen
 
 #### Gebruiker Koppelen aan Station
 
@@ -2419,7 +2419,7 @@ Supervisors hebben nu volledige toegang om **andere supervisors** te bewerken:
 - Stel uur limiet in (bijv. 24 uur/maand, of 0 uur voor supervisors die geen shifts werken)
 - Klik "Koppelen"
 
-**Nul Uren Toewijzing:** ⭐ NIEUW
+**Nul Uren Toewijzing:**
 - Het is nu mogelijk om **0 uur** in te stellen voor een station toewijzing
 - Dit is handig voor supervisors die wel systeemtoegang nodig hebben maar geen shifts draaien
 - Zorgt voor nauwkeurigere statistieken
@@ -2429,7 +2429,7 @@ Supervisors hebben nu volledige toegang om **andere supervisors** te bewerken:
 - Wijzig uur limieten door het getal aan te passen
 - Verwijder cross-team toewijzingen met de **X knop** (zie hieronder)
 
-#### Cross-Team Toewijzing Verwijderen ⭐ NIEUW
+#### Cross-Team Toewijzing Verwijderen
 
 **Stap-voor-stap:**
 
