@@ -9,7 +9,7 @@ import { db } from "./db";
 import { activityLogs, type InsertActivityLog } from "@shared/schema";
 import { desc, eq, and, gte, lte, sql, inArray } from "drizzle-orm";
 
-export type ActivityCategory = "LOGIN" | "LOGOUT" | "PREFERENCE" | "SCHEDULE" | "USER_MANAGEMENT" | "SETTINGS" | "VERDI" | "OVERTIME" | "PROFILE" | "OTHER";
+export type ActivityCategory = "LOGIN" | "LOGOUT" | "PREFERENCE" | "SCHEDULE" | "SHIFT_SWAP" | "USER_MANAGEMENT" | "SETTINGS" | "VERDI" | "OVERTIME" | "PROFILE" | "OTHER";
 
 interface LogActivityParams {
   userId?: number | null;
