@@ -90,10 +90,39 @@ function ScheduleGenerator() {
   const [addShiftCustomEndTime, setAddShiftCustomEndTime] = useState("19:00");
   const [addShiftUserId, setAddShiftUserId] = useState<number>(0);
   
-  // Station selector state voor supervisors
-  const [selectedStationId, setSelectedStationId] = useState<number | null>(
-    user?.role === 'supervisor' ? null : user?.stationId || null
-  );
+  // Station selector state voor supervisors - lees uit sessionStorage indien beschikbaar
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(() => {
+    if (user?.role === 'supervisor') {
+      try {
+        const stationData = sessionStorage.getItem('selectedStation');
+        if (stationData) {
+          const parsed = JSON.parse(stationData);
+          return parsed.id || null;
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+      return null;
+    }
+    return user?.stationId || null;
+  });
+
+  // Sync selectedStationId from sessionStorage when user becomes available (handles async hydration)
+  useEffect(() => {
+    if (user?.role === 'supervisor' && selectedStationId === null) {
+      try {
+        const stationData = sessionStorage.getItem('selectedStation');
+        if (stationData) {
+          const parsed = JSON.parse(stationData);
+          if (parsed.id) {
+            setSelectedStationId(parsed.id);
+          }
+        }
+      } catch {
+        // Ignore parsing errors
+      }
+    }
+  }, [user?.role, selectedStationId]);
 
   // Query voor stations (alleen voor supervisors)
   const { data: stations } = useQuery<Station[]>({
