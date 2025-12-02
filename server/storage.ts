@@ -2987,6 +2987,17 @@ export class DatabaseStorage implements IStorage {
     return shift;
   }
 
+  async getShiftsForUserInDateRange(userId: number, startDate: Date, endDate: Date): Promise<Shift[]> {
+    return db.select()
+      .from(shifts)
+      .where(and(
+        eq(shifts.userId, userId),
+        gte(shifts.date, startDate),
+        lte(shifts.date, endDate)
+      ))
+      .orderBy(shifts.date);
+  }
+
   async updateShift(id: number, updateData: Partial<Shift>): Promise<Shift> {
     const [shift] = await db
       .update(shifts)

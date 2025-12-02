@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,11 +20,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Loader2, RefreshCw, AlertCircle, ArrowRightLeft, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Shift, User } from "@shared/schema";
+
+type SwapMode = "transfer" | "swap";
 
 interface ShiftSwapDialogProps {
   open: boolean;
@@ -42,8 +45,15 @@ export function ShiftSwapDialog({
   stationUsers,
 }: ShiftSwapDialogProps) {
   const { toast } = useToast();
+  const [swapMode, setSwapMode] = useState<SwapMode>("transfer");
   const [targetUserId, setTargetUserId] = useState<string>("");
+  const [targetShiftId, setTargetShiftId] = useState<string>("");
   const [requesterNote, setRequesterNote] = useState("");
+
+  // Reset targetShiftId when targetUserId or mode changes
+  useEffect(() => {
+    setTargetShiftId("");
+  }, [targetUserId, swapMode]);
 
   // Check if shift swaps are enabled for this station
   const { data: swapSettings, isLoading: isLoadingSettings } = useQuery({
@@ -61,10 +71,30 @@ export function ShiftSwapDialog({
     (u) => u.id !== currentUser.id && u.role !== "supervisor"
   );
 
+  // Fetch shifts of the selected colleague for swap mode
+  const { data: colleagueShifts = [], isLoading: isLoadingColleagueShifts } = useQuery<Shift[]>({
+    queryKey: ["/api/shifts/user", targetUserId, shift.stationId],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/shifts/user/${targetUserId}`);
+      if (!res.ok) throw new Error("Kon shifts niet ophalen");
+      return res.json();
+    },
+    enabled: swapMode === "swap" && !!targetUserId && open,
+  });
+
+  // Filter colleague shifts: future dates, same station, not already in a swap request
+  const eligibleColleagueShifts = colleagueShifts.filter((s) => {
+    const shiftDate = new Date(s.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return shiftDate >= today && s.stationId === shift.stationId;
+  });
+
   const createSwapMutation = useMutation({
     mutationFn: async (data: {
       requesterShiftId: number;
       targetUserId: number;
+      targetShiftId?: number;
       requesterNote?: string;
     }) => {
       const res = await apiRequest("POST", "/api/shift-swaps", data);
@@ -77,12 +107,14 @@ export function ShiftSwapDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shift-swaps/my-requests"] });
       toast({
-        title: "Ruilverzoek ingediend",
+        title: swapMode === "swap" ? "Ruilverzoek ingediend" : "Overnameverzoek ingediend",
         description: "Je verzoek is verzonden naar de admin/supervisor voor goedkeuring.",
       });
       onOpenChange(false);
       setTargetUserId("");
+      setTargetShiftId("");
       setRequesterNote("");
+      setSwapMode("transfer");
     },
     onError: (error: Error) => {
       toast({
@@ -97,7 +129,16 @@ export function ShiftSwapDialog({
     if (!targetUserId) {
       toast({
         title: "Selecteer een collega",
-        description: "Kies met wie je wilt ruilen",
+        description: swapMode === "swap" ? "Kies met wie je wilt ruilen" : "Kies wie de shift overneemt",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (swapMode === "swap" && !targetShiftId) {
+      toast({
+        title: "Selecteer een shift",
+        description: "Kies welke shift je wilt overnemen van je collega",
         variant: "destructive",
       });
       return;
@@ -106,6 +147,7 @@ export function ShiftSwapDialog({
     createSwapMutation.mutate({
       requesterShiftId: shift.id,
       targetUserId: parseInt(targetUserId),
+      targetShiftId: swapMode === "swap" ? parseInt(targetShiftId) : undefined,
       requesterNote: requesterNote || undefined,
     });
   };
@@ -170,6 +212,29 @@ export function ShiftSwapDialog({
     );
   }
 
+  // Helper to format shift time for colleague shifts
+  const formatColleagueShiftTime = (s: Shift) => {
+    if (!s.startTime || !s.endTime) return "-";
+    const startHour = new Date(s.startTime).getUTCHours();
+    const endHour = new Date(s.endTime).getUTCHours();
+    
+    if (s.type === "night") {
+      if (s.isSplitShift) {
+        if (startHour === 19 && endHour === 23) return "19:00-23:00";
+        else if (startHour === 23 && endHour === 7) return "23:00-07:00";
+        else return `${startHour.toString().padStart(2, "0")}:00-${endHour.toString().padStart(2, "0")}:00`;
+      }
+      return "19:00-07:00";
+    } else {
+      if (s.isSplitShift) {
+        if (startHour === 7 && endHour === 13) return "07:00-13:00";
+        else if (startHour === 13 && endHour === 19) return "13:00-19:00";
+        else return `${startHour.toString().padStart(2, "0")}:00-${endHour.toString().padStart(2, "0")}:00`;
+      }
+      return "07:00-19:00";
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -179,11 +244,43 @@ export function ShiftSwapDialog({
             Shift Ruilen
           </DialogTitle>
           <DialogDescription>
-            Vraag een collega om jouw shift over te nemen
+            {swapMode === "transfer" 
+              ? "Vraag een collega om jouw shift over te nemen" 
+              : "Wissel je shift met een shift van een collega"}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Mode selection */}
+          <div className="space-y-2">
+            <Label>Wat wil je doen?</Label>
+            <RadioGroup
+              value={swapMode}
+              onValueChange={(value) => setSwapMode(value as SwapMode)}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="transfer" id="mode-transfer" />
+                <Label htmlFor="mode-transfer" className="flex items-center gap-1 cursor-pointer">
+                  <ArrowRight className="h-4 w-4" />
+                  Overnemen
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="swap" id="mode-swap" />
+                <Label htmlFor="mode-swap" className="flex items-center gap-1 cursor-pointer">
+                  <ArrowRightLeft className="h-4 w-4" />
+                  Ruilen
+                </Label>
+              </div>
+            </RadioGroup>
+            <p className="text-xs text-muted-foreground">
+              {swapMode === "transfer" 
+                ? "Je collega neemt jouw shift over" 
+                : "Jullie wisselen elkaars shifts"}
+            </p>
+          </div>
+
           {/* Shift info */}
           <div className="bg-muted/50 rounded-lg p-3">
             <p className="text-sm font-medium">Je shift:</p>
@@ -197,7 +294,9 @@ export function ShiftSwapDialog({
 
           {/* Target user selection */}
           <div className="space-y-2">
-            <Label htmlFor="target-user">Wie neemt de shift over?</Label>
+            <Label htmlFor="target-user">
+              {swapMode === "transfer" ? "Wie neemt de shift over?" : "Met wie wil je ruilen?"}
+            </Label>
             <Select value={targetUserId} onValueChange={setTargetUserId}>
               <SelectTrigger id="target-user">
                 <SelectValue placeholder="Selecteer een collega..." />
@@ -212,10 +311,40 @@ export function ShiftSwapDialog({
             </Select>
             {availableColleagues.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                Geen collega's beschikbaar om mee te ruilen
+                Geen collega's beschikbaar
               </p>
             )}
           </div>
+
+          {/* Target shift selection (only for swap mode) */}
+          {swapMode === "swap" && targetUserId && (
+            <div className="space-y-2">
+              <Label htmlFor="target-shift">Welke shift wil je overnemen?</Label>
+              {isLoadingColleagueShifts ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Shifts laden...
+                </div>
+              ) : eligibleColleagueShifts.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Deze collega heeft geen toekomstige shifts beschikbaar
+                </p>
+              ) : (
+                <Select value={targetShiftId} onValueChange={setTargetShiftId}>
+                  <SelectTrigger id="target-shift">
+                    <SelectValue placeholder="Selecteer een shift..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {eligibleColleagueShifts.map((s) => (
+                      <SelectItem key={s.id} value={s.id.toString()}>
+                        {format(new Date(s.date), "EEE d MMM", { locale: nl })} - {s.type === "day" ? "Dag" : "Nacht"} ({formatColleagueShiftTime(s)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
 
           {/* Optional note */}
           <div className="space-y-2">
@@ -232,7 +361,7 @@ export function ShiftSwapDialog({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Je verzoek moet goedgekeurd worden door een admin of supervisor voordat de ruil definitief is.
+              Je verzoek moet goedgekeurd worden door een admin of supervisor voordat de {swapMode === "swap" ? "ruil" : "overname"} definitief is.
             </AlertDescription>
           </Alert>
         </div>
@@ -243,7 +372,11 @@ export function ShiftSwapDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!targetUserId || createSwapMutation.isPending}
+            disabled={
+              !targetUserId || 
+              (swapMode === "swap" && !targetShiftId) || 
+              createSwapMutation.isPending
+            }
           >
             {createSwapMutation.isPending && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

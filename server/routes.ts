@@ -2316,6 +2316,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   
+  // Get shifts for a specific user (for shift swap feature)
+  app.get("/api/shifts/user/:userId", requireAuth, async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
+    try {
+      const userId = parseInt(req.params.userId);
+      const user = req.user as any;
+      
+      // Get the target user to verify they exist and get their station
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "Gebruiker niet gevonden" });
+      }
+      
+      // Security: only allow fetching shifts for users in the same station (or supervisors)
+      if (user.role !== 'supervisor' && user.stationId !== targetUser.stationId) {
+        return res.status(403).json({ message: "Geen toegang tot shifts van deze gebruiker" });
+      }
+      
+      // Get future shifts for this user (next 3 months)
+      const now = new Date();
+      const threeMonthsLater = new Date();
+      threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+      
+      const shifts = await storage.getShiftsForUserInDateRange(userId, now, threeMonthsLater);
+      res.json(shifts);
+    } catch (error) {
+      console.error("Error getting user shifts:", error);
+      res.status(500).json({ message: "Fout bij ophalen shifts" });
+    }
+  });
+  
   // Get a specific shift by id
   app.get("/api/shifts/:id", requireAuth, async (req, res) => {
     // Disable caching for dynamic shift data
@@ -5687,6 +5721,38 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       const hasPendingSwap = await storage.hasExistingPendingSwapForShift(requesterShiftId);
       if (hasPendingSwap) {
         return res.status(400).json({ message: "Er is al een lopend ruil verzoek voor deze shift" });
+      }
+
+      // Valideer targetShiftId als het een echte swap is (niet alleen transfer)
+      if (targetShiftId) {
+        const targetShift = await storage.getShift(targetShiftId);
+        if (!targetShift) {
+          return res.status(404).json({ message: "Target shift niet gevonden" });
+        }
+
+        // Controleer of de target shift van de target user is
+        if (targetShift.userId !== targetUserId) {
+          return res.status(400).json({ message: "De geselecteerde shift behoort niet tot de geselecteerde collega" });
+        }
+
+        // Controleer of de target shift in hetzelfde station is
+        if (targetShift.stationId !== shift.stationId) {
+          return res.status(400).json({ message: "Je kunt alleen ruilen met shifts van hetzelfde station" });
+        }
+
+        // Controleer of de target shift in de toekomst is
+        const targetShiftDate = new Date(targetShift.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (targetShiftDate < today) {
+          return res.status(400).json({ message: "Je kunt niet ruilen met shifts uit het verleden" });
+        }
+
+        // Controleer of er al een pending swap request is voor de target shift
+        const targetHasPendingSwap = await storage.hasExistingPendingSwapForShift(targetShiftId);
+        if (targetHasPendingSwap) {
+          return res.status(400).json({ message: "Er is al een lopend ruil verzoek voor de geselecteerde shift van je collega" });
+        }
       }
 
       const swapRequest = await storage.createShiftSwapRequest({
