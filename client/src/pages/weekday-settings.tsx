@@ -433,6 +433,29 @@ export default function WeekdaySettings() {
         </CardContent>
       </Card>
 
+      {/* Feestdagen Link Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Feestdagen
+          </CardTitle>
+          <CardDescription>
+            Beheer feestdagen en speciale dagen voor de planning
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button 
+            variant="outline"
+            onClick={() => setLocation("/holidays")}
+            className="flex items-center gap-2"
+          >
+            <Calendar className="h-4 w-4" />
+            Ga naar Feestdagen Beheer
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Shift Ruilen Configuration Section */}
       <Card className="mb-6">
         <CardHeader>
