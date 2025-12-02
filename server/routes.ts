@@ -5861,6 +5861,25 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // Get count of pending shift swap requests for admin/supervisor (for notification badge)
+  app.get("/api/shift-swaps/pending/count", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      // Supervisor kan alle stations zien, admin alleen zijn eigen station
+      if (user.role === 'supervisor') {
+        const requests = await storage.getAllPendingShiftSwapRequests();
+        res.json({ count: requests.length });
+      } else {
+        const requests = await storage.getPendingShiftSwapRequestsForStation(user.stationId);
+        res.json({ count: requests.length });
+      }
+    } catch (error: any) {
+      console.error("Error getting pending shift swap count:", error);
+      res.status(500).json({ message: "Fout bij ophalen aantal wachtende ruil verzoeken" });
+    }
+  });
+
   // Get all shift swap requests for admin/supervisor
   app.get("/api/shift-swaps/all", requireAdmin, async (req, res) => {
     try {
