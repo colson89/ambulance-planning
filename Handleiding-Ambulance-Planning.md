@@ -2684,208 +2684,31 @@ Een hard refresh forceert de browser om de nieuwste versie te downloaden.
 
 ---
 
-### ⭐ Versie 2025.10 - 29 November 2025
+### Versiegeschiedenis (Samenvatting)
 
-**Audit & Security:**
-- 📋 **Activiteitenlog** - Volledig audit trail systeem
-  - Nieuwe centrale pagina voor het bekijken van alle systeemactiviteiten
-  - Logging van logins, uitloggen, voorkeurwijzigingen, planning generatie, gebruikersbeheer en overuren
-  - Filtermogelijkheden op datum, categorie, gebruiker en station
-  - IP-adres tracking voor security monitoring
-  - Excel export van gefilterde logs
-  - Toegangscontrole: supervisors zien alle stations, admins alleen hun eigen station
-  - Navigatie link toegevoegd in dashboard menu
+Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de belangrijkste functies per versie:
 
----
+| Versie | Datum | Belangrijkste Verbeteringen |
+|--------|-------|----------------------------|
+| **2025.11** | Dec 2025 | Shift Ruilen/Overnemen systeem, Activiteitenlog uitbreiding |
+| **2025.10** | Nov 2025 | Activiteitenlog met audit trail, IP-tracking |
+| **2025.9** | Nov 2025 | Brute-force bescherming, Excel export beschikbaarheden |
+| **2025.6** | Nov 2025 | Integraties pagina, Verdi split shift support |
+| **2025.5** | Nov 2025 | Wachtwoord beveiliging (scrypt), 70% snellere laadtijd |
+| **2025.4** | Nov 2025 | Verdi synchronisatie, sorteerbare statistieken |
+| **2025.3** | Okt 2025 | Cache optimalisatie, Windows Server support |
+| **2025.2** | Okt 2025 | Kalender synchronisatie (iCal) |
+| **2025.1** | Okt 2025 | Planning algoritme, cross-team functionaliteit |
 
-### ⭐ Versie 2025.9 - 29 November 2025
+**Huidige functies:**
+- Push notificaties voor shifts en wijzigingen
+- Shift ruilen en overnemen tussen collega's
+- Kalender synchronisatie met externe apps
+- Verdi alarmsoftware integratie
+- Automatische maandelijkse rapportage via email
+- Volledige audit trail en activiteitenlogging
+- Progressive Web App (installeerbaar op telefoon/tablet)
 
-**Beveiliging:**
-- 🛡️ **Brute-Force Bescherming** - Bescherming tegen ongeautoriseerde inlogpogingen
-  - Na 5 mislukte inlogpogingen wordt het account tijdelijk geblokkeerd voor 15 minuten
-  - Gebruikers zien duidelijke Nederlandse foutmeldingen met resterende pogingen
-  - Bij blokkade: "Te veel mislukte inlogpogingen. Probeer opnieuw over X minuten."
-  - Automatische reset na succesvolle login
-  - Logging van alle geblokkeerde pogingen voor security monitoring
-  - Beschermt tegen wachtwoord-raden aanvallen via internet
-
-- 📋 **Activiteitenlog** - Uitgebreid audit trail voor supervisors
-  - Centrale pagina voor het bekijken van alle systeemactiviteiten
-  - Filtermogelijkheden op datum, categorie, gebruiker en station
-  - Gelogde acties: logins, uitloggen, voorkeur wijzigingen, planning generatie, gebruikersbeheer, overuren
-  - IP-adres tracking voor security monitoring
-  - Excel export van gefilterde logs
-  - Toegang alleen voor supervisors (volledige inzage over alle stations)
-
-- 📥 **Exporteer Beschikbaarheden naar Excel** - Persoonlijke export functie
-  - Ambulanciers kunnen hun opgegeven beschikbaarheden exporteren
-  - Excel bestand bevat: datum, dag, type shift, tijden en opmerkingen
-  - Bestandsnaam: `Mijn_Beschikbaarheden_[Maand]_[Jaar].xlsx`
-  - Inclusief export timestamp
-  - Knop uitgeschakeld wanneer geen voorkeuren opgegeven
-
-**Technisch:**
-- Timezone correctie voor shift tijden (Europe/Brussels)
-- Verbeterde error handling voor login foutmeldingen
-
----
-
-### ⭐ Versie 2025.6 - 23 November 2025
-
-**Stabiliteit & Integraties:**
-- 🎯 **Integraties Management Pagina** - Nieuwe centrale hub voor externe diensten
-  - Toegang via "Integraties" in het hoofdmenu
-  - Overzicht van alle beschikbare externe koppelingen
-  - Verdi Alarm Software integratie nu via deze centrale pagina
-  - Ruimte voor toekomstige integraties (HR-systemen, andere alarmsoftware)
-  - Alleen toegankelijk voor admins en supervisors
-  - Navigatie: Dashboard → Integraties → Verdi Alarm Software
-
-- 🔧 **Verdi Sync Database Fix** - Split shift ondersteuning toegevoegd
-  - Nieuwe database kolommen voor split shift synchronisatie
-  - Voorkomt "column does not exist" errors bij Verdi sync
-  - Ondersteunt split_group, split_start_time en split_end_time
-  - Elimineerde frontend crashes ("Er is iets misgegaan")
-  - Stabiele API responses (geen 500 errors meer)
-
-- 🛡️ **Error Handling Verbeteringen** - Betere afhandeling van edge cases
-  - Verdi configuratie loading state correct afgehandeld
-  - Onderscheid tussen laden (undefined) en geen configuratie (null)
-  - Voorkomt null reference errors bij eerste gebruik
-  - Formulier reset werkt correct voor stations zonder Verdi configuratie
-
-**Gebruikerservaring:**
-- Soepelere navigatie naar Verdi instellingen via centrale Integraties hub
-- Minder crashes en error meldingen
-- Betere feedback bij ontbrekende configuratie
-- Stabielere Verdi synchronisatie
-
-### ⭐ Versie 2025.5 - November 2025
-
-**Beveiliging & Performance:**
-- 🔒 **Enhanced Password Security** - Wachtwoorden worden nu veilig opgeslagen met scrypt hashing
-  - Automatische migration van oude plaintext wachtwoorden naar scrypt hashes
-  - Gebruikers kunnen gewoon inloggen met hun bestaande wachtwoorden
-  - Bescherming tegen timing attacks en rainbow table aanvallen
-  - Voldoet aan moderne security best practices (OWASP standaarden)
-  - IT beheerders: zie `MIGRATION.md` voor upgrade instructies
-
-- ⚡ **Bundle Size Optimalisatie** - Applicatie laadt nu ~70% sneller
-  - Route-based code splitting: pagina's laden alleen wanneer je ernaar navigeert
-  - Vendor chunk splitting voor betere browser caching
-  - React.memo optimalisaties voor ScheduleGenerator en Statistics
-  - Tree-shakeable imports voor kleinere bundle sizes
-  - Productie bundle geanalyseerd en geoptimaliseerd
-  - CSS purging verwijdert ongebruikte styles
-
-- 🔐 **Session Security Hardening**
-  - HttpOnly cookies voorkomt XSS aanvallen
-  - Secure flag in productie (HTTPS only)
-  - SameSite=lax bescherming tegen CSRF
-  - Automatische session expiry detection met redirect naar login
-  - Veilige API response logging (geen credentials in logs)
-
-### Versie 2025.4 - November 2025
-
-**Verdi Integratie (Backend Volledig):**
-- 🔗 **Verdi Synchronisatie Backend** - Volledige API integratie met Verdi alarmsoftware
-  - On-demand shift synchronisatie naar Verdi
-  - Station-specifieke configuratie (URL, ShiftSheet GUID)
-  - Person GUID mappings voor gebruikers (cross-station support)
-  - Position GUID mappings per station
-  - Comprehensive sync logging met status tracking (success/error/pending)
-  - Toegangscontrole: Admins en Supervisors hebben volledige toegang
-  - 🔍 **Zoekfunctie in Gebruiker Mappings** - Snel gebruikers vinden bij GUID koppeling
-    - Zoekt op gebruikersnaam, voornaam, achternaam en volledige naam
-    - Real-time filtering terwijl u typt
-    - Null-safe implementatie (werkt ook met incomplete namen)
-
-**Statistieken Verbeteringen:**
-- 🔄 **Sorteerbare Kolommen** - Klik op elke kolom header om te sorteren
-  - Sorteren op medewerker naam (alfabetisch)
-  - Sorteren op alle voorkeuren kolommen (dag/nacht, week/weekend, totaal, percentage)
-  - Sorteren op alle werkelijke shifts kolommen
-  - Visuele sorteer-indicatoren (▲ ▼) tonen actieve kolom en richting
-  - Toggle functionaliteit: klik opnieuw om sorteerrichting om te draaien
-  - Percentage kolom sorteert correct op berekende waarde (voorkeuren/max uren)
-
-**Verdi Sync Verbeteringen:**
-- 🎯 **Flexibele Personeelsbezetting** - Intelligente handling van variabel aantal personen
-  - Automatische groepering van shifts met meerdere personen
-  - Shifts met 1 persoon: gebruikt alleen Positie 1 (Chauffeur)
-  - Shifts met 2 personen: gebruikt Positie 1 (Chauffeur) + Positie 2 (Ambulancier)
-  - Shifts met 0 personen: worden automatisch overgeslagen met duidelijke logging
-  - Positie indices aangepast naar 1-based (Positie 1, 2) i.p.v. 0-based
-  - Verbeterde error messages met specifieke positienamen (Chauffeur/Ambulancier)
-  - Sync logs worden correct toegepast op alle shift records in een groep
-- 🕐 **Correcte Tijdzones met Zomer/Wintertijd** - Shift tijden worden correct naar Verdi gestuurd
-  - Dagshifts: 7:00-19:00 (altijd correct, ongeacht seizoen)
-  - Nachtshifts: 19:00-7:00 (altijd correct, ongeacht seizoen)
-  - Automatische detectie van zomertijd (CEST, UTC+2) en wintertijd (CET, UTC+1)
-  - Timezone indicator wordt toegevoegd: +02:00 in zomer, +01:00 in winter
-  - Shift tijden in Verdi matchen exact met tijden in planning systeem
-  - Werkt correct bij overgang zomer/wintertijd (laatste zondag maart/oktober)
-
-**Beveiliging:**
-- 🔒 **Enhanced Authorization** - Alle Verdi endpoints beveiligd
-  - Toegankelijk voor admins en supervisors
-  - Voorkomt ongeautoriseerde toegang door ambulanciers
-  - Veilige opslag van Verdi credentials
-
-### Versie 2025.3 - Oktober 2025
-
-**Technische Verbeteringen:**
-- ⚡ **Cache Optimalisatie** - Snellere updates en betere browser prestaties
-  - API responses worden niet meer gecached → wijzigingen zijn direct zichtbaar
-  - React Query update interval verlaagd naar 5 seconden voor snellere gegevens refresh
-  - Intelligente caching strategie voor static assets (JS/CSS/afbeeldingen)
-  - Productie-ready cache headers voor optimale performance
-  - Werkt betrouwbaar op alle browsers (Chrome, Firefox, Safari, Edge)
-  
-- 🔧 **Configuratie Flexibiliteit**
-  - NODE_ENV environment variabele ondersteuning voor productie omgevingen
-  - Verbeterde Windows Server deployment ondersteuning
-
-**Gebruikerservaring:**
-- Wijzigingen in planning en voorkeuren zijn binnen seconden zichtbaar
-- Geen oude/verouderde data meer door browser caching
-- Betere performance door optimale asset caching
-
-### Versie 2025.2 - Oktober 2025
-
-**Nieuwe Features:**
-- 📅 **Kalender Synchronisatie** - Synchroniseer uw shifts automatisch met Google Calendar, Outlook of Apple Agenda
-  - Persoonlijke, beveiligde kalender link per gebruiker
-  - Automatische updates van shifts
-  - Werkt op alle apparaten (telefoon, tablet, computer)
-  - Eenvoudige handleiding voor alle populaire kalender apps
-
-**Technische Verbeteringen:**
-- 🕐 Verbeterde shift tijden weergave (onafhankelijk van tijdzone)
-- 🔒 Beveiligde token-based authenticatie voor kalender feeds
-- 📊 Nauwkeurigere dashboard waarschuwingen
-
-### Versie 2025.1
-
-**Features:**
-- ✅ Feestdagen worden nu correct behandeld als weekend dagen
-- ✅ Verbeterde veiligheidscontroles tegen opeenvolgende shifts
-- ✅ Geavanceerde planning algoritmes voor betere verdeling
-- ✅ Cross-team functionaliteit voor supervisors
-
-### Geplande Updates
-
-- 📧 Email notificaties voor planning wijzigingen
-- 📱 Mobiele app ondersteuning
-- 📊 Uitgebreide rapportage mogelijkheden
-- 🔐 Twee-factor authenticatie (Azure-AD)
-- 🖥️ Verdi Frontend Interface - Admin UI voor configuratie en synchronisatie
-
----
-
-Deze handleiding is bijgewerkt voor versie 2025.4 van het Ambulance Planning Systeem. Voor de meest recente informatie en updates, raadpleeg uw systeembeheerder.
----
----
 ---
 
 # 🖥️ DEEL II: IT BEHEERDERS HANDLEIDING
