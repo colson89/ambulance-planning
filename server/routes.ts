@@ -3550,6 +3550,29 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       const allStations = await storage.getAllStations();
       const stationMap = new Map(allStations.map(s => [s.id, s.displayName]));
       
+      // VTIMEZONE component voor Europe/Brussels (CET/CEST)
+      // Dit zorgt ervoor dat iCal clients de tijdzone correct interpreteren
+      const vtimezone = [
+        'BEGIN:VTIMEZONE',
+        'TZID:Europe/Brussels',
+        'X-LIC-LOCATION:Europe/Brussels',
+        'BEGIN:DAYLIGHT',
+        'TZOFFSETFROM:+0100',
+        'TZOFFSETTO:+0200',
+        'TZNAME:CEST',
+        'DTSTART:19700329T020000',
+        'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
+        'END:DAYLIGHT',
+        'BEGIN:STANDARD',
+        'TZOFFSETFROM:+0200',
+        'TZOFFSETTO:+0100',
+        'TZNAME:CET',
+        'DTSTART:19701025T030000',
+        'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
+        'END:STANDARD',
+        'END:VTIMEZONE'
+      ];
+
       // Genereer ICS bestand volgens RFC 5545
       const icsLines = [
         'BEGIN:VCALENDAR',
@@ -3558,8 +3581,26 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         'CALSCALE:GREGORIAN',
         'X-WR-CALNAME:Mijn Ambulance Shifts',
         'X-WR-TIMEZONE:Europe/Brussels',
-        'X-WR-CALDESC:Persoonlijke shift planning'
+        'X-WR-CALDESC:Persoonlijke shift planning',
+        ...vtimezone
       ];
+      
+      // Helper: Format lokale tijd voor ICS met TZID (YYYYMMDDTHHmmss formaat, geen Z suffix)
+      const formatLocalICSDate = (date: Date) => {
+        // Extract lokale tijd componenten (niet UTC!)
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+      };
+      
+      // Helper: Format UTC tijd voor DTSTAMP (met Z suffix)
+      const formatUTCICSDate = (date: Date) => {
+        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      };
       
       for (const shift of userShifts) {
         const shiftDate = new Date(shift.date);
@@ -3575,7 +3616,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         
         if (shift.type === 'day') {
           if (shift.isSplitShift) {
-            const startHour = startTime.getUTCHours();
+            const startHour = startTime.getHours(); // Gebruik lokale uren, niet UTC
             if (startHour === 7) {
               summary = `Dagshift VM - ${stationName}`;
               description = `Ambulance dagshift voormiddag (07:00-13:00) - ${stationName}`;
@@ -3592,22 +3633,17 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           description = `Ambulance nachtshift (19:00-07:00) - ${stationName}`;
         }
         
-        // Format datetime voor ICS (UTC format: YYYYMMDDTHHmmssZ)
-        const formatICSDate = (date: Date) => {
-          return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        };
-        
         const uid = `shift-${shift.id}@dgh-planning.be`;
-        const dtstamp = formatICSDate(new Date());
-        const dtstart = formatICSDate(startTime);
-        const dtend = formatICSDate(endTime);
+        const dtstamp = formatUTCICSDate(new Date()); // DTSTAMP blijft UTC
+        const dtstart = formatLocalICSDate(startTime); // Lokale tijd
+        const dtend = formatLocalICSDate(endTime); // Lokale tijd
         
         icsLines.push(
           'BEGIN:VEVENT',
           `UID:${uid}`,
           `DTSTAMP:${dtstamp}`,
-          `DTSTART:${dtstart}`,
-          `DTEND:${dtend}`,
+          `DTSTART;TZID=Europe/Brussels:${dtstart}`,
+          `DTEND;TZID=Europe/Brussels:${dtend}`,
           `SUMMARY:${summary}`,
           `DESCRIPTION:${description}`,
           'STATUS:CONFIRMED',
