@@ -82,10 +82,12 @@ export default function ShiftSwapsPage() {
     queryKey: ["/api/stations"],
   });
 
+  // Supervisors kunnen alle gebruikers ophalen, admins alleen hun station
+  const usersEndpoint = user?.role === 'supervisor' ? "/api/users/all" : "/api/users";
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: ["/api/users/all"],
+    queryKey: [usersEndpoint],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/users/all");
+      const res = await apiRequest("GET", usersEndpoint);
       if (!res.ok) throw new Error("Failed to fetch users");
       return res.json();
     },
