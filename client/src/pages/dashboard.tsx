@@ -102,6 +102,18 @@ export default function Dashboard() {
     },
   });
 
+  const { data: pendingSwapCount = 0 } = useQuery<number>({
+    queryKey: ["/api/shift-swaps/pending/count"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/shift-swaps/pending/count");
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return data.count || 0;
+    },
+    enabled: user?.role === 'admin' || user?.role === 'supervisor',
+    refetchInterval: 30000,
+  });
+
   const isLoading = shiftsLoading || usersLoading || preferencesLoading || stationsLoading || configsLoading;
 
   // Mutation om handmatig shifts toe te voegen voor open slots
@@ -514,11 +526,17 @@ export default function Dashboard() {
                   Integraties
                 </Button>
                 <Button 
-                  variant="outline"
+                  variant={pendingSwapCount > 0 ? "destructive" : "outline"}
                   onClick={() => setLocation("/shift-swaps")}
+                  className="relative"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Ruilverzoeken
+                  {pendingSwapCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center bg-white text-red-600 border-2 border-red-600 text-xs font-bold">
+                      {pendingSwapCount}
+                    </Badge>
+                  )}
                 </Button>
                 <div className="w-px h-6 bg-border mx-1" />
               </>
@@ -589,12 +607,17 @@ export default function Dashboard() {
                     Integraties
                   </Button>
                   <Button 
-                    variant="outline"
-                    className="justify-start h-12"
+                    variant={pendingSwapCount > 0 ? "destructive" : "outline"}
+                    className="justify-start h-12 relative"
                     onClick={() => { setLocation("/shift-swaps"); setMobileMenuOpen(false); }}
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Ruilverzoeken
+                    {pendingSwapCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center bg-white text-red-600 border-2 border-red-600 text-xs font-bold">
+                        {pendingSwapCount}
+                      </Badge>
+                    )}
                   </Button>
                 </>
               )}
