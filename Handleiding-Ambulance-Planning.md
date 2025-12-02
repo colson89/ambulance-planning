@@ -21,29 +21,40 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
 
 ## 📋 Inhoudsopgave
 
-- [Inleiding](#inleiding)
-- [Inloggen en Navigatie](#inloggen-en-navigatie)
+### Algemeen
+- [Inleiding](#-inleiding)
+- [Inloggen en Navigatie](#-inloggen-en-navigatie)
 - [App Installatie (Progressive Web App)](#-app-installatie-progressive-web-app)
 - [Responsieve Weergave](#-responsieve-weergave)
-- [Handleiding voor Ambulanciers](#handleiding-voor-ambulanciers)
+
+### Handleiding per Rol
+- [Handleiding voor Ambulanciers](#-handleiding-voor-ambulanciers)
   - [Voorkeuren Opgeven](#-voorkeuren-opgeven)
   - [Exporteer Beschikbaarheden naar Excel](#-exporteer-beschikbaarheden-naar-excel)
   - [Planning Bekijken](#-uw-planning-bekijken)
   - [Profiel Beheren](#-profiel-beheren)
   - [Kalender Synchronisatie](#-kalender-synchronisatie)
   - [Push Notificaties](#-push-notificaties)
-    - [Probleemoplossing Push Notificaties](#️-probleemoplossing-push-notificaties)
   - [Overuren Registreren](#-overuren-registreren)
-- [Handleiding voor Admins](#handleiding-voor-admins)
+  - [Shift Ruilen of Overnemen](#-shift-ruilen)
+- [Handleiding voor Admins](#-handleiding-voor-admins)
+  - [Gebruikersbeheer](#-gebruikersbeheer)
+  - [Planning Genereren](#-planning-genereren)
+  - [Feestdagen Beheren](#-feestdagen-beheren)
+  - [Statistieken Bekijken](#-statistieken-bekijken)
+  - [Weekdag Instellingen](#-weekdag-instellingen)
+  - [Integraties Beheer](#-integraties-beheer)
   - [Verdi Integratie](#-verdi-integratie)
   - [Reportage Personeelsdienst](#-reportage-personeelsdienst)
   - [Activiteitenlog](#-activiteitenlog)
-- [Handleiding voor Supervisors](#handleiding-voor-supervisors)
+- [Handleiding voor Supervisors](#-handleiding-voor-supervisors)
   - [Supervisor Gebruikersbeheer](#-supervisor-gebruikersbeheer)
   - [Cross-Team Beheer](#-cross-team-beheer)
-- [Handleiding voor IT Beheerders](#handleiding-voor-it-beheerders)
-- [Veelgestelde Vragen](#veelgestelde-vragen)
-- [Problemen Oplossen](#problemen-oplossen)
+
+### Ondersteuning
+- [IT Beheerders](#-it-beheerders)
+- [Veelgestelde Vragen](#-veelgestelde-vragen)
+- [Problemen Oplossen](#-problemen-oplossen)
 - [Systeem Updates](#-systeem-updates)
 
 ---
