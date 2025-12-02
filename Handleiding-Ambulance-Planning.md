@@ -2309,19 +2309,20 @@ A: Nee, het formaat is standaard. Het bevat alle relevante shift informatie per 
 
 ### 📋 Activiteitenlog
 
-⭐ **NIEUW - Security & Audit Trail**
-
 De Activiteitenlog biedt een uitgebreid overzicht van alle belangrijke acties in het systeem. Dit is essentieel voor security monitoring en het traceren van wijzigingen.
 
 #### 📋 Wat wordt gelogd?
 
 **Categorieën:**
-- **LOGIN** - Succesvolle en mislukte inlogpogingen
-- **LOGOUT** - Wanneer gebruikers uitloggen
-- **PREFERENCE** - Wijzigingen in beschikbaarheidsvoorkeuren
-- **SCHEDULE** - Planning generatie en wijzigingen
-- **USER_MANAGEMENT** - Aanmaken, wijzigen en verwijderen van gebruikers
-- **OVERTIME** - Registratie van overuren
+| Categorie | Beschrijving | Badge Kleur |
+|-----------|--------------|-------------|
+| **LOGIN** | Succesvolle en mislukte inlogpogingen | Groen |
+| **LOGOUT** | Wanneer gebruikers uitloggen | Grijs |
+| **PREFERENCE** | Wijzigingen in beschikbaarheidsvoorkeuren | Blauw |
+| **SCHEDULE** | Planning generatie en wijzigingen | Oranje |
+| **USER_MANAGEMENT** | Aanmaken, wijzigen en verwijderen van gebruikers | Paars |
+| **OVERTIME** | Registratie van overuren | Geel |
+| **SHIFT_SWAP** | Shift ruil- en overnameverzoeken (aanvragen, goedkeuringen, afwijzingen, annuleringen) | Paars |
 
 **Details per Log Entry:**
 - Datum en tijdstip
