@@ -1,9 +1,11 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer, FileText } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer, FileText, RefreshCw } from "lucide-react";
 import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { OvertimeDialog } from "@/components/overtime-dialog";
+import { ShiftSwapDialog } from "@/components/shift-swap-dialog";
+import { MySwapRequests } from "@/components/my-swap-requests";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -47,6 +49,8 @@ export default function Dashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [overtimeDialogOpen, setOvertimeDialogOpen] = useState(false);
   const [selectedOvertimeShift, setSelectedOvertimeShift] = useState<Shift | null>(null);
+  const [shiftSwapDialogOpen, setShiftSwapDialogOpen] = useState(false);
+  const [selectedSwapShift, setSelectedSwapShift] = useState<Shift | null>(null);
   const [showOnlyMyShifts, setShowOnlyMyShifts] = useState(() => {
     const saved = localStorage.getItem('dashboard_showOnlyMyShifts');
     return saved === 'true';
@@ -515,6 +519,13 @@ export default function Dashboard() {
                   <LinkIcon className="h-4 w-4 mr-2" />
                   Integraties
                 </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setLocation("/shift-swaps")}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Ruilverzoeken
+                </Button>
               </>
             )}
             <Button 
@@ -589,6 +600,14 @@ export default function Dashboard() {
                   >
                     <LinkIcon className="h-4 w-4 mr-2" />
                     Integraties
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/shift-swaps"); setMobileMenuOpen(false); }}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Ruilverzoeken
                   </Button>
                 </>
               )}
@@ -679,6 +698,9 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Mijn Ruilverzoeken sectie */}
+      <MySwapRequests users={users} shifts={shifts} />
       
       {/* Planning section georganiseerd per maand/jaar */}
       <Card>
@@ -804,23 +826,37 @@ export default function Dashboard() {
                             )}
                           </div>
                           {isCurrentUserShift && shift.status === "planned" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              onClick={() => {
-                                setSelectedOvertimeShift(shift);
-                                setOvertimeDialogOpen(true);
-                              }}
-                            >
-                              <Timer className="h-3 w-3 mr-1" />
-                              Overuren
-                              {myOvertime.filter(o => o.shiftId === shift.id).length > 0 && (
-                                <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
-                                  {myOvertime.filter(o => o.shiftId === shift.id).length}
-                                </Badge>
-                              )}
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => {
+                                  setSelectedSwapShift(shift);
+                                  setShiftSwapDialogOpen(true);
+                                }}
+                              >
+                                <RefreshCw className="h-3 w-3 mr-1" />
+                                Ruilen
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => {
+                                  setSelectedOvertimeShift(shift);
+                                  setOvertimeDialogOpen(true);
+                                }}
+                              >
+                                <Timer className="h-3 w-3 mr-1" />
+                                Overuren
+                                {myOvertime.filter(o => o.shiftId === shift.id).length > 0 && (
+                                  <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
+                                    {myOvertime.filter(o => o.shiftId === shift.id).length}
+                                  </Badge>
+                                )}
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -841,7 +877,7 @@ export default function Dashboard() {
                       <TableHead>Tijd</TableHead>
                       <TableHead>Medewerker</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Overuren</TableHead>
+                      <TableHead className="text-center">Acties</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -935,25 +971,41 @@ export default function Dashboard() {
                                 {shift.status === "open" ? "Open" : "Ingepland"}
                               </div>
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-center">
                               {isCurrentUserShift && shift.status === "planned" ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 px-2"
-                                  onClick={() => {
-                                    setSelectedOvertimeShift(shift);
-                                    setOvertimeDialogOpen(true);
-                                  }}
-                                >
-                                  <Timer className="h-3 w-3 mr-1" />
-                                  {myOvertime.filter(o => o.shiftId === shift.id).length > 0 && (
-                                    <Badge variant="secondary" className="mr-1 h-4 px-1 text-[10px]">
-                                      {myOvertime.filter(o => o.shiftId === shift.id).length}
-                                    </Badge>
-                                  )}
-                                  Registreren
-                                </Button>
+                                <div className="flex justify-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={() => {
+                                      setSelectedSwapShift(shift);
+                                      setShiftSwapDialogOpen(true);
+                                    }}
+                                    title="Shift ruilen met collega"
+                                  >
+                                    <RefreshCw className="h-3 w-3 mr-1" />
+                                    Ruilen
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={() => {
+                                      setSelectedOvertimeShift(shift);
+                                      setOvertimeDialogOpen(true);
+                                    }}
+                                    title="Overuren registreren"
+                                  >
+                                    <Timer className="h-3 w-3 mr-1" />
+                                    {myOvertime.filter(o => o.shiftId === shift.id).length > 0 && (
+                                      <Badge variant="secondary" className="mr-1 h-4 px-1 text-[10px]">
+                                        {myOvertime.filter(o => o.shiftId === shift.id).length}
+                                      </Badge>
+                                    )}
+                                    Overuren
+                                  </Button>
+                                </div>
                               ) : (
                                 <span className="text-muted-foreground text-xs">-</span>
                               )}
@@ -1277,6 +1329,17 @@ export default function Dashboard() {
         shift={selectedOvertimeShift}
         existingOvertime={selectedOvertimeShift ? myOvertime.filter(o => o.shiftId === selectedOvertimeShift.id) : []}
       />
+
+      {/* Shift Swap Dialog */}
+      {selectedSwapShift && user && (
+        <ShiftSwapDialog
+          open={shiftSwapDialogOpen}
+          onOpenChange={setShiftSwapDialogOpen}
+          shift={selectedSwapShift}
+          currentUser={user}
+          stationUsers={users.filter(u => u.stationId === selectedSwapShift.stationId)}
+        />
+      )}
     </div>
   );
 }

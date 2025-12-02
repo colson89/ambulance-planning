@@ -72,6 +72,14 @@ Documentation Files:
   - **Timezone Handling**: Shift times are formatted as local time (Europe/Brussels) without UTC conversion when sending to Verdi API. Database stores timestamps without timezone info; VerdiClient uses formatLocalDateTime() helper to preserve local times (7:00-19:00 stays 7:00-19:00, not converted to 9:00-21:00).
   - **Shift Deletion Behavior**: According to Verdi API specifications, shifts cannot be truly deleted once created. When a shift is "deleted" in the planning system, all person assignments are cleared by sending `person: null` for all positions via POST request. The shift remains in Verdi as an empty placeholder. This is the official Verdi API behavior - DELETE endpoint is not supported.
   - **Future Enhancement**: Configuratie and Positie Mappings tabs should be restricted to supervisors only (currently open to admins for testing purposes). Gebruiker Mappings tab remains available to admins for their station users.
+- **Shift Swap System**: Allows ambulanciers to request shift swaps with colleagues, requiring admin/supervisor approval. Features:
+  - **Per-Station Configuration**: Shift swapping can be enabled/disabled per station via Weekdag Instellingen toggle (stored in station_settings table)
+  - **Request Flow**: User submits swap request → Admin/Supervisor approves → Shifts automatically transferred
+  - **Frontend UI**: Users see "Ruilen" button on their shifts in Dashboard. My Swap Requests section shows pending/approved/rejected requests
+  - **Admin UI**: Dedicated `/shift-swaps` page for admins/supervisors to view and manage all pending requests with approve/reject actions
+  - **Push Notifications**: Automatic notifications sent to admins (new requests) and involved users (approval/rejection)
+  - **Database Tables**: `shift_swap_requests` (request tracking with status), `station_settings` (per-station allowShiftSwaps toggle)
+  - **Constraints**: Users can only swap their own shifts, target must be same station, no duplicate pending requests per shift
 
 ### Build & Deployment
 - **Pre-built Application**: Deployed as pre-compiled backend (`dist/index.js`) and static frontend assets (`dist/public/`).

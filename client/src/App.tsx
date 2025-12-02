@@ -26,6 +26,7 @@ const Integrations = lazy(() => import("@/pages/integrations"));
 const Reportage = lazy(() => import("@/pages/reportage"));
 const Overtime = lazy(() => import("@/pages/overtime"));
 const ActivityLogs = lazy(() => import("@/pages/activity-logs"));
+const ShiftSwaps = lazy(() => import("@/pages/shift-swaps"));
 
 // Loading component for Suspense boundaries
 function PageLoader() {
@@ -55,6 +56,7 @@ function Router() {
         <ProtectedRoute path="/reportage" component={Reportage} />
         <ProtectedRoute path="/overtime" component={Overtime} />
         <ProtectedRoute path="/activity-logs" component={ActivityLogs} />
+        <ProtectedRoute path="/shift-swaps" component={ShiftSwaps} />
         <Route path="/station-select" component={StationSelect} />
         <Route path="/auth" component={AuthPage} />
         <Route component={NotFound} />

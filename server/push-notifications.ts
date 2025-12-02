@@ -269,3 +269,109 @@ export async function sendShiftChangedNotification(
     data: { type: 'shift_changed', userId, shiftDate: shift.date.toISOString(), shiftType, action }
   });
 }
+
+// ========================================
+// SHIFT SWAP NOTIFICATIONS
+// ========================================
+
+/**
+ * Notify admins/supervisors about a new shift swap request
+ */
+export async function notifyNewShiftSwapRequest(
+  stationId: number,
+  requesterName: string,
+  shiftDate: Date,
+  shiftType: 'day' | 'night'
+): Promise<void> {
+  // Get all admin/supervisor users for this station
+  const allUsers = await storage.getAllUsers();
+  const adminUsers = allUsers.filter(
+    u => (u.role === 'admin' || u.role === 'supervisor') && 
+         (u.stationId === stationId || u.role === 'supervisor')
+  );
+
+  if (adminUsers.length === 0) {
+    return;
+  }
+
+  const dateStr = shiftDate.toLocaleDateString('nl-BE', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+  const shiftTypeText = shiftType === 'day' ? 'dagdienst' : 'nachtdienst';
+
+  // Send to all admins/supervisors who have shift change notifications enabled
+  for (const admin of adminUsers) {
+    const subscriptions = await storage.getAllPushSubscriptions(admin.id);
+    const enabledSubscriptions = subscriptions.filter(sub => sub.notifyMyShiftChanged);
+
+    if (enabledSubscriptions.length > 0) {
+      await sendPushToSubscriptions(enabledSubscriptions, {
+        title: 'Nieuw Ruilverzoek',
+        body: `${requesterName} wil de ${shiftTypeText} van ${dateStr} ruilen.`,
+        icon: '/icon-192x192.png',
+        url: '/shift-swaps',
+        data: { type: 'shift_swap_request', stationId }
+      });
+    }
+  }
+}
+
+/**
+ * Notify users about shift swap request status changes
+ */
+export async function notifyShiftSwapStatusChanged(
+  requesterId: number,
+  targetUserId: number,
+  shiftDate: Date,
+  shiftType: 'day' | 'night',
+  status: 'approved' | 'rejected',
+  adminNote?: string
+): Promise<void> {
+  const dateStr = shiftDate.toLocaleDateString('nl-BE', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+  const shiftTypeText = shiftType === 'day' ? 'dagdienst' : 'nachtdienst';
+
+  // Notify requester
+  const requesterSubscriptions = await storage.getAllPushSubscriptions(requesterId);
+  const requesterEnabledSubs = requesterSubscriptions.filter(sub => sub.notifyMyShiftChanged);
+
+  if (requesterEnabledSubs.length > 0) {
+    const title = status === 'approved' ? 'Ruilverzoek Goedgekeurd' : 'Ruilverzoek Afgewezen';
+    let body = status === 'approved'
+      ? `Je ruilverzoek voor de ${shiftTypeText} op ${dateStr} is goedgekeurd.`
+      : `Je ruilverzoek voor de ${shiftTypeText} op ${dateStr} is afgewezen.`;
+    
+    if (adminNote) {
+      body += ` Opmerking: ${adminNote}`;
+    }
+
+    await sendPushToSubscriptions(requesterEnabledSubs, {
+      title,
+      body,
+      icon: '/icon-192x192.png',
+      url: '/dashboard',
+      data: { type: 'shift_swap_status', status }
+    });
+  }
+
+  // Notify target user if approved
+  if (status === 'approved') {
+    const targetSubscriptions = await storage.getAllPushSubscriptions(targetUserId);
+    const targetEnabledSubs = targetSubscriptions.filter(sub => sub.notifyMyShiftChanged);
+
+    if (targetEnabledSubs.length > 0) {
+      await sendPushToSubscriptions(targetEnabledSubs, {
+        title: 'Nieuwe Dienst Toegewezen',
+        body: `Je hebt de ${shiftTypeText} op ${dateStr} overgenomen via een ruilverzoek.`,
+        icon: '/icon-192x192.png',
+        url: '/dashboard',
+        data: { type: 'shift_swap_approved' }
+      });
+    }
+  }
+}

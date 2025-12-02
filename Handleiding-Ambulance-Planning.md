@@ -932,6 +932,54 @@ Overuren worden automatisch meegenomen in de maandelijkse Excel rapportages:
 
 ---
 
+### 🔄 Shift Ruilen ⭐ NIEUW
+
+Het Shift Ruilen systeem stelt ambulanciers in staat om onderling van shift te wisselen, mits goedkeuring van een admin of supervisor.
+
+#### Wat is Shift Ruilen?
+
+- Wanneer u verhinderd bent voor een geplande shift, kunt u een collega vragen om uw shift over te nemen
+- Het verzoek moet goedgekeurd worden door een admin of supervisor voordat de ruil definitief is
+- Bij goedkeuring wordt de shift automatisch overgedragen naar de overnemer
+
+#### Hoe een Ruilverzoek Indienen?
+
+1. Ga naar uw **Dashboard**
+2. Zoek de shift die u wilt ruilen in de planning sectie
+3. Klik op de **"Ruilen"** knop (🔄 icoon) naast uw shift
+4. Selecteer een collega die de shift kan overnemen
+5. Voeg optioneel een reden toe (bijv. "vakantie", "afspraak")
+6. Klik **"Verzoek Indienen"**
+
+#### Mijn Ruilverzoeken Bekijken
+
+Op uw dashboard ziet u een overzicht van uw ingediende ruilverzoeken:
+- **In behandeling** (geel): Wacht op goedkeuring
+- **Goedgekeurd** (groen): Shift is overgedragen
+- **Afgewezen** (rood): Verzoek is afgewezen
+
+#### Ruilverzoek Annuleren
+
+- U kunt een lopend verzoek annuleren zolang het nog niet is goedgekeurd
+- Klik op het X icoon naast uw verzoek
+- Bevestig de annulering
+
+#### Push Notificaties
+
+Bij shift ruilen ontvangt u automatisch meldingen (indien ingeschakeld):
+- **Aanvrager**: Melding bij goedkeuring of afwijzing
+- **Overnemer**: Melding wanneer de shift is toegewezen
+- **Admins/Supervisors**: Melding bij nieuwe ruilverzoeken
+
+#### Let Op
+
+- Shift ruilen moet eerst ingeschakeld zijn door de admin voor uw station
+- De overnemer moet dezelfde station hebben als de shift
+- U kunt alleen uw eigen shifts ruilen
+- Goedgekeurde ruilen kunnen niet ongedaan gemaakt worden
+
+---
+
 ## 🔧 Handleiding voor Admins
 
 **Admins hebben alle rechten van ambulanciers PLUS extra beheersrechten**
@@ -1662,6 +1710,29 @@ Instelbaar tussen 1 en 60 dagen
 
 - **Eenvoudig systeem**: → PIT diensten/ZW diensten die hier voor kiezen → Enkel volledige dag en nacht shiften
 - **Uitgebreid systeem**: → Enkel voor ZW diensten: volledige dagshiften/halve dagshiften + nachtshiften
+
+**Shift Ruilen Inschakelen:** ⭐ NIEUW
+
+In de Weekdag Instellingen kunt u de shift ruil functionaliteit inschakelen:
+
+1. Open **Weekdag Instellingen**
+2. Zoek de sectie **"Shift Ruilen"**
+3. Schakel de toggle in om shift ruilen toe te staan
+4. Ambulanciers kunnen nu ruilverzoeken indienen
+
+**Ruilverzoeken Beheren:**
+
+Als admin/supervisor vindt u een nieuwe **"Ruilverzoeken"** knop in het dashboard menu. Hier kunt u:
+
+- Alle openstaande ruilverzoeken bekijken
+- Verzoeken goedkeuren (shifts worden automatisch gewisseld)
+- Verzoeken afwijzen met een optionele reden
+- Gefilterd bekijken op status (in behandeling / alle)
+
+**Bij Goedkeuring:**
+- De shift wordt automatisch overgedragen naar de overnemer
+- Beide gebruikers ontvangen een push notificatie (indien ingeschakeld)
+- De ruil is direct zichtbaar in de planning
 
 ### 🔌 Integraties Beheer
 

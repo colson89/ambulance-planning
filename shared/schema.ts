@@ -469,3 +469,60 @@ export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
 
 export type ActivityLog = typeof activityLogs.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+
+// Station instellingen (per station configureerbare features)
+export const stationSettings = pgTable("station_settings", {
+  id: serial("id").primaryKey(),
+  stationId: integer("station_id").notNull().references(() => stations.id).unique(),
+  allowShiftSwaps: boolean("allow_shift_swaps").notNull().default(false), // Of shift ruilen is toegestaan
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertStationSettingsSchema = createInsertSchema(stationSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type StationSettings = typeof stationSettings.$inferSelect;
+export type InsertStationSettings = z.infer<typeof insertStationSettingsSchema>;
+
+// Shift ruil verzoeken
+export const shiftSwapRequests = pgTable("shift_swap_requests", {
+  id: serial("id").primaryKey(),
+  // Aanvrager info
+  requesterId: integer("requester_id").notNull().references(() => users.id),
+  requesterShiftId: integer("requester_shift_id").notNull().references(() => shifts.id),
+  // Doelcollega info (wie de shift overneemt)
+  targetUserId: integer("target_user_id").notNull().references(() => users.id),
+  targetShiftId: integer("target_shift_id").references(() => shifts.id), // Optioneel: als ze ook ruilen
+  // Station (voor filtering)
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  // Status workflow: pending -> accepted_by_target -> approved/rejected
+  status: text("status", { 
+    enum: ["pending", "accepted_by_target", "approved", "rejected", "cancelled"] 
+  }).notNull().default("pending"),
+  // Optionele notities
+  requesterNote: text("requester_note"),
+  adminNote: text("admin_note"),
+  // Wie heeft goedgekeurd/afgewezen
+  reviewedById: integer("reviewed_by_id").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertShiftSwapRequestSchema = createInsertSchema(shiftSwapRequests, {
+  requesterNote: z.string().max(500, "Notitie mag maximaal 500 karakters bevatten").optional(),
+  adminNote: z.string().max(500, "Notitie mag maximaal 500 karakters bevatten").optional()
+}).omit({
+  id: true,
+  status: true,
+  reviewedById: true,
+  reviewedAt: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type ShiftSwapRequest = typeof shiftSwapRequests.$inferSelect;
+export type InsertShiftSwapRequest = z.infer<typeof insertShiftSwapRequestSchema>;

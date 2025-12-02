@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { WeekdayConfig, Station } from "@shared/schema";
-import { Loader2, Save, Calendar, Settings, Home, ArrowLeft } from "lucide-react";
+import { WeekdayConfig, Station, StationSettings } from "@shared/schema";
+import { Loader2, Save, Calendar, Settings, Home, ArrowLeft, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLocation } from "wouter";
 
@@ -71,6 +71,40 @@ export default function WeekdaySettings() {
       setDeadlineDays(deadlineConfig.days);
     }
   }, [deadlineConfig]);
+
+  // Station settings query (for shift swap toggle)
+  const { data: stationSettings } = useQuery<StationSettings>({
+    queryKey: ["/api/station-settings", effectiveStationId],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/station-settings/${effectiveStationId}`);
+      if (!res.ok) throw new Error("Kon station instellingen niet ophalen");
+      return res.json();
+    },
+    enabled: !!effectiveStationId,
+  });
+
+  // Update station settings mutation
+  const updateStationSettingsMutation = useMutation({
+    mutationFn: async (settings: { allowShiftSwaps: boolean }) => {
+      const res = await apiRequest("PUT", `/api/station-settings/${effectiveStationId}`, settings);
+      if (!res.ok) throw new Error("Kon station instellingen niet bijwerken");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/station-settings", effectiveStationId] });
+      toast({
+        title: "Instellingen bijgewerkt",
+        description: "Station instellingen zijn opgeslagen",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout bij opslaan",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const updateDeadlineMutation = useMutation({
     mutationFn: async (days: number) => {
@@ -394,6 +428,53 @@ export default function WeekdaySettings() {
                   : 'Eenvoudig systeem actief - alleen volledig beschikbaar of niet beschikbaar'
                 }
               </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Shift Ruilen Configuration Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <RefreshCw className="h-5 w-5" />
+            Shift Ruilen
+          </CardTitle>
+          <CardDescription>
+            Sta gebruikers toe om shifts onderling te ruilen (met goedkeuring van admin/supervisor)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label htmlFor="allow-shift-swaps" className="text-base font-medium">
+                Shift ruilen inschakelen
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Wanneer ingeschakeld kunnen ambulanciers een verzoek indienen om hun shift te ruilen met een collega. 
+                Elke ruil moet eerst goedgekeurd worden door een admin of supervisor.
+              </p>
+            </div>
+            <Switch
+              id="allow-shift-swaps"
+              checked={stationSettings?.allowShiftSwaps || false}
+              onCheckedChange={(checked) => {
+                updateStationSettingsMutation.mutate({ allowShiftSwaps: checked });
+              }}
+              disabled={updateStationSettingsMutation.isPending}
+            />
+          </div>
+          <div className="pt-4 mt-4 border-t">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className={`w-2 h-2 rounded-full ${
+                stationSettings?.allowShiftSwaps 
+                  ? 'bg-green-500' 
+                  : 'bg-gray-400'
+              }`} />
+              {stationSettings?.allowShiftSwaps 
+                ? 'Shift ruilen is ingeschakeld - gebruikers kunnen ruilverzoeken indienen'
+                : 'Shift ruilen is uitgeschakeld - gebruikers kunnen geen ruilverzoeken indienen'
+              }
             </div>
           </div>
         </CardContent>

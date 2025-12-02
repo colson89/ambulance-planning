@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -3971,6 +3971,190 @@ export class DatabaseStorage implements IStorage {
 
   async deleteOvertime(id: number): Promise<void> {
     await db.delete(overtime).where(eq(overtime.id, id));
+  }
+
+  // ========================================
+  // STATION SETTINGS FUNCTIONS
+  // ========================================
+
+  async getStationSettings(stationId: number): Promise<StationSettings | undefined> {
+    const result = await db.select()
+      .from(stationSettings)
+      .where(eq(stationSettings.stationId, stationId));
+    return result[0];
+  }
+
+  async getAllStationSettings(): Promise<StationSettings[]> {
+    return db.select().from(stationSettings);
+  }
+
+  async createOrUpdateStationSettings(stationId: number, settings: Partial<InsertStationSettings>): Promise<StationSettings> {
+    const existing = await this.getStationSettings(stationId);
+    
+    if (existing) {
+      const result = await db
+        .update(stationSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(stationSettings.stationId, stationId))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db
+        .insert(stationSettings)
+        .values({ stationId, ...settings })
+        .returning();
+      return result[0];
+    }
+  }
+
+  async isShiftSwapEnabledForStation(stationId: number): Promise<boolean> {
+    const settings = await this.getStationSettings(stationId);
+    return settings?.allowShiftSwaps ?? false;
+  }
+
+  // ========================================
+  // SHIFT SWAP REQUEST FUNCTIONS
+  // ========================================
+
+  async createShiftSwapRequest(data: InsertShiftSwapRequest): Promise<ShiftSwapRequest> {
+    const result = await db
+      .insert(shiftSwapRequests)
+      .values(data)
+      .returning();
+    return result[0];
+  }
+
+  async getShiftSwapRequest(id: number): Promise<ShiftSwapRequest | undefined> {
+    const result = await db.select()
+      .from(shiftSwapRequests)
+      .where(eq(shiftSwapRequests.id, id));
+    return result[0];
+  }
+
+  async getShiftSwapRequestsByStation(stationId: number): Promise<ShiftSwapRequest[]> {
+    return db.select()
+      .from(shiftSwapRequests)
+      .where(eq(shiftSwapRequests.stationId, stationId))
+      .orderBy(desc(shiftSwapRequests.createdAt));
+  }
+
+  async getShiftSwapRequestsByRequester(userId: number): Promise<ShiftSwapRequest[]> {
+    return db.select()
+      .from(shiftSwapRequests)
+      .where(eq(shiftSwapRequests.requesterId, userId))
+      .orderBy(desc(shiftSwapRequests.createdAt));
+  }
+
+  async getShiftSwapRequestsByTarget(userId: number): Promise<ShiftSwapRequest[]> {
+    return db.select()
+      .from(shiftSwapRequests)
+      .where(eq(shiftSwapRequests.targetUserId, userId))
+      .orderBy(desc(shiftSwapRequests.createdAt));
+  }
+
+  async getPendingShiftSwapRequestsForStation(stationId: number): Promise<ShiftSwapRequest[]> {
+    return db.select()
+      .from(shiftSwapRequests)
+      .where(and(
+        eq(shiftSwapRequests.stationId, stationId),
+        or(
+          eq(shiftSwapRequests.status, 'pending'),
+          eq(shiftSwapRequests.status, 'accepted_by_target')
+        )
+      ))
+      .orderBy(desc(shiftSwapRequests.createdAt));
+  }
+
+  async getAllPendingShiftSwapRequests(): Promise<ShiftSwapRequest[]> {
+    return db.select()
+      .from(shiftSwapRequests)
+      .where(
+        or(
+          eq(shiftSwapRequests.status, 'pending'),
+          eq(shiftSwapRequests.status, 'accepted_by_target')
+        )
+      )
+      .orderBy(desc(shiftSwapRequests.createdAt));
+  }
+
+  async getAllShiftSwapRequests(): Promise<ShiftSwapRequest[]> {
+    return db.select()
+      .from(shiftSwapRequests)
+      .orderBy(desc(shiftSwapRequests.createdAt));
+  }
+
+  async updateShiftSwapRequest(id: number, data: Partial<ShiftSwapRequest>): Promise<ShiftSwapRequest> {
+    const result = await db
+      .update(shiftSwapRequests)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(shiftSwapRequests.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async cancelShiftSwapRequest(id: number): Promise<ShiftSwapRequest> {
+    return this.updateShiftSwapRequest(id, { status: 'cancelled' });
+  }
+
+  async approveShiftSwapRequest(id: number, reviewerId: number, adminNote?: string): Promise<ShiftSwapRequest> {
+    const swapRequest = await this.getShiftSwapRequest(id);
+    if (!swapRequest) {
+      throw new Error('Shift swap request not found');
+    }
+
+    // Voer de daadwerkelijke swap uit
+    const requesterShift = await this.getShift(swapRequest.requesterShiftId);
+    if (!requesterShift) {
+      throw new Error('Requester shift not found');
+    }
+
+    // Update de shift naar de nieuwe gebruiker
+    await db.update(shifts)
+      .set({ 
+        userId: swapRequest.targetUserId,
+        updatedAt: new Date()
+      })
+      .where(eq(shifts.id, swapRequest.requesterShiftId));
+
+    // Als er een target shift is (echte ruil), update die ook
+    if (swapRequest.targetShiftId) {
+      await db.update(shifts)
+        .set({ 
+          userId: swapRequest.requesterId,
+          updatedAt: new Date()
+        })
+        .where(eq(shifts.id, swapRequest.targetShiftId));
+    }
+
+    // Update de swap request status
+    return this.updateShiftSwapRequest(id, { 
+      status: 'approved',
+      reviewedById: reviewerId,
+      reviewedAt: new Date(),
+      adminNote: adminNote || null
+    });
+  }
+
+  async rejectShiftSwapRequest(id: number, reviewerId: number, adminNote?: string): Promise<ShiftSwapRequest> {
+    return this.updateShiftSwapRequest(id, { 
+      status: 'rejected',
+      reviewedById: reviewerId,
+      reviewedAt: new Date(),
+      adminNote: adminNote || null
+    });
+  }
+
+  async hasExistingPendingSwapForShift(shiftId: number): Promise<boolean> {
+    const result = await db.select()
+      .from(shiftSwapRequests)
+      .where(and(
+        eq(shiftSwapRequests.requesterShiftId, shiftId),
+        or(
+          eq(shiftSwapRequests.status, 'pending'),
+          eq(shiftSwapRequests.status, 'accepted_by_target')
+        )
+      ));
+    return result.length > 0;
   }
 }
 

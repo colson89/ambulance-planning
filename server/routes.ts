@@ -12,7 +12,7 @@ import { and, gte, lte, asc, ne, eq, inArray } from "drizzle-orm";
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import multer from 'multer';
-import { sendPlanningPublishedNotification, sendShiftChangedNotification } from "./push-notifications";
+import { sendPlanningPublishedNotification, sendShiftChangedNotification, notifyNewShiftSwapRequest, notifyShiftSwapStatusChanged } from "./push-notifications";
 import { logActivity, getActivityLogs, getActivityLogsCount, getClientInfo, ActivityActions, type ActivityCategory } from "./activity-logger";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -5613,6 +5613,380 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     } catch (error: any) {
       console.error('Error exporting activity logs:', error);
       res.status(500).json({ message: "Fout bij exporteren activiteitenlogs", error: error.message });
+    }
+  });
+
+  // ========================================
+  // SHIFT SWAP / RUIL ENDPOINTS
+  // ========================================
+
+  // Get station settings (including shift swap toggle)
+  app.get("/api/station-settings/:stationId", requireAuth, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const settings = await storage.getStationSettings(stationId);
+      
+      // Return default settings if none exist
+      res.json(settings || { stationId, allowShiftSwaps: false });
+    } catch (error: any) {
+      console.error("Error getting station settings:", error);
+      res.status(500).json({ message: "Fout bij ophalen station instellingen" });
+    }
+  });
+
+  // Update station settings (admin/supervisor only)
+  app.put("/api/station-settings/:stationId", requireAdmin, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const { allowShiftSwaps } = req.body;
+      
+      const settings = await storage.createOrUpdateStationSettings(stationId, { allowShiftSwaps });
+      res.json(settings);
+    } catch (error: any) {
+      console.error("Error updating station settings:", error);
+      res.status(500).json({ message: "Fout bij bijwerken station instellingen" });
+    }
+  });
+
+  // Check if shift swaps are enabled for a station
+  app.get("/api/station-settings/:stationId/shift-swaps-enabled", requireAuth, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const enabled = await storage.isShiftSwapEnabledForStation(stationId);
+      res.json({ enabled });
+    } catch (error: any) {
+      console.error("Error checking shift swap status:", error);
+      res.status(500).json({ message: "Fout bij controleren shift ruil status" });
+    }
+  });
+
+  // Create a shift swap request
+  app.post("/api/shift-swaps", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { requesterShiftId, targetUserId, targetShiftId, requesterNote } = req.body;
+
+      // Haal de shift op om het stationId te bepalen
+      const shift = await storage.getShift(requesterShiftId);
+      if (!shift) {
+        return res.status(404).json({ message: "Shift niet gevonden" });
+      }
+
+      // Controleer of de shift van de aanvrager is
+      if (shift.userId !== user.id) {
+        return res.status(403).json({ message: "Je kunt alleen je eigen shifts ruilen" });
+      }
+
+      // Controleer of shift swaps zijn ingeschakeld voor dit station
+      const swapsEnabled = await storage.isShiftSwapEnabledForStation(shift.stationId);
+      if (!swapsEnabled) {
+        return res.status(403).json({ message: "Shift ruilen is niet ingeschakeld voor dit station" });
+      }
+
+      // Controleer of er al een pending swap request is voor deze shift
+      const hasPendingSwap = await storage.hasExistingPendingSwapForShift(requesterShiftId);
+      if (hasPendingSwap) {
+        return res.status(400).json({ message: "Er is al een lopend ruil verzoek voor deze shift" });
+      }
+
+      const swapRequest = await storage.createShiftSwapRequest({
+        requesterId: user.id,
+        requesterShiftId,
+        targetUserId,
+        targetShiftId: targetShiftId || null,
+        stationId: shift.stationId,
+        requesterNote: requesterNote || null
+      });
+
+      // Send push notification to admins/supervisors
+      try {
+        await notifyNewShiftSwapRequest(
+          shift.stationId,
+          `${user.firstName} ${user.lastName}`,
+          new Date(shift.date),
+          shift.type as 'day' | 'night'
+        );
+      } catch (pushError) {
+        console.error("Failed to send push notification for shift swap request:", pushError);
+        // Don't fail the request if push notification fails
+      }
+
+      res.status(201).json(swapRequest);
+    } catch (error: any) {
+      console.error("Error creating shift swap request:", error);
+      res.status(500).json({ message: "Fout bij aanmaken ruil verzoek" });
+    }
+  });
+
+  // Get my shift swap requests (as requester)
+  app.get("/api/shift-swaps/my-requests", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const requests = await storage.getShiftSwapRequestsByRequester(user.id);
+      res.json(requests);
+    } catch (error: any) {
+      console.error("Error getting my shift swap requests:", error);
+      res.status(500).json({ message: "Fout bij ophalen mijn ruil verzoeken" });
+    }
+  });
+
+  // Get shift swap requests where I am the target
+  app.get("/api/shift-swaps/incoming", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const requests = await storage.getShiftSwapRequestsByTarget(user.id);
+      res.json(requests);
+    } catch (error: any) {
+      console.error("Error getting incoming shift swap requests:", error);
+      res.status(500).json({ message: "Fout bij ophalen inkomende ruil verzoeken" });
+    }
+  });
+
+  // Get all pending shift swap requests for admin/supervisor (across stations they have access to)
+  app.get("/api/shift-swaps/pending", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      // Supervisor kan alle stations zien, admin alleen zijn eigen station
+      if (user.role === 'supervisor') {
+        const requests = await storage.getAllPendingShiftSwapRequests();
+        res.json(requests);
+      } else {
+        const requests = await storage.getPendingShiftSwapRequestsForStation(user.stationId);
+        res.json(requests);
+      }
+    } catch (error: any) {
+      console.error("Error getting pending shift swap requests:", error);
+      res.status(500).json({ message: "Fout bij ophalen wachtende ruil verzoeken" });
+    }
+  });
+
+  // Get all shift swap requests for admin/supervisor
+  app.get("/api/shift-swaps/all", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      // Supervisor kan alle stations zien, admin alleen zijn eigen station
+      if (user.role === 'supervisor') {
+        const requests = await storage.getAllShiftSwapRequests();
+        res.json(requests);
+      } else {
+        const requests = await storage.getShiftSwapRequestsByStation(user.stationId);
+        res.json(requests);
+      }
+    } catch (error: any) {
+      console.error("Error getting all shift swap requests:", error);
+      res.status(500).json({ message: "Fout bij ophalen ruil verzoeken" });
+    }
+  });
+
+  // Get pending shift swap requests for a station (admin/supervisor)
+  app.get("/api/shift-swaps/station/:stationId/pending", requireAdmin, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const requests = await storage.getPendingShiftSwapRequestsForStation(stationId);
+      res.json(requests);
+    } catch (error: any) {
+      console.error("Error getting pending shift swap requests:", error);
+      res.status(500).json({ message: "Fout bij ophalen wachtende ruil verzoeken" });
+    }
+  });
+
+  // Get all shift swap requests for a station (admin/supervisor)
+  app.get("/api/shift-swaps/station/:stationId", requireAdmin, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const requests = await storage.getShiftSwapRequestsByStation(stationId);
+      res.json(requests);
+    } catch (error: any) {
+      console.error("Error getting shift swap requests for station:", error);
+      res.status(500).json({ message: "Fout bij ophalen ruil verzoeken" });
+    }
+  });
+
+  // Cancel a shift swap request (requester only) - POST method
+  app.post("/api/shift-swaps/:id/cancel", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const id = parseInt(req.params.id);
+      
+      const request = await storage.getShiftSwapRequest(id);
+      if (!request) {
+        return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
+      }
+
+      // Alleen de aanvrager of admin/supervisor kan annuleren
+      if (request.requesterId !== user.id && user.role === 'ambulancier') {
+        return res.status(403).json({ message: "Je kunt alleen je eigen ruil verzoeken annuleren" });
+      }
+
+      // Kan alleen annuleren als status pending is
+      if (request.status !== 'pending' && request.status !== 'accepted_by_target') {
+        return res.status(400).json({ message: "Dit verzoek kan niet meer geannuleerd worden" });
+      }
+
+      const cancelled = await storage.cancelShiftSwapRequest(id);
+      res.json(cancelled);
+    } catch (error: any) {
+      console.error("Error cancelling shift swap request:", error);
+      res.status(500).json({ message: "Fout bij annuleren ruil verzoek" });
+    }
+  });
+
+  // Cancel a shift swap request (requester only) - DELETE method  
+  app.delete("/api/shift-swaps/:id", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const id = parseInt(req.params.id);
+      
+      const request = await storage.getShiftSwapRequest(id);
+      if (!request) {
+        return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
+      }
+
+      // Alleen de aanvrager of admin/supervisor kan annuleren
+      if (request.requesterId !== user.id && user.role === 'ambulancier') {
+        return res.status(403).json({ message: "Je kunt alleen je eigen ruil verzoeken annuleren" });
+      }
+
+      // Kan alleen annuleren als status pending is
+      if (request.status !== 'pending' && request.status !== 'accepted_by_target') {
+        return res.status(400).json({ message: "Dit verzoek kan niet meer geannuleerd worden" });
+      }
+
+      const cancelled = await storage.cancelShiftSwapRequest(id);
+      res.json(cancelled);
+    } catch (error: any) {
+      console.error("Error cancelling shift swap request:", error);
+      res.status(500).json({ message: "Fout bij annuleren ruil verzoek" });
+    }
+  });
+
+  // Approve a shift swap request (admin/supervisor only)
+  app.post("/api/shift-swaps/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const id = parseInt(req.params.id);
+      const { adminNote } = req.body;
+
+      const request = await storage.getShiftSwapRequest(id);
+      if (!request) {
+        return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
+      }
+
+      // Status moet 'pending' zijn (we slaan accepted_by_target workflow over voor nu)
+      if (request.status !== 'pending' && request.status !== 'accepted_by_target') {
+        return res.status(400).json({ message: "Dit verzoek kan niet meer goedgekeurd worden" });
+      }
+
+      // Get shift info for notification
+      const requesterShift = await storage.getShift(request.requesterShiftId);
+
+      const approved = await storage.approveShiftSwapRequest(id, user.id, adminNote);
+
+      // Send push notifications to requester and target
+      if (requesterShift) {
+        try {
+          await notifyShiftSwapStatusChanged(
+            request.requesterId,
+            request.targetUserId,
+            new Date(requesterShift.date),
+            requesterShift.type as 'day' | 'night',
+            'approved',
+            adminNote
+          );
+        } catch (pushError) {
+          console.error("Failed to send push notification for shift swap approval:", pushError);
+        }
+      }
+
+      res.json(approved);
+    } catch (error: any) {
+      console.error("Error approving shift swap request:", error);
+      res.status(500).json({ message: "Fout bij goedkeuren ruil verzoek" });
+    }
+  });
+
+  // Reject a shift swap request (admin/supervisor only)
+  app.post("/api/shift-swaps/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const id = parseInt(req.params.id);
+      const { adminNote } = req.body;
+
+      const request = await storage.getShiftSwapRequest(id);
+      if (!request) {
+        return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
+      }
+
+      if (request.status !== 'pending' && request.status !== 'accepted_by_target') {
+        return res.status(400).json({ message: "Dit verzoek kan niet meer afgewezen worden" });
+      }
+
+      // Get shift info for notification
+      const requesterShift = await storage.getShift(request.requesterShiftId);
+
+      const rejected = await storage.rejectShiftSwapRequest(id, user.id, adminNote);
+
+      // Send push notification to requester
+      if (requesterShift) {
+        try {
+          await notifyShiftSwapStatusChanged(
+            request.requesterId,
+            request.targetUserId,
+            new Date(requesterShift.date),
+            requesterShift.type as 'day' | 'night',
+            'rejected',
+            adminNote
+          );
+        } catch (pushError) {
+          console.error("Failed to send push notification for shift swap rejection:", pushError);
+        }
+      }
+
+      res.json(rejected);
+    } catch (error: any) {
+      console.error("Error rejecting shift swap request:", error);
+      res.status(500).json({ message: "Fout bij afwijzen ruil verzoek" });
+    }
+  });
+
+  // Get a single shift swap request with full details
+  app.get("/api/shift-swaps/:id", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const id = parseInt(req.params.id);
+
+      const request = await storage.getShiftSwapRequest(id);
+      if (!request) {
+        return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
+      }
+
+      // Regular users can only see requests they're involved in
+      if (user.role === 'ambulancier' && request.requesterId !== user.id && request.targetUserId !== user.id) {
+        return res.status(403).json({ message: "Geen toegang tot dit ruil verzoek" });
+      }
+
+      // Get additional details
+      const requester = await storage.getUser(request.requesterId);
+      const target = await storage.getUser(request.targetUserId);
+      const requesterShift = await storage.getShift(request.requesterShiftId);
+      const targetShift = request.targetShiftId ? await storage.getShift(request.targetShiftId) : null;
+      const station = await storage.getStation(request.stationId);
+      const reviewer = request.reviewedById ? await storage.getUser(request.reviewedById) : null;
+
+      res.json({
+        ...request,
+        requester: requester ? { id: requester.id, firstName: requester.firstName, lastName: requester.lastName } : null,
+        target: target ? { id: target.id, firstName: target.firstName, lastName: target.lastName } : null,
+        requesterShift,
+        targetShift,
+        station: station ? { id: station.id, displayName: station.displayName } : null,
+        reviewer: reviewer ? { id: reviewer.id, firstName: reviewer.firstName, lastName: reviewer.lastName } : null
+      });
+    } catch (error: any) {
+      console.error("Error getting shift swap request:", error);
+      res.status(500).json({ message: "Fout bij ophalen ruil verzoek" });
     }
   });
 
