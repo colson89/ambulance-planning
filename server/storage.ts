@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftBids, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftBid, type InsertShiftBid } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -4186,6 +4186,153 @@ export class DatabaseStorage implements IStorage {
         )
       ));
     return result.length > 0;
+  }
+
+  // ========================================
+  // SHIFT BID FUNCTIONS
+  // ========================================
+
+  async createShiftBid(data: InsertShiftBid): Promise<ShiftBid> {
+    const result = await db
+      .insert(shiftBids)
+      .values(data)
+      .returning();
+    return result[0];
+  }
+
+  async getShiftBid(id: number): Promise<ShiftBid | undefined> {
+    const result = await db.select()
+      .from(shiftBids)
+      .where(eq(shiftBids.id, id));
+    return result[0];
+  }
+
+  async getShiftBidsByShift(shiftId: number): Promise<ShiftBid[]> {
+    return db.select()
+      .from(shiftBids)
+      .where(eq(shiftBids.shiftId, shiftId))
+      .orderBy(desc(shiftBids.createdAt));
+  }
+
+  async getPendingShiftBidsByShift(shiftId: number): Promise<ShiftBid[]> {
+    return db.select()
+      .from(shiftBids)
+      .where(and(
+        eq(shiftBids.shiftId, shiftId),
+        eq(shiftBids.status, 'pending')
+      ))
+      .orderBy(asc(shiftBids.createdAt));
+  }
+
+  async getShiftBidsByUser(userId: number): Promise<ShiftBid[]> {
+    return db.select()
+      .from(shiftBids)
+      .where(eq(shiftBids.userId, userId))
+      .orderBy(desc(shiftBids.createdAt));
+  }
+
+  async getShiftBidsByStation(stationId: number): Promise<ShiftBid[]> {
+    return db.select()
+      .from(shiftBids)
+      .where(eq(shiftBids.stationId, stationId))
+      .orderBy(desc(shiftBids.createdAt));
+  }
+
+  async getPendingShiftBidsByStation(stationId: number): Promise<ShiftBid[]> {
+    return db.select()
+      .from(shiftBids)
+      .where(and(
+        eq(shiftBids.stationId, stationId),
+        eq(shiftBids.status, 'pending')
+      ))
+      .orderBy(desc(shiftBids.createdAt));
+  }
+
+  async hasExistingPendingBidForShift(shiftId: number, userId: number): Promise<boolean> {
+    const result = await db.select()
+      .from(shiftBids)
+      .where(and(
+        eq(shiftBids.shiftId, shiftId),
+        eq(shiftBids.userId, userId),
+        eq(shiftBids.status, 'pending')
+      ));
+    return result.length > 0;
+  }
+
+  async updateShiftBid(id: number, data: Partial<ShiftBid>): Promise<ShiftBid> {
+    const result = await db
+      .update(shiftBids)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(shiftBids.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async withdrawShiftBid(id: number): Promise<ShiftBid> {
+    return this.updateShiftBid(id, { status: 'withdrawn' });
+  }
+
+  async acceptShiftBid(id: number, reviewerId: number): Promise<ShiftBid> {
+    const bid = await this.getShiftBid(id);
+    if (!bid) {
+      throw new Error('Shift bid not found');
+    }
+
+    const shift = await this.getShift(bid.shiftId);
+    if (!shift) {
+      throw new Error('Shift not found');
+    }
+
+    if (shift.status !== 'open') {
+      throw new Error('Shift is no longer open');
+    }
+
+    // Update the shift to assign it to the bidder
+    await db.update(shifts)
+      .set({ 
+        userId: bid.userId,
+        status: 'planned',
+        updatedAt: new Date()
+      })
+      .where(eq(shifts.id, bid.shiftId));
+
+    // Accept this bid
+    await this.updateShiftBid(id, { 
+      status: 'accepted',
+      reviewedById: reviewerId,
+      reviewedAt: new Date()
+    });
+
+    // Reject all other pending bids for this shift
+    await db.update(shiftBids)
+      .set({ 
+        status: 'rejected',
+        reviewedById: reviewerId,
+        reviewedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(shiftBids.shiftId, bid.shiftId),
+        eq(shiftBids.status, 'pending'),
+        ne(shiftBids.id, id)
+      ));
+
+    return this.getShiftBid(id) as Promise<ShiftBid>;
+  }
+
+  async rejectShiftBid(id: number, reviewerId: number): Promise<ShiftBid> {
+    return this.updateShiftBid(id, { 
+      status: 'rejected',
+      reviewedById: reviewerId,
+      reviewedAt: new Date()
+    });
+  }
+
+  async getAllPendingShiftBids(): Promise<ShiftBid[]> {
+    return db.select()
+      .from(shiftBids)
+      .where(eq(shiftBids.status, 'pending'))
+      .orderBy(desc(shiftBids.createdAt));
   }
 }
 

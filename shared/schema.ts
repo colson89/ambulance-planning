@@ -526,3 +526,32 @@ export const insertShiftSwapRequestSchema = createInsertSchema(shiftSwapRequests
 });
 export type ShiftSwapRequest = typeof shiftSwapRequests.$inferSelect;
 export type InsertShiftSwapRequest = z.infer<typeof insertShiftSwapRequestSchema>;
+
+// Shift biedingen - medewerkers kunnen bieden op open shifts
+export const shiftBids = pgTable("shift_bids", {
+  id: serial("id").primaryKey(),
+  shiftId: integer("shift_id").notNull().references(() => shifts.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  status: text("status", { 
+    enum: ["pending", "accepted", "rejected", "withdrawn"] 
+  }).notNull().default("pending"),
+  note: text("note"), // Optionele notitie van de bieder
+  reviewedById: integer("reviewed_by_id").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertShiftBidSchema = createInsertSchema(shiftBids, {
+  note: z.string().max(500, "Notitie mag maximaal 500 karakters bevatten").optional()
+}).omit({
+  id: true,
+  status: true,
+  reviewedById: true,
+  reviewedAt: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type ShiftBid = typeof shiftBids.$inferSelect;
+export type InsertShiftBid = z.infer<typeof insertShiftBidSchema>;

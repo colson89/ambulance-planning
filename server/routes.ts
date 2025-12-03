@@ -6242,6 +6242,451 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // ========================================
+  // SHIFT BID ENDPOINTS
+  // ========================================
+
+  // Create a bid on an open shift
+  app.post("/api/shifts/:shiftId/bids", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const shiftId = parseInt(req.params.shiftId);
+      const { note } = req.body;
+
+      // Get the shift
+      const shift = await storage.getShift(shiftId);
+      if (!shift) {
+        return res.status(404).json({ message: "Shift niet gevonden" });
+      }
+
+      // Check if shift is open
+      if (shift.status !== 'open') {
+        return res.status(400).json({ message: "Je kunt alleen bieden op open shifts" });
+      }
+
+      // Check if user already has a pending bid for this shift
+      const existingBid = await storage.hasExistingPendingBidForShift(shiftId, user.id);
+      if (existingBid) {
+        return res.status(400).json({ message: "Je hebt al een actieve bieding op deze shift" });
+      }
+
+      // Create the bid
+      const bid = await storage.createShiftBid({
+        shiftId,
+        userId: user.id,
+        stationId: shift.stationId,
+        note: note || null
+      });
+
+      // Log activity
+      try {
+        const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
+        const shiftType = shift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+        await logActivity({
+          userId: user.id,
+          stationId: shift.stationId,
+          action: 'CREATE',
+          category: 'SHIFT_BID',
+          details: `Bieding geplaatst op ${shiftType} van ${shiftDate}`,
+          targetShiftId: shiftId,
+          ipAddress: getClientInfo(req).ipAddress
+        });
+      } catch (logError) {
+        console.error("Failed to log shift bid activity:", logError);
+      }
+
+      // Send push notification to admins/supervisors
+      try {
+        const station = await storage.getStation(shift.stationId);
+        const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
+        const shiftType = shift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+        
+        // Get admins and supervisors for this station
+        const admins = await storage.getUsersByStation(shift.stationId);
+        const adminUsers = admins.filter(u => u.role === 'admin' || u.role === 'supervisor');
+        
+        for (const admin of adminUsers) {
+          await sendPushNotificationToUser(
+            admin.id,
+            'Nieuwe Bieding',
+            `${user.firstName} ${user.lastName} wil ${shiftType} op ${shiftDate} doen`,
+            `/schedule`
+          );
+        }
+      } catch (notifyError) {
+        console.error("Failed to send push notification for shift bid:", notifyError);
+      }
+
+      res.status(201).json(bid);
+    } catch (error: any) {
+      console.error("Error creating shift bid:", error);
+      res.status(500).json({ message: "Fout bij plaatsen bieding" });
+    }
+  });
+
+  // Get bids for a specific shift (admin/supervisor only)
+  app.get("/api/shifts/:shiftId/bids", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const shiftId = parseInt(req.params.shiftId);
+
+      // Get the shift
+      const shift = await storage.getShift(shiftId);
+      if (!shift) {
+        return res.status(404).json({ message: "Shift niet gevonden" });
+      }
+
+      // Only admins/supervisors can see all bids, others can only see their own
+      let bids;
+      if (user.role === 'admin' || user.role === 'supervisor') {
+        bids = await storage.getShiftBidsByShift(shiftId);
+      } else {
+        const userBids = await storage.getShiftBidsByUser(user.id);
+        bids = userBids.filter(b => b.shiftId === shiftId);
+      }
+
+      // Enrich bids with user info
+      const enrichedBids = await Promise.all(bids.map(async (bid) => {
+        const bidUser = await storage.getUser(bid.userId);
+        return {
+          ...bid,
+          user: bidUser ? {
+            id: bidUser.id,
+            firstName: bidUser.firstName,
+            lastName: bidUser.lastName,
+            role: bidUser.role
+          } : null
+        };
+      }));
+
+      res.json(enrichedBids);
+    } catch (error: any) {
+      console.error("Error getting shift bids:", error);
+      res.status(500).json({ message: "Fout bij ophalen biedingen" });
+    }
+  });
+
+  // Get pending bid count for a shift
+  app.get("/api/shifts/:shiftId/bids/count", requireAuth, async (req, res) => {
+    try {
+      const shiftId = parseInt(req.params.shiftId);
+      const bids = await storage.getPendingShiftBidsByShift(shiftId);
+      res.json({ count: bids.length });
+    } catch (error: any) {
+      console.error("Error getting shift bid count:", error);
+      res.status(500).json({ message: "Fout bij ophalen aantal biedingen" });
+    }
+  });
+
+  // Get bid counts for all open shifts in a month (admin/supervisor)
+  app.get("/api/shift-bids/counts", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { month, year, stationId } = req.query;
+      
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+      
+      const targetStationId = user.role === 'supervisor' && stationId 
+        ? parseInt(stationId as string) 
+        : user.stationId;
+      
+      // Get all shifts for this month and station
+      const shifts = await storage.getShiftsByMonthAndStation(
+        parseInt(month as string),
+        parseInt(year as string),
+        targetStationId
+      );
+      
+      // Filter to open shifts
+      const openShifts = shifts.filter(s => s.status === 'open');
+      
+      // Get bid counts for each open shift
+      const counts = await Promise.all(openShifts.map(async (shift) => {
+        const bids = await storage.getPendingShiftBidsByShift(shift.id);
+        return {
+          shiftId: shift.id,
+          count: bids.length
+        };
+      }));
+      
+      // Only return shifts with bids
+      res.json(counts.filter(c => c.count > 0));
+    } catch (error: any) {
+      console.error("Error getting shift bid counts:", error);
+      res.status(500).json({ message: "Fout bij ophalen biedingen tellingen" });
+    }
+  });
+
+  // Get my bids
+  app.get("/api/shift-bids/my-bids", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const bids = await storage.getShiftBidsByUser(user.id);
+
+      // Enrich with shift info
+      const enrichedBids = await Promise.all(bids.map(async (bid) => {
+        const shift = await storage.getShift(bid.shiftId);
+        const station = await storage.getStation(bid.stationId);
+        return {
+          ...bid,
+          shift,
+          station: station ? { id: station.id, displayName: station.displayName } : null
+        };
+      }));
+
+      res.json(enrichedBids);
+    } catch (error: any) {
+      console.error("Error getting my shift bids:", error);
+      res.status(500).json({ message: "Fout bij ophalen mijn biedingen" });
+    }
+  });
+
+  // Get all pending bids (admin/supervisor)
+  app.get("/api/shift-bids/pending", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      let bids;
+
+      if (user.role === 'supervisor') {
+        bids = await storage.getAllPendingShiftBids();
+      } else {
+        bids = await storage.getPendingShiftBidsByStation(user.stationId);
+      }
+
+      // Enrich with user and shift info
+      const enrichedBids = await Promise.all(bids.map(async (bid) => {
+        const bidUser = await storage.getUser(bid.userId);
+        const shift = await storage.getShift(bid.shiftId);
+        const station = await storage.getStation(bid.stationId);
+        return {
+          ...bid,
+          user: bidUser ? {
+            id: bidUser.id,
+            firstName: bidUser.firstName,
+            lastName: bidUser.lastName,
+            role: bidUser.role
+          } : null,
+          shift,
+          station: station ? { id: station.id, displayName: station.displayName } : null
+        };
+      }));
+
+      res.json(enrichedBids);
+    } catch (error: any) {
+      console.error("Error getting pending shift bids:", error);
+      res.status(500).json({ message: "Fout bij ophalen openstaande biedingen" });
+    }
+  });
+
+  // Get pending bid count
+  app.get("/api/shift-bids/pending/count", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      let bids;
+
+      if (user.role === 'supervisor') {
+        bids = await storage.getAllPendingShiftBids();
+      } else {
+        bids = await storage.getPendingShiftBidsByStation(user.stationId);
+      }
+
+      res.json({ count: bids.length });
+    } catch (error: any) {
+      console.error("Error getting pending shift bid count:", error);
+      res.status(500).json({ message: "Fout bij ophalen aantal biedingen" });
+    }
+  });
+
+  // Accept a bid (assign the shift to the bidder)
+  app.post("/api/shift-bids/:bidId/accept", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const bidId = parseInt(req.params.bidId);
+
+      const bid = await storage.getShiftBid(bidId);
+      if (!bid) {
+        return res.status(404).json({ message: "Bieding niet gevonden" });
+      }
+
+      if (bid.status !== 'pending') {
+        return res.status(400).json({ message: "Deze bieding is al verwerkt" });
+      }
+
+      // Check station access (admins can only accept bids for their station, supervisors can do all)
+      if (user.role === 'admin' && bid.stationId !== user.stationId) {
+        return res.status(403).json({ message: "Geen toegang tot biedingen van andere posten" });
+      }
+
+      // Accept the bid (this also assigns the shift and rejects other bids)
+      const acceptedBid = await storage.acceptShiftBid(bidId, user.id);
+
+      // Get shift and bidder info for logging and notifications
+      const shift = await storage.getShift(bid.shiftId);
+      const bidder = await storage.getUser(bid.userId);
+
+      // Log activity
+      try {
+        if (shift && bidder) {
+          const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
+          const shiftType = shift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+          await logActivity({
+            userId: user.id,
+            stationId: bid.stationId,
+            action: 'APPROVE',
+            category: 'SHIFT_BID',
+            details: `Bieding geaccepteerd: ${shiftType} op ${shiftDate} toegewezen aan ${bidder.firstName} ${bidder.lastName}`,
+            targetUserId: bid.userId,
+            targetShiftId: bid.shiftId,
+            ipAddress: getClientInfo(req).ipAddress
+          });
+        }
+      } catch (logError) {
+        console.error("Failed to log shift bid acceptance activity:", logError);
+      }
+
+      // Send push notification to the bidder
+      try {
+        if (shift) {
+          const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
+          const shiftType = shift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+          await sendPushNotificationToUser(
+            bid.userId,
+            'Bieding Geaccepteerd!',
+            `Je bieding voor ${shiftType} op ${shiftDate} is geaccepteerd. De shift is aan jou toegewezen.`,
+            `/dashboard`
+          );
+        }
+      } catch (notifyError) {
+        console.error("Failed to send push notification for accepted bid:", notifyError);
+      }
+
+      res.json(acceptedBid);
+    } catch (error: any) {
+      console.error("Error accepting shift bid:", error);
+      res.status(500).json({ message: error.message || "Fout bij accepteren bieding" });
+    }
+  });
+
+  // Reject a bid
+  app.post("/api/shift-bids/:bidId/reject", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const bidId = parseInt(req.params.bidId);
+
+      const bid = await storage.getShiftBid(bidId);
+      if (!bid) {
+        return res.status(404).json({ message: "Bieding niet gevonden" });
+      }
+
+      if (bid.status !== 'pending') {
+        return res.status(400).json({ message: "Deze bieding is al verwerkt" });
+      }
+
+      // Check station access
+      if (user.role === 'admin' && bid.stationId !== user.stationId) {
+        return res.status(403).json({ message: "Geen toegang tot biedingen van andere posten" });
+      }
+
+      const rejectedBid = await storage.rejectShiftBid(bidId, user.id);
+
+      // Get shift info for logging and notification
+      const shift = await storage.getShift(bid.shiftId);
+      const bidder = await storage.getUser(bid.userId);
+      
+      // Log activity
+      try {
+        if (shift && bidder) {
+          const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
+          const shiftType = shift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+          await logActivity({
+            userId: user.id,
+            stationId: bid.stationId,
+            action: 'REJECT',
+            category: 'SHIFT_BID',
+            details: `Bieding afgewezen: ${shiftType} op ${shiftDate} van ${bidder.firstName} ${bidder.lastName}`,
+            targetUserId: bid.userId,
+            targetShiftId: bid.shiftId,
+            ipAddress: getClientInfo(req).ipAddress
+          });
+        }
+      } catch (logError) {
+        console.error("Failed to log shift bid rejection activity:", logError);
+      }
+
+      // Send push notification to the bidder about rejection
+      try {
+        if (shift) {
+          const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
+          const shiftType = shift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+          await sendPushNotificationToUser(
+            bid.userId,
+            'Bieding Afgewezen',
+            `Je bieding voor ${shiftType} op ${shiftDate} is helaas afgewezen.`,
+            `/dashboard`
+          );
+        }
+      } catch (notifyError) {
+        console.error("Failed to send push notification for rejected bid:", notifyError);
+      }
+
+      res.json(rejectedBid);
+    } catch (error: any) {
+      console.error("Error rejecting shift bid:", error);
+      res.status(500).json({ message: "Fout bij afwijzen bieding" });
+    }
+  });
+
+  // Withdraw my bid
+  app.post("/api/shift-bids/:bidId/withdraw", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const bidId = parseInt(req.params.bidId);
+
+      const bid = await storage.getShiftBid(bidId);
+      if (!bid) {
+        return res.status(404).json({ message: "Bieding niet gevonden" });
+      }
+
+      // Users can only withdraw their own bids
+      if (bid.userId !== user.id) {
+        return res.status(403).json({ message: "Je kunt alleen je eigen biedingen intrekken" });
+      }
+
+      if (bid.status !== 'pending') {
+        return res.status(400).json({ message: "Deze bieding kan niet meer worden ingetrokken" });
+      }
+
+      const withdrawnBid = await storage.withdrawShiftBid(bidId);
+
+      // Log activity
+      try {
+        const shift = await storage.getShift(bid.shiftId);
+        if (shift) {
+          const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
+          const shiftType = shift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+          await logActivity({
+            userId: user.id,
+            stationId: bid.stationId,
+            action: 'DELETE',
+            category: 'SHIFT_BID',
+            details: `Bieding ingetrokken voor ${shiftType} op ${shiftDate}`,
+            targetShiftId: bid.shiftId,
+            ipAddress: getClientInfo(req).ipAddress
+          });
+        }
+      } catch (logError) {
+        console.error("Failed to log shift bid withdrawal activity:", logError);
+      }
+
+      res.json(withdrawnBid);
+    } catch (error: any) {
+      console.error("Error withdrawing shift bid:", error);
+      res.status(500).json({ message: "Fout bij intrekken bieding" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

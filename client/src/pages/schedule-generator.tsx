@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO, addDays } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +93,10 @@ function ScheduleGenerator() {
   // Force assignment state (voor noodgevallen)
   const [forceAssignment, setForceAssignment] = useState<boolean>(false);
   const [showForceOption, setShowForceOption] = useState<boolean>(false);
+  
+  // Shift bid viewing state (voor admins/supervisors)
+  const [showBidsDialog, setShowBidsDialog] = useState(false);
+  const [selectedBidShift, setSelectedBidShift] = useState<Shift | null>(null);
   
   // Station selector state voor supervisors - lees uit sessionStorage indien beschikbaar
   const [selectedStationId, setSelectedStationId] = useState<number | null>(() => {
@@ -869,6 +873,97 @@ function ScheduleGenerator() {
     onError: (error: Error) => {
       toast({
         title: "Fout bij toevoegen shift",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Query voor biedingen tellen per shift (voor open shifts)
+  const { data: bidCounts = {} } = useQuery<Record<number, number>>({
+    queryKey: ["/api/shift-bids/counts", selectedMonth + 1, selectedYear, effectiveStationId],
+    queryFn: async () => {
+      if (!effectiveStationId) return {};
+      const response = await apiRequest("GET", `/api/shift-bids/counts?month=${selectedMonth + 1}&year=${selectedYear}&stationId=${effectiveStationId}`);
+      const data = await response.json();
+      // Convert array to lookup object
+      const counts: Record<number, number> = {};
+      for (const item of data) {
+        counts[item.shiftId] = item.count;
+      }
+      return counts;
+    },
+    enabled: !!effectiveStationId && (user?.role === 'admin' || user?.role === 'supervisor'),
+  });
+
+  // Query voor biedingen op een specifieke shift
+  const { data: shiftBids, refetch: refetchBids } = useQuery<{
+    id: number;
+    shiftId: number;
+    userId: number;
+    status: string;
+    createdAt: string;
+    respondedAt: string | null;
+    user: {
+      id: number;
+      username: string;
+      firstName: string;
+      lastName: string;
+    };
+  }[]>({
+    queryKey: ["/api/shifts/bids", selectedBidShift?.id],
+    queryFn: async () => {
+      if (!selectedBidShift?.id) return [];
+      const response = await apiRequest("GET", `/api/shifts/${selectedBidShift.id}/bids`);
+      return response.json();
+    },
+    enabled: !!selectedBidShift?.id && showBidsDialog,
+  });
+
+  // Mutation voor het toewijzen van een bieding
+  const assignBidMutation = useMutation({
+    mutationFn: async (bidId: number) => {
+      const response = await apiRequest("POST", `/api/shift-bids/${bidId}/accept`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts", selectedMonth + 1, selectedYear, effectiveStationId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shift-bids/counts", selectedMonth + 1, selectedYear, effectiveStationId] });
+      refetchShifts();
+      refetchBids();
+      setShowBidsDialog(false);
+      setSelectedBidShift(null);
+      toast({
+        title: "Shift toegewezen",
+        description: "De shift is toegewezen aan de geselecteerde medewerker",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout bij toewijzen",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation voor het afwijzen van een bieding
+  const rejectBidMutation = useMutation({
+    mutationFn: async (bidId: number) => {
+      const response = await apiRequest("POST", `/api/shift-bids/${bidId}/reject`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shift-bids/counts", selectedMonth + 1, selectedYear, effectiveStationId] });
+      refetchBids();
+      toast({
+        title: "Bieding afgewezen",
+        description: "De bieding is afgewezen en de medewerker is op de hoogte gebracht",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout bij afwijzen",
         description: error.message,
         variant: "destructive",
       });
@@ -2017,9 +2112,25 @@ function ScheduleGenerator() {
                           </TableCell>
                           <TableCell>
                             {shift.status === "open" || isUserDeleted ? (
-                              <span className="text-red-500 font-medium">
-                                {shift.status === "open" ? "Niet ingevuld" : "Medewerker verwijderd"}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-red-500 font-medium">
+                                  {shift.status === "open" ? "Niet ingevuld" : "Medewerker verwijderd"}
+                                </span>
+                                {shift.status === "open" && bidCounts[shift.id] > 0 && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+                                    onClick={() => {
+                                      setSelectedBidShift(shift);
+                                      setShowBidsDialog(true);
+                                    }}
+                                  >
+                                    <Users className="h-3 w-3 mr-1" />
+                                    {bidCounts[shift.id]} {bidCounts[shift.id] === 1 ? 'bieding' : 'biedingen'}
+                                  </Button>
+                                )}
+                              </div>
                             ) : shiftUser ? (
                               <Button
                                 variant="link"
@@ -2663,6 +2774,80 @@ function ScheduleGenerator() {
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowContactDialog(false)}>
+              Sluiten
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Shift Bids Dialog */}
+      <Dialog open={showBidsDialog} onOpenChange={setShowBidsDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Biedingen voor Shift</DialogTitle>
+            <DialogDescription>
+              {selectedBidShift && (
+                <>
+                  {format(new Date(selectedBidShift.date), "dd MMMM yyyy", { locale: nl })} - {selectedBidShift.type === "day" ? "Dagshift" : "Nachtshift"}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {shiftBids && shiftBids.length > 0 ? (
+              shiftBids.filter(b => b.status === 'pending').map((bid) => (
+                <div key={bid.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <div className="font-medium">
+                      {bid.user.firstName} {bid.user.lastName}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(bid.createdAt), "dd MMM yyyy HH:mm", { locale: nl })}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => rejectBidMutation.mutate(bid.id)}
+                      disabled={rejectBidMutation.isPending || assignBidMutation.isPending}
+                      title="Bieding afwijzen"
+                    >
+                      {rejectBidMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => assignBidMutation.mutate(bid.id)}
+                      disabled={assignBidMutation.isPending || rejectBidMutation.isPending}
+                    >
+                      {assignBidMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : (
+                        <Check className="h-4 w-4 mr-1" />
+                      )}
+                      Toewijzen
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-muted-foreground py-4">
+                Geen openstaande biedingen
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowBidsDialog(false);
+              setSelectedBidShift(null);
+            }}>
               Sluiten
             </Button>
           </DialogFooter>

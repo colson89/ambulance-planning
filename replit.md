@@ -80,6 +80,13 @@ Documentation Files:
   - **Push Notifications**: Automatic notifications sent to admins (new requests) and involved users (approval/rejection)
   - **Database Tables**: `shift_swap_requests` (request tracking with status), `station_settings` (per-station allowShiftSwaps toggle)
   - **Constraints**: Users can only swap their own shifts, target must be same station, no duplicate pending requests per shift
+- **Shift Bidding System**: Allows ambulanciers to bid on open (unfilled) shifts. Admins/supervisors can then assign the shift to one of the bidders. Features:
+  - **Frontend UI**: Ambulanciers see "Ik wil deze shift" button on open shifts in Dashboard (both mobile and desktop views). After bidding, a "Ingediend" badge confirms the bid.
+  - **Admin UI**: In the Planning page, open shifts with bids show a clickable badge (e.g., "2 biedingen"). Clicking opens a dialog to view all pending bids and assign the shift to a bidder.
+  - **Push Notifications**: Admins receive notifications for new bids. Bidders receive notifications when their bid is accepted or rejected.
+  - **Database Table**: `shift_bids` with status workflow (pending/accepted/rejected/withdrawn)
+  - **API Endpoints**: Create bid, list bids per shift, accept bid (auto-rejects others), reject bid, withdraw bid, get bid counts per month
+  - **Activity Logging**: All bid actions are logged with SHIFT_BID category
 
 ### Build & Deployment
 - **Pre-built Application**: Deployed as pre-compiled backend (`dist/index.js`) and static frontend assets (`dist/public/`).

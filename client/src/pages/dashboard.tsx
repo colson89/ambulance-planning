@@ -114,6 +114,89 @@ export default function Dashboard() {
     refetchInterval: 30000,
   });
 
+  // Query for pending bid count (for admins/supervisors)
+  const { data: pendingBidCount = 0 } = useQuery<number>({
+    queryKey: ["/api/shift-bids/pending/count"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/shift-bids/pending/count");
+      if (!res.ok) return 0;
+      const data = await res.json();
+      return data.count || 0;
+    },
+    enabled: user?.role === 'admin' || user?.role === 'supervisor',
+    refetchInterval: 30000,
+  });
+
+  // Query for my bids
+  const { data: myBids = [] } = useQuery<any[]>({
+    queryKey: ["/api/shift-bids/my-bids"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/shift-bids/my-bids");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  // Mutation to create a shift bid
+  const createBidMutation = useMutation({
+    mutationFn: async (shiftId: number) => {
+      const res = await apiRequest("POST", `/api/shifts/${shiftId}/bids`, {});
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Fout bij plaatsen bieding");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shift-bids/my-bids"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shift-bids/pending/count"] });
+      toast({
+        title: "Bieding geplaatst",
+        description: "Je aanvraag is ingediend. De admin/supervisor zal deze beoordelen.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Check if user has a pending bid for a specific shift
+  const hasPendingBidForShift = (shiftId: number) => {
+    return myBids.some(bid => bid.shiftId === shiftId && bid.status === 'pending');
+  };
+  
+  // Get the pending bid for a shift (to get the bidId for withdrawal)
+  const getPendingBidForShift = (shiftId: number) => {
+    return myBids.find(bid => bid.shiftId === shiftId && bid.status === 'pending');
+  };
+
+  // Mutation to withdraw a bid
+  const withdrawBidMutation = useMutation({
+    mutationFn: async (bidId: number) => {
+      const response = await apiRequest("POST", `/api/shift-bids/${bidId}/withdraw`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shift-bids/my-bids"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shift-bids/pending/count"] });
+      toast({
+        title: "Bieding ingetrokken",
+        description: "Je bieding is succesvol ingetrokken.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const isLoading = shiftsLoading || usersLoading || preferencesLoading || stationsLoading || configsLoading;
 
   // Mutation om handmatig shifts toe te voegen voor open slots
@@ -833,6 +916,42 @@ export default function Dashboard() {
                               <span className="text-muted-foreground">Onbekend</span>
                             )}
                           </div>
+                          {shift.status === "open" && !isCurrentUserShift && (
+                            <div className="flex gap-1">
+                              {hasPendingBidForShift(shift.id) ? (
+                                <div className="flex items-center gap-1">
+                                  <Badge variant="secondary" className="text-xs">
+                                    <Check className="h-3 w-3 mr-1" />
+                                    Ingediend
+                                  </Badge>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    onClick={() => {
+                                      const bid = getPendingBidForShift(shift.id);
+                                      if (bid) withdrawBidMutation.mutate(bid.id);
+                                    }}
+                                    disabled={withdrawBidMutation.isPending}
+                                    title="Bieding intrekken"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200"
+                                  onClick={() => createBidMutation.mutate(shift.id)}
+                                  disabled={createBidMutation.isPending}
+                                >
+                                  <UserPlus className="h-3 w-3 mr-1" />
+                                  Ik wil deze shift
+                                </Button>
+                              )}
+                            </div>
+                          )}
                           {isCurrentUserShift && shift.status === "planned" && (
                             <div className="flex gap-1">
                               <Button
@@ -1010,6 +1129,42 @@ export default function Dashboard() {
                                     )}
                                     Overuren
                                   </Button>
+                                </div>
+                              ) : shift.status === "open" && !isCurrentUserShift ? (
+                                <div className="flex justify-center">
+                                  {hasPendingBidForShift(shift.id) ? (
+                                    <div className="flex items-center gap-1">
+                                      <Badge variant="secondary" className="text-xs">
+                                        <Check className="h-3 w-3 mr-1" />
+                                        Ingediend
+                                      </Badge>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 px-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        onClick={() => {
+                                          const bid = getPendingBidForShift(shift.id);
+                                          if (bid) withdrawBidMutation.mutate(bid.id);
+                                        }}
+                                        disabled={withdrawBidMutation.isPending}
+                                        title="Bieding intrekken"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 px-2 bg-blue-50 hover:bg-blue-100 border-blue-200"
+                                      onClick={() => createBidMutation.mutate(shift.id)}
+                                      disabled={createBidMutation.isPending}
+                                      title="Ik wil deze shift doen"
+                                    >
+                                      <UserPlus className="h-3 w-3 mr-1" />
+                                      Ik wil deze shift
+                                    </Button>
+                                  )}
                                 </div>
                               ) : (
                                 <span className="text-muted-foreground text-xs">-</span>

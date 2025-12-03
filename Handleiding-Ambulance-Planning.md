@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.12 - Laatst bijgewerkt: 2 december 2025**
+**Versie 2025.13 - Laatst bijgewerkt: 3 december 2025**
 
 ---
 
@@ -37,6 +37,7 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
   - [Push Notificaties](#-push-notificaties)
   - [Overuren Registreren](#-overuren-registreren)
   - [Shift Ruilen of Overnemen](#-shift-ruilen)
+  - [Bieden op Open Shifts](#-bieden-op-open-shifts)
 - [Handleiding voor Admins](#-handleiding-voor-admins)
   - [Gebruikersbeheer](#-gebruikersbeheer)
   - [Planning Genereren](#-planning-genereren)
@@ -1008,6 +1009,47 @@ Bij shift verzoeken ontvangt u automatisch meldingen (indien ingeschakeld):
 
 ---
 
+### 🙋 Bieden op Open Shifts
+
+Het biedingssysteem stelt ambulanciers in staat om zich aan te melden voor open (niet-ingevulde) shifts. Admins en supervisors kunnen vervolgens kiezen wie de shift krijgt toegewezen.
+
+#### Hoe werkt Bieden?
+
+1. **Bekijk Open Shifts**: Op uw dashboard ziet u shifts die nog niet zijn ingevuld (aangegeven met "Niet ingevuld" in rood)
+2. **Plaats een Bieding**: Klik op de blauwe **"Ik wil deze shift"** knop naast een open shift
+3. **Bevestiging**: Na het plaatsen verschijnt een groene badge "Ingediend" als bevestiging
+4. **Wacht op Toewijzing**: Een admin of supervisor bekijkt alle biedingen en wijst de shift toe
+
+#### Mijn Biedingen
+
+- Na het bieden ziet u een groene "Ingediend" badge naast de shift
+- U kunt niet meerdere keren bieden op dezelfde shift
+- Zodra de shift is toegewezen, ontvangt u een push notificatie
+
+#### Push Notificaties bij Bieden
+
+- **Bieding Geaccepteerd**: U ontvangt een melding wanneer de shift aan u is toegewezen
+- **Bieding Afgewezen**: U ontvangt een melding als een andere bieder is gekozen
+- **Admins/Supervisors**: Ontvangen een melding bij elke nieuwe bieding
+
+#### Bieding Intrekken
+
+Zolang uw bieding nog niet is verwerkt (pending status), kunt u deze intrekken:
+
+1. Ga naar uw **Dashboard**
+2. Zoek de shift waarvoor u geboden heeft (met de "Ingediend" badge)
+3. Klik op het rode **X** icoon naast de badge
+4. Uw bieding wordt direct ingetrokken
+
+#### Let Op
+
+- U kunt alleen bieden op open shifts van uw eigen station
+- Alleen pending biedingen kunnen worden ingetrokken
+- Als meerdere mensen bieden, kiest de admin/supervisor wie de shift krijgt
+- Toegewezen shifts verschijnen direct in uw rooster
+
+---
+
 ## 🔧 Handleiding voor Admins
 
 **Admins hebben alle rechten van ambulanciers PLUS extra beheersrechten**
@@ -1237,6 +1279,44 @@ De "Verwijder Voorkeuren" knop verwijdert ALLE opgegeven shift voorkeuren van al
 - ⚠️ Alle gebruikers moeten opnieuw hun voorkeuren opgeven
 - ⚠️ Deze actie kan niet ongedaan worden gemaakt
 - 🔒 Wachtwoord vereist voor beveiliging
+
+### 🙋 Biedingen Beheren (Admins)
+
+Als admin kunt u biedingen op open shifts bekijken en toewijzen. Dit geeft u controle over wie welke open shifts krijgt.
+
+#### Biedingen Bekijken
+
+Wanneer ambulanciers bieden op een open shift, ziet u in de planning:
+- Een blauwe badge met **"X biedingen"** naast open shifts
+- Klik op deze badge om alle biedingen te bekijken
+
+#### Biedingen Toewijzen of Afwijzen
+
+**In het biedingen dialoogvenster ziet u:**
+- Naam van de bieder
+- Datum en tijd van de bieding
+- **Rood X icoon** om een bieding af te wijzen
+- **"Toewijzen"** knop om de shift toe te wijzen
+
+**Shift Toewijzen:**
+1. Klik op de blauwe **"X biedingen"** badge naast een open shift
+2. Bekijk alle biedingen en kies de meest geschikte kandidaat
+3. Klik **"Toewijzen"** naast de gewenste bieder
+4. De shift wordt automatisch aan deze persoon toegewezen
+5. Andere bieders ontvangen automatisch een afwijzingsmelding
+
+**Bieding Afwijzen:**
+1. Klik op de blauwe **"X biedingen"** badge naast een open shift
+2. Klik op het **rode X icoon** naast de bieding die u wilt afwijzen
+3. De bieder ontvangt een push notificatie over de afwijzing
+4. De shift blijft open voor andere biedingen of handmatige toewijzing
+
+#### Push Notificaties
+
+Bij het verwerken van biedingen:
+- **Nieuwe bieding**: U ontvangt een melding wanneer iemand biedt
+- **Na toewijzing**: De gekozen bieder ontvangt een bevestiging
+- **Afgewezen bieders**: Ontvangen automatisch een afwijzingsmelding
 
 ### 🧠 Gedetailleerde Uitleg Planning Algoritme
 
@@ -2702,6 +2782,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 
 | Versie | Datum | Belangrijkste Verbeteringen |
 |--------|-------|----------------------------|
+| **2025.13** | Dec 2025 | Biedingssysteem voor open shifts |
 | **2025.12** | Dec 2025 | Handleiding herstructurering, verbeterde documentatie |
 | **2025.11** | Dec 2025 | Shift Ruilen/Overnemen systeem, Activiteitenlog uitbreiding |
 | **2025.10** | Nov 2025 | Activiteitenlog met audit trail, IP-tracking |
@@ -2714,6 +2795,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 | **2025.1** | Okt 2025 | Planning algoritme, cross-team functionaliteit |
 
 **Huidige functies:**
+- Biedingssysteem voor open shifts (ambulanciers kunnen zich aanmelden)
 - Push notificaties voor shifts en wijzigingen
 - Shift ruilen en overnemen tussen collega's
 - Kalender synchronisatie met externe apps
