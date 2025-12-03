@@ -760,8 +760,6 @@ export default function Dashboard() {
                   .map((shift) => {
                     const shiftUser = users.find(u => u.id === shift.userId);
                     const isCurrentUserShift = shift.userId === user?.id;
-                    const openSlots = detectOpenTimeSlots(new Date(shift.date));
-                    const hasOpenSlots = openSlots.length > 0;
                     
                     const getShiftTime = () => {
                       if (!shift.startTime || !shift.endTime) return "-";
@@ -788,7 +786,7 @@ export default function Dashboard() {
                     return (
                       <div 
                         key={shift.id}
-                        className={`rounded-lg border p-3 ${shift.status === "open" ? "bg-red-50 border-red-200" : isCurrentUserShift ? "bg-green-50 border-green-200" : "bg-white"} ${hasOpenSlots ? "border-l-4 border-l-orange-500" : ""}`}
+                        className={`rounded-lg border p-3 ${shift.status === "open" ? "bg-red-50 border-red-200" : isCurrentUserShift ? "bg-green-50 border-green-200" : "bg-white"}`}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <button 
@@ -897,15 +895,12 @@ export default function Dashboard() {
                         const shiftUser = users.find(u => u.id === shift.userId);
                         const isCurrentUserShift = shift.userId === user?.id;
                         
-                        const openSlots = detectOpenTimeSlots(new Date(shift.date));
-                        const hasOpenSlots = openSlots.length > 0;
-                        
                         const results = [];
                         
                         results.push(
                           <TableRow 
                             key={shift.id}
-                            className={`${shift.status === "open" ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""} ${hasOpenSlots ? "border-l-4 border-l-orange-500" : ""}`}
+                            className={`${shift.status === "open" ? "bg-red-50" : ""} ${isCurrentUserShift ? "bg-green-50" : ""}`}
                           >
                             <TableCell>
                               <Button 
@@ -1022,28 +1017,6 @@ export default function Dashboard() {
                             </TableCell>
                           </TableRow>
                         );
-                        
-                        if (hasOpenSlots) {
-                          const shiftDate = new Date(shift.date);
-                          const dayOfWeek = shiftDate.getDay();
-                          const config = weekdayConfigs.find(c => c.dayOfWeek === dayOfWeek);
-                          const requiredNightStaff = config?.nightShiftCount || 2;
-                          const requiredDayStaff = config?.dayShiftCount || 2;
-                          
-                          results.push(
-                            <TableRow key={`${shift.id}-warning`} className="bg-orange-50 border-l-4 border-l-orange-500">
-                              <TableCell colSpan={6} className="p-0">
-                                <OpenSlotWarning
-                                  date={new Date(shift.date)}
-                                  shifts={filteredShifts.filter(s => format(new Date(s.date), 'yyyy-MM-dd') === format(new Date(shift.date), 'yyyy-MM-dd'))}
-                                  showAddButton={false}
-                                  requiredStaff={requiredNightStaff}
-                                  requiredDayStaff={requiredDayStaff}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          );
-                        }
                         
                         return results;
                       })}
