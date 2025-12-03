@@ -40,6 +40,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { User, ShiftPreference, Shift } from "@shared/schema";
 
 interface Station {
@@ -88,6 +89,10 @@ function ScheduleGenerator() {
   const [addShiftCustomStartTime, setAddShiftCustomStartTime] = useState("07:00");
   const [addShiftCustomEndTime, setAddShiftCustomEndTime] = useState("19:00");
   const [addShiftUserId, setAddShiftUserId] = useState<number>(0);
+  
+  // Force assignment state (voor noodgevallen)
+  const [forceAssignment, setForceAssignment] = useState<boolean>(false);
+  const [showForceOption, setShowForceOption] = useState<boolean>(false);
   
   // Station selector state voor supervisors - lees uit sessionStorage indien beschikbaar
   const [selectedStationId, setSelectedStationId] = useState<number | null>(() => {
@@ -776,16 +781,25 @@ function ScheduleGenerator() {
   
   // Mutatie om een shift te updaten
   const updateShiftMutation = useMutation({
-    mutationFn: async ({ shiftId, userId }: { shiftId: number; userId: number }) => {
+    mutationFn: async ({ shiftId, userId, force }: { shiftId: number; userId: number; force?: boolean }) => {
       const res = await apiRequest("PATCH", `/api/shifts/${shiftId}`, {
         userId: userId,
-        status: userId === 0 ? "open" : "planned"
+        status: userId === 0 ? "open" : "planned",
+        force: force || false
       });
-      if (!res.ok) throw new Error("Kon shift niet updaten");
+      if (!res.ok) {
+        const errorData = await res.json();
+        if (errorData.errorCode === "SPLIT_SHIFT_NOT_ALLOWED_FOR_CROSS_TEAM_USER") {
+          throw { message: errorData.message, showForce: true };
+        }
+        throw new Error(errorData.message || "Kon shift niet updaten");
+      }
       return res.json();
     },
     onSuccess: () => {
       setEditingShift(null);
+      setForceAssignment(false);
+      setShowForceOption(false);
       toast({
         title: "Succes",
         description: "Shift succesvol bijgewerkt",
@@ -793,12 +807,21 @@ function ScheduleGenerator() {
       // Vernieuw de shifts na een update
       queryClient.invalidateQueries({ queryKey: ["/api/shifts", selectedMonth + 1, selectedYear, effectiveStationId] });
     },
-    onError: (error: Error) => {
-      toast({
-        title: "Fout",
-        description: error.message || "Er is een fout opgetreden bij het updaten van de shift",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      if (error.showForce) {
+        setShowForceOption(true);
+        toast({
+          title: "Toewijzing geblokkeerd",
+          description: "Gebruik 'Forceer toewijzing' om de beperking te negeren (alleen in noodgevallen).",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Fout",
+          description: error.message || "Er is een fout opgetreden bij het updaten van de shift",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -952,6 +975,8 @@ function ScheduleGenerator() {
   const handleEditShift = (shift: Shift) => {
     setEditingShift(shift);
     setSelectedUserId(shift.userId);
+    setForceAssignment(false);
+    setShowForceOption(false);
   };
   
   // Handle save
@@ -959,7 +984,8 @@ function ScheduleGenerator() {
     if (editingShift) {
       updateShiftMutation.mutate({
         shiftId: editingShift.id,
-        userId: selectedUserId
+        userId: selectedUserId,
+        force: forceAssignment
       });
     }
   };
@@ -2257,7 +2283,11 @@ function ScheduleGenerator() {
                 <Label htmlFor="ambulancier">Ambulancier</Label>
                 <Select
                   value={selectedUserId.toString()}
-                  onValueChange={(value) => setSelectedUserId(parseInt(value))}
+                  onValueChange={(value) => {
+                    setSelectedUserId(parseInt(value));
+                    setShowForceOption(false);
+                    setForceAssignment(false);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecteer ambulancier" />
@@ -2274,6 +2304,27 @@ function ScheduleGenerator() {
                   </SelectContent>
                 </Select>
               </div>
+              
+              {showForceOption && (
+                <div className="flex items-center space-x-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                  <Checkbox
+                    id="force-assignment"
+                    checked={forceAssignment}
+                    onCheckedChange={(checked) => setForceAssignment(checked === true)}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label
+                      htmlFor="force-assignment"
+                      className="text-sm font-medium text-orange-800 cursor-pointer"
+                    >
+                      Forceer toewijzing (noodgeval)
+                    </Label>
+                    <p className="text-xs text-orange-600">
+                      Gebruik dit alleen in noodgevallen. Normale restricties worden genegeerd.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
