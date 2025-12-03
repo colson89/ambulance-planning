@@ -1747,6 +1747,23 @@ function ScheduleGenerator() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    setAddShiftDate(null);
+                    setAddShiftType("day");
+                    setAddShiftTimeMode("standard");
+                    setAddShiftStandardDayType("full");
+                    setAddShiftCustomStartTime("07:00");
+                    setAddShiftCustomEndTime("19:00");
+                    setAddShiftUserId(0);
+                    setShowAddShiftDialog(true);
+                  }}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Shift Toevoegen
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
                     const timestamp = Date.now();
                     const url = `/api/schedule/export-xlsx?month=${selectedMonth + 1}&year=${selectedYear}&t=${timestamp}`;
                     window.location.href = url;
@@ -2073,11 +2090,32 @@ function ScheduleGenerator() {
           <DialogHeader>
             <DialogTitle>Shift Toevoegen</DialogTitle>
             <DialogDescription>
-              Voeg een nieuwe shift toe voor {addShiftDate && format(addShiftDate, "dd MMMM yyyy", { locale: nl })}
+              {addShiftDate 
+                ? `Voeg een nieuwe shift toe voor ${format(addShiftDate, "dd MMMM yyyy", { locale: nl })}`
+                : "Selecteer een datum en voeg een nieuwe shift toe"
+              }
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
+            {/* Datum Selectie */}
+            <div className="grid gap-2">
+              <Label>Datum</Label>
+              <Input
+                type="date"
+                value={addShiftDate ? format(addShiftDate, "yyyy-MM-dd") : ""}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setAddShiftDate(parseISO(e.target.value));
+                  } else {
+                    setAddShiftDate(null);
+                  }
+                }}
+                min={format(new Date(selectedYear, selectedMonth, 1), "yyyy-MM-dd")}
+                max={format(new Date(selectedYear, selectedMonth + 1, 0), "yyyy-MM-dd")}
+              />
+            </div>
+
             {/* Shift Type Selectie */}
             <div className="grid gap-2">
               <Label>Shift Type</Label>
@@ -2191,7 +2229,7 @@ function ScheduleGenerator() {
             <Button variant="outline" onClick={() => setShowAddShiftDialog(false)}>
               Annuleren
             </Button>
-            <Button onClick={handleConfirmAddShift}>
+            <Button onClick={handleConfirmAddShift} disabled={!addShiftDate}>
               Shift Toevoegen
             </Button>
           </DialogFooter>
