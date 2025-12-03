@@ -1956,7 +1956,13 @@ function ScheduleGenerator() {
                       const shiftDate = new Date(shift.date);
                       return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
                     })
-                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    .sort((a, b) => {
+                      const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+                      if (dateComparison !== 0) return dateComparison;
+                      if (a.type === 'day' && b.type === 'night') return -1;
+                      if (a.type === 'night' && b.type === 'day') return 1;
+                      return 0;
+                    })
                     .map((shift) => {
                       const shiftUser = users.find(u => u.id === shift.userId);
                       const isCurrentUserShift = shift.userId === user?.id;
