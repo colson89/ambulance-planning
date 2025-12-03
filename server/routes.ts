@@ -2373,7 +2373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/shifts/:id", requireAdmin, async (req, res) => {
     try {
       const shiftId = parseInt(req.params.id);
-      const updateData = req.body;
+      const { force, ...updateData } = req.body;
       
       // Validate the shift exists
       const existingShift = await storage.getShift(shiftId);
@@ -2382,7 +2382,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // BUSINESS RULE VALIDATION: Check if updating to split shift for cross-team user in simple system
-      if (updateData.userId && updateData.userId > 0 && (updateData.isSplitShift || existingShift.isSplitShift)) {
+      // Skip validation if 'force' flag is set (admin/supervisor emergency override)
+      if (!force && updateData.userId && updateData.userId > 0 && (updateData.isSplitShift || existingShift.isSplitShift)) {
         const targetStationId = updateData.stationId || existingShift.stationId;
         const canReceiveSplit = await storage.canUserReceiveSplitShift(updateData.userId, targetStationId);
         if (!canReceiveSplit) {
@@ -2392,6 +2393,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             errorCode: "SPLIT_SHIFT_NOT_ALLOWED_FOR_CROSS_TEAM_USER"
           });
         }
+      }
+      
+      if (force) {
+        console.log(`⚠️ FORCE OVERRIDE: Admin/supervisor manually overriding business rules for shift ${shiftId} assignment to user ${updateData.userId}`);
       }
       
       // Update the shift
