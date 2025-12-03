@@ -6393,7 +6393,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         : user.stationId;
       
       // Get all shifts for this month and station
-      const shifts = await storage.getShiftsByMonthAndStation(
+      const shifts = await storage.getShiftsByMonth(
         parseInt(month as string),
         parseInt(year as string),
         targetStationId
