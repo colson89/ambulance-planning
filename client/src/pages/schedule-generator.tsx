@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO, addDays } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon } from "lucide-react";
-import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -2060,48 +2059,6 @@ function ScheduleGenerator() {
                           </TableCell>
                         </TableRow>
                       );
-                      
-                      // Check if this is the last shift for this date to add open slot warning
-                      const currentDateStr = format(new Date(shift.date), 'yyyy-MM-dd');
-                      const nextShiftIndex = shifts.findIndex((s, idx) => 
-                        idx > shifts.indexOf(shift) && 
-                        format(new Date(s.date), 'yyyy-MM-dd') !== currentDateStr
-                      );
-                      const isLastShiftForDate = nextShiftIndex === -1 || 
-                        shifts.slice(0, nextShiftIndex).every(s => 
-                          format(new Date(s.date), 'yyyy-MM-dd') !== currentDateStr || 
-                          shifts.indexOf(s) <= shifts.indexOf(shift)
-                        );
-                      
-                      // Add open slot warning if this is the last shift for the date
-                      if (isLastShiftForDate) {
-                        // Get the weekday config for this date
-                        const shiftDate = new Date(shift.date);
-                        const dayOfWeek = shiftDate.getDay();
-                        const config = weekdayConfigs.find(c => c.dayOfWeek === dayOfWeek);
-                        const requiredNightStaff = config?.nightShiftCount || 2;
-                        const requiredDayStaff = config?.dayShiftCount || 2;
-                        
-                        results.push(
-                          <TableRow key={`${shift.id}-warning`} className="bg-orange-50">
-                            <TableCell colSpan={5} className="p-0">
-                              <OpenSlotWarning
-                                date={new Date(shift.date)}
-                                shifts={shiftsForDate}
-                                onAddShift={handleAddShift}
-                                showAddButton={true}
-                                users={users.filter(u => u.role === "ambulancier" || u.role === "admin").map(u => ({
-                                  id: u.id,
-                                  firstName: u.firstName,
-                                  lastName: u.lastName
-                                }))}
-                                requiredStaff={requiredNightStaff}
-                                requiredDayStaff={requiredDayStaff}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        );
-                      }
                       
                       return results;
                     }).flat()}
