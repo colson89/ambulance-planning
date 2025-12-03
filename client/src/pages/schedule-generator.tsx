@@ -857,13 +857,47 @@ function ScheduleGenerator() {
   const handleAddShift = (date: Date, startTime?: string, endTime?: string, userId?: number) => {
     setAddShiftDate(date);
     setShowAddShiftDialog(true);
-    // Reset dialog state
-    setAddShiftType("day");
-    setAddShiftTimeMode("standard");
-    setAddShiftStandardDayType("full");
+    setAddShiftUserId(userId || 0);
+    
+    // Intelligent pre-fill based on provided times
+    if (startTime && endTime) {
+      // Determine shift type and preset based on times
+      if (startTime === "19:00" && endTime === "07:00") {
+        // Night shift
+        setAddShiftType("night");
+        setAddShiftTimeMode("standard");
+        setAddShiftStandardDayType("full");
+      } else if (startTime === "07:00" && endTime === "19:00") {
+        // Full day
+        setAddShiftType("day");
+        setAddShiftTimeMode("standard");
+        setAddShiftStandardDayType("full");
+      } else if (startTime === "07:00" && endTime === "13:00") {
+        // Morning
+        setAddShiftType("day");
+        setAddShiftTimeMode("standard");
+        setAddShiftStandardDayType("morning");
+      } else if (startTime === "13:00" && endTime === "19:00") {
+        // Afternoon
+        setAddShiftType("day");
+        setAddShiftTimeMode("standard");
+        setAddShiftStandardDayType("afternoon");
+      } else {
+        // Custom times
+        setAddShiftType("day");
+        setAddShiftTimeMode("custom");
+        setAddShiftCustomStartTime(startTime);
+        setAddShiftCustomEndTime(endTime);
+      }
+    } else {
+      // No times provided - default to day shift full
+      setAddShiftType("day");
+      setAddShiftTimeMode("standard");
+      setAddShiftStandardDayType("full");
+    }
+    
     setAddShiftCustomStartTime(startTime || "07:00");
     setAddShiftCustomEndTime(endTime || "19:00");
-    setAddShiftUserId(userId || 0);
   };
   
   // Handler voor daadwerkelijk toevoegen van shift (na dialog bevestiging)
