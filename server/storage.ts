@@ -1265,6 +1265,26 @@ export class DatabaseStorage implements IStorage {
       eq(shifts.stationId, stationId)
     ];
     
+    // BELANGRIJK: Eerst shift_swap_requests verwijderen die verwijzen naar deze shifts
+    // Anders faalt de delete vanwege foreign key constraints
+    const shiftsToDelete = await db.select({ id: shifts.id })
+      .from(shifts)
+      .where(and(...deleteConditions));
+    
+    if (shiftsToDelete.length > 0) {
+      const shiftIdsToDelete = shiftsToDelete.map(s => s.id);
+      
+      // Verwijder swap requests waar deze shifts bij betrokken zijn
+      await db.delete(shiftSwapRequests).where(
+        or(
+          inArray(shiftSwapRequests.requesterShiftId, shiftIdsToDelete),
+          inArray(shiftSwapRequests.targetShiftId, shiftIdsToDelete)
+        )
+      );
+      
+      console.log(`Deleted swap requests for ${shiftIdsToDelete.length} shifts before regenerating schedule`);
+    }
+    
     await db.delete(shifts).where(and(...deleteConditions));
 
     // Haal alle gebruikers op van dit station die uren willen werken (inclusief cross-station gebruikers)
