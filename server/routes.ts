@@ -6605,11 +6605,11 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         await logActivity({
           userId: user.id,
           stationId: shift.stationId,
-          action: 'CREATE',
+          action: ActivityActions.SHIFT_BID.CREATED,
           category: 'SHIFT_BID',
           details: `Bieding geplaatst op ${shiftType} van ${shiftDate}`,
-          targetShiftId: shiftId,
-          ipAddress: getClientInfo(req).ipAddress
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
         });
       } catch (logError) {
         console.error("Failed to log shift bid activity:", logError);

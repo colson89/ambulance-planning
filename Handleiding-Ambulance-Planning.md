@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.13 - Laatst bijgewerkt: 3 december 2025**
+**Versie 2025.14 - Laatst bijgewerkt: 5 december 2025**
 
 ---
 
@@ -2403,14 +2403,32 @@ De Activiteitenlog biedt een uitgebreid overzicht van alle belangrijke acties in
 | **USER_MANAGEMENT** | Aanmaken, wijzigen en verwijderen van gebruikers | Paars |
 | **OVERTIME** | Registratie van overuren | Geel |
 | **SHIFT_SWAP** | Shift ruil- en overnameverzoeken (aanvragen, goedkeuringen, afwijzingen, annuleringen) | Paars |
+| **SHIFT_MANUAL** | Handmatige shift wijzigingen (aanmaken, wijzigen, verwijderen, splitsen, samenvoegen) | Blauw |
+| **SHIFT_BID** | Shift biedingen (ingediend, geaccepteerd, afgewezen, ingetrokken) | Oranje |
+| **SETTINGS** | Systeeminstellingen wijzigingen (station instellingen, voorkeuren wissen) | Grijs |
+
+**SHIFT_MANUAL Details (uitgebreide audit trail):**
+Elke handmatige shift wijziging wordt gelogd met volledige details:
+
+| Actie | Beschrijving | Details in Log |
+|-------|--------------|----------------|
+| **CREATED** | Shift aangemaakt | Shift type, datum, gebruiker, station |
+| **UPDATED** | Shift gewijzigd | Oude vs nieuwe waarden (toewijzing, datum, station, shift type) |
+| **DELETED** | Shift verwijderd | Welke shift werd verwijderd |
+| **MONTH_DELETED** | Maand shifts verwijderd | Aantal verwijderde shifts per station |
+| **SPLIT** | Shift gesplitst | Originele shift naar twee delen gesplitst |
+| **MERGED** | Shifts samengevoegd | Gesplitste shifts terug naar volledige shift |
+| **FORCE_OVERRIDE** | Force optie gebruikt | Wanneer admin/supervisor validatieregels omzeilt |
 
 **Details per Log Entry:**
 - Datum en tijdstip
 - Gebruiker die de actie uitvoerde
-- Type actie (bijv. "Succesvol ingelogd")
-- Beschrijving met details
+- Type actie (bijv. "Succesvol ingelogd", "Shift toegewezen")
+- Beschrijving met details (inclusief oude vs nieuwe waarden bij wijzigingen)
 - IP-adres van de gebruiker
+- User-agent (browser informatie)
 - Station van de gebruiker
+- Betrokken gebruiker (bij acties op anderen)
 
 #### 🔧 Activiteitenlog Gebruiken
 
@@ -2782,6 +2800,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 
 | Versie | Datum | Belangrijkste Verbeteringen |
 |--------|-------|----------------------------|
+| **2025.14** | Dec 2025 | Uitgebreide audit logging voor handmatige shift wijzigingen (aanmaken, wijzigen, verwijderen, splitsen, samenvoegen), shift biedingen, station instellingen |
 | **2025.13** | Dec 2025 | Biedingssysteem voor open shifts |
 | **2025.12** | Dec 2025 | Handleiding herstructurering, verbeterde documentatie |
 | **2025.11** | Dec 2025 | Shift Ruilen/Overnemen systeem, Activiteitenlog uitbreiding |
