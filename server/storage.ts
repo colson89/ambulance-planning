@@ -24,6 +24,8 @@ export interface IStorage {
   getStation(id: number): Promise<Station | undefined>;
   getStationByCode(code: string): Promise<Station | undefined>;
   createStation(station: InsertStation): Promise<Station>;
+  canDeleteStation(stationId: number): Promise<{canDelete: boolean, reason?: string, dependencies?: {users: number, shifts: number, preferences: number}}>;
+  deleteStation(stationId: number, force?: boolean): Promise<void>;
   
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -190,6 +192,183 @@ export class DatabaseStorage implements IStorage {
       .values(stationData)
       .returning();
     return station;
+  }
+
+  async canDeleteStation(stationId: number): Promise<{canDelete: boolean, reason?: string, dependencies?: {users: number, shifts: number, preferences: number, overtime: number, weekdayConfigs: number, holidays: number, userStations: number, userComments: number, reportageConfig: number, reportageRecipients: number, reportageLogs: number, stationSettings: number, verdiConfig: number}}> {
+    // Check if station exists
+    const station = await this.getStation(stationId);
+    if (!station) {
+      return { canDelete: false, reason: "Station niet gevonden" };
+    }
+
+    // Count ALL dependencies to prevent FK constraint errors
+    const [usersCount] = await db.select({ count: users.id }).from(users).where(eq(users.stationId, stationId));
+    const [shiftsCount] = await db.select({ count: shifts.id }).from(shifts).where(eq(shifts.stationId, stationId));
+    const [preferencesCount] = await db.select({ count: shiftPreferences.id }).from(shiftPreferences).where(eq(shiftPreferences.stationId, stationId));
+    const [overtimeCount] = await db.select({ count: overtime.id }).from(overtime).where(eq(overtime.stationId, stationId));
+    const [weekdayConfigsCount] = await db.select({ count: weekdayConfigs.id }).from(weekdayConfigs).where(eq(weekdayConfigs.stationId, stationId));
+    const [holidaysCount] = await db.select({ count: holidays.id }).from(holidays).where(eq(holidays.stationId, stationId));
+    const [userStationsCount] = await db.select({ count: userStations.userId }).from(userStations).where(eq(userStations.stationId, stationId));
+    const [userCommentsCount] = await db.select({ count: userComments.id }).from(userComments).where(eq(userComments.stationId, stationId));
+    const [reportageConfigCount] = await db.select({ count: reportageConfig.id }).from(reportageConfig).where(eq(reportageConfig.stationId, stationId));
+    const [reportageRecipientsCount] = await db.select({ count: reportageRecipients.id }).from(reportageRecipients).where(eq(reportageRecipients.stationId, stationId));
+    const [reportageLogsCount] = await db.select({ count: reportageLogs.id }).from(reportageLogs).where(eq(reportageLogs.stationId, stationId));
+    const [stationSettingsCount] = await db.select({ count: stationSettings.id }).from(stationSettings).where(eq(stationSettings.stationId, stationId));
+    const [verdiConfigCount] = await db.select({ count: verdiStationConfig.id }).from(verdiStationConfig).where(eq(verdiStationConfig.stationId, stationId));
+
+    const userCount = Number(usersCount?.count || 0);
+    const shiftCount = Number(shiftsCount?.count || 0);
+    const prefCount = Number(preferencesCount?.count || 0);
+    const otCount = Number(overtimeCount?.count || 0);
+    const wdCount = Number(weekdayConfigsCount?.count || 0);
+    const holCount = Number(holidaysCount?.count || 0);
+    const usCount = Number(userStationsCount?.count || 0);
+    const ucCount = Number(userCommentsCount?.count || 0);
+    const repConfigCount = Number(reportageConfigCount?.count || 0);
+    const repRecipientsCount = Number(reportageRecipientsCount?.count || 0);
+    const repLogsCount = Number(reportageLogsCount?.count || 0);
+    const ssCount = Number(stationSettingsCount?.count || 0);
+    const verdiCount = Number(verdiConfigCount?.count || 0);
+
+    const dependencies = {
+      users: userCount,
+      shifts: shiftCount,
+      preferences: prefCount,
+      overtime: otCount,
+      weekdayConfigs: wdCount,
+      holidays: holCount,
+      userStations: usCount,
+      userComments: ucCount,
+      reportageConfig: repConfigCount,
+      reportageRecipients: repRecipientsCount,
+      reportageLogs: repLogsCount,
+      stationSettings: ssCount,
+      verdiConfig: verdiCount
+    };
+
+    const hasDeps = userCount > 0 || shiftCount > 0 || prefCount > 0 || otCount > 0 || 
+                   wdCount > 0 || holCount > 0 || usCount > 0 || ucCount > 0 || 
+                   repConfigCount > 0 || repRecipientsCount > 0 || repLogsCount > 0 || 
+                   ssCount > 0 || verdiCount > 0;
+
+    if (hasDeps) {
+      const parts: string[] = [];
+      if (userCount > 0) parts.push(`${userCount} gebruiker(s)`);
+      if (shiftCount > 0) parts.push(`${shiftCount} shift(s)`);
+      if (prefCount > 0) parts.push(`${prefCount} voorkeuren`);
+      if (otCount > 0) parts.push(`${otCount} overwerk records`);
+      if (wdCount > 0) parts.push(`${wdCount} weekdag configuraties`);
+      if (holCount > 0) parts.push(`${holCount} feestdagen`);
+      if (usCount > 0) parts.push(`${usCount} cross-team toewijzingen`);
+      if (ucCount > 0) parts.push(`${ucCount} gebruikers opmerkingen`);
+      if (repConfigCount > 0) parts.push(`${repConfigCount} reportage configuraties`);
+      if (repRecipientsCount > 0) parts.push(`${repRecipientsCount} reportage ontvangers`);
+      if (repLogsCount > 0) parts.push(`${repLogsCount} reportage logs`);
+      if (ssCount > 0) parts.push(`${ssCount} station instellingen`);
+      if (verdiCount > 0) parts.push(`${verdiCount} Verdi configuraties`);
+      
+      return {
+        canDelete: false,
+        reason: `Station kan niet worden verwijderd: er zijn nog ${parts.join(", ")} gekoppeld aan dit station.`,
+        dependencies
+      };
+    }
+
+    return { canDelete: true, dependencies };
+  }
+
+  async deleteStation(stationId: number, force: boolean = false): Promise<void> {
+    // VEILIGHEIDSMAATREGEL: Controleer altijd of er dependencies zijn
+    const check = await this.canDeleteStation(stationId);
+    
+    if (!check.canDelete && !force) {
+      throw new Error(check.reason || "Station kan niet worden verwijderd vanwege bestaande dependencies.");
+    }
+
+    if (force && !check.canDelete) {
+      // FORCE DELETE: Eerst alle gerelateerde data verwijderen
+      // LET OP: Dit is een destructieve operatie!
+      console.warn(`[FORCE DELETE] Station ${stationId} wordt geforceerd verwijderd met alle gerelateerde data`);
+      
+      // PRE-CHECK: Controleer eerst of er gebruikers zijn met dit station als primary
+      // Dit moet VOOR de transaction om onnodige rollbacks te voorkomen
+      const stationUsers = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.stationId, stationId));
+      
+      if (stationUsers.length > 0) {
+        throw new Error(`Kan station niet verwijderen: ${stationUsers.length} gebruiker(s) hebben dit als primary station. Verplaats of verwijder deze gebruikers eerst.`);
+      }
+      
+      await db.transaction(async (tx) => {
+        // 1. Haal shifts op voor cleanup van gerelateerde data (EERST voor FK volgorde)
+        const stationShifts = await tx
+          .select({ id: shifts.id })
+          .from(shifts)
+          .where(eq(shifts.stationId, stationId));
+        
+        const shiftIds = stationShifts.map(s => s.id);
+        
+        // 2. Verwijder shift-gerelateerde data EERST (FK constraints)
+        if (shiftIds.length > 0) {
+          // Verwijder shift bids
+          await tx.delete(shiftBids).where(inArray(shiftBids.shiftId, shiftIds));
+          
+          // Verwijder shift swap requests
+          await tx.delete(shiftSwapRequests).where(
+            or(
+              inArray(shiftSwapRequests.requesterShiftId, shiftIds),
+              inArray(shiftSwapRequests.targetShiftId, shiftIds)
+            )
+          );
+          
+          // Verwijder Verdi sync logs
+          await tx.delete(verdiSyncLog).where(inArray(verdiSyncLog.shiftId, shiftIds));
+        }
+        
+        // 3. Verwijder shifts
+        await tx.delete(shifts).where(eq(shifts.stationId, stationId));
+        
+        // 4. Verwijder Verdi configuratie (NA shifts voor sync log FK)
+        await tx.delete(verdiStationConfig).where(eq(verdiStationConfig.stationId, stationId));
+        await tx.delete(verdiPositionMappings).where(eq(verdiPositionMappings.stationId, stationId));
+        // NOTE: verdi_shift_registry wordt NIET verwijderd - deze is permanent by design
+        // Verdi shifts kunnen niet echt verwijderd worden, alleen gecleared
+        
+        // 5. Verwijder station settings
+        await tx.delete(stationSettings).where(eq(stationSettings.stationId, stationId));
+        
+        // 6. Verwijder weekday configs
+        await tx.delete(weekdayConfigs).where(eq(weekdayConfigs.stationId, stationId));
+        
+        // 7. Verwijder holidays (station-specifieke)
+        await tx.delete(holidays).where(eq(holidays.stationId, stationId));
+        
+        // 8. Verwijder user stations (cross-team assignments)
+        await tx.delete(userStations).where(eq(userStations.stationId, stationId));
+        
+        // 9. Verwijder shift preferences
+        await tx.delete(shiftPreferences).where(eq(shiftPreferences.stationId, stationId));
+        
+        // 10. Verwijder user comments
+        await tx.delete(userComments).where(eq(userComments.stationId, stationId));
+        
+        // 11. Verwijder overtime
+        await tx.delete(overtime).where(eq(overtime.stationId, stationId));
+        
+        // 12. Verwijder reportage configuratie
+        await tx.delete(reportageConfig).where(eq(reportageConfig.stationId, stationId));
+        await tx.delete(reportageRecipients).where(eq(reportageRecipients.stationId, stationId));
+        await tx.delete(reportageLogs).where(eq(reportageLogs.stationId, stationId));
+        
+        // 13. Verwijder het station zelf
+        await tx.delete(stations).where(eq(stations.id, stationId));
+      });
+    } else {
+      // Normale delete (station heeft geen dependencies)
+      await db.delete(stations).where(eq(stations.id, stationId));
+    }
   }
 
   async getUser(id: number): Promise<User | undefined> {
