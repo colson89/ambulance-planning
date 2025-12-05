@@ -1283,7 +1283,12 @@ export class DatabaseStorage implements IStorage {
         )
       );
       
-      console.log(`Deleted swap requests for ${shiftIdsToDelete.length} shifts before regenerating schedule`);
+      // Verwijder shift bids die verwijzen naar deze shifts
+      await db.delete(shiftBids).where(
+        inArray(shiftBids.shiftId, shiftIdsToDelete)
+      );
+      
+      console.log(`Deleted swap requests and bids for ${shiftIdsToDelete.length} shifts before regenerating schedule`);
     }
     
     await db.delete(shifts).where(and(...deleteConditions));
@@ -3044,6 +3049,18 @@ export class DatabaseStorage implements IStorage {
     if (!shift) {
       throw new Error("Shift not found");
     }
+
+    // BELANGRIJK: Verwijder eerst gerelateerde records om foreign key errors te voorkomen
+    // 1. Verwijder shift bids die verwijzen naar deze shift
+    await db.delete(shiftBids).where(eq(shiftBids.shiftId, id));
+    
+    // 2. Verwijder swap requests waar deze shift bij betrokken is
+    await db.delete(shiftSwapRequests).where(
+      or(
+        eq(shiftSwapRequests.requesterShiftId, id),
+        eq(shiftSwapRequests.targetShiftId, id)
+      )
+    );
 
     // Haal ALLE sync logs op voor deze shift (niet alleen "success")
     // FIX: Oude code checkte alleen syncStatus === "success", waardoor shifts met
