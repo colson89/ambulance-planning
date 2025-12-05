@@ -828,13 +828,14 @@ export class DatabaseStorage implements IStorage {
       const proposedStart = proposedStartTime.getTime();
       const proposedEnd = proposedEndTime.getTime();
 
-      // BUSINESS RULE CLARITY: Geen overlappende shifts, minimum 1 uur pauze tussen stations
+      // BUSINESS RULE CLARITY: Geen overlappende shifts, minimum 12 uur rust tussen stations
       // Overlap check: shifts overlappen direct
       const hasOverlap = (proposedStart < existingEnd) && (proposedEnd > existingStart);
       
       // Consecutive check: minder dan minimum break time tussen shifts
-      // Voor cross-team: minimum 1 uur pauze tussen shifts van verschillende stations
-      const minBreakTimeMs = 3600000; // 1 uur = 3600000 milliseconden
+      // Voor cross-team: minimum 12 uur rust tussen shifts van verschillende stations
+      // (zelfde regel als voor opeenvolgende shifts binnen 1 station)
+      const minBreakTimeMs = 12 * 60 * 60 * 1000; // 12 uur = 43200000 milliseconden
       
       // Controleer gap tussen shifts (in beide richtingen)
       const gapAfterExisting = proposedStart - existingEnd;  // Positief als proposed shift later is
