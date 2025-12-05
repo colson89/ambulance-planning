@@ -2129,6 +2129,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // CROSS-TEAM CONFLICT VALIDATION: Check if user has conflicting shifts at other stations
+      if (shiftData.userId && shiftData.userId > 0) {
+        const hasConflict = await storage.hasConflictingCrossTeamShift(
+          shiftData.userId,
+          shiftData.date,
+          shiftData.startTime,
+          shiftData.endTime,
+          shiftData.stationId,
+          shiftData.month,
+          shiftData.year
+        );
+        
+        if (hasConflict) {
+          console.log(`❌ CROSS-TEAM CONFLICT: User ${shiftData.userId} has conflicting shift at another station`);
+          return res.status(400).json({ 
+            message: "Deze gebruiker heeft al een shift op een ander station die overlapt of binnen 12 uur valt. Kies een andere gebruiker of een ander tijdstip.",
+            errorCode: "CROSS_TEAM_SHIFT_CONFLICT"
+          });
+        }
+      }
+      
       const shift = await storage.createShift(shiftData);
       console.log('Shift created successfully:', shift);
       
@@ -2391,6 +2412,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ 
             message: "Cross-team gebruikers kunnen geen gesplitste shifts krijgen in eenvoudige systemen. Wijs een volledige shift toe of kies een andere gebruiker.",
             errorCode: "SPLIT_SHIFT_NOT_ALLOWED_FOR_CROSS_TEAM_USER"
+          });
+        }
+      }
+      
+      // CROSS-TEAM CONFLICT VALIDATION: Check if user has conflicting shifts at other stations
+      // Run validation when: userId changes, date/times change, OR stationId changes on an existing assignment
+      // Skip validation if 'force' flag is set (admin/supervisor emergency override)
+      const targetUserId = updateData.userId ?? existingShift.userId;
+      const isDateTimeChange = updateData.date || updateData.startTime || updateData.endTime;
+      const isStationChange = updateData.stationId !== undefined && updateData.stationId !== existingShift.stationId;
+      const needsCrossTeamValidation = !force && targetUserId && targetUserId > 0 && 
+        (updateData.userId !== undefined || isDateTimeChange || isStationChange);
+      
+      if (needsCrossTeamValidation) {
+        const targetStationId = updateData.stationId || existingShift.stationId;
+        const shiftDate = updateData.date ? new Date(updateData.date) : existingShift.date;
+        const shiftStartTime = updateData.startTime ? new Date(updateData.startTime) : existingShift.startTime;
+        const shiftEndTime = updateData.endTime ? new Date(updateData.endTime) : existingShift.endTime;
+        // Derive month/year from effective date to ensure consistency
+        const shiftMonth = shiftDate.getMonth() + 1;
+        const shiftYear = shiftDate.getFullYear();
+        
+        // Update month/year in updateData to persist consistently when date changes
+        if (updateData.date) {
+          updateData.month = shiftMonth;
+          updateData.year = shiftYear;
+        }
+        
+        const hasConflict = await storage.hasConflictingCrossTeamShift(
+          targetUserId,
+          shiftDate,
+          shiftStartTime,
+          shiftEndTime,
+          targetStationId,
+          shiftMonth,
+          shiftYear
+        );
+        
+        if (hasConflict) {
+          console.log(`❌ CROSS-TEAM CONFLICT: User ${targetUserId} has conflicting shift at another station`);
+          return res.status(400).json({ 
+            message: "Deze gebruiker heeft al een shift op een ander station die overlapt of binnen 12 uur valt. Kies een andere gebruiker of een ander tijdstip.",
+            errorCode: "CROSS_TEAM_SHIFT_CONFLICT"
           });
         }
       }
