@@ -9,7 +9,7 @@ import { db } from "./db";
 import { activityLogs, type InsertActivityLog } from "@shared/schema";
 import { desc, eq, and, gte, lte, sql, inArray } from "drizzle-orm";
 
-export type ActivityCategory = "LOGIN" | "LOGOUT" | "PREFERENCE" | "SCHEDULE" | "SHIFT_SWAP" | "USER_MANAGEMENT" | "SETTINGS" | "VERDI" | "OVERTIME" | "PROFILE" | "OTHER";
+export type ActivityCategory = "LOGIN" | "LOGOUT" | "PREFERENCE" | "SCHEDULE" | "SHIFT_SWAP" | "SHIFT_MANUAL" | "SHIFT_BID" | "USER_MANAGEMENT" | "SETTINGS" | "VERDI" | "OVERTIME" | "PROFILE" | "OTHER";
 
 interface LogActivityParams {
   userId?: number | null;
@@ -355,6 +355,8 @@ export const ActivityActions = {
     HOLIDAY_ADDED: "Feestdag toegevoegd",
     HOLIDAY_DELETED: "Feestdag verwijderd",
     WEEKDAY_CONFIG_UPDATED: "Weekdag configuratie gewijzigd",
+    STATION_SETTINGS_UPDATED: "Station instellingen gewijzigd",
+    PREFERENCES_CLEARED: "Voorkeuren gewist",
   },
   VERDI: {
     SYNC_STARTED: "Verdi sync gestart",
@@ -367,5 +369,25 @@ export const ActivityActions = {
     CREATED: "Overuren geregistreerd",
     UPDATED: "Overuren gewijzigd",
     DELETED: "Overuren verwijderd",
+  },
+  SHIFT_MANUAL: {
+    CREATED: "Shift manueel aangemaakt",
+    UPDATED: "Shift manueel gewijzigd",
+    DELETED: "Shift manueel verwijderd",
+    MONTH_DELETED: "Maand shifts verwijderd",
+    ASSIGNED: "Shift manueel toegewezen",
+    UNASSIGNED: "Shift manueel vrijgemaakt",
+    DATE_CHANGED: "Shift datum/tijd gewijzigd",
+    STATION_CHANGED: "Shift station gewijzigd",
+    TYPE_CHANGED: "Shift type gewijzigd",
+    SPLIT: "Shift gesplitst",
+    MERGED: "Shift samengevoegd",
+    FORCE_OVERRIDE: "Validatie geforceerd omzeild",
+  },
+  SHIFT_BID: {
+    CREATED: "Bieding geplaatst",
+    ACCEPTED: "Bieding geaccepteerd",
+    REJECTED: "Bieding afgewezen",
+    WITHDRAWN: "Bieding ingetrokken",
   },
 } as const;
