@@ -279,7 +279,7 @@ export class DatabaseStorage implements IStorage {
     // Dit voorkomt foreign key constraint errors en zorgt voor atomic cleanup
     
     await db.transaction(async (tx) => {
-      // 1. Haal eerst alle shifts van deze user op (voor verdiSyncLog cleanup)
+      // 1. Haal eerst alle shifts van deze user op (voor cleanup van gerelateerde data)
       const userShifts = await tx
         .select({ id: shifts.id })
         .from(shifts)
@@ -287,30 +287,59 @@ export class DatabaseStorage implements IStorage {
       
       const shiftIds = userShifts.map(s => s.id);
       
-      // 2. Verwijder Verdi sync logs voor deze shifts (FK constraint op shift_id)
+      // 2. Verwijder shift bids van deze gebruiker (als bieder)
+      await tx.delete(shiftBids).where(eq(shiftBids.userId, userId));
+      
+      // 3. Verwijder shift bids op de shifts van deze gebruiker
+      if (shiftIds.length > 0) {
+        await tx.delete(shiftBids).where(inArray(shiftBids.shiftId, shiftIds));
+      }
+      
+      // 4. Verwijder shift swap requests waar deze gebruiker bij betrokken is
+      await tx.delete(shiftSwapRequests).where(
+        or(
+          eq(shiftSwapRequests.requesterId, userId),
+          eq(shiftSwapRequests.targetUserId, userId)
+        )
+      );
+      
+      // 5. Verwijder swap requests die verwijzen naar shifts van deze gebruiker
+      if (shiftIds.length > 0) {
+        await tx.delete(shiftSwapRequests).where(
+          or(
+            inArray(shiftSwapRequests.requesterShiftId, shiftIds),
+            inArray(shiftSwapRequests.targetShiftId, shiftIds)
+          )
+        );
+      }
+      
+      // 6. Verwijder Verdi sync logs voor de shifts van deze gebruiker
       if (shiftIds.length > 0) {
         await tx.delete(verdiSyncLog).where(inArray(verdiSyncLog.shiftId, shiftIds));
       }
       
-      // 3. Verwijder shifts
+      // 7. Verwijder shifts
       await tx.delete(shifts).where(eq(shifts.userId, userId));
       
-      // 4. Verwijder shift preferences
+      // 8. Verwijder shift preferences
       await tx.delete(shiftPreferences).where(eq(shiftPreferences.userId, userId));
       
-      // 5. Verwijder user comments
+      // 9. Verwijder user comments
       await tx.delete(userComments).where(eq(userComments.userId, userId));
       
-      // 6. Verwijder cross-team station assignments (FK constraint)
+      // 10. Verwijder cross-team station assignments (FK constraint)
       await tx.delete(userStations).where(eq(userStations.userId, userId));
       
-      // 7. Verwijder calendar tokens (FK constraint)
+      // 11. Verwijder calendar tokens (FK constraint)
       await tx.delete(calendarTokens).where(eq(calendarTokens.userId, userId));
       
-      // 8. Verwijder Verdi user mappings (FK constraint)
+      // 12. Verwijder push notification subscriptions
+      await tx.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+      
+      // 13. Verwijder Verdi user mappings (FK constraint)
       await tx.delete(verdiUserMappings).where(eq(verdiUserMappings.userId, userId));
       
-      // 9. Ten slotte, verwijder de user zelf
+      // 14. Ten slotte, verwijder de user zelf
       await tx.delete(users).where(eq(users.id, userId));
     });
   }
