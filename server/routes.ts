@@ -1506,6 +1506,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.deleteShiftPreference(pref.id);
       }
       
+      // Log activity for preferences cleared
+      try {
+        await logActivity({
+          userId: currentUser.id,
+          stationId: currentUser.stationId,
+          action: ActivityActions.SETTINGS.PREFERENCES_CLEARED,
+          category: 'SETTINGS',
+          details: `${userPrefs.length} voorkeuren gewist voor ${targetUser.firstName} ${targetUser.lastName} voor ${month}/${year}`,
+          targetUserId: targetUserId,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log preferences cleared activity:", logError);
+      }
+      
       res.status(200).json({ message: `Deleted ${userPrefs.length} preferences for user ${userId} in ${month}/${year}` });
     } catch (error) {
       console.error("Error clearing preferences:", error);
@@ -2153,6 +2169,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const shift = await storage.createShift(shiftData);
       console.log('Shift created successfully:', shift);
       
+      // Log activity for manual shift creation
+      try {
+        const shiftDate = new Date(shiftData.date).toLocaleDateString('nl-BE');
+        const shiftType = shiftData.type === 'day' ? 'Dagshift' : shiftData.type === 'night' ? 'Nachtshift' : shiftData.type;
+        let details = `${shiftType} aangemaakt voor ${shiftDate}`;
+        
+        if (shiftData.userId && shiftData.userId > 0) {
+          const assignedUser = await storage.getUser(shiftData.userId);
+          if (assignedUser) {
+            details += ` - toegewezen aan ${assignedUser.firstName} ${assignedUser.lastName}`;
+          }
+        } else {
+          details += ` - open shift`;
+        }
+        
+        await logActivity({
+          userId: req.user?.id,
+          stationId: shiftData.stationId,
+          action: ActivityActions.SHIFT_MANUAL.CREATED,
+          category: 'SHIFT_MANUAL',
+          details,
+          targetUserId: shiftData.userId > 0 ? shiftData.userId : null,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log shift creation activity:", logError);
+      }
+      
       res.status(201).json(shift);
     } catch (error) {
       console.error("Error creating shift:", error);
@@ -2208,6 +2253,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Complete progress tracking
       deleteProgress = { percentage: 100, message: "Verwijderen voltooid!", isActive: false };
+      
+      // Log activity for bulk month deletion
+      try {
+        const details = `${successCount} shifts verwijderd voor ${month}/${year}${failedShifts.length > 0 ? ` (${failedShifts.length} gefaald)` : ''}`;
+        await logActivity({
+          userId: req.user?.id,
+          stationId: userStationId,
+          action: ActivityActions.SHIFT_MANUAL.MONTH_DELETED,
+          category: 'SHIFT_MANUAL',
+          details,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log month deletion activity:", logError);
+      }
       
       // Return summary
       if (failedShifts.length === 0) {
@@ -2485,6 +2546,149 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Log activity for manual shift update with detailed change tracking
+      try {
+        const shiftDate = new Date(existingShift.date).toLocaleDateString('nl-BE');
+        const shiftType = existingShift.type === 'day' ? 'Dagshift' : existingShift.type === 'night' ? 'Nachtshift' : existingShift.type;
+        const changes: string[] = [];
+        
+        // Track user assignment changes
+        if (updateData.userId !== undefined && updateData.userId !== existingShift.userId) {
+          if (updateData.userId && updateData.userId > 0 && (!existingShift.userId || existingShift.userId === 0)) {
+            // Assigned to someone
+            const newUser = await storage.getUser(updateData.userId);
+            changes.push(`toegewezen aan ${newUser?.firstName} ${newUser?.lastName}`);
+            await logActivity({
+              userId: req.user?.id,
+              stationId: existingShift.stationId,
+              action: ActivityActions.SHIFT_MANUAL.ASSIGNED,
+              category: 'SHIFT_MANUAL',
+              details: `${shiftType} op ${shiftDate} toegewezen aan ${newUser?.firstName} ${newUser?.lastName}`,
+              targetUserId: updateData.userId,
+              ipAddress: getClientInfo(req).ipAddress,
+              userAgent: getClientInfo(req).userAgent
+            });
+          } else if ((!updateData.userId || updateData.userId === 0) && existingShift.userId && existingShift.userId > 0) {
+            // Unassigned from someone
+            const oldUser = await storage.getUser(existingShift.userId);
+            changes.push(`vrijgemaakt van ${oldUser?.firstName} ${oldUser?.lastName}`);
+            await logActivity({
+              userId: req.user?.id,
+              stationId: existingShift.stationId,
+              action: ActivityActions.SHIFT_MANUAL.UNASSIGNED,
+              category: 'SHIFT_MANUAL',
+              details: `${shiftType} op ${shiftDate} vrijgemaakt van ${oldUser?.firstName} ${oldUser?.lastName}`,
+              targetUserId: existingShift.userId,
+              ipAddress: getClientInfo(req).ipAddress,
+              userAgent: getClientInfo(req).userAgent
+            });
+          } else if (updateData.userId && updateData.userId > 0 && existingShift.userId && existingShift.userId > 0) {
+            // Reassigned from one person to another
+            const oldUser = await storage.getUser(existingShift.userId);
+            const newUser = await storage.getUser(updateData.userId);
+            changes.push(`hertoegewezen van ${oldUser?.firstName} ${oldUser?.lastName} naar ${newUser?.firstName} ${newUser?.lastName}`);
+            await logActivity({
+              userId: req.user?.id,
+              stationId: existingShift.stationId,
+              action: ActivityActions.SHIFT_MANUAL.ASSIGNED,
+              category: 'SHIFT_MANUAL',
+              details: `${shiftType} op ${shiftDate} hertoegewezen van ${oldUser?.firstName} ${oldUser?.lastName} naar ${newUser?.firstName} ${newUser?.lastName}`,
+              targetUserId: updateData.userId,
+              ipAddress: getClientInfo(req).ipAddress,
+              userAgent: getClientInfo(req).userAgent
+            });
+          }
+        }
+        
+        // Track date/time changes
+        if (updateData.date || updateData.startTime || updateData.endTime) {
+          const oldDate = new Date(existingShift.date).toLocaleDateString('nl-BE');
+          const oldStart = new Date(existingShift.startTime).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' });
+          const oldEnd = new Date(existingShift.endTime).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' });
+          const newDate = updateData.date ? new Date(updateData.date).toLocaleDateString('nl-BE') : oldDate;
+          const newStart = updateData.startTime ? new Date(updateData.startTime).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }) : oldStart;
+          const newEnd = updateData.endTime ? new Date(updateData.endTime).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }) : oldEnd;
+          
+          if (oldDate !== newDate || oldStart !== newStart || oldEnd !== newEnd) {
+            changes.push(`datum/tijd gewijzigd van ${oldDate} ${oldStart}-${oldEnd} naar ${newDate} ${newStart}-${newEnd}`);
+            await logActivity({
+              userId: req.user?.id,
+              stationId: existingShift.stationId,
+              action: ActivityActions.SHIFT_MANUAL.DATE_CHANGED,
+              category: 'SHIFT_MANUAL',
+              details: `${shiftType} datum/tijd gewijzigd: ${oldDate} ${oldStart}-${oldEnd} → ${newDate} ${newStart}-${newEnd}`,
+              targetUserId: existingShift.userId > 0 ? existingShift.userId : null,
+              ipAddress: getClientInfo(req).ipAddress,
+              userAgent: getClientInfo(req).userAgent
+            });
+          }
+        }
+        
+        // Track station changes
+        if (updateData.stationId && updateData.stationId !== existingShift.stationId) {
+          const oldStation = await storage.getStation(existingShift.stationId);
+          const newStation = await storage.getStation(updateData.stationId);
+          changes.push(`station gewijzigd van ${oldStation?.displayName} naar ${newStation?.displayName}`);
+          await logActivity({
+            userId: req.user?.id,
+            stationId: updateData.stationId,
+            action: ActivityActions.SHIFT_MANUAL.STATION_CHANGED,
+            category: 'SHIFT_MANUAL',
+            details: `${shiftType} op ${shiftDate} station gewijzigd: ${oldStation?.displayName} → ${newStation?.displayName}`,
+            targetUserId: existingShift.userId > 0 ? existingShift.userId : null,
+            ipAddress: getClientInfo(req).ipAddress,
+            userAgent: getClientInfo(req).userAgent
+          });
+        }
+        
+        // Track type changes
+        if (updateData.type && updateData.type !== existingShift.type) {
+          const oldType = existingShift.type === 'day' ? 'Dagshift' : existingShift.type === 'night' ? 'Nachtshift' : existingShift.type;
+          const newType = updateData.type === 'day' ? 'Dagshift' : updateData.type === 'night' ? 'Nachtshift' : updateData.type;
+          changes.push(`type gewijzigd van ${oldType} naar ${newType}`);
+          await logActivity({
+            userId: req.user?.id,
+            stationId: existingShift.stationId,
+            action: ActivityActions.SHIFT_MANUAL.TYPE_CHANGED,
+            category: 'SHIFT_MANUAL',
+            details: `Shift op ${shiftDate} type gewijzigd: ${oldType} → ${newType}`,
+            targetUserId: existingShift.userId > 0 ? existingShift.userId : null,
+            ipAddress: getClientInfo(req).ipAddress,
+            userAgent: getClientInfo(req).userAgent
+          });
+        }
+        
+        // Log force override if used
+        if (force) {
+          await logActivity({
+            userId: req.user?.id,
+            stationId: existingShift.stationId,
+            action: ActivityActions.SHIFT_MANUAL.FORCE_OVERRIDE,
+            category: 'SHIFT_MANUAL',
+            details: `Validatie geforceerd omzeild voor ${shiftType} op ${shiftDate}. Wijzigingen: ${changes.length > 0 ? changes.join(', ') : 'geen specifieke wijzigingen'}`,
+            targetUserId: updateData.userId > 0 ? updateData.userId : (existingShift.userId > 0 ? existingShift.userId : null),
+            ipAddress: getClientInfo(req).ipAddress,
+            userAgent: getClientInfo(req).userAgent
+          });
+        }
+        
+        // Log general update if no specific changes were tracked but something changed
+        if (changes.length === 0 && Object.keys(updateData).length > 0) {
+          await logActivity({
+            userId: req.user?.id,
+            stationId: existingShift.stationId,
+            action: ActivityActions.SHIFT_MANUAL.UPDATED,
+            category: 'SHIFT_MANUAL',
+            details: `${shiftType} op ${shiftDate} gewijzigd`,
+            targetUserId: existingShift.userId > 0 ? existingShift.userId : null,
+            ipAddress: getClientInfo(req).ipAddress,
+            userAgent: getClientInfo(req).userAgent
+          });
+        }
+      } catch (logError) {
+        console.error("Failed to log shift update activity:", logError);
+      }
+      
       res.status(200).json(updatedShift);
     } catch (error) {
       console.error("Error updating shift:", error);
@@ -2555,6 +2759,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         year: existingShift.year
       });
       
+      // Log activity for shift split
+      try {
+        const shiftDate = new Date(existingShift.date).toLocaleDateString('nl-BE');
+        const shiftType = existingShift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+        await logActivity({
+          userId: req.user?.id,
+          stationId: existingShift.stationId,
+          action: ActivityActions.SHIFT_MANUAL.SPLIT,
+          category: 'SHIFT_MANUAL',
+          details: `${shiftType} op ${shiftDate} gesplitst in twee halve shifts`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log shift split activity:", logError);
+      }
+      
       res.status(200).json({ 
         message: "Shift successfully split into two half shifts",
         originalShift: shiftId,
@@ -2624,6 +2845,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: 0,
         status: "open"
       });
+      
+      // Log activity for shift merge
+      try {
+        const shiftDate = new Date(existingShift.date).toLocaleDateString('nl-BE');
+        const shiftType = existingShift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+        await logActivity({
+          userId: req.user?.id,
+          stationId: existingShift.stationId,
+          action: ActivityActions.SHIFT_MANUAL.MERGED,
+          category: 'SHIFT_MANUAL',
+          details: `Gesplitste ${shiftType.toLowerCase()} op ${shiftDate} samengevoegd naar volledige shift`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log shift merge activity:", logError);
+      }
       
       res.status(200).json({ 
         message: `Split shifts successfully merged into one ${shiftDescription}`,
@@ -5744,6 +5982,24 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       const { allowShiftSwaps } = req.body;
       
       const settings = await storage.createOrUpdateStationSettings(stationId, { allowShiftSwaps });
+      
+      // Log activity for station settings update
+      try {
+        const station = await storage.getStation(stationId);
+        const swapStatus = allowShiftSwaps ? 'ingeschakeld' : 'uitgeschakeld';
+        await logActivity({
+          userId: req.user?.id,
+          stationId: stationId,
+          action: ActivityActions.SETTINGS.STATION_SETTINGS_UPDATED,
+          category: 'SETTINGS',
+          details: `Station instellingen gewijzigd voor ${station?.displayName}: Shift ruilen ${swapStatus}`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log station settings update activity:", logError);
+      }
+      
       res.json(settings);
     } catch (error: any) {
       console.error("Error updating station settings:", error);
@@ -6598,12 +6854,12 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           await logActivity({
             userId: user.id,
             stationId: bid.stationId,
-            action: 'APPROVE',
+            action: ActivityActions.SHIFT_BID.ACCEPTED,
             category: 'SHIFT_BID',
             details: `Bieding geaccepteerd: ${shiftType} op ${shiftDate} toegewezen aan ${bidder.firstName} ${bidder.lastName}`,
             targetUserId: bid.userId,
-            targetShiftId: bid.shiftId,
-            ipAddress: getClientInfo(req).ipAddress
+            ipAddress: getClientInfo(req).ipAddress,
+            userAgent: getClientInfo(req).userAgent
           });
         }
       } catch (logError) {
@@ -6667,12 +6923,12 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           await logActivity({
             userId: user.id,
             stationId: bid.stationId,
-            action: 'REJECT',
+            action: ActivityActions.SHIFT_BID.REJECTED,
             category: 'SHIFT_BID',
             details: `Bieding afgewezen: ${shiftType} op ${shiftDate} van ${bidder.firstName} ${bidder.lastName}`,
             targetUserId: bid.userId,
-            targetShiftId: bid.shiftId,
-            ipAddress: getClientInfo(req).ipAddress
+            ipAddress: getClientInfo(req).ipAddress,
+            userAgent: getClientInfo(req).userAgent
           });
         }
       } catch (logError) {
@@ -6733,11 +6989,11 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           await logActivity({
             userId: user.id,
             stationId: bid.stationId,
-            action: 'DELETE',
+            action: ActivityActions.SHIFT_BID.WITHDRAWN,
             category: 'SHIFT_BID',
             details: `Bieding ingetrokken voor ${shiftType} op ${shiftDate}`,
-            targetShiftId: bid.shiftId,
-            ipAddress: getClientInfo(req).ipAddress
+            ipAddress: getClientInfo(req).ipAddress,
+            userAgent: getClientInfo(req).userAgent
           });
         }
       } catch (logError) {
