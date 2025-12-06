@@ -87,13 +87,13 @@ Documentation Files:
   - **Database Table**: `shift_bids` with status workflow (pending/accepted/rejected/withdrawn)
   - **API Endpoints**: Create bid, list bids per shift, accept bid (auto-rejects others), reject bid, withdraw bid, get bid counts per month
   - **Activity Logging**: All bid actions are logged with SHIFT_BID category
-- **Undo History System**: Allows admins/supervisors to revert recent manual planning changes. Features:
-  - **Database Table**: `undo_history` tracks all shift modifications with old/new values as JSON
-  - **Supported Actions**: Shift assignment changes, shift deletions (can be restored), shift modifications
-  - **Frontend UI**: Collapsible "Undo Historie" panel on Planning page, shows last 50 undoable actions per month
+- **Undo History System**: Allows admins/supervisors to revert recent changes to both shift planning and user management. Features:
+  - **Database Table**: `undo_history` tracks all modifications with old/new values as JSON
+  - **Shift Planning Undo**: Supports shift assignment changes, shift deletions (can be restored), shift modifications. Collapsible "Undo Historie" panel on Planning page, shows last 50 undoable actions per month
+  - **User Management Undo**: Supports user create, update, delete, and station assignment changes. Collapsible "Undo Historie (Gebruikersbeheer)" panel on User Management page
   - **Security**: Station-scoped access (admins see own station only, supervisors see all stations)
-  - **API Endpoints**: GET `/api/undo-history/:stationId/:month/:year`, POST `/api/undo/:id`
-  - **Limitations**: Planning generation/deletion cannot be undone via this system (use Rollback feature instead)
+  - **API Endpoints**: GET `/api/undo-history/:stationId/:month/:year` (shifts), GET `/api/undo-history/users/:stationId` (users), POST `/api/undo/:id`
+  - **Limitations**: Planning generation/deletion cannot be undone via this system (use Rollback feature instead). Restoring deleted users only restores basic profile data - related shifts/preferences remain deleted due to cascade delete
 
 ### Build & Deployment
 - **Pre-built Application**: Deployed as pre-compiled backend (`dist/index.js`) and static frontend assets (`dist/public/`).

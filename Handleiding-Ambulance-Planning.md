@@ -1216,6 +1216,56 @@ U hebt per ongeluk Jan toegewezen aan een nachtshift op 15 december, maar het mo
 4. Bevestig → De shift wordt weer "Niet ingevuld"
 5. Wijs nu Piet toe aan de shift
 
+#### ↩️ Undo Historie (Gebruikersbeheer)
+
+Naast shift planning wijzigingen kunt u ook gebruikersbeheer acties ongedaan maken. Dit is handig wanneer u per ongeluk een gebruiker hebt verwijderd of verkeerde gegevens hebt ingevuld.
+
+**Toegang tot Gebruiker Undo Historie:**
+
+1. Ga naar de **Gebruikersbeheer** pagina
+2. Scroll naar beneden tot het **Undo Historie (Gebruikersbeheer)** paneel
+3. Klik op de titel om het paneel uit te klappen
+
+**Wat kunt u terugdraaien:**
+
+| Type Wijziging | Badge Kleur | Beschrijving |
+|----------------|-------------|--------------|
+| **Aangemaakt** | Groen | Een nieuwe gebruiker aanmaken |
+| **Bijgewerkt** | Grijs | Wijzigingen aan gebruikersgegevens |
+| **Verwijderd** | Rood | Verwijderde gebruikers herstellen |
+| **Station +** | Blauw | Cross-team station toewijzing toegevoegd |
+| **Station -** | Oranje | Cross-team station toewijzing verwijderd |
+
+**Hoe een wijziging ongedaan maken:**
+
+1. Open het **Undo Historie (Gebruikersbeheer)** paneel
+2. Bekijk de recente wijzigingen (gesorteerd op datum/tijd)
+3. Bij elke wijziging ziet u:
+   - **Type badge**: Soort wijziging (zie tabel hierboven)
+   - **Beschrijving**: Wat er is gewijzigd (bijv. "Gebruiker Jan Jansen aangemaakt")
+   - **Tijdstip**: Wanneer de wijziging is gemaakt
+   - **Door wie**: Naam van de admin die de wijziging maakte
+4. Klik op het **↩️ undo icoon** naast de wijziging
+5. Bevestig in de popup
+6. De gebruiker wordt teruggezet naar de vorige staat
+
+**Belangrijke opmerkingen:**
+
+- ⏰ **Beperkte historie**: Alleen de laatste 50 wijzigingen worden getoond
+- 🔒 **Eenmalig**: Elke wijziging kan maar één keer ongedaan gemaakt worden
+- ⚠️ **Verwijderde gebruikers**: Bij het herstellen van een verwijderde gebruiker worden alleen de basisgegevens hersteld (naam, email, rol, station, uren). Gerelateerde shifts, voorkeuren en biedingen blijven verwijderd vanwege cascade delete
+- 🏥 **Station beperking**: Admins zien alleen wijzigingen voor hun eigen station. Supervisors zien alle stations
+
+**Voorbeeld Scenario:**
+
+U hebt per ongeluk gebruiker Maria verwijderd:
+
+1. Open Undo Historie (Gebruikersbeheer) paneel
+2. Zoek "Gebruiker Maria Janssen verwijderd" (rode badge)
+3. Klik op het undo icoon
+4. Bevestig → Maria's account wordt hersteld met basisgegevens
+5. Maria kan nu weer inloggen (let op: shifts en voorkeuren moeten opnieuw worden ingevoerd)
+
 #### 👥 Beschikbaarheid Bekijken per Datum 
 
 Als admin kunt u op elke datum in de planning klikken om te zien wie beschikbaar is voor die specifieke shift. Dit helpt u om:

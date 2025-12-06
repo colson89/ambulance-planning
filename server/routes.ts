@@ -305,6 +305,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const user = await storage.createUser(userData);
       
+      // Create undo record for user creation
+      const now = new Date();
+      await storage.createUndoRecord({
+        userId: req.user!.id,
+        stationId: user.stationId,
+        entityType: 'user_create',
+        entityId: user.id,
+        action: 'CREATE',
+        description: `Gebruiker aangemaakt: ${user.firstName} ${user.lastName} (${user.username})`,
+        oldValue: null,
+        newValue: JSON.stringify({
+          id: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          hours: user.hours,
+          stationId: user.stationId
+        }),
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: req.headers['user-agent'] || null
+      });
+      
       // Log activity
       await logActivity({
         userId: req.user!.id,
@@ -377,7 +403,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`User promoted to supervisor, automatically assigned to supervisor station (ID 8)`);
       }
       
+      // Store old values before update for undo
+      const oldUserValues = {
+        firstName: targetUser.firstName,
+        lastName: targetUser.lastName,
+        email: targetUser.email,
+        role: targetUser.role,
+        hours: targetUser.hours,
+        stationId: targetUser.stationId,
+        isProfessional: targetUser.isProfessional,
+        hasDrivingLicenseC: targetUser.hasDrivingLicenseC,
+        phoneNumber: targetUser.phoneNumber
+      };
+      
       const user = await storage.updateUser(parseInt(req.params.id), updateData);
+      
+      // Create undo record for user update
+      const now = new Date();
+      await storage.createUndoRecord({
+        userId: req.user!.id,
+        stationId: targetUser.stationId,
+        entityType: 'user_update',
+        entityId: user.id,
+        action: 'UPDATE',
+        description: `Gebruiker bijgewerkt: ${user.firstName} ${user.lastName} (${user.username})`,
+        oldValue: JSON.stringify(oldUserValues),
+        newValue: JSON.stringify({
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          hours: user.hours,
+          stationId: user.stationId,
+          isProfessional: user.isProfessional,
+          hasDrivingLicenseC: user.hasDrivingLicenseC,
+          phoneNumber: user.phoneNumber
+        }),
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: req.headers['user-agent'] || null
+      });
       
       // Log activity
       await logActivity({
@@ -502,6 +568,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: "Cannot access supervisor station users" });
         }
         
+        // Create undo record before deletion
+        const now = new Date();
+        await storage.createUndoRecord({
+          userId: req.user!.id,
+          stationId: targetUser.stationId,
+          entityType: 'user_delete',
+          entityId: targetUserId,
+          action: 'DELETE',
+          description: `Gebruiker verwijderd: ${targetUser.firstName} ${targetUser.lastName} (${targetUser.username})`,
+          oldValue: JSON.stringify({
+            username: targetUser.username,
+            password: targetUser.password,
+            firstName: targetUser.firstName,
+            lastName: targetUser.lastName,
+            email: targetUser.email,
+            role: targetUser.role,
+            hours: targetUser.hours,
+            stationId: targetUser.stationId,
+            isProfessional: targetUser.isProfessional,
+            hasDrivingLicenseC: targetUser.hasDrivingLicenseC,
+            phoneNumber: targetUser.phoneNumber,
+            profilePhotoUrl: targetUser.profilePhotoUrl,
+            calendarToken: targetUser.calendarToken
+          }),
+          newValue: null,
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: req.headers['user-agent'] || null
+        });
+        
         // Supervisor: fully delete the user
         await logActivity({
           userId: req.user!.id,
@@ -528,6 +625,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Case: User should be fully deleted (only had this station)
       if (result.fullyDeleted) {
+        // Create undo record before deletion
+        const now = new Date();
+        await storage.createUndoRecord({
+          userId: req.user!.id,
+          stationId: targetUser.stationId,
+          entityType: 'user_delete',
+          entityId: targetUserId,
+          action: 'DELETE',
+          description: `Gebruiker verwijderd: ${targetUser.firstName} ${targetUser.lastName} (${targetUser.username})`,
+          oldValue: JSON.stringify({
+            username: targetUser.username,
+            password: targetUser.password,
+            firstName: targetUser.firstName,
+            lastName: targetUser.lastName,
+            email: targetUser.email,
+            role: targetUser.role,
+            hours: targetUser.hours,
+            stationId: targetUser.stationId,
+            isProfessional: targetUser.isProfessional,
+            hasDrivingLicenseC: targetUser.hasDrivingLicenseC,
+            phoneNumber: targetUser.phoneNumber,
+            profilePhotoUrl: targetUser.profilePhotoUrl,
+            calendarToken: targetUser.calendarToken
+          }),
+          newValue: null,
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: req.headers['user-agent'] || null
+        });
+        
         await logActivity({
           userId: req.user!.id,
           stationId: req.user!.stationId,
@@ -752,6 +880,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.addUserToStation(userId, stationId);
+      
+      // Create undo record for station assignment
+      const now = new Date();
+      await storage.createUndoRecord({
+        userId: req.user!.id,
+        stationId: targetUser.stationId,
+        entityType: 'user_station_add',
+        entityId: userId,
+        action: 'ADD_STATION',
+        description: `${targetUser.firstName} ${targetUser.lastName} toegevoegd aan ${station.displayName}`,
+        oldValue: JSON.stringify({ stationId }),
+        newValue: JSON.stringify({ stationId, userName: `${targetUser.firstName} ${targetUser.lastName}` }),
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: req.headers['user-agent'] || null
+      });
+      
       res.json({ message: "User toegevoegd aan station" });
     } catch (error) {
       console.error("Error adding user to station:", error);
@@ -775,6 +921,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (targetUser.stationId === stationId) {
         return res.status(400).json({ message: "Cannot remove user from their primary station" });
       }
+      
+      // Get station name for undo description
+      const station = await storage.getStation(stationId);
+      
+      // Get current assignment for max hours (if exists)
+      const assignments = await storage.getUserStationAssignments(userId);
+      const currentAssignment = assignments.find((a: any) => a.stationId === stationId);
+      
+      // Create undo record before removing
+      const now = new Date();
+      await storage.createUndoRecord({
+        userId: req.user!.id,
+        stationId: targetUser.stationId,
+        entityType: 'user_station_remove',
+        entityId: userId,
+        action: 'REMOVE_STATION',
+        description: `${targetUser.firstName} ${targetUser.lastName} verwijderd van ${station?.displayName || 'station'}`,
+        oldValue: JSON.stringify({ 
+          stationId, 
+          maxHoursPerMonth: currentAssignment?.maxHoursPerMonth 
+        }),
+        newValue: null,
+        month: now.getMonth() + 1,
+        year: now.getFullYear(),
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: req.headers['user-agent'] || null
+      });
       
       await storage.removeUserFromStation(userId, stationId);
       res.json({ message: "User verwijderd van station" });
@@ -6003,7 +6176,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   // UNDO HISTORY ENDPOINTS
   // ========================================
 
-  // Get undo history for a station and month/year
+  // Get undo history for a station and month/year (for shift planning)
   app.get("/api/undo-history/:stationId/:month/:year", requireAdmin, async (req, res) => {
     try {
       const stationId = parseInt(req.params.stationId);
@@ -6032,6 +6205,36 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     } catch (error: any) {
       console.error('Error getting undo history:', error);
       res.status(500).json({ message: "Fout bij ophalen undo historie", error: error.message });
+    }
+  });
+
+  // Get undo history for user management (not filtered by month/year)
+  app.get("/api/undo-history/users/:stationId", requireAdmin, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const limit = parseInt(req.query.limit as string) || 50;
+      const user = req.user as User;
+      
+      // SECURITY: Verify station access - admins can only access their own station
+      if (user.role !== 'supervisor' && user.stationId !== stationId) {
+        return res.status(403).json({ message: "Geen toegang tot deze station" });
+      }
+      
+      const history = await storage.getUserUndoHistory(stationId, limit);
+      
+      // Enrich with user information
+      const enrichedHistory = await Promise.all(history.map(async (record) => {
+        const recordUser = await storage.getUser(record.userId);
+        return {
+          ...record,
+          userName: recordUser ? `${recordUser.firstName} ${recordUser.lastName}` : 'Onbekend'
+        };
+      }));
+      
+      res.json(enrichedHistory);
+    } catch (error: any) {
+      console.error('Error getting user undo history:', error);
+      res.status(500).json({ message: "Fout bij ophalen gebruiker undo historie", error: error.message });
     }
   });
 

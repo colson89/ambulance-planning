@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { UserUndoHistoryPanel } from "@/components/user-undo-history-panel";
 
 const updateUserSchema = z.object({
   firstName: z.string().min(1, "Voornaam is verplicht"),
@@ -1422,6 +1423,9 @@ export default function UserManagement() {
           </Card>
         ))}
       </div>
+      
+      {/* Undo History Panel voor gebruikersbeheer */}
+      <UserUndoHistoryPanel stationId={user?.role === 'supervisor' ? (selectedStationId || 0) : (user?.stationId || 0)} />
         </TabsContent>
 
         {/* Cross-team Beheer Tab - Alleen voor supervisors */}

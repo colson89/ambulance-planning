@@ -556,13 +556,18 @@ export const insertShiftBidSchema = createInsertSchema(shiftBids, {
 export type ShiftBid = typeof shiftBids.$inferSelect;
 export type InsertShiftBid = z.infer<typeof insertShiftBidSchema>;
 
-// Undo Historie - voor ongedaan maken van planning wijzigingen
+// Undo Historie - voor ongedaan maken van planning en gebruikersbeheer wijzigingen
 export const undoHistory = pgTable("undo_history", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   stationId: integer("station_id").notNull().references(() => stations.id),
   entityType: text("entity_type", { 
-    enum: ["shift", "shift_assignment", "shift_delete", "planning_generate", "planning_delete"] 
+    enum: [
+      // Shift gerelateerde types
+      "shift", "shift_assignment", "shift_delete", "planning_generate", "planning_delete",
+      // Gebruikersbeheer types
+      "user_create", "user_update", "user_delete", "user_station_add", "user_station_remove"
+    ] 
   }).notNull(),
   entityId: integer("entity_id"),
   action: text("action").notNull(),

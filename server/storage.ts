@@ -148,6 +148,7 @@ export interface IStorage {
   // Undo History
   createUndoRecord(record: InsertUndoHistory): Promise<UndoHistory>;
   getUndoHistory(stationId: number, month: number, year: number, limit?: number): Promise<UndoHistory[]>;
+  getUserUndoHistory(stationId: number, limit?: number): Promise<UndoHistory[]>;
   getUndoRecord(id: number): Promise<UndoHistory | undefined>;
   markAsUndone(id: number, undoneById: number): Promise<UndoHistory>;
   executeUndo(id: number, undoneById: number): Promise<void>;
@@ -4587,6 +4588,18 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
+  async getUserUndoHistory(stationId: number, limit: number = 50): Promise<UndoHistory[]> {
+    return db.select()
+      .from(undoHistory)
+      .where(and(
+        eq(undoHistory.stationId, stationId),
+        inArray(undoHistory.entityType, ['user_create', 'user_update', 'user_delete', 'user_station_add', 'user_station_remove']),
+        eq(undoHistory.isUndone, false)
+      ))
+      .orderBy(desc(undoHistory.createdAt))
+      .limit(limit);
+  }
+
   async getUndoRecord(id: number): Promise<UndoHistory | undefined> {
     const [record] = await db.select()
       .from(undoHistory)
@@ -4673,6 +4686,76 @@ export class DatabaseStorage implements IStorage {
       case 'planning_generate':
       case 'planning_delete':
         throw new Error("Planning generatie/verwijdering kan niet individueel ongedaan worden gemaakt. Gebruik de Rollback functie.");
+        
+      // User management undo cases
+      case 'user_create':
+        // Undo user creation by deleting the user
+        if (record.entityId) {
+          await db.delete(users).where(eq(users.id, record.entityId));
+        }
+        break;
+        
+      case 'user_delete':
+        // Undo user deletion by re-creating the user
+        if (oldValue) {
+          await db.insert(users).values({
+            username: oldValue.username,
+            password: oldValue.password,
+            firstName: oldValue.firstName,
+            lastName: oldValue.lastName,
+            email: oldValue.email,
+            role: oldValue.role,
+            hours: oldValue.hours,
+            stationId: oldValue.stationId,
+            isProfessional: oldValue.isProfessional ?? false,
+            hasDrivingLicenseC: oldValue.hasDrivingLicenseC ?? false,
+            phoneNumber: oldValue.phoneNumber,
+            profilePhotoUrl: oldValue.profilePhotoUrl,
+            calendarToken: oldValue.calendarToken
+          });
+        }
+        break;
+        
+      case 'user_update':
+        // Undo user update by restoring old values
+        if (record.entityId && oldValue) {
+          await db.update(users)
+            .set({
+              firstName: oldValue.firstName,
+              lastName: oldValue.lastName,
+              email: oldValue.email,
+              role: oldValue.role,
+              hours: oldValue.hours,
+              stationId: oldValue.stationId,
+              isProfessional: oldValue.isProfessional,
+              hasDrivingLicenseC: oldValue.hasDrivingLicenseC,
+              phoneNumber: oldValue.phoneNumber
+            })
+            .where(eq(users.id, record.entityId));
+        }
+        break;
+        
+      case 'user_station_add':
+        // Undo adding user to station by removing them
+        if (record.entityId && oldValue?.stationId) {
+          await db.delete(userStations)
+            .where(and(
+              eq(userStations.userId, record.entityId),
+              eq(userStations.stationId, oldValue.stationId)
+            ));
+        }
+        break;
+        
+      case 'user_station_remove':
+        // Undo removing user from station by adding them back
+        if (record.entityId && oldValue?.stationId) {
+          await db.insert(userStations).values({
+            userId: record.entityId,
+            stationId: oldValue.stationId,
+            maxHours: oldValue.maxHoursPerMonth || 24
+          }).onConflictDoNothing();
+        }
+        break;
         
       default:
         throw new Error(`Onbekend entity type: ${record.entityType}`);
