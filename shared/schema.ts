@@ -555,3 +555,36 @@ export const insertShiftBidSchema = createInsertSchema(shiftBids, {
 });
 export type ShiftBid = typeof shiftBids.$inferSelect;
 export type InsertShiftBid = z.infer<typeof insertShiftBidSchema>;
+
+// Undo Historie - voor ongedaan maken van planning wijzigingen
+export const undoHistory = pgTable("undo_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  entityType: text("entity_type", { 
+    enum: ["shift", "shift_assignment", "shift_delete", "planning_generate", "planning_delete"] 
+  }).notNull(),
+  entityId: integer("entity_id"),
+  action: text("action").notNull(),
+  description: text("description").notNull(),
+  oldValue: text("old_value"),
+  newValue: text("new_value"),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  isUndone: boolean("is_undone").notNull().default(false),
+  undoneAt: timestamp("undone_at"),
+  undoneById: integer("undone_by_id").references(() => users.id, { onDelete: 'set null' }),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const insertUndoHistorySchema = createInsertSchema(undoHistory).omit({
+  id: true,
+  isUndone: true,
+  undoneAt: true,
+  undoneById: true,
+  createdAt: true
+});
+export type UndoHistory = typeof undoHistory.$inferSelect;
+export type InsertUndoHistory = z.infer<typeof insertUndoHistorySchema>;
