@@ -264,22 +264,214 @@ export default function Integrations() {
         </div>
 
         {/* Info Section */}
-        <div className="mt-8">
+        <div className="mt-8 space-y-6">
           <Card className="bg-blue-50 border-blue-200">
             <CardHeader>
               <CardTitle className="text-blue-900">Over Integraties</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <p className="text-blue-800">
                 Integraties verbinden het Ambulance Planning Systeem met externe diensten zoals 
                 alarmeringssoftware, HR-systemen, en andere tools. Deze koppelingen automatiseren 
                 workflows en zorgen ervoor dat data up-to-date blijft tussen verschillende systemen.
               </p>
-              <div className="mt-4 p-3 bg-white rounded border border-blue-200">
-                <p className="text-sm text-gray-700">
-                  <strong>Verdi:</strong> Synchroniseert ingeplande shifts automatisch naar de Verdi 
-                  alarmeringscentrale, zodat de juiste medewerkers bereikbaar zijn tijdens noodsituaties.
-                </p>
+              
+              {/* Overzichtstabel */}
+              <div className="bg-white rounded-lg border border-blue-200 overflow-hidden">
+                <div className="bg-blue-100 px-4 py-2 border-b border-blue-200 flex items-center justify-between">
+                  <h3 className="font-semibold text-blue-900">Beschikbare Integraties</h3>
+                  {user?.role !== 'supervisor' && (
+                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                      Sommige integraties zijn alleen zichtbaar voor supervisors
+                    </span>
+                  )}
+                </div>
+                <div className="divide-y divide-gray-100">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-green-100 rounded-lg shrink-0">
+                        <LinkIcon className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Verdi Alarm Software</p>
+                        <p className="text-sm text-gray-600">Synchroniseert ingeplande shifts automatisch naar de Verdi alarmeringscentrale, zodat de juiste medewerkers bereikbaar zijn tijdens noodsituaties.</p>
+                        <p className="text-xs text-gray-500 mt-1">Vereist: Verdi URL, API credentials, ShiftSheet GUID</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-purple-100 rounded-lg shrink-0">
+                        <Mail className="h-5 w-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Reportage Personeelsdienst</p>
+                        <p className="text-sm text-gray-600">Verstuurt automatisch maandelijkse shift rapportages via e-mail met Excel overzichten voor de personeelsdienst.</p>
+                        <p className="text-xs text-gray-500 mt-1">Vereist: SMTP server instellingen (host, poort, gebruiker, wachtwoord)</p>
+                      </div>
+                    </div>
+                  </div>
+                  {user?.role === 'supervisor' && (
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-indigo-100 rounded-lg shrink-0">
+                          <KeyRound className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">Wachtwoord Reset via E-mail</p>
+                          <p className="text-sm text-gray-600">Gebruikers kunnen zelf hun wachtwoord resetten via een e-mail link. Vermindert werkdruk op admins.</p>
+                          <p className="text-xs text-gray-500 mt-1">Vereist: Werkende SMTP configuratie (eerst Reportage instellen)</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {user?.role === 'supervisor' && (
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-amber-100 rounded-lg shrink-0">
+                          <FileText className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">Activiteitenlog</p>
+                          <p className="text-sm text-gray-600">Bekijk alle gebruikersactiviteiten en systeemgebeurtenissen. Handig voor audit en troubleshooting.</p>
+                          <p className="text-xs text-gray-500 mt-1">Alleen beschikbaar voor supervisors</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Status Indicatoren */}
+          <Card className="bg-gray-50 border-gray-200">
+            <CardHeader>
+              <CardTitle className="text-gray-900">Status Indicatoren</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4">
+                Elke integratie toont een status badge die aangeeft of de koppeling actief en correct geconfigureerd is.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                  <Badge className="bg-green-600">Actief / Geconfigureerd</Badge>
+                  <span className="text-xs text-gray-600">Werkt correct</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                  <Badge className="bg-orange-500">Configuratie Nodig</Badge>
+                  <span className="text-xs text-gray-600">Nog niet ingesteld</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                  <Badge className="bg-gray-400">Uitgeschakeld</Badge>
+                  <span className="text-xs text-gray-600">Handmatig uit</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                  <Badge variant="secondary">Binnenkort</Badge>
+                  <span className="text-xs text-gray-600">Nog niet beschikbaar</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Setup Volgorde */}
+          <Card className="bg-amber-50 border-amber-200">
+            <CardHeader>
+              <CardTitle className="text-amber-900">Setup Volgorde</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-amber-800 mb-4">
+                Sommige integraties zijn afhankelijk van andere. Volg deze volgorde voor correcte configuratie:
+              </p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-amber-200">
+                  <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                  <span className="text-sm font-medium">SMTP Instellingen</span>
+                </div>
+                <span className="hidden sm:block text-amber-600">→</span>
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-amber-200">
+                  <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                  <span className="text-sm font-medium">Reportage</span>
+                </div>
+                <span className="hidden sm:block text-amber-600">→</span>
+                <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-amber-200">
+                  <div className="w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                  <span className="text-sm font-medium">Wachtwoord Reset</span>
+                </div>
+              </div>
+              <p className="text-xs text-amber-700 mt-3">
+                Verdi is onafhankelijk en kan op elk moment worden geconfigureerd.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Voordelen */}
+          <Card className="bg-green-50 border-green-200">
+            <CardHeader>
+              <CardTitle className="text-green-900">Voordelen van Integraties</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-green-600">✓</span>
+                  <div>
+                    <p className="font-medium text-gray-900">Automatisering</p>
+                    <p className="text-sm text-gray-600">Geen handmatig overtypen van data meer</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-600">✓</span>
+                  <div>
+                    <p className="font-medium text-gray-900">Up-to-date Informatie</p>
+                    <p className="text-sm text-gray-600">Data blijft gesynchroniseerd tussen systemen</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-600">✓</span>
+                  <div>
+                    <p className="font-medium text-gray-900">Tijdsbesparing</p>
+                    <p className="text-sm text-gray-600">Minder administratief werk voor supervisors</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-green-600">✓</span>
+                  <div>
+                    <p className="font-medium text-gray-900">Foutreductie</p>
+                    <p className="text-sm text-gray-600">Minder kans op tikfouten bij handmatige invoer</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Troubleshooting */}
+          <Card className="bg-red-50 border-red-200">
+            <CardHeader>
+              <CardTitle className="text-red-900">Veelvoorkomende Problemen</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-3 bg-white rounded-lg border border-red-200">
+                <p className="font-medium text-gray-900">E-mail wordt niet verzonden</p>
+                <ul className="text-sm text-gray-600 mt-1 list-disc list-inside">
+                  <li>Controleer SMTP instellingen in Reportage (host, poort, gebruiker)</li>
+                  <li>Voor Outlook/Microsoft 365: gebruik een App-wachtwoord i.p.v. normaal wachtwoord</li>
+                  <li>Controleer of poort 587 (TLS) of 465 (SSL) correct is ingesteld</li>
+                </ul>
+              </div>
+              <div className="p-3 bg-white rounded-lg border border-red-200">
+                <p className="font-medium text-gray-900">Verdi synchronisatie mislukt</p>
+                <ul className="text-sm text-gray-600 mt-1 list-disc list-inside">
+                  <li>Controleer of alle gebruiker-mappings correct zijn ingesteld</li>
+                  <li>Controleer of de ShiftSheet GUID overeenkomt met Verdi</li>
+                  <li>Verifieer de API credentials bij uw Verdi beheerder</li>
+                </ul>
+              </div>
+              <div className="p-3 bg-white rounded-lg border border-red-200">
+                <p className="font-medium text-gray-900">Wachtwoord reset toggle is uitgeschakeld</p>
+                <ul className="text-sm text-gray-600 mt-1 list-disc list-inside">
+                  <li>SMTP moet eerst geconfigureerd zijn via Reportage</li>
+                  <li>Alleen supervisors kunnen deze functie beheren</li>
+                </ul>
               </div>
             </CardContent>
           </Card>

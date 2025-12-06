@@ -1954,7 +1954,7 @@ Als admin/supervisor vindt u een nieuwe **"Ruilverzoeken"** knop in het dashboar
 
 **Centraal Overzicht**
 
-Het Ambulance Planning Systeem biedt nu een centraal overzicht van alle externe koppelingen via de **Integraties** pagina.
+Het Ambulance Planning Systeem biedt nu een centraal overzicht van alle externe koppelingen via de **Integraties** pagina. Integraties verbinden het systeem met externe diensten zoals alarmeringssoftware, HR-systemen, en andere tools. Deze koppelingen automatiseren workflows en zorgen ervoor dat data up-to-date blijft tussen verschillende systemen.
 
 #### Toegang tot Integraties
 
@@ -1966,11 +1966,74 @@ Het Ambulance Planning Systeem biedt nu een centraal overzicht van alle externe 
 1. Klik op "Integraties" in het hoofdmenu van het dashboard
 2. U ziet een overzicht van alle beschikbare externe koppelingen
 
-**Beschikbare Integraties:**
+#### Beschikbare Integraties Overzicht
+
+> **Let op:** Sommige integraties zijn alleen zichtbaar voor supervisors. Admins zien alleen de integraties die zij mogen beheren.
+
+| Integratie | Beschrijving | Vereisten | Zichtbaar voor |
+|------------|--------------|-----------|----------------|
+| 📱 **Verdi Alarm Software** | Synchroniseert shifts naar Verdi alarmeringscentrale | Verdi URL, API credentials, ShiftSheet GUID | Admins & Supervisors |
+| 📧 **Reportage Personeelsdienst** | Maandelijkse shift rapportages via e-mail | SMTP server instellingen (host, poort, gebruiker, wachtwoord) | Admins & Supervisors |
+| 🔐 **Wachtwoord Reset** | Self-service wachtwoord reset via e-mail | Werkende SMTP configuratie (eerst Reportage instellen) | Alleen Supervisors |
+| 📋 **Activiteitenlog** | Audit trail van alle systeemgebeurtenissen | Geen | Alleen Supervisors |
+
+#### Status Indicatoren
+
+Elke integratie toont een status badge die aangeeft of de koppeling actief en correct geconfigureerd is:
+
+| Badge | Betekenis |
+|-------|-----------|
+| 🟢 **Actief / Geconfigureerd** (groen) | De integratie werkt correct |
+| 🟠 **Configuratie Nodig** (oranje) | Instellingen moeten nog worden ingevuld |
+| ⚪ **Uitgeschakeld** (grijs) | De functie is handmatig uitgeschakeld |
+| 🔵 **Binnenkort** (blauw/grijs) | Toekomstige integratie, nog niet beschikbaar |
+
+#### Setup Volgorde
+
+**Belangrijk:** Sommige integraties zijn afhankelijk van andere. Volg deze volgorde voor correcte configuratie:
+
+```
+┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
+│  1. SMTP Instellen  │ ──► │  2. Reportage       │ ──► │  3. Wachtwoord      │
+│  (via Reportage)    │     │     Configureren    │     │     Reset           │
+└─────────────────────┘     └─────────────────────┘     └─────────────────────┘
+```
+
+**Verdi** is onafhankelijk en kan op elk moment worden geconfigureerd.
+
+#### Voordelen van Integraties
+
+| Voordeel | Uitleg |
+|----------|--------|
+| ✅ **Automatisering** | Geen handmatig overtypen van data meer tussen systemen |
+| ✅ **Up-to-date Informatie** | Data blijft gesynchroniseerd tussen alle gekoppelde systemen |
+| ✅ **Tijdsbesparing** | Minder administratief werk voor supervisors en admins |
+| ✅ **Foutreductie** | Minder kans op tikfouten bij handmatige invoer |
+
+#### Veelvoorkomende Problemen (Troubleshooting)
+
+**E-mail wordt niet verzonden:**
+- ❌ Controleer SMTP instellingen in Reportage (host, poort, gebruiker)
+- ❌ Voor Outlook/Microsoft 365: gebruik een **App-wachtwoord** i.p.v. normaal wachtwoord
+- ❌ Controleer of poort 587 (TLS) of 465 (SSL) correct is ingesteld
+- ❌ Controleer of "Minder veilige apps" is ingeschakeld (indien van toepassing)
+
+**Verdi synchronisatie mislukt:**
+- ❌ Controleer of alle gebruiker-mappings correct zijn ingesteld
+- ❌ Controleer of de ShiftSheet GUID overeenkomt met Verdi
+- ❌ Verifieer de API credentials bij uw Verdi beheerder
+- ❌ Controleer of positie-mappings correct zijn geconfigureerd
+
+**Wachtwoord reset toggle is uitgeschakeld:**
+- ❌ SMTP moet eerst geconfigureerd zijn via Reportage
+- ❌ Alleen supervisors kunnen deze functie beheren
+
+#### Gedetailleerde Integratie Beschrijvingen
 
 📱 **Verdi Alarm Software** (Actief)
 - Automatische shift synchronisatie naar Verdi alarmeringscentrale
 - Configureer URL, credentials en gebruikersmappings
+- Ondersteunt split shifts (dag/nacht)
 - Status: Volledig operationeel
 
 📧 **Reportage Personeelsdienst** (Actief)
@@ -1978,18 +2041,26 @@ Het Ambulance Planning Systeem biedt nu een centraal overzicht van alle externe 
 - Excel bestand met overzicht van alle shifts per station
 - SMTP configuratie via UI (self-service)
 - Export Excel functie als backup
+- Configureerbare ontvangers per station
 - Status: Volledig operationeel
+
+🔐 **Wachtwoord Reset via E-mail** (Nieuw - v2025.15)
+- Gebruikers kunnen zelf hun wachtwoord resetten via e-mail
+- Schakelbaar per organisatie door supervisors
+- Vereist werkende SMTP configuratie (zie Reportage)
+- Reset links zijn 1 uur geldig en eenmalig te gebruiken
+- Status: Beschikbaar wanneer ingeschakeld
+
+📋 **Activiteitenlog** (Alleen Supervisors)
+- Bekijk alle gebruikersactiviteiten en systeemgebeurtenissen
+- Filter op categorie (AUTH, PLANNING, SETTINGS, etc.)
+- Handig voor audit en troubleshooting
+- Toont IP-adres en browser informatie
 
 🔜 **Toekomstige Integraties**
 - Ruimte voor HR-systemen
 - Andere alarmsoftware
 - En meer externe diensten
-
-🔐 **Wachtwoord Reset via E-mail** (Nieuw - v2025.7)
-- Gebruikers kunnen zelf hun wachtwoord resetten via e-mail
-- Schakelbaar per organisatie door supervisors
-- Vereist werkende SMTP configuratie (zie Reportage)
-- Status: Beschikbaar wanneer ingeschakeld
 
 ### 🔐 Wachtwoord Reset via E-mail
 
