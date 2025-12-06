@@ -1168,6 +1168,54 @@ Als admin ziet u extra knoppen:
 - Klik op shift om handmatig toe te wijzen
 - Selecteer beschikbare medewerker
 
+#### ↩️ Undo Historie (Wijzigingen Terugdraaien)
+
+Als admin of supervisor kunt u recente handmatige wijzigingen aan de planning ongedaan maken. Dit is handig wanneer u per ongeluk de verkeerde persoon hebt toegewezen of een wijziging wilt terugdraaien.
+
+**Toegang tot Undo Historie:**
+
+1. Ga naar de **Planning** pagina
+2. Scroll naar beneden tot het **Undo Historie** paneel
+3. Klik op de titel om het paneel uit te klappen
+
+**Wat kunt u terugdraaien:**
+
+| Type Wijziging | Beschrijving |
+|----------------|--------------|
+| **Toewijzing** | Een shift toewijzen aan een medewerker |
+| **Shift** | Wijzigingen aan shift details (tijd, type) |
+| **Verwijderd** | Verwijderde shifts herstellen |
+
+**Hoe een wijziging ongedaan maken:**
+
+1. Open het **Undo Historie** paneel
+2. Bekijk de recente wijzigingen (gesorteerd op datum/tijd)
+3. Bij elke wijziging ziet u:
+   - **Type**: Toewijzing, Shift, of Verwijderd
+   - **Beschrijving**: Wat er is gewijzigd
+   - **Tijdstip**: Wanneer de wijziging is gemaakt
+   - **Door wie**: Naam van de admin die de wijziging maakte
+4. Klik op het **↩️ undo icoon** naast de wijziging
+5. Bevestig in de popup
+6. De shift wordt teruggezet naar de vorige staat
+
+**Belangrijke opmerkingen:**
+
+- ⏰ **Beperkte historie**: Alleen de laatste 50 wijzigingen worden getoond
+- 📅 **Per maand gefilterd**: U ziet alleen wijzigingen voor de geselecteerde maand
+- 🔒 **Eenmalig**: Elke wijziging kan maar één keer ongedaan gemaakt worden
+- ⚠️ **Planning generatie**: Het ongedaan maken van een volledige planning generatie is niet mogelijk via dit paneel - gebruik hiervoor de systeem Rollback functie
+
+**Voorbeeld Scenario:**
+
+U hebt per ongeluk Jan toegewezen aan een nachtshift op 15 december, maar het moest eigenlijk Piet zijn:
+
+1. Open Undo Historie paneel
+2. Zoek "Shift toegewezen: Jan Jansen - 15 dec nacht"
+3. Klik op het undo icoon
+4. Bevestig → De shift wordt weer "Niet ingevuld"
+5. Wijs nu Piet toe aan de shift
+
 #### 👥 Beschikbaarheid Bekijken per Datum 
 
 Als admin kunt u op elke datum in de planning klikken om te zien wie beschikbaar is voor die specifieke shift. Dit helpt u om:

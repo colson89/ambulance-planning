@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftBids, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftBid, type InsertShiftBid } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftBids, undoHistory, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -144,6 +144,13 @@ export interface IStorage {
   updatePushSubscription(userId: number, endpoint: string, updateData: Partial<PushSubscription>): Promise<PushSubscription>;
   deletePushSubscription(userId: number, endpoint: string): Promise<void>;
   deletePushSubscriptionsByUser(userId: number): Promise<void>;
+  
+  // Undo History
+  createUndoRecord(record: InsertUndoHistory): Promise<UndoHistory>;
+  getUndoHistory(stationId: number, month: number, year: number, limit?: number): Promise<UndoHistory[]>;
+  getUndoRecord(id: number): Promise<UndoHistory | undefined>;
+  markAsUndone(id: number, undoneById: number): Promise<UndoHistory>;
+  executeUndo(id: number, undoneById: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4559,6 +4566,119 @@ export class DatabaseStorage implements IStorage {
       .from(shiftBids)
       .where(eq(shiftBids.status, 'pending'))
       .orderBy(desc(shiftBids.createdAt));
+  }
+
+  // Undo History Methods
+  async createUndoRecord(record: InsertUndoHistory): Promise<UndoHistory> {
+    const [result] = await db.insert(undoHistory).values(record).returning();
+    return result;
+  }
+
+  async getUndoHistory(stationId: number, month: number, year: number, limit: number = 50): Promise<UndoHistory[]> {
+    return db.select()
+      .from(undoHistory)
+      .where(and(
+        eq(undoHistory.stationId, stationId),
+        eq(undoHistory.month, month),
+        eq(undoHistory.year, year),
+        eq(undoHistory.isUndone, false)
+      ))
+      .orderBy(desc(undoHistory.createdAt))
+      .limit(limit);
+  }
+
+  async getUndoRecord(id: number): Promise<UndoHistory | undefined> {
+    const [record] = await db.select()
+      .from(undoHistory)
+      .where(eq(undoHistory.id, id));
+    return record || undefined;
+  }
+
+  async markAsUndone(id: number, undoneById: number): Promise<UndoHistory> {
+    const [result] = await db.update(undoHistory)
+      .set({ 
+        isUndone: true, 
+        undoneAt: new Date(), 
+        undoneById: undoneById 
+      })
+      .where(eq(undoHistory.id, id))
+      .returning();
+    return result;
+  }
+
+  async executeUndo(id: number, undoneById: number): Promise<void> {
+    const record = await this.getUndoRecord(id);
+    if (!record) {
+      throw new Error("Undo record niet gevonden");
+    }
+    if (record.isUndone) {
+      throw new Error("Deze actie is al ongedaan gemaakt");
+    }
+
+    const oldValue = record.oldValue ? JSON.parse(record.oldValue) : null;
+
+    switch (record.entityType) {
+      case 'shift_assignment':
+        if (record.entityId && oldValue) {
+          await db.update(shifts)
+            .set({ 
+              userId: oldValue.userId,
+              status: oldValue.status || 'planned',
+              updatedAt: new Date()
+            })
+            .where(eq(shifts.id, record.entityId));
+        }
+        break;
+        
+      case 'shift_delete':
+        if (oldValue) {
+          await db.insert(shifts).values({
+            userId: oldValue.userId,
+            stationId: oldValue.stationId,
+            date: new Date(oldValue.date),
+            startTime: new Date(oldValue.startTime),
+            endTime: new Date(oldValue.endTime),
+            type: oldValue.type,
+            status: oldValue.status,
+            isSplitShift: oldValue.isSplitShift || false,
+            splitGroup: oldValue.splitGroup,
+            splitStartTime: oldValue.splitStartTime ? new Date(oldValue.splitStartTime) : null,
+            splitEndTime: oldValue.splitEndTime ? new Date(oldValue.splitEndTime) : null,
+            month: oldValue.month,
+            year: oldValue.year
+          });
+        }
+        break;
+        
+      case 'shift':
+        if (record.entityId && oldValue) {
+          await db.update(shifts)
+            .set({
+              userId: oldValue.userId,
+              date: new Date(oldValue.date),
+              startTime: new Date(oldValue.startTime),
+              endTime: new Date(oldValue.endTime),
+              type: oldValue.type,
+              status: oldValue.status,
+              isSplitShift: oldValue.isSplitShift,
+              splitGroup: oldValue.splitGroup,
+              splitStartTime: oldValue.splitStartTime ? new Date(oldValue.splitStartTime) : null,
+              splitEndTime: oldValue.splitEndTime ? new Date(oldValue.splitEndTime) : null,
+              updatedAt: new Date()
+            })
+            .where(eq(shifts.id, record.entityId));
+        }
+        break;
+        
+      case 'planning_generate':
+      case 'planning_delete':
+        throw new Error("Planning generatie/verwijdering kan niet individueel ongedaan worden gemaakt. Gebruik de Rollback functie.");
+        
+      default:
+        throw new Error(`Onbekend entity type: ${record.entityType}`);
+    }
+
+    await this.markAsUndone(id, undoneById);
   }
 }
 

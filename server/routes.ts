@@ -2527,6 +2527,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update the shift
       const updatedShift = await storage.updateShift(shiftId, updateData);
       
+      // Create undo record for this change
+      try {
+        const shiftDateStr = new Date(existingShift.date).toLocaleDateString('nl-BE');
+        const shiftTypeStr = existingShift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+        let description = `${shiftTypeStr} op ${shiftDateStr}`;
+        let entityType: 'shift' | 'shift_assignment' = 'shift';
+        
+        // Determine the type of change for better description
+        if (updateData.userId !== undefined && updateData.userId !== existingShift.userId) {
+          entityType = 'shift_assignment';
+          if (updateData.userId && updateData.userId > 0) {
+            const newUser = await storage.getUser(updateData.userId);
+            if (existingShift.userId && existingShift.userId > 0) {
+              const oldUser = await storage.getUser(existingShift.userId);
+              description = `${shiftTypeStr} op ${shiftDateStr} hertoegewezen van ${oldUser?.firstName || 'Onbekend'} naar ${newUser?.firstName || 'Onbekend'}`;
+            } else {
+              description = `${shiftTypeStr} op ${shiftDateStr} toegewezen aan ${newUser?.firstName || 'Onbekend'}`;
+            }
+          } else {
+            const oldUser = await storage.getUser(existingShift.userId);
+            description = `${shiftTypeStr} op ${shiftDateStr} vrijgemaakt van ${oldUser?.firstName || 'Onbekend'}`;
+          }
+        }
+        
+        await storage.createUndoRecord({
+          userId: req.user?.id || 0,
+          stationId: existingShift.stationId,
+          entityType: entityType,
+          entityId: shiftId,
+          action: updateData.userId !== undefined ? 'toewijzing gewijzigd' : 'shift gewijzigd',
+          description: description,
+          oldValue: JSON.stringify(existingShift),
+          newValue: JSON.stringify(updatedShift),
+          month: existingShift.month,
+          year: existingShift.year,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (undoError) {
+        console.error('Failed to create undo record:', undoError);
+      }
+      
       // Send push notification if userId changed (shift was assigned/reassigned)
       if (updateData.userId !== undefined && updateData.userId !== existingShift.userId) {
         // Notify new user if shift was assigned to someone (not just unassigned)
@@ -5954,6 +5996,88 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     } catch (error: any) {
       console.error('Error exporting activity logs:', error);
       res.status(500).json({ message: "Fout bij exporteren activiteitenlogs", error: error.message });
+    }
+  });
+
+  // ========================================
+  // UNDO HISTORY ENDPOINTS
+  // ========================================
+
+  // Get undo history for a station and month/year
+  app.get("/api/undo-history/:stationId/:month/:year", requireAdmin, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const month = parseInt(req.params.month);
+      const year = parseInt(req.params.year);
+      const limit = parseInt(req.query.limit as string) || 50;
+      const user = req.user as User;
+      
+      // SECURITY: Verify station access - admins can only access their own station
+      if (user.role !== 'supervisor' && user.stationId !== stationId) {
+        return res.status(403).json({ message: "Geen toegang tot deze station" });
+      }
+      
+      const history = await storage.getUndoHistory(stationId, month, year, limit);
+      
+      // Enrich with user information
+      const enrichedHistory = await Promise.all(history.map(async (record) => {
+        const recordUser = await storage.getUser(record.userId);
+        return {
+          ...record,
+          userName: recordUser ? `${recordUser.firstName} ${recordUser.lastName}` : 'Onbekend'
+        };
+      }));
+      
+      res.json(enrichedHistory);
+    } catch (error: any) {
+      console.error('Error getting undo history:', error);
+      res.status(500).json({ message: "Fout bij ophalen undo historie", error: error.message });
+    }
+  });
+
+  // Execute undo action
+  app.post("/api/undo/:id", requireAdmin, async (req, res) => {
+    try {
+      const undoId = parseInt(req.params.id);
+      const user = req.user as User;
+      
+      if (!user) {
+        return res.status(401).json({ message: "Niet ingelogd" });
+      }
+      
+      // Get the undo record first for logging
+      const undoRecord = await storage.getUndoRecord(undoId);
+      if (!undoRecord) {
+        return res.status(404).json({ message: "Undo record niet gevonden" });
+      }
+      
+      // SECURITY: Verify station access - admins can only undo actions for their own station
+      if (user.role !== 'supervisor' && user.stationId !== undoRecord.stationId) {
+        return res.status(403).json({ message: "Geen toegang om deze actie ongedaan te maken" });
+      }
+      
+      // Execute the undo
+      await storage.executeUndo(undoId, user.id);
+      
+      // Log the undo action
+      try {
+        await logActivity({
+          userId: user.id,
+          stationId: undoRecord.stationId,
+          action: 'UNDO_ACTION',
+          category: 'SHIFT_MANUAL',
+          details: `Actie ongedaan gemaakt: ${undoRecord.description}`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error('Failed to log undo action:', logError);
+      }
+      
+      res.json({ success: true, message: "Actie ongedaan gemaakt" });
+    } catch (error: any) {
+      console.error('Error executing undo:', error);
+      res.status(500).json({ message: error.message || "Fout bij ongedaan maken" });
     }
   });
 

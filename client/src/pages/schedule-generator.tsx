@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO, addDays } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X } from "lucide-react";
+import { UndoHistoryPanel } from "@/components/undo-history-panel";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -2704,6 +2705,15 @@ function ScheduleGenerator() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Undo Historie Panel - alleen voor admins/supervisors */}
+      {effectiveStationId && (user?.role === 'admin' || user?.role === 'supervisor') && (
+        <UndoHistoryPanel 
+          stationId={effectiveStationId} 
+          month={selectedMonth + 1} 
+          year={selectedYear} 
+        />
       )}
 
       {/* Contact Info Dialog */}
