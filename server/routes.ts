@@ -101,6 +101,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Supervisor-only middleware (excludes admins)
+  const requireSupervisor = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated() || req.user.role !== 'supervisor') {
+      console.log("Supervisor access denied:", {
+        isAuthenticated: req.isAuthenticated(),
+        userRole: req.user?.role,
+        userId: req.user?.id
+      });
+      return res.sendStatus(403);
+    }
+    next();
+  };
+
   // Authenticatie middleware
   const requireAuth = (req: any, res: any, next: any) => {
     console.log("=== REQUIRE AUTH DEBUG ===");

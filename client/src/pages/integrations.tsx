@@ -2,13 +2,19 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText } from "lucide-react";
+import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText, KeyRound } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Integrations() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Alleen admins en supervisors kunnen integraties beheren
   const canManageIntegrations = user?.role === "admin" || user?.role === "supervisor";
@@ -17,6 +23,34 @@ export default function Integrations() {
   const { data: emailStatus } = useQuery<{ configured: boolean; host?: string; user?: string }>({
     queryKey: ['/api/reportage/email-status'],
     enabled: canManageIntegrations
+  });
+
+  // Check password reset status (supervisor only)
+  const { data: passwordResetStatus } = useQuery<{ enabled: boolean }>({
+    queryKey: ['/api/password-reset/enabled'],
+    enabled: user?.role === 'supervisor'
+  });
+
+  // Toggle password reset
+  const togglePasswordReset = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const res = await apiRequest('PUT', '/api/password-reset/toggle', { enabled });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/password-reset/enabled'] });
+      toast({
+        title: data.enabled ? "Ingeschakeld" : "Uitgeschakeld",
+        description: `Wachtwoord reset via e-mail is nu ${data.enabled ? 'ingeschakeld' : 'uitgeschakeld'}`
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fout",
+        description: "Kon instelling niet wijzigen",
+        variant: "destructive"
+      });
+    }
   });
 
   if (!canManageIntegrations) {
@@ -133,6 +167,45 @@ export default function Integrations() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Password Reset Card - Only for supervisors */}
+          {user?.role === 'supervisor' && (
+            <Card className="hover:shadow-lg transition-all duration-200">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 p-3 bg-indigo-100 rounded-full w-fit">
+                  <KeyRound className="h-8 w-8 text-indigo-600" />
+                </div>
+                <CardTitle className="text-xl">Wachtwoord Reset</CardTitle>
+                <CardDescription className="mb-2">
+                  Gebruikers kunnen via e-mail hun wachtwoord resetten
+                </CardDescription>
+                <Badge 
+                  variant="default" 
+                  className={passwordResetStatus?.enabled ? "mx-auto bg-green-600" : "mx-auto bg-gray-400"}
+                >
+                  {passwordResetStatus?.enabled ? "Ingeschakeld" : "Uitgeschakeld"}
+                </Badge>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="text-sm">
+                    <p className="font-medium text-gray-700">E-mail Reset</p>
+                    <p className="text-gray-500 text-xs">Toont 'Wachtwoord vergeten?' op login</p>
+                  </div>
+                  <Switch
+                    checked={passwordResetStatus?.enabled || false}
+                    onCheckedChange={(checked) => togglePasswordReset.mutate(checked)}
+                    disabled={togglePasswordReset.isPending || !emailStatus?.configured}
+                  />
+                </div>
+                {!emailStatus?.configured && (
+                  <p className="text-xs text-orange-600 mt-2 text-center">
+                    SMTP moet eerst worden geconfigureerd in Reportage
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Activiteitenlog Card - Only for supervisors */}
           {user?.role === 'supervisor' && (

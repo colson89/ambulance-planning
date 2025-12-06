@@ -6,8 +6,9 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
-import { Home, Building2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Home, Building2, ArrowLeft, Eye, EyeOff, KeyRound } from "lucide-react";
 import type { Station } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
 
 const logoUrl = "/logo.png";
 
@@ -51,6 +52,11 @@ export default function AuthPage() {
 
   const loginForm = useForm({
     defaultValues: { username: "", password: "" }
+  });
+
+  // Check if password reset is enabled
+  const { data: passwordResetStatus } = useQuery<{ enabled: boolean }>({
+    queryKey: ['/api/password-reset/enabled']
   });
 
   const togglePasswordVisibility = () => {
@@ -197,6 +203,21 @@ export default function AuthPage() {
                       </span>
                     ) : "Inloggen"}
                   </Button>
+                  
+                  {/* Forgot password link - only shown when feature is enabled */}
+                  {passwordResetStatus?.enabled && (
+                    <div className="text-center mt-4">
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="text-sm text-muted-foreground hover:text-primary"
+                        onClick={() => setLocation("/forgot-password")}
+                      >
+                        <KeyRound className="h-3 w-3 mr-1" />
+                        Wachtwoord vergeten?
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </form>
             </Form>

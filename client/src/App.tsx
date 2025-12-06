@@ -27,6 +27,8 @@ const Reportage = lazy(() => import("@/pages/reportage"));
 const Overtime = lazy(() => import("@/pages/overtime"));
 const ActivityLogs = lazy(() => import("@/pages/activity-logs"));
 const ShiftSwaps = lazy(() => import("@/pages/shift-swaps"));
+const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
+const ResetPassword = lazy(() => import("@/pages/reset-password"));
 
 // Loading component for Suspense boundaries
 function PageLoader() {
@@ -59,6 +61,8 @@ function Router() {
         <ProtectedRoute path="/shift-swaps" component={ShiftSwaps} />
         <Route path="/station-select" component={StationSelect} />
         <Route path="/auth" component={AuthPage} />
+        <Route path="/forgot-password" component={ForgotPassword} />
+        <Route path="/reset-password" component={ResetPassword} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
