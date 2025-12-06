@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Ambulance Planning System is a web-based shift scheduling application designed for emergency medical services, specifically for managing 8 ambulance stations and 119 users. Built with React, TypeScript, Express, and PostgreSQL, its primary purpose is to streamline shift planning, scheduling, and operational management. The system offers multi-station support, automated schedule generation, user preference management, holiday and weekday configurations, calendar integration, and comprehensive reporting, aiming to provide a robust and user-friendly platform for efficient daily operations.
+The Ambulance Planning System is a web-based shift scheduling application for emergency medical services, managing 8 ambulance stations and 119 users. Built with React, TypeScript, Express, and PostgreSQL, it streamlines shift planning, scheduling, and operational management. Key capabilities include multi-station support, automated schedule generation, user preference management, holiday/weekday configurations, calendar integration, and comprehensive reporting. The system aims to be a robust and user-friendly platform for efficient daily operations, enhancing overall service delivery and reducing administrative overhead.
 
 ## User Preferences
 
@@ -12,120 +12,71 @@ Protected Files: Do not make changes to the `dist/` folder or the file `dist/pub
 
 Documentation Policy: **ALWAYS update `Handleiding-Ambulance-Planning.md` when adding new features or making changes to existing functionality.** This ensures end-users and IT administrators have up-to-date documentation for all system capabilities.
 
-Documentation Files:
-- **Handleiding-Ambulance-Planning.md**: Complete handleiding (versie 2025.6) met twee delen:
-  - **Deel I: Gebruikershandleiding** - Voor ambulanciers, admins en supervisors (feature documentatie, push notificaties, Verdi integratie, kalender sync, PWA installatie)
-  - **Deel II: IT Beheerders Handleiding** - Voor IT professionals (Windows Server deployment, database setup, Nginx/IIS configuratie, SSL certificaten, PM2 process management, onderhoud & troubleshooting)
-
 ## System Architecture
 
-### Frontend
-- **Framework**: React 18+ with TypeScript
+### UI/UX Decisions
+- **Frontend Framework**: React 18+ with TypeScript
 - **Routing**: Wouter
 - **State Management**: TanStack Query (React Query)
 - **UI Components**: Radix UI primitives with shadcn/ui
 - **Styling**: Tailwind CSS with custom themes
-- **Build Tool**: Vite
 - **Calendar Interface**: Dynamic, color-coded calendar views with configurable weekday/holiday settings.
+- **PWA Support**: Full installable app support for iOS, Android, and desktop with offline functionality and automatic updates.
 
-### Backend
-- **Runtime**: Node.js 18+ with Express.js
+### Technical Implementations
+- **Backend Runtime**: Node.js 18+ with Express.js
 - **Language**: TypeScript with ES modules
-- **Authentication**: Passport.js (local strategy, session-based)
-- **Session Storage**: PostgreSQL-backed (connect-pg-simple) or in-memory (memorystore)
+- **Authentication**: Passport.js (local, session-based)
 - **API Design**: RESTful with protected routes and role-based access control
-- **Database Connection**: PostgreSQL connection pooling (`pg.Pool`).
-
-### Database
-- **Database**: PostgreSQL 12+ (specifically Neon Database serverless with WebSocket support)
+- **Database**: PostgreSQL 12+ (Neon Database serverless)
 - **ORM**: Drizzle ORM with schema validation
-- **Schema**: Multi-station support with normalized tables for users, shifts, preferences, configurations, holidays, and weekdays.
-- **Migrations**: Schema changes managed via `npm run db:push`.
+- **Build Tool**: Vite
 
-### Key Features
-- **Multi-Station Support**: Station-scoped entities, user accounts, and unified preference management across 8 stations.
-- **User Management**: Role-based access control (admin/supervisor/ambulancier), password management with scrypt, and admin contact system. Cross-team user deletion is restricted to supervisors only - admins attempting to delete cross-team users receive a clear error message directing them to contact a supervisor.
-- **Shift Planning System**: Supports day/night and split shifts, preference-based scheduling, automated generation with optimization algorithms (including weekend-first, historical fairness, workload balancing, 12-hour rest enforcement, professional restrictions), and manual override capabilities.
-- **Availability Management**: Collects user preferences for monthly periods (full, partial, unavailable) with comments and visual calendar input.
-- **Schedule Generation**: Intelligent multi-phase algorithm considering user preferences, availability, historical fairness, scarcity-based prioritization, and conflict detection.
-- **Calendar Integration**: iCal feed generation with personal tokens and CORS support for external calendar applications.
-- **Reporting & Statistics**: Shift statistics by user, station, and period, with Excel export and workload analysis.
-- **Progressive Web App (PWA)**: Full installable app support for iOS, Android, and desktop platforms with offline functionality, automatic updates, and native-like experience. Dual service worker strategy: development uses runtime caching with JS module exclusion, production uses Workbox-generated precaching of entire app shell. Build process automatically generates optimized service worker via `npm run build`.
-  - **Cache Strategy**: JavaScript modules are NEVER cached in development (timestamp-based versioning) and use NetworkFirst with 5-min max in production to prevent stale module errors
-  - **Update Notifications**: Automatic detection of new versions with user-friendly banner ("Nieuwe Versie Beschikbaar") and one-click reload functionality
-  - **Module Loading Fix**: Prevents "Failed to fetch dynamically imported module" errors through intelligent cache exclusion of .js/.mjs files and Vite dev server paths
-- **Integrations Management**: Centralized dashboard (`/integrations`) for managing external service integrations, designed for future extensibility. Accessible only to admin and supervisor roles. Currently supports Verdi alarm software integration and Reportage Personeelsdienst (automated monthly email reports).
-- **Reportage Personeelsdienst**: Automated monthly shift reporting via SMTP email. Features:
-  - **Automatic Scheduling**: Reports are sent automatically on configurable day after month-end (default: day 5)
-  - **Excel Attachments**: Complete shift overview per station with summary and detailed per-station tabs
-  - **Recipient Management**: Add/remove email recipients with active/inactive toggle
-  - **Manual Sending**: Option to send reports for any month/year on demand
-  - **SMTP Configuration**: Fully configurable via UI at `/reportage` page (SMTP Instellingen tab). Settings stored securely in database with AES-256-GCM encrypted passwords. Requires `SESSION_SECRET` environment variable (min 32 characters) for password encryption. Supports SMTP servers including Office 365, Gmail, and custom mail servers.
-  - **Self-Service**: Customers can configure their own SMTP settings without server access - IT only needs to set `SESSION_SECRET` environment variable
-  - **Send Logging**: Complete history of sent reports with success/failure status
-  - **Windows Server Compatible**: Works with Office 365, Gmail, and any SMTP server
-- **Verdi Integration**: Full shift synchronization to Verdi alarm software via REST API. Station-scoped configuration stored in database (verdiStationConfig table) with URL, authentication credentials (authId/authSecret), and ShiftSheet GUID. Person GUID mappings are global (cross-station), position mappings are station-specific. Comprehensive sync logging with status tracking. Admin users can configure their station and map users; supervisors have full access to all stations and configurations. Accessed via Integrations page (`/integrations`).
-  - **Staging Environment**: `https://kempen-staging.verdi.cloud/comm-api/hooks/v1/ShiftPlanning` (free for testing)
-  - **Production Environment**: Implementation fee of €1,380 excl. BTW (one-time)
-  - **Security**: All credentials stored in database per station. Use UI configuration page only (never share credentials in chat/logs).
-  - **User Search**: Gebruiker Mappings tab includes a search bar to filter users by username, first name, last name, or full name (case-insensitive, null-safe).
-  - **Timezone Handling**: Shift times are formatted as local time (Europe/Brussels) without UTC conversion when sending to Verdi API. Database stores timestamps without timezone info; VerdiClient uses formatLocalDateTime() helper to preserve local times (7:00-19:00 stays 7:00-19:00, not converted to 9:00-21:00).
-  - **Shift Deletion Behavior**: According to Verdi API specifications, shifts cannot be truly deleted once created. When a shift is "deleted" in the planning system, all person assignments are cleared by sending `person: null` for all positions via POST request. The shift remains in Verdi as an empty placeholder. This is the official Verdi API behavior - DELETE endpoint is not supported.
-  - **Future Enhancement**: Configuratie and Positie Mappings tabs should be restricted to supervisors only (currently open to admins for testing purposes). Gebruiker Mappings tab remains available to admins for their station users.
-- **Shift Swap System**: Allows ambulanciers to request shift swaps with colleagues, requiring admin/supervisor approval. Features:
-  - **Per-Station Configuration**: Shift swapping can be enabled/disabled per station via Weekdag Instellingen toggle (stored in station_settings table)
-  - **Request Flow**: User submits swap request → Admin/Supervisor approves → Shifts automatically transferred
-  - **Frontend UI**: Users see "Ruilen" button on their shifts in Dashboard. My Swap Requests section shows pending/approved/rejected requests
-  - **Admin UI**: Dedicated `/shift-swaps` page for admins/supervisors to view and manage all pending requests with approve/reject actions
-  - **Push Notifications**: Automatic notifications sent to admins (new requests) and involved users (approval/rejection)
-  - **Database Tables**: `shift_swap_requests` (request tracking with status), `station_settings` (per-station allowShiftSwaps toggle)
-  - **Constraints**: Users can only swap their own shifts, target must be same station, no duplicate pending requests per shift
-- **Shift Bidding System**: Allows ambulanciers to bid on open (unfilled) shifts. Admins/supervisors can then assign the shift to one of the bidders. Features:
-  - **Frontend UI**: Ambulanciers see "Ik wil deze shift" button on open shifts in Dashboard (both mobile and desktop views). After bidding, a "Ingediend" badge confirms the bid.
-  - **Admin UI**: In the Planning page, open shifts with bids show a clickable badge (e.g., "2 biedingen"). Clicking opens a dialog to view all pending bids and assign the shift to a bidder.
-  - **Push Notifications**: Admins receive notifications for new bids. Bidders receive notifications when their bid is accepted or rejected.
-  - **Database Table**: `shift_bids` with status workflow (pending/accepted/rejected/withdrawn)
-  - **API Endpoints**: Create bid, list bids per shift, accept bid (auto-rejects others), reject bid, withdraw bid, get bid counts per month
-  - **Activity Logging**: All bid actions are logged with SHIFT_BID category
-- **Undo History System**: Allows admins/supervisors to revert recent changes to both shift planning and user management. Features:
-  - **Database Table**: `undo_history` tracks all modifications with old/new values as JSON
-  - **Shift Planning Undo**: Supports shift assignment changes, shift deletions (can be restored), shift modifications. Collapsible "Undo Historie" panel on Planning page, shows last 50 undoable actions per month
-  - **User Management Undo**: Supports user create, update, delete, and station assignment changes. Collapsible "Undo Historie (Gebruikersbeheer)" panel on User Management page
-  - **Security**: Station-scoped access (admins see own station only, supervisors see all stations)
-  - **API Endpoints**: GET `/api/undo-history/:stationId/:month/:year` (shifts), GET `/api/undo-history/users/:stationId` (users), POST `/api/undo/:id`
-  - **Limitations**: Planning generation/deletion cannot be undone via this system (use Rollback feature instead). Restoring deleted users only restores basic profile data - related shifts/preferences remain deleted due to cascade delete
+### Feature Specifications
+- **Multi-Station Support**: Station-scoped entities, user accounts, and unified preference management.
+- **User Management**: Role-based access control (admin/supervisor/ambulancier), password management.
+- **Shift Planning System**: Supports day/night/split shifts, preference-based scheduling, automated generation with optimization algorithms, and manual override.
+- **Availability Management**: Collects user preferences for monthly periods.
+- **Schedule Generation**: Intelligent multi-phase algorithm considering preferences, availability, historical fairness, and conflict detection.
+- **Calendar Integration**: iCal feed generation with personal tokens.
+- **Reporting & Statistics**: Shift statistics by user, station, and period, with Excel export.
+- **Integrations Management**: Centralized dashboard for managing external services like Verdi alarm software and Reportage Personeelsdienst.
+- **Reportage Personeelsdienst**: Automated monthly shift reporting via SMTP email with Excel attachments, configurable scheduling, and recipient management.
+- **Verdi Integration**: Full shift synchronization to Verdi alarm software via REST API, including station-scoped configuration and user mapping.
+- **Shift Swap System**: Allows ambulanciers to request shift swaps with colleague, requiring admin/supervisor approval and supporting per-station configuration.
+- **Shift Bidding System**: Allows ambulanciers to bid on open shifts, with admin/supervisor assignment and notifications.
+- **Undo History System**: Allows admins/supervisors to revert recent changes to shift planning and user management, with station-scoped access.
+- **Password Reset via Email**: Self-service password reset functionality, supervisor-controlled, requiring SMTP configuration and using secure, expiring tokens.
 
-### Build & Deployment
-- **Pre-built Application**: Deployed as pre-compiled backend (`dist/index.js`) and static frontend assets (`dist/public/`).
-- **Production Mode**: Serves assets on port 5000.
-- **Environment**: Designed for VM deployment, with specific environment variables for public-facing URLs (e.g., `PUBLIC_URL` for Windows Server deployments).
-- **Deployment Strategy**: Recommended use of PM2 for process management and Nginx as a reverse proxy. Supports Linux/Ubuntu, Windows Server, and is Docker-ready.
+### System Design Choices
+- **Database Schema**: Multi-station support with normalized tables for users, shifts, preferences, configurations, holidays, and weekdays.
+- **Deployment**: Pre-compiled backend and static frontend assets. Designed for VM deployment (Linux/Ubuntu, Windows Server) and Docker-ready, using PM2 and Nginx.
 
 ## External Dependencies
 
 - **Database**:
-  - `@neondatabase/serverless`: PostgreSQL connection for serverless environments.
-  - `pg`: PostgreSQL client for Node.js.
-  - `drizzle-orm`, `drizzle-kit`: ORM and migration tools.
+  - `@neondatabase/serverless`
+  - `pg`
+  - `drizzle-orm`, `drizzle-kit`
 
 - **Frontend Core**:
-  - `react`, `react-dom`: UI library.
-  - `@tanstack/react-query`: Server state management.
-  - `@radix-ui/***`: Accessible UI component primitives.
-  - `wouter`: Lightweight client-side routing.
+  - `react`, `react-dom`
+  - `@tanstack/react-query`
+  - `@radix-ui/***`
+  - `wouter`
 
 - **Backend Core**:
-  - `express`, `express-session`: Web framework and session management.
-  - `passport`, `passport-local`: Authentication middleware.
-  - `connect-pg-simple`, `memorystore`: Session stores.
+  - `express`, `express-session`
+  - `passport`, `passport-local`
+  - `connect-pg-simple`, `memorystore`
 
 - **Utilities & Other**:
-  - `typescript`: Language.
-  - `date-fns`: Date manipulation.
-  - `nanoid`: Unique ID generation.
-  - `zod`, `drizzle-zod`: Schema validation.
-  - `vite`, `@vitejs/plugin-react`: Build tool.
-  - `xlsx`, `exceljs`: Excel file generation.
-  - `ws`: WebSocket support.
-  - `dotenv`: Environment variable management.
-  - `nodemailer`: SMTP email sending for automated reports.
+  - `typescript`
+  - `date-fns`
+  - `nanoid`
+  - `zod`, `drizzle-zod`
+  - `vite`, `@vitejs/plugin-react`
+  - `xlsx`, `exceljs`
+  - `ws`
+  - `dotenv`
+  - `nodemailer`

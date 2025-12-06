@@ -1985,6 +1985,61 @@ Het Ambulance Planning Systeem biedt nu een centraal overzicht van alle externe 
 - Andere alarmsoftware
 - En meer externe diensten
 
+🔐 **Wachtwoord Reset via E-mail** (Nieuw - v2025.7)
+- Gebruikers kunnen zelf hun wachtwoord resetten via e-mail
+- Schakelbaar per organisatie door supervisors
+- Vereist werkende SMTP configuratie (zie Reportage)
+- Status: Beschikbaar wanneer ingeschakeld
+
+### 🔐 Wachtwoord Reset via E-mail
+
+**Self-Service Wachtwoord Reset**
+
+Gebruikers kunnen nu zelf hun wachtwoord resetten wanneer ze dit vergeten zijn. Dit vermindert de werkdruk op admins en biedt een snelle oplossing voor gebruikers.
+
+#### Hoe Werkt Het?
+
+**Voor Gebruikers:**
+
+1. Op de inlogpagina staat een "Wachtwoord vergeten?" link (alleen zichtbaar als feature ingeschakeld)
+2. Klik op de link en voer uw e-mailadres in
+3. U ontvangt een e-mail met een reset link (geldig voor 1 uur)
+4. Klik op de link en stel een nieuw wachtwoord in (minimaal 6 karakters)
+5. U kunt nu inloggen met uw nieuwe wachtwoord
+
+**Belangrijk:**
+- ⏱️ De reset link is **1 uur geldig** na aanvraag
+- 📧 Gebruik het e-mailadres dat gekoppeld is aan uw account
+- 🔒 Elke link kan maar **één keer** gebruikt worden
+- 📁 Controleer ook uw **spam/ongewenste mail** folder
+
+#### Inschakelen/Uitschakelen (Alleen Supervisors)
+
+Deze functie is standaard uitgeschakeld en kan alleen door supervisors worden ingeschakeld.
+
+**Vereisten:**
+- ✅ SMTP e-mail moet geconfigureerd zijn (via Reportage > SMTP Instellingen)
+- ✅ Alleen supervisors kunnen deze functie beheren
+
+**Inschakelen:**
+
+1. Ga naar **Integraties** in het hoofdmenu
+2. Zoek de kaart "Wachtwoord Reset" (indigo/paars gekleurd)
+3. Gebruik de **schakelaar** om de functie in of uit te schakelen
+4. Bij inschakelen verschijnt de "Wachtwoord vergeten?" link op de inlogpagina
+
+**Let Op:**
+- Als SMTP niet geconfigureerd is, is de schakelaar uitgeschakeld
+- U ziet dan een waarschuwing: "SMTP moet eerst worden geconfigureerd in Reportage"
+- Configureer eerst SMTP voordat u deze functie kunt gebruiken
+
+#### Beveiliging
+
+- 🔒 **Token Expiratie**: Reset links verlopen na 1 uur
+- 🔐 **Eenmalig Gebruik**: Elke token kan maar één keer gebruikt worden
+- 📋 **Activity Logging**: Alle reset aanvragen en succesvolle resets worden gelogd
+- 🔍 **Privacy**: Het systeem geeft geen informatie vrij over welke e-mailadressen bestaan
+
 #### Over Integraties
 
 Integraties verbinden het Ambulance Planning Systeem met externe diensten zoals alarmeringssoftware, HR-systemen, en andere tools. Deze koppelingen automatiseren workflows en zorgen ervoor dat data up-to-date blijft tussen verschillende systemen.
@@ -2898,6 +2953,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 
 | Versie | Datum | Belangrijkste Verbeteringen |
 |--------|-------|----------------------------|
+| **2025.15** | Dec 2025 | Wachtwoord reset via e-mail (self-service), undo historie voor gebruikersbeheer |
 | **2025.14** | Dec 2025 | Uitgebreide audit logging voor handmatige shift wijzigingen (aanmaken, wijzigen, verwijderen, splitsen, samenvoegen), shift biedingen, station instellingen |
 | **2025.13** | Dec 2025 | Biedingssysteem voor open shifts |
 | **2025.12** | Dec 2025 | Handleiding herstructurering, verbeterde documentatie |
@@ -2912,6 +2968,8 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 | **2025.1** | Okt 2025 | Planning algoritme, cross-team functionaliteit |
 
 **Huidige functies:**
+- Wachtwoord reset via e-mail (self-service, supervisor-gecontroleerd)
+- Undo historie voor gebruikersbeheer en shift planning
 - Biedingssysteem voor open shifts (ambulanciers kunnen zich aanmelden)
 - Push notificaties voor shifts en wijzigingen
 - Shift ruilen en overnemen tussen collega's
