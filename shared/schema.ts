@@ -593,3 +593,18 @@ export const insertUndoHistorySchema = createInsertSchema(undoHistory).omit({
 });
 export type UndoHistory = typeof undoHistory.$inferSelect;
 export type InsertUndoHistory = z.infer<typeof insertUndoHistorySchema>;
+
+// Password Reset Tokens - voor wachtwoord vergeten functionaliteit
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  used: boolean("used").notNull().default(false),
+  usedAt: timestamp("used_at"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;

@@ -6285,6 +6285,220 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // ========================================
+  // PASSWORD RESET ENDPOINTS
+  // ========================================
+
+  // Get password reset feature status (public endpoint)
+  app.get("/api/password-reset/enabled", async (req, res) => {
+    try {
+      const setting = await storage.getSystemSetting('password_reset_enabled');
+      res.json({ enabled: setting === 'true' });
+    } catch (error: any) {
+      console.error('Error checking password reset status:', error);
+      res.json({ enabled: false });
+    }
+  });
+
+  // Toggle password reset feature (supervisor only)
+  app.put("/api/password-reset/toggle", requireSupervisor, async (req, res) => {
+    try {
+      const { enabled } = req.body;
+      const user = req.user as User;
+      
+      await storage.setSystemSetting('password_reset_enabled', enabled ? 'true' : 'false');
+      
+      // Log activity
+      try {
+        await logActivity({
+          userId: user.id,
+          stationId: user.stationId,
+          action: enabled ? 'PASSWORD_RESET_ENABLED' : 'PASSWORD_RESET_DISABLED',
+          category: 'SETTINGS',
+          details: `Wachtwoord reset via e-mail ${enabled ? 'ingeschakeld' : 'uitgeschakeld'}`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error('Failed to log password reset toggle:', logError);
+      }
+      
+      res.json({ success: true, enabled });
+    } catch (error: any) {
+      console.error('Error toggling password reset:', error);
+      res.status(500).json({ message: "Fout bij wijzigen wachtwoord reset instelling" });
+    }
+  });
+
+  // Request password reset (public endpoint)
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      // Check if feature is enabled
+      const setting = await storage.getSystemSetting('password_reset_enabled');
+      if (setting !== 'true') {
+        return res.status(403).json({ message: "Wachtwoord reset via e-mail is niet ingeschakeld" });
+      }
+      
+      // Find user by email
+      const allUsers = await storage.getAllUsers();
+      const user = allUsers.find(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+      
+      // Always return success to prevent email enumeration
+      if (!user || !user.email) {
+        console.log(`Password reset requested for non-existent email: ${email}`);
+        return res.json({ success: true, message: "Als dit e-mailadres bekend is, ontvangt u een reset link" });
+      }
+      
+      // Generate secure token
+      const { randomBytes } = await import('crypto');
+      const token = randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      
+      // Store token
+      await storage.createPasswordResetToken(
+        user.id, 
+        token, 
+        expiresAt,
+        getClientInfo(req).ipAddress,
+        getClientInfo(req).userAgent
+      );
+      
+      // Send email
+      const { emailService } = await import('./email-service');
+      const resetUrl = `${req.protocol}://${req.get('host')}/reset-password?token=${token}`;
+      
+      try {
+        await emailService.sendEmail({
+          to: user.email,
+          subject: 'Wachtwoord Reset - Ambulance Planning',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #1a56db;">Wachtwoord Reset</h2>
+              <p>Beste ${user.firstName},</p>
+              <p>U heeft een wachtwoord reset aangevraagd voor uw account bij Ambulance Planning.</p>
+              <p>Klik op onderstaande knop om een nieuw wachtwoord in te stellen:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="background-color: #1a56db; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Wachtwoord Resetten
+                </a>
+              </div>
+              <p style="color: #666; font-size: 14px;">Deze link is 1 uur geldig.</p>
+              <p style="color: #666; font-size: 14px;">Als u geen wachtwoord reset heeft aangevraagd, kunt u deze e-mail negeren.</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+              <p style="color: #999; font-size: 12px;">Dit is een automatisch gegenereerd bericht van het Ambulance Planning Systeem.</p>
+            </div>
+          `
+        });
+        
+        // Log activity
+        await logActivity({
+          userId: user.id,
+          stationId: user.stationId,
+          action: 'PASSWORD_RESET_REQUESTED',
+          category: 'AUTH',
+          details: `Wachtwoord reset aangevraagd voor ${user.email}`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+        
+      } catch (emailError) {
+        console.error('Error sending password reset email:', emailError);
+        return res.status(500).json({ message: "Fout bij verzenden van e-mail. Controleer de SMTP instellingen." });
+      }
+      
+      res.json({ success: true, message: "Als dit e-mailadres bekend is, ontvangt u een reset link" });
+    } catch (error: any) {
+      console.error('Error requesting password reset:', error);
+      res.status(500).json({ message: "Fout bij aanvragen wachtwoord reset" });
+    }
+  });
+
+  // Reset password with token (public endpoint)
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ message: "Token en wachtwoord zijn verplicht" });
+      }
+      
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Wachtwoord moet minimaal 6 karakters bevatten" });
+      }
+      
+      // Check if feature is enabled
+      const setting = await storage.getSystemSetting('password_reset_enabled');
+      if (setting !== 'true') {
+        return res.status(403).json({ message: "Wachtwoord reset via e-mail is niet ingeschakeld" });
+      }
+      
+      // Get and validate token
+      const resetToken = await storage.getPasswordResetToken(token);
+      
+      if (!resetToken) {
+        return res.status(400).json({ message: "Ongeldige of verlopen reset link" });
+      }
+      
+      if (resetToken.used) {
+        return res.status(400).json({ message: "Deze reset link is al gebruikt" });
+      }
+      
+      if (new Date() > resetToken.expiresAt) {
+        return res.status(400).json({ message: "Deze reset link is verlopen" });
+      }
+      
+      // Update password
+      await storage.updateUserPassword(resetToken.userId, password);
+      
+      // Mark token as used
+      await storage.markPasswordResetTokenUsed(token);
+      
+      // Get user for logging
+      const user = await storage.getUser(resetToken.userId);
+      
+      // Log activity
+      if (user) {
+        await logActivity({
+          userId: user.id,
+          stationId: user.stationId,
+          action: 'PASSWORD_RESET_COMPLETED',
+          category: 'AUTH',
+          details: `Wachtwoord gereset via e-mail link voor ${user.username}`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      }
+      
+      // Clean up expired tokens
+      await storage.deleteExpiredPasswordResetTokens();
+      
+      res.json({ success: true, message: "Wachtwoord succesvol gewijzigd" });
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
+      res.status(500).json({ message: "Fout bij resetten wachtwoord" });
+    }
+  });
+
+  // Validate reset token (public endpoint)
+  app.get("/api/auth/validate-reset-token/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      const resetToken = await storage.getPasswordResetToken(token);
+      
+      if (!resetToken || resetToken.used || new Date() > resetToken.expiresAt) {
+        return res.json({ valid: false });
+      }
+      
+      res.json({ valid: true });
+    } catch (error: any) {
+      console.error('Error validating reset token:', error);
+      res.json({ valid: false });
+    }
+  });
+
+  // ========================================
   // SHIFT SWAP / RUIL ENDPOINTS
   // ========================================
 

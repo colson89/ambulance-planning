@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftBids, undoHistory, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftBids, undoHistory, passwordResetTokens, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -152,6 +152,12 @@ export interface IStorage {
   getUndoRecord(id: number): Promise<UndoHistory | undefined>;
   markAsUndone(id: number, undoneById: number): Promise<UndoHistory>;
   executeUndo(id: number, undoneById: number): Promise<void>;
+  
+  // Password Reset
+  createPasswordResetToken(userId: number, token: string, expiresAt: Date, ipAddress?: string, userAgent?: string): Promise<PasswordResetToken>;
+  getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
+  markPasswordResetTokenUsed(token: string): Promise<void>;
+  deleteExpiredPasswordResetTokens(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4762,6 +4768,36 @@ export class DatabaseStorage implements IStorage {
     }
 
     await this.markAsUndone(id, undoneById);
+  }
+
+  // Password Reset Token Methods
+  async createPasswordResetToken(userId: number, token: string, expiresAt: Date, ipAddress?: string, userAgent?: string): Promise<PasswordResetToken> {
+    const [result] = await db.insert(passwordResetTokens).values({
+      userId,
+      token,
+      expiresAt,
+      ipAddress,
+      userAgent
+    }).returning();
+    return result;
+  }
+
+  async getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined> {
+    const [result] = await db.select()
+      .from(passwordResetTokens)
+      .where(eq(passwordResetTokens.token, token));
+    return result || undefined;
+  }
+
+  async markPasswordResetTokenUsed(token: string): Promise<void> {
+    await db.update(passwordResetTokens)
+      .set({ used: true, usedAt: new Date() })
+      .where(eq(passwordResetTokens.token, token));
+  }
+
+  async deleteExpiredPasswordResetTokens(): Promise<void> {
+    await db.delete(passwordResetTokens)
+      .where(lt(passwordResetTokens.expiresAt, new Date()));
   }
 }
 
