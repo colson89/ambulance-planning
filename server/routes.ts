@@ -126,6 +126,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Helper: Veilige effectieve stationId resolutie met autorisatie validatie
+  // Voor supervisors: valideert dat het gevraagde station toegankelijk is
+  // Voor anderen: gebruikt hun eigen stationId
+  async function getAuthorizedStationId(
+    req: any, 
+    requestedStationId: string | number | undefined | null
+  ): Promise<{ stationId: number | null; error?: string }> {
+    const user = req.user;
+    if (!user) {
+      return { stationId: null, error: "Geen geldige sessie" };
+    }
+    
+    // Als er geen override gevraagd wordt, gebruik de standaard stationId van de gebruiker
+    if (requestedStationId === undefined || requestedStationId === null || requestedStationId === '') {
+      return { stationId: user.stationId };
+    }
+    
+    // Parse de gevraagde stationId
+    const parsedStationId = typeof requestedStationId === 'number' 
+      ? requestedStationId 
+      : parseInt(requestedStationId, 10);
+    
+    if (isNaN(parsedStationId) || parsedStationId <= 0) {
+      return { stationId: null, error: "Ongeldige stationId" };
+    }
+    
+    // Alleen supervisors mogen een ander station selecteren
+    if (user.role !== 'supervisor') {
+      // Voor niet-supervisors: alleen hun eigen station is toegestaan
+      if (parsedStationId !== user.stationId) {
+        return { stationId: null, error: "Geen toegang tot dit station" };
+      }
+      return { stationId: user.stationId };
+    }
+    
+    // Voor supervisors: valideer dat het station toegankelijk is
+    const accessibleStations = await storage.getUserAccessibleStations(user.id, false);
+    const hasAccess = accessibleStations.some(s => s.id === parsedStationId);
+    
+    if (!hasAccess) {
+      console.log(`[SECURITY] Supervisor ${user.id} probeerde toegang tot niet-geautoriseerd station ${parsedStationId}`);
+      return { stationId: null, error: "Geen toegang tot dit station" };
+    }
+    
+    return { stationId: parsedStationId };
+  }
+
   // Version endpoint for deployment verification
   app.get("/api/version", (req, res) => {
     const version = {
@@ -2286,14 +2333,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       let shifts;
-      const userStationId = req.user?.stationId;
+      
+      // SECURE SUPERVISOR FIX: Valideer station toegang
+      const { stationId: effectiveStationId, error } = await getAuthorizedStationId(
+        req, 
+        req.query.stationId as string | undefined
+      );
+      
+      if (error) {
+        return res.status(403).json({ message: error });
+      }
       
       if (req.query.month && req.query.year) {
         const month = parseInt(req.query.month as string);
         const year = parseInt(req.query.year as string);
-        shifts = await storage.getShiftsByMonth(month, year, userStationId);
+        shifts = await storage.getShiftsByMonth(month, year, effectiveStationId!);
       } else {
-        shifts = await storage.getAllShifts(userStationId);
+        shifts = await storage.getAllShifts(effectiveStationId!);
       }
       
       res.status(200).json(shifts);
@@ -2394,16 +2450,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete all shifts for a specific month/year
   app.delete("/api/shifts/month", requireAdmin, async (req, res) => {
     try {
-      const { month, year } = req.body;
+      const { month, year, stationId: bodyStationId } = req.body;
       if (!month || !year) {
         return res.status(400).json({ message: "Month and year are required" });
       }
       
-      const userStationId = req.user?.stationId;
-      console.log(`Deleting all shifts for ${month}/${year} for station ${userStationId}`);
+      // SECURE SUPERVISOR FIX: Valideer station toegang
+      const { stationId: effectiveStationId, error } = await getAuthorizedStationId(req, bodyStationId);
+      
+      if (error) {
+        return res.status(403).json({ message: error });
+      }
+      
+      console.log(`Deleting all shifts for ${month}/${year} for station ${effectiveStationId}`);
       
       // Haal eerst alle shifts op voor deze maand/jaar en station
-      const shifts = await storage.getShiftsByMonth(parseInt(month), parseInt(year), userStationId);
+      const shifts = await storage.getShiftsByMonth(parseInt(month), parseInt(year), effectiveStationId);
       const totalShifts = shifts.length;
       
       console.log(`[0%] Begonnen met verwijderen van ${totalShifts} shifts...`);
@@ -2445,7 +2507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const details = `${successCount} shifts verwijderd voor ${month}/${year}${failedShifts.length > 0 ? ` (${failedShifts.length} gefaald)` : ''}`;
         await logActivity({
           userId: req.user?.id,
-          stationId: userStationId,
+          stationId: effectiveStationId,
           action: ActivityActions.SHIFT_MANUAL.MONTH_DELETED,
           category: 'SHIFT_MANUAL',
           details,
@@ -2488,11 +2550,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     try {
       const { month, year } = req.params;
-      const userStationId = req.user?.stationId;
+      
+      // SECURE SUPERVISOR FIX: Valideer station toegang
+      const { stationId: effectiveStationId, error } = await getAuthorizedStationId(
+        req, 
+        req.query.stationId as string | undefined
+      );
+      
+      if (error) {
+        return res.status(403).json({ message: error });
+      }
+      
       const shifts = await storage.getShiftsByMonth(
         parseInt(month),
         parseInt(year),
-        userStationId
+        effectiveStationId!
       );
       res.json(shifts);
     } catch (error) {
@@ -2522,21 +2594,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // zodat we de functionaliteit kunnen demonstreren
   app.post("/api/schedule/generate", requireAuth, async (req, res) => {
     try {
-      const { month, year } = req.body;
-      const userStationId = req.user?.stationId;
+      const { month, year, stationId: bodyStationId } = req.body;
       
+      // SECURE SUPERVISOR FIX: Valideer station toegang
+      const { stationId: effectiveStationId, error } = await getAuthorizedStationId(req, bodyStationId);
       
-      // Controleer of gebruiker ingelogd is en stationId heeft
-      if (!req.user || !userStationId) {
-        console.error("Geen geldige gebruiker of stationId:", { 
-          user: req.user?.username, 
-          stationId: userStationId,
-          fullUser: req.user 
-        });
-        return res.status(401).json({ message: "Geen geldige sessie of station informatie. Log opnieuw in." });
+      if (error || !effectiveStationId) {
+        return res.status(403).json({ message: error || "Geen geldige sessie of station informatie. Log opnieuw in." });
       }
       
-      console.log(`[0%] Planning generatie gestart voor ${month}/${year} voor station ${userStationId}`);
+      console.log(`[0%] Planning generatie gestart voor ${month}/${year} voor station ${effectiveStationId}`);
       
       // Initialize progress tracking
       generateProgress = { percentage: 0, message: "Planning generatie gestart...", isActive: true };
@@ -2547,7 +2614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[${percentage}%] ${message}`);
       };
       
-      const generatedShifts = await storage.generateMonthlySchedule(month, year, userStationId, progressCallback);
+      const generatedShifts = await storage.generateMonthlySchedule(month, year, effectiveStationId, progressCallback);
       
       
       // Complete progress tracking
@@ -2563,7 +2630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log activity
       await logActivity({
         userId: req.user!.id,
-        stationId: userStationId,
+        stationId: effectiveStationId,
         action: ActivityActions.SCHEDULE.GENERATED,
         category: 'SCHEDULE',
         details: `Planning gegenereerd voor ${month}/${year} - ${Array.isArray(generatedShifts) ? generatedShifts.length : 0} shifts aangemaakt`,
@@ -2571,8 +2638,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Send push notification to all users with subscriptions enabled
-      console.log(`📱 Sending planning published notifications for ${month}/${year} at station ${userStationId}`);
-      sendPlanningPublishedNotification(userStationId, month, year).catch(err => {
+      console.log(`📱 Sending planning published notifications for ${month}/${year} at station ${effectiveStationId}`);
+      sendPlanningPublishedNotification(effectiveStationId, month, year).catch(err => {
         console.error('Failed to send planning published notifications:', err);
       });
       
