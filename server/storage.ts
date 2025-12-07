@@ -1022,8 +1022,42 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
 
-    // MONTH-BOUNDARY FIX: Gebruik time-window query in plaats van month/year filter
-    // Buffer van 24 uur voor/na de voorgestelde shift om cross-month conflicts te detecteren
+    // === PRIMAIRE CHECK: SAME-DAY CONFLICT (ROBUUST, TIMEZONE-ONAFHANKELIJK) ===
+    // Cross-team gebruikers mogen NIET op dezelfde planningsdatum werken bij meerdere stations
+    // Dit voorkomt dubbele inplanning ongeacht tijdzone-issues
+    const proposedDay = proposedDate.getDate();
+    const proposedMonth = proposedDate.getMonth() + 1;
+    const proposedYear = proposedDate.getFullYear();
+    
+    // Query shifts op basis van month/year en dag van de maand
+    const sameDayShifts = await db
+      .select()
+      .from(shifts)
+      .where(
+        and(
+          eq(shifts.userId, userId),
+          ne(shifts.stationId, targetStationId), // Alleen shifts van andere stations
+          ne(shifts.status, "open"), // Ignore open shifts
+          eq(shifts.month, proposedMonth),
+          eq(shifts.year, proposedYear)
+        )
+      );
+    
+    // Check of er een shift is op dezelfde dag (dag van de maand)
+    for (const existingShift of sameDayShifts) {
+      const existingDay = existingShift.date.getDate();
+      
+      if (existingDay === proposedDay) {
+        const existingStation = await this.getStation(existingShift.stationId);
+        const targetStation = await this.getStation(targetStationId);
+        
+        console.log(`❌ CROSS-TEAM SAME-DAY CONFLICT: User ${userId} heeft al shift op dag ${proposedDay} in ${existingStation?.displayName} (shift ${existingShift.id}), kan niet ook inprogrammeren bij ${targetStation?.displayName}`);
+        return true;
+      }
+    }
+
+    // === SECUNDAIRE CHECK: TIME-BASED OVERLAP (VOOR CROSS-DAY CONFLICTS) ===
+    // Extra check voor shifts die over meerdere dagen lopen (bijv. nachtshift van dag 28 naar dag 29)
     const bufferHours = 24;
     const queryStartTime = new Date(proposedStartTime.getTime() - (bufferHours * 60 * 60 * 1000));
     const queryEndTime = new Date(proposedEndTime.getTime() + (bufferHours * 60 * 60 * 1000));
