@@ -288,12 +288,16 @@ export function setupAuth(app: Express) {
         
         loginRateLimiter.recordSuccessfulLogin(ip, username, stationId);
         
+        // Haal stationsnaam op voor duidelijkere logging
+        const station = await storage.getStation(stationId);
+        const stationName = station?.displayName || `station ${stationId}`;
+        
         await logActivity({
           userId: user.id,
           stationId: user.stationId,
           action: ActivityActions.LOGIN.SUCCESSFUL,
           category: 'LOGIN',
-          details: `Succesvol ingelogd via station ${stationId}`,
+          details: `Succesvol ingelogd via ${stationName}`,
           ipAddress: ip
         });
         
