@@ -38,6 +38,7 @@ export interface IStorage {
   addUserToStation(userId: number, stationId: number, maxHours?: number): Promise<void>;
   removeUserFromStation(userId: number, stationId: number): Promise<void>;
   getUsersByStation(stationId: number): Promise<User[]>;
+  getUsersByStationWithCrossTeamInfo(stationId: number): Promise<Array<User & { isCrossTeam: boolean; effectiveHours: number; crossTeamMaxHours: number | null }>>;
   
   // Cross-team functionality
   getUserStationAssignments(userId: number): Promise<Array<{station: Station, maxHours: number}>>;
@@ -752,7 +753,7 @@ export class DatabaseStorage implements IStorage {
 
     console.log(`DEBUG: Found ${primaryUsers.length} primary users for station ${stationId}:`, primaryUsers.map(u => `${u.username}:${u.id}`));
 
-    // Get users who have additional access to this station
+    // Get users who have additional access to this station (cross-team)
     const additionalUsers = await db
       .select({
         id: users.id,
@@ -774,13 +775,13 @@ export class DatabaseStorage implements IStorage {
 
     console.log(`DEBUG: Found ${additionalUsers.length} additional users for station ${stationId}:`, additionalUsers.map(u => `${u.username}:${u.id}`));
 
-    // Combine and deduplicate
+    // Combine and deduplicate - keep original user data intact
     const allUserIds = new Set(primaryUsers.map(u => u.id));
-    const allUsers = [...primaryUsers];
+    const allUsers: User[] = [...primaryUsers];
     
     for (const user of additionalUsers) {
       if (!allUserIds.has(user.id)) {
-        console.log(`DEBUG: Adding additional user ${user.username}:${user.id} to results`);
+        console.log(`DEBUG: Adding additional cross-team user ${user.username}:${user.id} to results`);
         allUsers.push(user);
       } else {
         console.log(`DEBUG: Skipping duplicate user ${user.username}:${user.id}`);
@@ -789,6 +790,82 @@ export class DatabaseStorage implements IStorage {
 
     console.log(`DEBUG: Total ${allUsers.length} users returned for station ${stationId}`);
     return allUsers.sort((a, b) => a.username.localeCompare(b.username));
+  }
+  
+  async getUsersByStationWithCrossTeamInfo(stationId: number): Promise<Array<User & { isCrossTeam: boolean; effectiveHours: number; crossTeamMaxHours: number | null }>> {
+    console.log(`DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: ${stationId}`);
+    
+    // Get users whose primary station is this station
+    const primaryUsers = await db
+      .select()
+      .from(users)
+      .where(eq(users.stationId, stationId));
+
+    console.log(`DEBUG: Found ${primaryUsers.length} primary users for station ${stationId}`);
+
+    // Get cross-team users for this station with their maxHours
+    const crossTeamUsers = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        password: users.password,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        role: users.role,
+        isAdmin: users.isAdmin,
+        isProfessional: users.isProfessional,
+        hasDrivingLicenseC: users.hasDrivingLicenseC,
+        hours: users.hours,
+        stationId: users.stationId,
+        crossTeamMaxHours: userStations.maxHours
+      })
+      .from(userStations)
+      .innerJoin(users, eq(userStations.userId, users.id))
+      .where(eq(userStations.stationId, stationId));
+
+    console.log(`DEBUG: Found ${crossTeamUsers.length} cross-team users for station ${stationId}`);
+
+    // Combine and deduplicate with cross-team metadata
+    const allUserIds = new Set(primaryUsers.map(u => u.id));
+    const result: Array<User & { isCrossTeam: boolean; effectiveHours: number; crossTeamMaxHours: number | null }> = [];
+    
+    // Add primary users (not cross-team for this station)
+    for (const user of primaryUsers) {
+      result.push({
+        ...user,
+        isCrossTeam: false,
+        effectiveHours: user.hours || 0,
+        crossTeamMaxHours: null
+      });
+    }
+    
+    // Add cross-team users
+    for (const user of crossTeamUsers) {
+      if (!allUserIds.has(user.id)) {
+        console.log(`DEBUG: Adding cross-team user ${user.username}:${user.id} with maxHours ${user.crossTeamMaxHours}`);
+        result.push({
+          id: user.id,
+          username: user.username,
+          password: user.password,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          isAdmin: user.isAdmin,
+          isProfessional: user.isProfessional,
+          hasDrivingLicenseC: user.hasDrivingLicenseC,
+          hours: user.hours, // Keep original primary station hours
+          stationId: user.stationId, // Keep original primary station
+          isCrossTeam: true,
+          effectiveHours: user.crossTeamMaxHours || 0, // Hours for THIS station
+          crossTeamMaxHours: user.crossTeamMaxHours
+        });
+      }
+    }
+
+    console.log(`DEBUG: Total ${result.length} users returned for station ${stationId} with cross-team info`);
+    return result.sort((a, b) => a.username.localeCompare(b.username));
   }
 
   // Cross-team functionality methods

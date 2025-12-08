@@ -285,25 +285,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const requestedStationId = req.query.stationId ? parseInt(req.query.stationId as string) : null;
         
         if (requestedStationId) {
-          // Supervisor requested specific station - include both primary AND cross-team users
-          filteredUsers = await storage.getUsersByStation(requestedStationId);
-          console.log(`Supervisor requested station ${requestedStationId}, returning ${filteredUsers.length} users (including cross-team)`);
+          // Supervisor requested specific station - include both primary AND cross-team users with cross-team info
+          const usersWithCrossTeamInfo = await storage.getUsersByStationWithCrossTeamInfo(requestedStationId);
+          console.log(`Supervisor requested station ${requestedStationId}, returning ${usersWithCrossTeamInfo.length} users (with cross-team info)`);
+          
+          // SECURITY FIX: Remove password fields
+          const users = usersWithCrossTeamInfo.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
+          return res.json(users);
         } else {
-          // Return all users including supervisor station for viewing
-          filteredUsers = allUsers;
-          console.log(`Supervisor gets all users including station 8: ${filteredUsers.length} users`);
+          // Return all users including supervisor station for viewing (no cross-team info needed)
+          const users = allUsers.map(({ password, ...userWithoutPassword }) => ({
+            ...userWithoutPassword,
+            isCrossTeam: false,
+            effectiveHours: userWithoutPassword.hours || 0,
+            crossTeamMaxHours: null
+          }));
+          console.log(`Supervisor gets all users including station 8: ${users.length} users`);
+          return res.json(users);
         }
       } else {
-        // Regular admin - only their station (including cross-station users)
+        // Regular admin - only their station (including cross-station users with cross-team info)
         const adminStationId = (req.user as any).stationId;
-        filteredUsers = await storage.getUsersByStation(adminStationId);
-        console.log(`Admin gets users for station ${adminStationId}: ${filteredUsers.length} users (including cross-station)`);
+        const usersWithCrossTeamInfo = await storage.getUsersByStationWithCrossTeamInfo(adminStationId);
+        console.log(`Admin gets users for station ${adminStationId}: ${usersWithCrossTeamInfo.length} users (with cross-team info)`);
+        
+        // SECURITY FIX: Remove password fields
+        const users = usersWithCrossTeamInfo.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
+        return res.json(users);
       }
-      
-      // SECURITY FIX: Remove password fields from all user objects before sending
-      const users = filteredUsers.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
-      
-      res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "Failed to get users" });

@@ -10,6 +10,13 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { insertUserSchema, type User, type ShiftPreference, type Station } from "@shared/schema";
 import { z } from "zod";
+
+// Extended user type with cross-team information from API
+type UserWithCrossTeamInfo = User & {
+  isCrossTeam: boolean;
+  effectiveHours: number;
+  crossTeamMaxHours: number | null;
+};
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -62,6 +69,9 @@ export default function UserManagement() {
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
   
+  // State for tracking selected user for editing (includes cross-team info)
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<UserWithCrossTeamInfo | null>(null);
+  
   // State for create user photo
   const [createUserPhotoFile, setCreateUserPhotoFile] = useState<File | null>(null);
   
@@ -110,7 +120,7 @@ export default function UserManagement() {
     enabled: viewPreferencesForUserId !== null,
   });
 
-  const { data: users, isLoading } = useQuery<User[]>({
+  const { data: users, isLoading } = useQuery<UserWithCrossTeamInfo[]>({
     queryKey: user?.role === 'supervisor' 
       ? ["/api/users", selectedStationId] 
       : ["/api/users", user?.stationId],
@@ -771,8 +781,13 @@ export default function UserManagement() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-semibold">
+                  <h3 className="font-semibold flex items-center gap-2">
                     {u.firstName} {u.lastName}
+                    {u.isCrossTeam && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        Cross-team
+                      </span>
+                    )}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     {u.username} - {u.role}
@@ -780,7 +795,10 @@ export default function UserManagement() {
                     {!u.hasDrivingLicenseC && u.hasDrivingLicenseC !== undefined && " • Geen Rijbewijs C"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Uren: {u.hours}
+                    Uren: {u.effectiveHours}
+                    {u.isCrossTeam && (
+                      <span className="text-blue-600 ml-1">(cross-team limiet)</span>
+                    )}
                   </p>
                 </div>
 
@@ -1093,12 +1111,13 @@ export default function UserManagement() {
                     setEditDialogOpen(open);
                     if (open) {
                       setSelectedUserId(u.id);
+                      setSelectedUserForEdit(u);
                       updateUserForm.reset({
                         firstName: u.firstName,
                         lastName: u.lastName,
                         email: u.email || "",
                         role: u.role as "admin" | "ambulancier" | "supervisor",
-                        hours: u.hours,
+                        hours: u.effectiveHours,
                         isProfessional: u.isProfessional || false,
                         hasDrivingLicenseC: u.hasDrivingLicenseC ?? true,
                         phoneNumber: u.phoneNumber || ""
@@ -1108,6 +1127,7 @@ export default function UserManagement() {
                     } else {
                       setPhotoPreviewUrl(null);
                       setSelectedPhotoFile(null);
+                      setSelectedUserForEdit(null);
                     }
                   }}>
                     <DialogTrigger asChild>
@@ -1125,22 +1145,48 @@ export default function UserManagement() {
                             if (!selectedUserId) return;
                             
                             try {
-                              // Update basic user data
-                              await updateUserMutation.mutateAsync({ 
-                                userId: selectedUserId, 
-                                data: {
-                                  firstName: data.firstName,
-                                  lastName: data.lastName,
-                                  email: data.email,
-                                  role: data.role as "admin" | "ambulancier" | "supervisor",
-                                  hours: data.hours,
-                                  isProfessional: data.isProfessional,
-                                  hasDrivingLicenseC: data.hasDrivingLicenseC
-                                }
-                              });
+                              // Check if this is a cross-team user
+                              const isCrossTeamUser = selectedUserForEdit?.isCrossTeam;
+                              
+                              if (isCrossTeamUser && selectedStationId) {
+                                // For cross-team users: update hours separately via cross-team API
+                                await updateUserStationHoursMutation.mutateAsync({
+                                  userId: selectedUserId,
+                                  stationId: selectedStationId,
+                                  maxHours: data.hours
+                                });
+                                
+                                // Update other user data (keep primary hours unchanged by sending original value)
+                                await updateUserMutation.mutateAsync({ 
+                                  userId: selectedUserId, 
+                                  data: {
+                                    firstName: data.firstName,
+                                    lastName: data.lastName,
+                                    email: data.email,
+                                    role: data.role as "admin" | "ambulancier" | "supervisor",
+                                    hours: selectedUserForEdit.hours || 0,
+                                    isProfessional: data.isProfessional,
+                                    hasDrivingLicenseC: data.hasDrivingLicenseC
+                                  }
+                                });
+                              } else {
+                                // For primary station users: update all data normally
+                                await updateUserMutation.mutateAsync({ 
+                                  userId: selectedUserId, 
+                                  data: {
+                                    firstName: data.firstName,
+                                    lastName: data.lastName,
+                                    email: data.email,
+                                    role: data.role as "admin" | "ambulancier" | "supervisor",
+                                    hours: data.hours,
+                                    isProfessional: data.isProfessional,
+                                    hasDrivingLicenseC: data.hasDrivingLicenseC
+                                  }
+                                });
+                              }
                               
                               // Update phone number if changed
-                              const currentUser = users?.find((u: User) => u.id === selectedUserId);
+                              const currentUser = users?.find((u: UserWithCrossTeamInfo) => u.id === selectedUserId);
                               if (data.phoneNumber !== (currentUser?.phoneNumber || "")) {
                                 await updatePhoneNumberMutation.mutateAsync({
                                   userId: selectedUserId,
@@ -1161,10 +1207,13 @@ export default function UserManagement() {
                               updateUserForm.reset();
                               setSelectedPhotoFile(null);
                               setPhotoPreviewUrl(null);
+                              setSelectedUserForEdit(null);
                               
                               toast({
                                 title: "Succes",
-                                description: "Gebruiker volledig bijgewerkt",
+                                description: isCrossTeamUser 
+                                  ? "Gebruiker en cross-team uren bijgewerkt" 
+                                  : "Gebruiker volledig bijgewerkt",
                               });
                             } catch (error) {
                               // Error is already handled by individual mutations
@@ -1276,8 +1325,20 @@ export default function UserManagement() {
                           </div>
 
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Werkuren</label>
-                            <p className="text-sm text-muted-foreground">Bepaal het aantal werkuren per maand</p>
+                            <label className="text-sm font-medium flex items-center gap-2">
+                              Werkuren
+                              {selectedUserForEdit?.isCrossTeam && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                  Cross-team limiet
+                                </span>
+                              )}
+                            </label>
+                            <p className="text-sm text-muted-foreground">
+                              {selectedUserForEdit?.isCrossTeam 
+                                ? `Cross-team uren limiet voor dit station (primair station: ${selectedUserForEdit.hours} uur)`
+                                : "Bepaal het aantal werkuren per maand"
+                              }
+                            </p>
                             <Input
                               type="number"
                               placeholder="24"
