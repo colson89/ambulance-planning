@@ -174,6 +174,11 @@ export default function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users/all'] });
+      if (user?.role === 'supervisor') {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
+      }
       refetchAssignments();
       toast({
         title: "Succes",
