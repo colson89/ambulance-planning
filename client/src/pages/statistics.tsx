@@ -373,7 +373,7 @@ function Statistics() {
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-blue-900 mb-2">Dag Week</h4>
               <p className="text-sm text-blue-700">
-                Dagshifts op weekdagen (maandag-vrijdag)
+                Dagshifts op weekdagen (maandag-donderdag, vrijdag dag)
                 <br />
                 <span className="font-medium">Tijd: 07:00 - 19:00</span>
               </p>
@@ -382,7 +382,7 @@ function Statistics() {
             <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
               <h4 className="font-semibold text-purple-900 mb-2">Nacht Week</h4>
               <p className="text-sm text-purple-700">
-                Nachtshifts op weekdagen (maandag-vrijdag)
+                Nachtshifts op weekdagen (maandag-donderdag)
                 <br />
                 <span className="font-medium">Tijd: 19:00 - 07:00</span>
               </p>
@@ -391,7 +391,7 @@ function Statistics() {
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
               <h4 className="font-semibold text-green-900 mb-2">Dag Weekend</h4>
               <p className="text-sm text-green-700">
-                Dagshifts in het weekend (zaterdag-zondag)
+                Dagshifts op za/zo en feestdagen
                 <br />
                 <span className="font-medium">Tijd: 07:00 - 19:00</span>
               </p>
@@ -400,7 +400,7 @@ function Statistics() {
             <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
               <h4 className="font-semibold text-orange-900 mb-2">Nacht Weekend</h4>
               <p className="text-sm text-orange-700">
-                Nachtshifts in het weekend (zaterdag-zondag)
+                Nachtshifts op vrijdag, za/zo en feestdagen
                 <br />
                 <span className="font-medium">Tijd: 19:00 - 07:00</span>
               </p>

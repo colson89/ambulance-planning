@@ -1411,13 +1411,49 @@ export class DatabaseStorage implements IStorage {
           )
         );
 
+      // Get holidays for the statistics period to count them as weekend
+      // Include: national holidays (stationId IS NULL) AND station-specific holidays for user's stations
+      const periodHolidays = await db
+        .select()
+        .from(holidays)
+        .where(
+          and(
+            gte(holidays.date, startDate.toISOString().split('T')[0]),
+            lte(holidays.date, endDate.toISOString().split('T')[0]),
+            eq(holidays.isActive, true),
+            or(
+              isNull(holidays.stationId), // National holidays apply to all stations
+              inArray(holidays.stationId, allStationIds) // Station-specific holidays for user's stations
+            )
+          )
+        );
+      const holidayDates = new Set(periodHolidays.map(h => h.date));
+      
+      // Helper function to determine if a date/shift counts as "weekend" for statistics
+      // Weekend = Saturday, Sunday, holidays, OR Friday night shifts
+      const isWeekendForStats = (date: Date, shiftType: string): boolean => {
+        const dayOfWeek = date.getDay();
+        const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        
+        // Saturday (6) or Sunday (0)
+        if (dayOfWeek === 0 || dayOfWeek === 6) return true;
+        
+        // Holidays count as weekend
+        if (holidayDates.has(dateString)) return true;
+        
+        // Friday night shifts count as weekend (they run into Saturday)
+        if (dayOfWeek === 5 && shiftType === 'night') return true;
+        
+        return false;
+      };
+
       // Calculate preference statistics
       const prefStats = preferences.reduce((acc, pref) => {
         if (!allStationIds.includes(pref.stationId)) return acc;
         
         const prefDate = new Date(pref.date);
-        const isWeekend = prefDate.getDay() === 0 || prefDate.getDay() === 6;
-        const key = `${pref.type}${isWeekend ? 'Weekend' : 'Week'}`;
+        const countsAsWeekend = isWeekendForStats(prefDate, pref.type);
+        const key = `${pref.type}${countsAsWeekend ? 'Weekend' : 'Week'}`;
         
         let hours = 0;
         if (pref.startTime && pref.endTime) {
@@ -1443,8 +1479,8 @@ export class DatabaseStorage implements IStorage {
         if (!allStationIds.includes(shift.stationId)) return acc;
         
         const shiftDate = new Date(shift.date);
-        const isWeekend = shiftDate.getDay() === 0 || shiftDate.getDay() === 6;
-        const key = `${shift.type}${isWeekend ? 'Weekend' : 'Week'}`;
+        const countsAsWeekend = isWeekendForStats(shiftDate, shift.type);
+        const key = `${shift.type}${countsAsWeekend ? 'Weekend' : 'Week'}`;
         
         let hours = 0;
         if (shift.startTime && shift.endTime) {

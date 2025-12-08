@@ -8,7 +8,7 @@ import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
 import { toZonedTime, format as formatTz } from 'date-fns-tz';
 import { db } from "./db";
-import { and, gte, lte, asc, ne, eq, inArray } from "drizzle-orm";
+import { and, gte, lte, asc, ne, eq, inArray, isNull, or } from "drizzle-orm";
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import multer from 'multer';
@@ -3483,6 +3483,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("All cross-station access data:", allCrossStationAccess);
       
+      // Get holidays for the statistics period to count them as weekend
+      // Include: national holidays (stationId IS NULL) AND station-specific holidays for target station
+      const periodHolidays = await db.select()
+        .from(holidays)
+        .where(
+          and(
+            gte(holidays.date, startDate.toISOString().split('T')[0]),
+            lte(holidays.date, endDate.toISOString().split('T')[0]),
+            eq(holidays.isActive, true),
+            or(
+              isNull(holidays.stationId), // National holidays apply to all stations
+              eq(holidays.stationId, targetStationId) // Station-specific holidays
+            )
+          )
+        );
+      const holidayDates = new Set(periodHolidays.map(h => h.date));
+      
+      // Helper function to determine if a date/shift counts as "weekend" for statistics
+      // Weekend = Saturday, Sunday, holidays, OR Friday night shifts
+      const isWeekendForStats = (date: Date, shiftType: string): boolean => {
+        const dayOfWeek = date.getDay();
+        const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        
+        // Saturday (6) or Sunday (0)
+        if (dayOfWeek === 0 || dayOfWeek === 6) return true;
+        
+        // Holidays count as weekend
+        if (holidayDates.has(dateString)) return true;
+        
+        // Friday night shifts count as weekend (they run into Saturday)
+        if (dayOfWeek === 5 && shiftType === 'night') return true;
+        
+        return false;
+      };
+      
       // Calculate statistics for each user
       const statistics = allUsersWithCrossAccess.map(user => {
         const userPreferences = preferences.filter(p => p.userId === user.id);
@@ -3490,8 +3525,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Calculate preference hours by type and weekend/weekday
         const prefStats = userPreferences.reduce((acc, pref) => {
-          const isWeekend = pref.date.getDay() === 0 || pref.date.getDay() === 6;
-          const key = `${pref.type}${isWeekend ? 'Weekend' : 'Week'}` as keyof typeof acc;
+          const prefDate = new Date(pref.date);
+          const countsAsWeekend = isWeekendForStats(prefDate, pref.type);
+          const key = `${pref.type}${countsAsWeekend ? 'Weekend' : 'Week'}` as keyof typeof acc;
           // Only count approved or pending preferences (not unavailable)
           // Check notes for "Niet beschikbaar" because unavailable prefs are stored with notes field
           if (pref.type !== 'unavailable' && pref.notes !== 'Niet beschikbaar') {
@@ -3509,8 +3545,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Calculate actual shift hours by type and weekend/weekday
         const actualStats = userActualShifts.reduce((acc, shift) => {
-          const isWeekend = shift.date.getDay() === 0 || shift.date.getDay() === 6;
-          const key = `${shift.type}${isWeekend ? 'Weekend' : 'Week'}` as keyof typeof acc;
+          const shiftDate = new Date(shift.date);
+          const countsAsWeekend = isWeekendForStats(shiftDate, shift.type);
+          const key = `${shift.type}${countsAsWeekend ? 'Weekend' : 'Week'}` as keyof typeof acc;
           
           // Calculate actual hours from start/end times
           let hours = 0;
