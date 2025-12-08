@@ -830,6 +830,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const photoUrl = `/uploads/profile-photos/${req.file.filename}`;
       const updatedUser = await storage.updateUser(targetUserId, { profilePhotoUrl: photoUrl });
 
+      // Log activity for profile photo upload
+      try {
+        const isOwnPhoto = currentUserId === targetUserId;
+        await logActivity({
+          userId: currentUserId,
+          stationId: (req.user as any).stationId,
+          action: ActivityActions.PROFILE.PHOTO_UPLOADED,
+          category: 'PROFILE',
+          details: isOwnPhoto 
+            ? `Eigen profielfoto geüpload`
+            : `Profielfoto geüpload voor ${targetUser.firstName} ${targetUser.lastName}`,
+          targetUserId: isOwnPhoto ? undefined : targetUserId,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log profile photo upload:", logError);
+      }
+
       const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
     } catch (error) {
@@ -984,6 +1003,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userAgent: req.headers['user-agent'] || null
       });
       
+      // Log activity for cross-team addition
+      try {
+        await logActivity({
+          userId: req.user!.id,
+          stationId: (req.user as any).stationId,
+          action: ActivityActions.USER_MANAGEMENT.CROSS_TEAM_ADDED,
+          category: 'USER_MANAGEMENT',
+          details: `Cross-team toegang toegevoegd: ${targetUser.firstName} ${targetUser.lastName} aan ${station.displayName}`,
+          targetUserId: userId,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: req.headers['user-agent'] || undefined
+        });
+      } catch (logError) {
+        console.error("Failed to log cross-team addition:", logError);
+      }
+      
       res.json({ message: "User toegevoegd aan station" });
     } catch (error) {
       console.error("Error adding user to station:", error);
@@ -1036,6 +1071,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       await storage.removeUserFromStation(userId, stationId);
+      
+      // Log activity for cross-team removal
+      try {
+        await logActivity({
+          userId: req.user!.id,
+          stationId: (req.user as any).stationId,
+          action: ActivityActions.USER_MANAGEMENT.CROSS_TEAM_REMOVED,
+          category: 'USER_MANAGEMENT',
+          details: `Cross-team toegang verwijderd: ${targetUser.firstName} ${targetUser.lastName} van ${station?.displayName || 'station'}`,
+          targetUserId: userId,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: req.headers['user-agent'] || undefined
+        });
+      } catch (logError) {
+        console.error("Failed to log cross-team removal:", logError);
+      }
+      
       res.json({ message: "User verwijderd van station" });
     } catch (error) {
       console.error("Error removing user from station:", error);
@@ -1129,6 +1181,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.addUserToStation(userId, validatedData.stationId, validatedData.maxHours);
       
+      // Log activity for cross-team addition with hours
+      // Use target stationId so the log appears in that station's audit trail
+      try {
+        await logActivity({
+          userId: currentUser.id,
+          stationId: validatedData.stationId,
+          action: ActivityActions.USER_MANAGEMENT.CROSS_TEAM_ADDED,
+          category: 'USER_MANAGEMENT',
+          details: `Cross-team toegang toegevoegd: ${targetUser.firstName} ${targetUser.lastName} aan ${station.displayName} (${validatedData.maxHours}u/maand)`,
+          targetUserId: userId,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: req.headers['user-agent'] || undefined
+        });
+      } catch (logError) {
+        console.error("Failed to log cross-team addition:", logError);
+      }
+      
       res.json({ 
         message: `${targetUser.firstName} ${targetUser.lastName} toegevoegd aan ${station.displayName} met ${validatedData.maxHours} uur limiet`
       });
@@ -1187,6 +1256,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.removeUserFromStation(userId, stationId);
+      
+      // Log activity for cross-team removal
+      // Use target stationId so the log appears in that station's audit trail
+      try {
+        await logActivity({
+          userId: currentUser.id,
+          stationId: stationId,
+          action: ActivityActions.USER_MANAGEMENT.CROSS_TEAM_REMOVED,
+          category: 'USER_MANAGEMENT',
+          details: `Cross-team toegang verwijderd: ${targetUser.firstName} ${targetUser.lastName} van ${station.displayName}`,
+          targetUserId: userId,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: req.headers['user-agent'] || undefined
+        });
+      } catch (logError) {
+        console.error("Failed to log cross-team removal:", logError);
+      }
       
       res.json({ 
         message: `${targetUser.firstName} ${targetUser.lastName} verwijderd van ${station.displayName}`
@@ -1564,6 +1650,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await storage.deleteUnifiedPreferencesForUser(userId, month, year);
+
+      // Log activity for deleting unified preferences
+      const monthNames = ['januari', 'februari', 'maart', 'april', 'mei', 'juni',
+                          'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+      const monthName = monthNames[month - 1];
+      
+      try {
+        await logActivity({
+          userId: userId,
+          stationId: req.user!.stationId,
+          action: ActivityActions.PREFERENCE.DELETED,
+          category: 'PREFERENCE',
+          details: `Eigen voorkeuren verwijderd voor ${monthName} ${year} (alle stations)`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log unified preferences deletion:", logError);
+      }
 
       res.json({ message: `Alle voorkeuren voor ${month}/${year} zijn verwijderd van alle stations` });
     } catch (error) {
@@ -2080,6 +2185,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`Deleted ${deletedCount} preferences for station ${userStationId}, month ${month}/${year}`);
       
+      // Log activity for bulk preference deletion
+      try {
+        const station = await storage.getStation(userStationId);
+        await logActivity({
+          userId: req.user!.id,
+          stationId: userStationId,
+          action: ActivityActions.SETTINGS.PREFERENCES_CLEARED,
+          category: 'SETTINGS',
+          details: `Alle voorkeuren verwijderd voor ${station?.displayName || 'station'} - ${month}/${year} (${deletedCount} voorkeuren)`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log bulk preference deletion:", logError);
+      }
+      
       res.status(200).json({ 
         message: `Successfully deleted ${deletedCount} preferences for ${month}/${year}`,
         deletedCount
@@ -2184,7 +2305,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "U heeft geen toegang tot deze voorkeur" });
       }
 
+      // Store preference details before deletion for logging
+      const prefDate = format(new Date(preference.date), 'dd-MM-yyyy');
+      const prefType = preference.type === 'day' ? 'dag' : preference.type === 'night' ? 'nacht' : preference.type;
+
       await storage.deleteShiftPreference(parseInt(req.params.id));
+      
+      // Log activity for single preference deletion
+      try {
+        await logActivity({
+          userId: req.user!.id,
+          stationId: req.user!.stationId,
+          action: ActivityActions.PREFERENCE.DELETED,
+          category: 'PREFERENCE',
+          details: `Voorkeur verwijderd voor ${prefDate} (${prefType})`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log preference deletion:", logError);
+      }
+      
       res.sendStatus(200);
     } catch (error) {
       res.status(500).json({ message: "Kon voorkeur niet verwijderen" });
@@ -3369,6 +3510,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const updatedConfig = await storage.updateWeekdayConfig(dayOfWeek, updateData, targetStationId);
+      
+      // Log activity for weekday config update
+      try {
+        const dayNames = ['zondag', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag'];
+        const dayName = dayNames[dayOfWeek] || `dag ${dayOfWeek}`;
+        await logActivity({
+          userId: req.user!.id,
+          stationId: targetStationId,
+          action: ActivityActions.SETTINGS.WEEKDAY_CONFIG_UPDATED,
+          category: 'SETTINGS',
+          details: `Weekdag configuratie bijgewerkt: ${dayName}`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log weekday config update:", logError);
+      }
+      
       res.json(updatedConfig);
     } catch (error) {
       console.error("Error updating weekday config:", error);
@@ -4068,6 +4227,23 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       console.log("Final validated holidayData:", holidayData);
       
       const holiday = await storage.createHoliday(holidayData);
+      
+      // Log activity for holiday creation
+      try {
+        const dateStr = format(new Date(holiday.date), 'dd-MM-yyyy');
+        await logActivity({
+          userId: req.user!.id,
+          stationId: req.user!.stationId,
+          action: ActivityActions.SETTINGS.HOLIDAY_ADDED,
+          category: 'SETTINGS',
+          details: `Feestdag toegevoegd: ${holiday.name} (${dateStr})`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log holiday creation:", logError);
+      }
+      
       res.status(201).json(holiday);
     } catch (error) {
       console.error("Error creating holiday:", error);
@@ -4108,7 +4284,27 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(404).json({ message: "Holiday not found" });
       }
       
+      // Store holiday details before deletion for logging
+      const holidayName = holiday.name;
+      const dateStr = format(new Date(holiday.date), 'dd-MM-yyyy');
+      
       await storage.deleteHoliday(holidayId);
+      
+      // Log activity for holiday deletion
+      try {
+        await logActivity({
+          userId: req.user!.id,
+          stationId: req.user!.stationId,
+          action: ActivityActions.SETTINGS.HOLIDAY_DELETED,
+          category: 'SETTINGS',
+          details: `Feestdag verwijderd: ${holidayName} (${dateStr})`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log holiday deletion:", logError);
+      }
+      
       res.status(200).json({ message: "Holiday deleted successfully" });
     } catch (error) {
       console.error("Error deleting holiday:", error);
@@ -6107,7 +6303,29 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         });
       }
       
+      // Store details for logging before deletion
+      const overtimeDate = format(new Date(existing.startTime), 'dd-MM-yyyy');
+      const durationHours = Math.floor(existing.durationMinutes / 60);
+      const durationMins = existing.durationMinutes % 60;
+      const durationStr = durationMins > 0 ? `${durationHours}u${durationMins}m` : `${durationHours}u`;
+      
       await storage.deleteOvertime(id);
+      
+      // Log activity for overtime deletion
+      try {
+        await logActivity({
+          userId: req.user.id,
+          stationId: req.user.stationId,
+          action: ActivityActions.OVERTIME.DELETED,
+          category: 'OVERTIME',
+          details: `Overuren verwijderd: ${overtimeDate} (${durationStr})`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: req.headers['user-agent'] || undefined
+        });
+      } catch (logError) {
+        console.error("Failed to log overtime deletion:", logError);
+      }
+      
       res.json({ message: "Overuren verwijderd" });
     } catch (error: any) {
       console.error('Error deleting overtime:', error);
