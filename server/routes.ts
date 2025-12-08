@@ -442,8 +442,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (adminRole === 'supervisor') {
         // Supervisors have full access to all users including other supervisors
       } else {
-        // Regular admins - only their station
-        if (targetUser.stationId !== adminStationId) {
+        // Regular admins - check if user belongs to their station (primary OR cross-team)
+        const isPrimaryMember = targetUser.stationId === adminStationId;
+        
+        // Check if user is a cross-team member of admin's current station
+        const isCrossTeamMember = !isPrimaryMember 
+          ? await storage.isUserCrossTeamMemberOfStation(targetUser.id, adminStationId)
+          : false;
+        
+        if (!isPrimaryMember && !isCrossTeamMember) {
           return res.status(404).json({ message: "User not found" });
         }
       }
@@ -800,13 +807,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Permission check: only home station admins can edit profiles, not cross-team admins
+      // Permission check: admins can edit profiles for their station users (primary OR cross-team)
       const isOwnProfile = currentUserId === targetUserId;
       const isAdmin = userRole === 'admin' || userRole === 'supervisor';
       const isSupervisor = userRole === 'supervisor';
       const isSameHomeStation = targetUser.stationId === userStationId;
+      
+      // Check if user is a cross-team member of admin's current station
+      const isCrossTeamMember = (isAdmin && !isSameHomeStation)
+        ? await storage.isUserCrossTeamMemberOfStation(targetUserId, userStationId)
+        : false;
 
-      if (!isOwnProfile && !(isAdmin && (isSupervisor || isSameHomeStation))) {
+      if (!isOwnProfile && !(isAdmin && (isSupervisor || isSameHomeStation || isCrossTeamMember))) {
         return res.status(403).json({ message: "Je hebt geen toestemming om deze foto bij te werken" });
       }
 
@@ -839,13 +851,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // Permission check: only home station admins can edit profiles, not cross-team admins
+      // Permission check: admins can edit profiles for their station users (primary OR cross-team)
       const isOwnProfile = currentUserId === targetUserId;
       const isAdmin = userRole === 'admin' || userRole === 'supervisor';
       const isSupervisor = userRole === 'supervisor';
       const isSameHomeStation = targetUser.stationId === userStationId;
+      
+      // Check if user is a cross-team member of admin's current station
+      const isCrossTeamMember = (isAdmin && !isSameHomeStation)
+        ? await storage.isUserCrossTeamMemberOfStation(targetUserId, userStationId)
+        : false;
 
-      if (!isOwnProfile && !(isAdmin && (isSupervisor || isSameHomeStation))) {
+      if (!isOwnProfile && !(isAdmin && (isSupervisor || isSameHomeStation || isCrossTeamMember))) {
         return res.status(403).json({ message: "Je hebt geen toestemming om dit telefoonnummer bij te werken" });
       }
 

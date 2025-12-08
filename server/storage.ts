@@ -43,6 +43,7 @@ export interface IStorage {
   // Cross-team functionality
   getUserStationAssignments(userId: number): Promise<Array<{station: Station, maxHours: number}>>;
   updateUserStationHours(userId: number, stationId: number, maxHours: number): Promise<void>;
+  isUserCrossTeamMemberOfStation(userId: number, stationId: number): Promise<boolean>;
   getCrossTeamUsersForStation(stationId: number): Promise<Array<{user: User, maxHours: number}>>;
   validateCrossTeamSchedule(userId: number, proposedShifts: Array<{date: Date, startTime: Date, endTime: Date, stationId: number}>): Promise<{conflicts: string[], valid: boolean}>;
   
@@ -894,6 +895,16 @@ export class DatabaseStorage implements IStorage {
       .update(userStations)
       .set({ maxHours })
       .where(and(eq(userStations.userId, userId), eq(userStations.stationId, stationId)));
+  }
+
+  async isUserCrossTeamMemberOfStation(userId: number, stationId: number): Promise<boolean> {
+    const result = await db
+      .select({ userId: userStations.userId })
+      .from(userStations)
+      .where(and(eq(userStations.userId, userId), eq(userStations.stationId, stationId)))
+      .limit(1);
+    
+    return result.length > 0;
   }
 
   async getCrossTeamUsersForStation(stationId: number): Promise<Array<{user: User, maxHours: number}>> {
