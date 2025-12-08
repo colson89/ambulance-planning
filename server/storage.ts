@@ -876,6 +876,12 @@ export class DatabaseStorage implements IStorage {
 
   // Cross-team functionality methods
   async getUserStationAssignments(userId: number): Promise<Array<{station: Station, maxHours: number}>> {
+    // First get the user's primary station to filter it out
+    const user = await this.getUser(userId);
+    if (!user) {
+      return [];
+    }
+    
     const assignments = await db
       .select({
         station: {
@@ -890,7 +896,10 @@ export class DatabaseStorage implements IStorage {
       })
       .from(userStations)
       .innerJoin(stations, eq(userStations.stationId, stations.id))
-      .where(eq(userStations.userId, userId));
+      .where(and(
+        eq(userStations.userId, userId),
+        ne(userStations.stationId, user.stationId) // Exclude the user's primary station
+      ));
 
     return assignments;
   }
