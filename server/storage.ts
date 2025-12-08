@@ -805,6 +805,8 @@ export class DatabaseStorage implements IStorage {
     console.log(`DEBUG: Found ${primaryUsers.length} primary users for station ${stationId}`);
 
     // Get cross-team users for this station with their maxHours
+    // IMPORTANT: Only include users whose PRIMARY station is NOT this station
+    // This prevents primary users from being incorrectly flagged as cross-team
     const crossTeamUsers = await db
       .select({
         id: users.id,
@@ -823,7 +825,10 @@ export class DatabaseStorage implements IStorage {
       })
       .from(userStations)
       .innerJoin(users, eq(userStations.userId, users.id))
-      .where(eq(userStations.stationId, stationId));
+      .where(and(
+        eq(userStations.stationId, stationId),
+        ne(users.stationId, stationId) // Exclude users whose primary station is this station
+      ));
 
     console.log(`DEBUG: Found ${crossTeamUsers.length} cross-team users for station ${stationId}`);
 
