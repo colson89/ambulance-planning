@@ -1336,6 +1336,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // IMPORTANT: This endpoint is ONLY for updating cross-team hours in user_stations.
+      // If the target station is the user's PRIMARY station, reject the request.
+      // Primary station hours should be updated via PATCH /api/users/:id
+      if (targetUser.stationId === stationId) {
+        return res.status(400).json({ 
+          message: `${targetUser.firstName} ${targetUser.lastName} heeft ${station.displayName} als primair station. Gebruik het standaard bewerkformulier om primaire uren aan te passen.` 
+        });
+      }
+      
       // Verify target user has cross-team access to this station (only applicable for cross-team hours)
       const targetUserCrossTeamStations = await storage.getUserCrossTeamStations(userId);
       const hasUserCrossTeamAccess = targetUserCrossTeamStations.some(s => s.stationId === stationId);

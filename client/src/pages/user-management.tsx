@@ -1153,11 +1153,14 @@ export default function UserManagement() {
                               // Check if this is a cross-team user
                               const isCrossTeamUser = selectedUserForEdit?.isCrossTeam;
                               
-                              if (isCrossTeamUser && selectedStationId) {
+                              // Get the active station ID (for supervisors it's selectedStationId, for admins it's user.stationId)
+                              const activeStationId = user?.role === 'supervisor' ? selectedStationId : user?.stationId;
+                              
+                              if (isCrossTeamUser && activeStationId) {
                                 // For cross-team users: update hours separately via cross-team API
                                 await updateUserStationHoursMutation.mutateAsync({
                                   userId: selectedUserId,
-                                  stationId: selectedStationId,
+                                  stationId: activeStationId,
                                   maxHours: data.hours
                                 });
                                 
