@@ -809,7 +809,7 @@ export default function Dashboard() {
       </div>
 
       {/* Mijn Ruilverzoeken sectie */}
-      <MySwapRequests users={users} shifts={shifts} />
+      <MySwapRequests users={colleagues} shifts={shifts} />
       
       {/* Planning section georganiseerd per maand/jaar */}
       <Card>
@@ -1491,7 +1491,7 @@ export default function Dashboard() {
           onOpenChange={setShiftSwapDialogOpen}
           shift={selectedSwapShift}
           currentUser={user}
-          stationUsers={users.filter(u => u.stationId === selectedSwapShift.stationId)}
+          stationUsers={colleagues.filter(u => u.stationId === selectedSwapShift.stationId)}
         />
       )}
     </div>
