@@ -21,7 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, UserPlus, KeyRound, Home, Users, Settings, Plus, Minus, X, Upload, Camera } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Calendar } from "@/components/ui/calendar";
 import { Eye, EyeOff } from "lucide-react";
@@ -56,7 +56,6 @@ export default function UserManagement() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStationId, setSelectedStationId] = useState<number | null>(null);
   
   // Cross-team management state
   const [crossTeamSearchTerm, setCrossTeamSearchTerm] = useState("");
@@ -79,16 +78,100 @@ export default function UserManagement() {
   const [showCreatePassword, setShowCreatePassword] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   
-  // Query om stations op te halen (voor supervisors)
-  const { data: stations = [] } = useQuery({
-    queryKey: ["/api/user/stations", "includeSupervisor"],
+  // Query om stations op te halen (voor supervisors EN admins)
+  const { data: stations = [], isLoading: stationsLoading } = useQuery<Station[]>({
+    queryKey: ["/api/user/stations", user?.role === 'supervisor' ? "includeSupervisor" : "admin"],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/user/stations?includeSupervisor=true");
+      const url = user?.role === 'supervisor' 
+        ? "/api/user/stations?includeSupervisor=true"
+        : "/api/user/stations";
+      const res = await apiRequest("GET", url);
       if (!res.ok) throw new Error("Kon stations niet laden");
       return res.json();
     },
-    enabled: user?.role === 'supervisor'
+    enabled: user?.role === 'supervisor' || user?.role === 'admin'
   });
+  
+  // Check of admin multi-station toegang heeft (meer dan 1 station beschikbaar)
+  const isMultiStationAdmin = user?.role === 'admin' && stations && stations.length > 1;
+  
+  // Bepaal of station selector getoond moet worden
+  const showStationSelector = user?.role === 'supervisor' || isMultiStationAdmin;
+  
+  // Station selector state - initialiseren na user en stations beschikbaar zijn
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(null);
+  const [stationInitialized, setStationInitialized] = useState(false);
+  
+  // Effect om selectedStationId te initialiseren wanneer user en stations beschikbaar zijn
+  useEffect(() => {
+    if (stationInitialized || !user) return;
+    
+    // Voor supervisors: check sessionStorage of null (moet selecteren)
+    if (user.role === 'supervisor') {
+      const savedStationId = sessionStorage.getItem('selectedStationId');
+      if (savedStationId) {
+        const parsedId = parseInt(savedStationId);
+        // Valideer dat het opgeslagen station nog steeds beschikbaar is
+        if (!stationsLoading && stations.length > 0) {
+          if (stations.some(s => s.id === parsedId)) {
+            setSelectedStationId(parsedId);
+          }
+          setStationInitialized(true);
+        }
+      } else if (!stationsLoading) {
+        setStationInitialized(true);
+      }
+      return;
+    }
+    
+    // Voor admins: check sessionStorage, fallback naar eigen station
+    if (user.role === 'admin') {
+      const savedStationId = sessionStorage.getItem('selectedStationId');
+      if (savedStationId) {
+        const parsedId = parseInt(savedStationId);
+        // Valideer dat het opgeslagen station nog steeds beschikbaar is
+        if (!stationsLoading && stations.length > 0) {
+          if (stations.some(s => s.id === parsedId)) {
+            setSelectedStationId(parsedId);
+          } else {
+            // Fallback naar eigen station als opgeslagen station niet meer beschikbaar
+            setSelectedStationId(user.stationId);
+          }
+          setStationInitialized(true);
+        }
+      } else {
+        // Geen opgeslagen selectie, gebruik eigen station
+        setSelectedStationId(user.stationId);
+        setStationInitialized(true);
+      }
+      return;
+    }
+    
+    // Voor andere rollen: gebruik eigen station
+    setSelectedStationId(user.stationId);
+    setStationInitialized(true);
+  }, [user, stations, stationsLoading, stationInitialized]);
+  
+  // Effectieve station ID - voor supervisors moet station geselecteerd worden,
+  // voor admins: gebruik geselecteerde station of fallback naar eigen station
+  const effectiveStationId = useMemo(() => {
+    // Supervisor moet altijd expliciet een station selecteren
+    if (user?.role === 'supervisor') {
+      return selectedStationId;
+    }
+    // Admin: gebruik geselecteerde station als die beschikbaar is, anders eigen station
+    if (user?.role === 'admin') {
+      return selectedStationId || user?.stationId;
+    }
+    return user?.stationId;
+  }, [user?.role, selectedStationId, user?.stationId]);
+  
+  // Handler voor station selectie verandering
+  const handleStationChange = (value: string) => {
+    const stationId = parseInt(value);
+    setSelectedStationId(stationId);
+    sessionStorage.setItem('selectedStationId', value);
+  };
   
   // Cross-team queries
   const { data: allUsersForCrossTeam = [], isLoading: isLoadingCrossTeamUsers } = useQuery<User[]>({
@@ -125,18 +208,16 @@ export default function UserManagement() {
   });
 
   const { data: users, isLoading } = useQuery<UserWithCrossTeamInfo[]>({
-    queryKey: user?.role === 'supervisor' 
-      ? ["/api/users", selectedStationId] 
-      : ["/api/users", user?.stationId],
+    queryKey: ["/api/users", effectiveStationId],
     queryFn: async () => {
-      const url = user?.role === 'supervisor' && selectedStationId 
-        ? `/api/users?stationId=${selectedStationId}`
+      const url = showStationSelector && effectiveStationId 
+        ? `/api/users?stationId=${effectiveStationId}`
         : '/api/users';
       const res = await fetch(url);
       if (!res.ok) throw new Error("Kon gebruikers niet laden");
       return res.json();
     },
-    enabled: user?.role === 'supervisor' ? selectedStationId !== null : !!user?.stationId,
+    enabled: !!effectiveStationId,
   });
 
   // Cross-team mutations
@@ -178,11 +259,7 @@ export default function UserManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users/all'] });
-      if (user?.role === 'supervisor') {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["/api/users", effectiveStationId] });
       refetchAssignments();
       toast({
         title: "Succes",
@@ -312,11 +389,7 @@ export default function UserManagement() {
       return res.json();
     },
     onSuccess: async (newUser) => {
-      if (user?.role === 'supervisor') {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["/api/users", effectiveStationId] });
       
       // Upload profile photo if selected
       if (createUserPhotoFile && newUser?.id) {
@@ -339,11 +412,7 @@ export default function UserManagement() {
             });
           } else {
             // Refresh user list to show new photo
-            if (user?.role === 'supervisor') {
-              queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
-            } else {
-              queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
-            }
+            queryClient.invalidateQueries({ queryKey: ["/api/users", effectiveStationId] });
           }
         } catch (error) {
           toast({
@@ -377,11 +446,7 @@ export default function UserManagement() {
       return res.json();
     },
     onSuccess: () => {
-      if (user?.role === 'supervisor') {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["/api/users", effectiveStationId] });
       // Don't show toast or close dialog here - handled in form submit
     },
     onError: (error: Error) => {
@@ -424,11 +489,7 @@ export default function UserManagement() {
       return res.json();
     },
     onSuccess: () => {
-      if (user?.role === 'supervisor') {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["/api/users", effectiveStationId] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/all"] });
       // Don't show toast here - handled in form submit
     },
@@ -460,11 +521,7 @@ export default function UserManagement() {
       return res.json();
     },
     onSuccess: () => {
-      if (user?.role === 'supervisor') {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["/api/users", effectiveStationId] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/all"] });
       // Don't show toast or reset photo state here - handled in form submit
     },
@@ -482,11 +539,7 @@ export default function UserManagement() {
       await apiRequest("DELETE", `/api/users/${userId}`);
     },
     onSuccess: () => {
-      if (user?.role === 'supervisor') {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", selectedStationId] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["/api/users", user?.stationId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["/api/users", effectiveStationId] });
       toast({
         title: "Succes",
         description: "Gebruiker verwijderd",
@@ -506,6 +559,64 @@ export default function UserManagement() {
       <div className="container mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6">Geen toegang</h1>
         <p>U heeft geen toegang tot deze pagina.</p>
+      </div>
+    );
+  }
+
+  // Station selectie guard voor multi-station admins en supervisors
+  // Toon loading state terwijl stations laden
+  if (stationsLoading && (user?.role === 'supervisor' || user?.role === 'admin')) {
+    return (
+      <div className="container mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6">Gebruikersbeheer</h1>
+        <Card className="p-8">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+            <p className="text-lg">Stations laden...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Toon station selector guard voor supervisors (verplichte selectie) en multi-station admins (indien geen fallback)
+  if (showStationSelector && !effectiveStationId) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Gebruikersbeheer</h1>
+          <Button
+            variant="outline"
+            onClick={() => setLocation("/dashboard")}
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Home
+          </Button>
+        </div>
+        <Card className="p-8">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <Users className="h-16 w-16 text-muted-foreground" />
+            <h2 className="text-xl font-semibold">Selecteer een station</h2>
+            <p className="text-muted-foreground text-center">
+              Kies een station om gebruikers te bekijken en beheren.
+            </p>
+            <Select 
+              value={selectedStationId?.toString() || ""} 
+              onValueChange={handleStationChange}
+            >
+              <SelectTrigger className="w-[200px] mt-1" data-testid="select-station">
+                <SelectValue placeholder="Selecteer station..." />
+              </SelectTrigger>
+              <SelectContent>
+                {stations.map((station) => (
+                  <SelectItem key={station.id} value={station.id.toString()}>
+                    {station.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -534,21 +645,20 @@ export default function UserManagement() {
         <TabsContent value="users" className="space-y-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4 flex-1">
-              {user?.role === 'supervisor' && (
+              {showStationSelector && (
                 <Select 
                   value={selectedStationId?.toString() || ""} 
-                  onValueChange={(value) => setSelectedStationId(parseInt(value))}
+                  onValueChange={handleStationChange}
                 >
                   <SelectTrigger className="w-[200px]" data-testid="select-station">
                     <SelectValue placeholder="Kies station..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {(stations as Station[])
-                      ?.map((station) => (
-                        <SelectItem key={station.id} value={station.id.toString()}>
-                          {station.displayName}
-                        </SelectItem>
-                      ))}
+                    {stations.map((station) => (
+                      <SelectItem key={station.id} value={station.id.toString()}>
+                        {station.displayName}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               )}
@@ -565,7 +675,7 @@ export default function UserManagement() {
             <Dialog>
             <DialogTrigger asChild>
               <Button 
-                disabled={user?.role === 'supervisor' && !selectedStationId}
+                disabled={showStationSelector && !effectiveStationId}
                 data-testid="button-new-user"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -578,12 +688,12 @@ export default function UserManagement() {
               </DialogHeader>
               <Form {...createUserForm}>
                 <form onSubmit={createUserForm.handleSubmit((data) => {
-                  // For supervisors, set the selected station ID
-                  if (user?.role === 'supervisor' && selectedStationId) {
-                    data.stationId = selectedStationId;
+                  // For supervisors and multi-station admins, set the effective station ID
+                  if (showStationSelector && effectiveStationId) {
+                    data.stationId = effectiveStationId;
                   }
-                  // Validation: Check if supervisor has selected a station
-                  if (user?.role === 'supervisor' && !selectedStationId) {
+                  // Validation: Check if station selector is active and no station selected
+                  if (showStationSelector && !effectiveStationId) {
                     toast({
                       title: "Fout",
                       description: "Selecteer eerst een station",
