@@ -249,7 +249,7 @@ function ScheduleGenerator() {
       if (!res.ok) throw new Error("Kon gebruikers niet ophalen");
       return res.json();
     },
-    enabled: !!user && ((user.role === "admin") || (user.role === "supervisor" && !!effectiveStationId)),
+    enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
   });
 
   // Haal alle voorkeuren op voor de geselecteerde maand
@@ -267,7 +267,7 @@ function ScheduleGenerator() {
       if (!res.ok) throw new Error("Kon voorkeuren niet ophalen");
       return res.json();
     },
-    enabled: !!user && ((user.role === "admin") || (user.role === "supervisor" && !!effectiveStationId)),
+    enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
   });
 
   // Haal alle shifts op voor de geselecteerde maand (gefilterd per station via backend)
@@ -285,7 +285,7 @@ function ScheduleGenerator() {
       if (!res.ok) throw new Error("Kon shifts niet ophalen");
       return res.json();
     },
-    enabled: !!user && ((user.role === "admin" && !!user.stationId) || (user.role === "supervisor" && !!effectiveStationId) || (user.role === "ambulancier" && !!user.stationId)),
+    enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor" || user.role === "ambulancier"),
     // Force fresh data on every query to prevent stale cache issues
     staleTime: 0,
     gcTime: 0,
@@ -308,7 +308,7 @@ function ScheduleGenerator() {
       if (!res.ok && res.status !== 404) throw new Error("Kon opmerkingen niet ophalen");
       return res.status === 404 ? [] : res.json();
     },
-    enabled: !!user && ((user.role === "admin") || (user.role === "supervisor" && !!effectiveStationId)),
+    enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
   });
 
   // Haal weekday configuraties op voor requiredStaff berekening
@@ -325,7 +325,7 @@ function ScheduleGenerator() {
       if (!res.ok) throw new Error("Kon weekday configuraties niet ophalen");
       return res.json();
     },
-    enabled: !!user && ((user.role === "admin") || (user.role === "supervisor" && !!effectiveStationId)),
+    enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
   });
 
   // Haal cross-team shifts op (shifts van gebruikers op ANDERE stations)
@@ -1228,6 +1228,33 @@ function ScheduleGenerator() {
             Je hebt geen toegang tot deze pagina. Je moet ingelogd zijn om planningen te bekijken.
           </AlertDescription>
         </Alert>
+      </div>
+    );
+  }
+
+  // Loading state voor admins terwijl stations worden geladen
+  if (user.role === 'admin' && isLoadingStations) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Planning Generator</h1>
+          <Button
+            variant="outline"
+            onClick={() => setLocation("/dashboard")}
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Home
+          </Button>
+        </div>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mr-3" />
+              <span>Stations laden...</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
