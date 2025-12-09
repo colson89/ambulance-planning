@@ -230,6 +230,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get admin contacts for a station (public endpoint for login page)
+  app.get("/api/stations/:id/contacts", async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.id);
+      const station = await storage.getStation(stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station not found" });
+      }
+      
+      // Get all users for this station who are admin or supervisor
+      const allUsers = await storage.getAllUsers();
+      const adminContacts = allUsers
+        .filter(u => u.stationId === stationId && (u.role === 'admin' || u.role === 'supervisor') && u.isActive)
+        .map(u => ({
+          firstName: u.firstName,
+          lastName: u.lastName,
+          phoneNumber: u.phoneNumber || null,
+          role: u.role
+        }))
+        .sort((a, b) => {
+          // Sort supervisors first, then admins
+          if (a.role === 'supervisor' && b.role !== 'supervisor') return -1;
+          if (a.role !== 'supervisor' && b.role === 'supervisor') return 1;
+          return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+        });
+      
+      res.json(adminContacts);
+    } catch (error) {
+      console.error("Error getting station contacts:", error);
+      res.status(500).json({ message: "Failed to get station contacts" });
+    }
+  });
+
   // Security: Dev login endpoint has been completely removed for security reasons
   // Use proper authentication via /api/login instead
 
