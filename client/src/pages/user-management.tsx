@@ -652,7 +652,6 @@ export default function UserManagement() {
                     <div className="relative">
                       <Input
                         type={showCreatePassword ? "text" : "password"}
-                        placeholder="Wachtwoord"
                         {...createUserForm.register("password")}
                       />
                       <Button
@@ -1468,7 +1467,6 @@ export default function UserManagement() {
                             <div className="relative">
                               <Input
                                 type={showChangePassword ? "text" : "password"}
-                                placeholder="Nieuw wachtwoord"
                                 {...changePasswordForm.register("password")}
                               />
                               <Button
