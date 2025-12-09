@@ -239,10 +239,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Station not found" });
       }
       
-      // Get all active admins for this station (no supervisors)
-      const allUsers = await storage.getAllUsers();
-      const adminContacts = allUsers
-        .filter(u => u.stationId === stationId && u.role === 'admin' && u.isActive !== false)
+      // Get all users for this station (including cross-team users)
+      const stationUsers = await storage.getUsersByStation(stationId);
+      
+      // Filter to only admins
+      const adminContacts = stationUsers
+        .filter(u => u.role === 'admin')
         .map(u => ({
           firstName: u.firstName,
           lastName: u.lastName,
