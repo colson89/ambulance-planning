@@ -70,8 +70,21 @@ export default function Dashboard() {
     },
   });
   
+  // Use /api/users/colleagues which works for ALL users (including ambulanciers)
+  // This returns limited but sufficient data for displaying colleague names
+  const { data: colleagues = [], isLoading: colleaguesLoading } = useQuery<any[]>({
+    queryKey: ["/api/users/colleagues"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/users/colleagues");
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+  
+  // For admin operations, still try to get full user list (will fail for ambulanciers but that's ok)
   const { data: users = [], isLoading: usersLoading } = useQuery<UserType[]>({
     queryKey: ["/api/users"],
+    enabled: user?.role === 'admin' || user?.role === 'supervisor',
   });
   
   const { data: preferences = [], isLoading: preferencesLoading } = useQuery<any[]>({
@@ -295,7 +308,8 @@ export default function Dashboard() {
       });
       
       // Haal alle ambulanciers EN admins op die shifts kunnen draaien
-      const ambulanciers = users.filter(u => u.role === "ambulancier" || u.role === "admin");
+      // Use colleagues instead of users (works for all roles including ambulanciers)
+      const ambulanciers = colleagues.filter(u => u.role === "ambulancier" || u.role === "admin");
       
       // Zoek in voorkeuren voor deze datum
       const allPreferences = preferences.flatMap(userPrefs => userPrefs.preferences || []);
@@ -328,8 +342,10 @@ export default function Dashboard() {
         const userPreference = userPreferencesMap.get(ambulancier.id);
         const isAvailable = !!userPreference;
         
-        // Controleer of de ambulancier uren wil werken (hours > 0)
-        const wantsToWork = ambulancier.hours > 0;
+        // Controleer of de ambulancier uren wil werken 
+        // Use effectiveHours for cross-team users (their primary hours may be 0 for this station)
+        const effectiveHrs = ambulancier.effectiveHours ?? ambulancier.hours ?? 0;
+        const wantsToWork = effectiveHrs > 0;
         
         // Bepaal het preferentietype
         let preferenceType = "unavailable";
@@ -351,7 +367,7 @@ export default function Dashboard() {
             canSplit: userPreference?.canSplit || false,
             isAssigned: isAssigned,
             isAvailable: isAvailable && wantsToWork,
-            hours: ambulancier.hours || 0,
+            hours: effectiveHrs,
             startTime: isAssigned ? shiftDetails?.startTime : userPreference?.startTime,
             endTime: isAssigned ? shiftDetails?.endTime : userPreference?.endTime
           });
@@ -841,7 +857,7 @@ export default function Dashboard() {
                 {filteredShifts
                   .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                   .map((shift) => {
-                    const shiftUser = users.find(u => u.id === shift.userId);
+                    const shiftUser = colleagues.find(u => u.id === shift.userId);
                     const isCurrentUserShift = shift.userId === user?.id;
                     
                     const getShiftTime = () => {
@@ -1011,7 +1027,7 @@ export default function Dashboard() {
                     {filteredShifts
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
                       .map((shift) => {
-                        const shiftUser = users.find(u => u.id === shift.userId);
+                        const shiftUser = colleagues.find(u => u.id === shift.userId);
                         const isCurrentUserShift = shift.userId === user?.id;
                         
                         const results = [];
@@ -1220,7 +1236,7 @@ export default function Dashboard() {
                         </TableHeader>
                         <TableBody>
                           {getUsersAvailableForDate(selectedDate, "day").map((u) => {
-                            const fullUser = users.find(usr => usr.id === u.userId);
+                            const fullUser = colleagues.find(usr => usr.id === u.userId);
                             return (
                               <TableRow key={u.userId}>
                                 <TableCell>
@@ -1311,7 +1327,7 @@ export default function Dashboard() {
                       </TableHeader>
                       <TableBody>
                         {getUsersAvailableForDate(selectedDate, "night").map((u) => {
-                          const fullUser = users.find(usr => usr.id === u.userId);
+                          const fullUser = colleagues.find(usr => usr.id === u.userId);
                           return (
                             <TableRow key={u.userId}>
                               <TableCell>

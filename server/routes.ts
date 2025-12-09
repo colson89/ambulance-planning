@@ -348,6 +348,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get colleagues for any authenticated user (ambulanciers can see station colleagues)
+  // Returns limited data needed for dashboard: id, names, phone, role, station, hours
+  app.get("/api/users/colleagues", requireAuth, async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
+    try {
+      const currentUser = req.user as any;
+      console.log(`=== GET /api/users/colleagues for user ${currentUser.username} (role: ${currentUser.role}) ===`);
+      
+      // Get all accessible station IDs for this user
+      const accessibleStationIds = new Set<number>();
+      
+      // Always include primary station
+      accessibleStationIds.add(currentUser.stationId);
+      
+      // Get cross-team station assignments
+      const crossTeamAssignments = await storage.getUserCrossTeamStations(currentUser.id);
+      for (const assignment of crossTeamAssignments) {
+        accessibleStationIds.add(assignment.stationId);
+      }
+      
+      console.log(`User ${currentUser.username} has access to stations: ${Array.from(accessibleStationIds).join(', ')}`);
+      
+      // Collect all colleagues from all accessible stations (including cross-team members)
+      const allColleagues = new Map<number, any>(); // Use Map to deduplicate by user ID
+      
+      for (const stationId of accessibleStationIds) {
+        // Use getUsersByStationWithCrossTeamInfo to include cross-team users
+        const stationUsers = await storage.getUsersByStationWithCrossTeamInfo(stationId);
+        for (const user of stationUsers) {
+          if (!allColleagues.has(user.id)) {
+            // Return fields needed for dashboard: names, contact info, role, hours (for availability)
+            // Exclude sensitive fields: password, email, admin flags
+            allColleagues.set(user.id, {
+              id: user.id,
+              username: user.username,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email || null, // Needed for contact dialog
+              phoneNumber: user.phoneNumber || null,
+              profilePhotoUrl: user.profilePhotoUrl || null,
+              role: user.role,
+              stationId: user.stationId,
+              hours: user.hours || 0, // Needed for availability calculations
+              effectiveHours: user.effectiveHours || user.hours || 0,
+              isCrossTeam: user.isCrossTeam || false
+            });
+          }
+        }
+      }
+      
+      const colleagues = Array.from(allColleagues.values())
+        .sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
+      
+      console.log(`Returning ${colleagues.length} colleagues for user ${currentUser.username}`);
+      res.json(colleagues);
+    } catch (error) {
+      console.error("Error fetching colleagues:", error);
+      res.status(500).json({ message: "Failed to get colleagues" });
+    }
+  });
+
   // Create new user (admin only)
   app.post("/api/users", requireAdmin, async (req, res) => {
     try {
