@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -99,58 +99,76 @@ function ScheduleGenerator() {
   const [showBidsDialog, setShowBidsDialog] = useState(false);
   const [selectedBidShift, setSelectedBidShift] = useState<Shift | null>(null);
   
-  // Station selector state voor supervisors - lees uit sessionStorage indien beschikbaar
+  // Query voor stations (voor supervisors en admins)
+  const { data: stations, isLoading: isLoadingStations } = useQuery<Station[]>({
+    queryKey: ["/api/user/stations", user?.id, user?.role],
+    enabled: user?.role === 'supervisor' || user?.role === 'admin',
+  });
+  
+  // Check of admin meerdere stations heeft - alleen na data load
+  const isMultiStationAdmin = useMemo(() => {
+    return user?.role === 'admin' && stations && stations.length > 1;
+  }, [user?.role, stations]);
+  
+  // Station selector state voor supervisors en multi-station admins - lees uit sessionStorage indien beschikbaar
   const [selectedStationId, setSelectedStationId] = useState<number | null>(() => {
-    if (user?.role === 'supervisor') {
-      try {
-        const stationData = sessionStorage.getItem('selectedStation');
-        if (stationData) {
-          const parsed = JSON.parse(stationData);
-          return parsed.id || null;
-        }
-      } catch {
-        // Ignore parsing errors
+    try {
+      const stationData = sessionStorage.getItem('selectedStation');
+      if (stationData) {
+        const parsed = JSON.parse(stationData);
+        return parsed.id || null;
       }
-      return null;
+    } catch {
+      // Ignore parsing errors
     }
     return user?.stationId || null;
   });
+  
+  // Handler to update station selection and persist to sessionStorage
+  const handleStationChange = (stationId: number) => {
+    setSelectedStationId(stationId);
+    const station = stations?.find(s => s.id === stationId);
+    if (station) {
+      sessionStorage.setItem('selectedStation', JSON.stringify({ id: station.id, displayName: station.displayName }));
+    }
+  };
 
   // Sync selectedStationId from sessionStorage when user becomes available (handles async hydration)
   useEffect(() => {
-    if (user?.role === 'supervisor' && selectedStationId === null) {
+    if ((user?.role === 'supervisor' || user?.role === 'admin') && selectedStationId === null) {
       try {
         const stationData = sessionStorage.getItem('selectedStation');
         if (stationData) {
           const parsed = JSON.parse(stationData);
           if (parsed.id) {
             setSelectedStationId(parsed.id);
+            return;
           }
         }
       } catch {
         // Ignore parsing errors
       }
+      // Default to primary station if no selection
+      if (user?.stationId) {
+        setSelectedStationId(user.stationId);
+      }
     }
-  }, [user?.role, selectedStationId]);
+  }, [user?.role, user?.stationId, selectedStationId]);
 
-  // Query voor stations (alleen voor supervisors)
-  const { data: stations } = useQuery<Station[]>({
-    queryKey: ["/api/user/stations", user?.id, user?.role],
-    enabled: user?.role === 'supervisor',
-  });
-
-  // Effectieve station ID - voor supervisors is dit de geselecteerde station, anders hun eigen station
-  // Fallback to sessionStorage if user.stationId is not yet available
-  const effectiveStationId = user?.role === 'supervisor' 
-    ? selectedStationId 
-    : user?.stationId || (() => {
-        try {
-          const stationData = sessionStorage.getItem('selectedStation');
-          return stationData ? JSON.parse(stationData).id : null;
-        } catch {
-          return null;
-        }
-      })();
+  // Effectieve station ID - voor supervisors en multi-station admins is dit de geselecteerde station
+  // Wacht op stations data voor admins voordat we isMultiStationAdmin kunnen bepalen
+  const effectiveStationId = useMemo(() => {
+    // For supervisors: always use selectedStationId if available
+    if (user?.role === 'supervisor') {
+      return selectedStationId;
+    }
+    // For admins with multiple stations: use selectedStationId or fallback to primary
+    if (isMultiStationAdmin) {
+      return selectedStationId || user?.stationId;
+    }
+    // For single-station admins or ambulanciers: use their station
+    return user?.stationId || null;
+  }, [user?.role, user?.stationId, selectedStationId, isMultiStationAdmin]);
   
   // Query om de laatste tijdstempel voor gegenereerde testvoorkeuren op te halen (per maand)
   const { data: lastGeneratedTimestamp, isLoading: isLoadingTimestamp } = useQuery({
@@ -1241,7 +1259,7 @@ function ScheduleGenerator() {
             </Label>
             <Select 
               value={selectedStationId?.toString() || ""} 
-              onValueChange={(value) => setSelectedStationId(parseInt(value))}
+              onValueChange={(value) => handleStationChange(parseInt(value))}
             >
               <SelectTrigger className="mt-1" data-testid="select-station">
                 <SelectValue placeholder="Kies station..." />
@@ -1280,15 +1298,15 @@ function ScheduleGenerator() {
         <div>
           <h1 className="text-3xl font-bold">Planning Generator</h1>
           
-          {/* Station selector voor supervisors */}
-          {user?.role === 'supervisor' && (
+          {/* Station selector voor supervisors en multi-station admins */}
+          {(user?.role === 'supervisor' || isMultiStationAdmin) && (
             <div className="mt-4">
               <Label htmlFor="station-select" className="text-sm font-medium">
                 Station
               </Label>
               <Select 
-                value={selectedStationId?.toString() || ""} 
-                onValueChange={(value) => setSelectedStationId(parseInt(value))}
+                value={(selectedStationId || effectiveStationId)?.toString() || ""} 
+                onValueChange={(value) => handleStationChange(parseInt(value))}
               >
                 <SelectTrigger className="w-[200px] mt-1" data-testid="select-station">
                   <SelectValue placeholder="Kies station..." />
