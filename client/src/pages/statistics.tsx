@@ -92,19 +92,57 @@ function Statistics() {
   const [sortColumn, setSortColumn] = useState<keyof ShiftStatistics | "name" | "percentage">("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   
-  // Station selector state voor supervisors
-  const [selectedStationId, setSelectedStationId] = useState<number | null>(
-    user?.role === 'supervisor' ? null : user?.stationId || null
-  );
-
-  // Query voor stations (alleen voor supervisors)
-  const { data: stations } = useQuery<Station[]>({
+  // Query voor stations (voor supervisors EN admins)
+  const { data: stations, isLoading: stationsLoading } = useQuery<Station[]>({
     queryKey: ["/api/user/stations"],
-    enabled: user?.role === 'supervisor',
+    enabled: user?.role === 'supervisor' || user?.role === 'admin',
+  });
+  
+  // Check of admin multi-station toegang heeft (meer dan 1 station beschikbaar)
+  const isMultiStationAdmin = user?.role === 'admin' && stations && stations.length > 1;
+  
+  // Bepaal of station selector getoond moet worden
+  const showStationSelector = user?.role === 'supervisor' || isMultiStationAdmin;
+
+  // Station selector state - initialiseer intelligent gebaseerd op rol en beschikbare stations
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(() => {
+    // Voor supervisors: check sessionStorage of null (moet selecteren)
+    if (user?.role === 'supervisor') {
+      const savedStationId = sessionStorage.getItem('selectedStationId');
+      return savedStationId ? parseInt(savedStationId) : null;
+    }
+    // Voor admins: check sessionStorage, fallback naar eigen station
+    if (user?.role === 'admin') {
+      const savedStationId = sessionStorage.getItem('selectedStationId');
+      if (savedStationId) {
+        return parseInt(savedStationId);
+      }
+      // Fallback naar eigen station
+      return user?.stationId || null;
+    }
+    return user?.stationId || null;
   });
 
-  // Effectieve station ID - voor supervisors is dit de geselecteerde station, anders hun eigen station
-  const effectiveStationId = user?.role === 'supervisor' ? selectedStationId : user?.stationId;
+  // Effectieve station ID - voor supervisors moet station geselecteerd worden,
+  // voor admins: gebruik geselecteerde station of fallback naar eigen station
+  const effectiveStationId = useMemo(() => {
+    // Supervisor moet altijd expliciet een station selecteren
+    if (user?.role === 'supervisor') {
+      return selectedStationId;
+    }
+    // Admin: gebruik geselecteerde station als die beschikbaar is, anders eigen station
+    if (user?.role === 'admin') {
+      return selectedStationId || user?.stationId;
+    }
+    return user?.stationId;
+  }, [user?.role, selectedStationId, user?.stationId]);
+  
+  // Handler voor station selectie verandering
+  const handleStationChange = (value: string) => {
+    const stationId = parseInt(value);
+    setSelectedStationId(stationId);
+    sessionStorage.setItem('selectedStationId', value);
+  };
 
   const { data: statistics, isLoading, error } = useQuery<ShiftStatistics[]>({
     queryKey: ["/api/statistics/shifts", periodType, selectedYear, selectedMonth, selectedQuarter, effectiveStationId],
@@ -120,8 +158,8 @@ function Statistics() {
         params.append("quarter", selectedQuarter.toString());
       }
 
-      // Voeg stationId toe voor supervisors
-      if (user?.role === 'supervisor' && effectiveStationId) {
+      // Voeg stationId toe voor supervisors EN multi-station admins
+      if (showStationSelector && effectiveStationId) {
         params.append("stationId", effectiveStationId.toString());
       }
 
@@ -240,8 +278,9 @@ function Statistics() {
     });
   }, [statistics, searchTerm, sortColumn, sortDirection]);
 
-  // Guard voor supervisors: vereist station selectie
-  if (user?.role === 'supervisor' && !selectedStationId) {
+  // Guard voor supervisors/multi-station admins: vereist station selectie
+  // Note: Single-station admins slaan dit over (effectiveStationId fallback naar user.stationId)
+  if (showStationSelector && !effectiveStationId) {
     return (
       <div className="container mx-auto p-6">
         <div className="flex items-center gap-4 mb-8">
@@ -268,14 +307,14 @@ function Statistics() {
               </Label>
               <Select 
                 value={selectedStationId?.toString() || ""} 
-                onValueChange={(value) => setSelectedStationId(parseInt(value))}
+                onValueChange={handleStationChange}
               >
                 <SelectTrigger className="w-[200px] mt-1" data-testid="select-station">
                   <SelectValue placeholder="Kies station..." />
                 </SelectTrigger>
                 <SelectContent>
                   {(stations as Station[])
-                    ?.filter(station => station.code !== 'supervisor') // Filter supervisor station
+                    ?.filter(station => station.code !== 'supervisor')
                     ?.map((station) => (
                       <SelectItem key={station.id} value={station.id.toString()}>
                         {station.displayName}
@@ -332,22 +371,22 @@ function Statistics() {
             Overzicht van shift voorkeuren per medewerker
           </p>
           
-          {/* Station selector voor supervisors */}
-          {user?.role === 'supervisor' && (
+          {/* Station selector voor supervisors EN multi-station admins */}
+          {showStationSelector && (
             <div className="mt-4">
               <Label htmlFor="station-select" className="text-sm font-medium">
                 Station
               </Label>
               <Select 
                 value={selectedStationId?.toString() || ""} 
-                onValueChange={(value) => setSelectedStationId(parseInt(value))}
+                onValueChange={handleStationChange}
               >
                 <SelectTrigger className="w-[200px] mt-1" data-testid="select-station">
                   <SelectValue placeholder="Kies station..." />
                 </SelectTrigger>
                 <SelectContent>
                   {(stations as Station[])
-                    ?.filter(station => station.code !== 'supervisor') // Filter supervisor station
+                    ?.filter(station => station.code !== 'supervisor')
                     ?.map((station) => (
                       <SelectItem key={station.id} value={station.id.toString()}>
                         {station.displayName}

@@ -3676,16 +3676,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/statistics/shifts", requireAdmin, async (req, res) => {
     try {
       const { type, year, month, quarter, stationId } = req.query;
-      const user = req.user as any;
       
       if (!type || !year) {
         return res.status(400).json({ message: "Type and year are required" });
       }
 
-      // Voor supervisors: gebruik stationId parameter als die er is, anders hun eigen stationId
-      const targetStationId = user.role === 'supervisor' && stationId 
-        ? parseInt(stationId as string)
-        : user.stationId;
+      // MULTI-STATION ADMIN FIX: Validate station access for admins and supervisors
+      const { stationId: authorizedStationId, error } = await getAuthorizedStationId(
+        req, 
+        stationId as string | undefined
+      );
+      
+      if (error || !authorizedStationId) {
+        return res.status(403).json({ message: error || "Geen toegang tot dit station" });
+      }
 
       const targetYear = parseInt(year as string);
       let startDate: Date, endDate: Date;
@@ -3721,7 +3725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get users filtered by station
       const allUsers = await storage.getAllUsers();
-      const users = allUsers.filter(user => user.stationId === targetStationId);
+      const users = allUsers.filter(user => user.stationId === authorizedStationId);
       
       // Get shift preferences for the period (filtered by station)
       const preferences = await db.select()
@@ -3730,7 +3734,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           and(
             gte(shiftPreferences.date, startDate),
             lte(shiftPreferences.date, endDate),
-            eq(shiftPreferences.stationId, targetStationId)
+            eq(shiftPreferences.stationId, authorizedStationId)
           )
         );
       
@@ -3747,11 +3751,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       
       // Get cross-station hours for users - need to check all users that have access to current station
-      const allUsersWithCrossAccess = await storage.getUsersByStation(targetStationId);
+      const allUsersWithCrossAccess = await storage.getUsersByStation(authorizedStationId);
       
       // Get ALL cross-station access data for calculating total max hours for all users
       console.log("=== CROSS-STATION DEBUG v3 ===");
-      console.log("Target stationId:", targetStationId);
+      console.log("Target stationId:", authorizedStationId);
       
       // Get ALL cross-station access data (not filtered by station) to calculate total user capacity
       const allCrossStationAccess = await db.select()
@@ -3770,7 +3774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eq(holidays.isActive, true),
             or(
               isNull(holidays.stationId), // National holidays apply to all stations
-              eq(holidays.stationId, targetStationId) // Station-specific holidays
+              eq(holidays.stationId, authorizedStationId) // Station-specific holidays
             )
           )
         );
