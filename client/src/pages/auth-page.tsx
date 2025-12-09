@@ -6,7 +6,7 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
-import { Home, Building2, ArrowLeft, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Home, Building2, ArrowLeft, Eye, EyeOff, KeyRound, Phone, User } from "lucide-react";
 import type { Station } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 
@@ -57,6 +57,18 @@ export default function AuthPage() {
   // Check if password reset is enabled
   const { data: passwordResetStatus } = useQuery<{ enabled: boolean }>({
     queryKey: ['/api/password-reset/enabled']
+  });
+
+  // Get admin contacts for selected station
+  const { data: adminContacts } = useQuery<{ firstName: string; lastName: string; phoneNumber: string | null; role: string }[]>({
+    queryKey: ['/api/stations', selectedStation?.id, 'contacts'],
+    queryFn: async () => {
+      if (!selectedStation?.id) return [];
+      const response = await fetch(`/api/stations/${selectedStation.id}/contacts`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!selectedStation?.id
   });
 
   const togglePasswordVisibility = () => {
@@ -216,6 +228,37 @@ export default function AuthPage() {
                         <KeyRound className="h-3 w-3 mr-1" />
                         Wachtwoord vergeten?
                       </Button>
+                    </div>
+                  )}
+
+                  {/* Admin contacts for help */}
+                  {adminContacts && adminContacts.length > 0 && (
+                    <div className="mt-6 pt-4 border-t">
+                      <p className="text-xs text-muted-foreground text-center mb-3">
+                        Problemen met inloggen? Neem contact op met:
+                      </p>
+                      <div className="space-y-2">
+                        {adminContacts.map((contact, index) => (
+                          <div key={index} className="flex items-center justify-between text-sm bg-muted/50 rounded-md px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <User className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="font-medium">{contact.firstName} {contact.lastName}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({contact.role === 'supervisor' ? 'Supervisor' : 'Beheerder'})
+                              </span>
+                            </div>
+                            {contact.phoneNumber && (
+                              <a 
+                                href={`tel:${contact.phoneNumber}`} 
+                                className="flex items-center gap-1 text-primary hover:underline"
+                              >
+                                <Phone className="h-3.5 w-3.5" />
+                                <span>{contact.phoneNumber}</span>
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
