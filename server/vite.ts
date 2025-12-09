@@ -84,7 +84,22 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  // Serve static files with cache-busting for JS/CSS
+  // Files with hash in filename (like index-BiU_A5mR.js) can be cached long-term
+  // But we disable caching to force browsers to always get the latest version
+  app.use(express.static(distPath, {
+    setHeaders: (res, filePath) => {
+      // Disable caching for HTML, JS, and CSS files to ensure users get latest version
+      if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      } else {
+        // Other static assets (images, fonts) can be cached
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+      }
+    }
+  }));
 
   // fall through to index.html if the file doesn't exist
   // Set no-cache headers to ensure users always get the latest version
