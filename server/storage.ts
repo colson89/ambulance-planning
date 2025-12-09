@@ -1708,6 +1708,16 @@ export class DatabaseStorage implements IStorage {
     // Cache voor station hour limits om database calls te vermijden
     const stationHourLimitsCache = new Map<number, number>();
     
+    // CROSS-TEAM FIX: Synchrone helper om gecachte station-specifieke uren op te halen
+    // KRITIEK: Gebruik ALTIJD deze functie in plaats van user.hours voor correcte cross-team uren
+    const getEffectiveHours = (userId: number): number => {
+      const cached = stationHourLimitsCache.get(userId);
+      if (cached !== undefined) return cached;
+      // Fallback naar user.hours als cache niet gevuld is (zou niet moeten gebeuren na initialisatie)
+      const user = activeUsers.find(u => u.id === userId);
+      return user ? user.hours : 0;
+    };
+    
     // Helper functie om per-station hour limiet te berekenen
     const getStationHourLimit = async (userId: number): Promise<number> => {
       const user = activeUsers.find(u => u.id === userId);
@@ -1787,14 +1797,16 @@ export class DatabaseStorage implements IStorage {
       // Als we de laatste positie invullen EN alle anderen hebben geen rijbewijs C, dan MOET deze wel
       if (assignedUserIds.length === targetShifts - 1) {
         // Check of alle reeds toegewezen users GEEN rijbewijs C hebben
+        // CROSS-TEAM FIX: Alleen eligibleUsers (geen fallback naar activeUsers)
         const allLackLicense = assignedUserIds.every(userId => {
-          const user = activeUsers.find(u => u.id === userId);
+          const user = eligibleUsers.find(u => u.id === userId);
           return user && !user.hasDrivingLicenseC;
         });
         
         if (allLackLicense) {
           // Check of de candidate rijbewijs C heeft
-          const candidateUser = activeUsers.find(u => u.id === candidateUserId);
+          // CROSS-TEAM FIX: Alleen eligibleUsers (geen fallback naar activeUsers)
+          const candidateUser = eligibleUsers.find(u => u.id === candidateUserId);
           const candidateHasLicense = candidateUser?.hasDrivingLicenseC ?? true; // Default true voor backwards compatibility
           
           if (!candidateHasLicense) {
@@ -1815,7 +1827,24 @@ export class DatabaseStorage implements IStorage {
       console.log(`User ${user.username} (${user.id}): station ${stationId} limit = ${stationLimit}h`);
     }
     
-    console.log(`Generating schedule for ${month}/${year} with ${activeUsers.length} actieve gebruikers`);
+    // CROSS-TEAM FIX PUNT 1: Filter activeUsers opnieuw op basis van effectieve uren
+    // Dit voorkomt dat cross-team gebruikers met 0 uur limiet voor dit station worden ingepland
+    const eligibleUsers = activeUsers.filter(user => {
+      const effectiveHrs = getEffectiveHours(user.id);
+      if (effectiveHrs <= 0) {
+        console.log(`EXCLUDED USER: ${user.username} (${user.id}) has 0 effective hours for station ${stationId}`);
+        return false;
+      }
+      return true;
+    });
+    
+    // Herinitialiseer hours tracking voor eligible users
+    userAssignedHours.clear();
+    eligibleUsers.forEach(user => {
+      userAssignedHours.set(user.id, 0);
+    });
+    
+    console.log(`Generating schedule for ${month}/${year} with ${eligibleUsers.length} eligible users (filtered from ${activeUsers.length} active)`);
     
     // PERFORMANCE FIX 1: Prefetch ALL shift preferences for the month ONCE to fix N+1 query problem
     const allPreferences = await db.select()
@@ -1868,7 +1897,7 @@ export class DatabaseStorage implements IStorage {
     
     // Build weekend history cache (inclusief feestdagen!)
     const weekendHistoryCache = new Map<number, number>();
-    for (const user of activeUsers) {
+    for (const user of eligibleUsers) {
       const userWeekendShifts = allWeekendShifts.filter(shift => {
         if (shift.userId !== user.id) return false;
         const shiftDay = shift.date.getDay();
@@ -1907,7 +1936,7 @@ export class DatabaseStorage implements IStorage {
     
     // Progress tracking
     if (progressCallback) {
-      progressCallback(5, `Voorbereidingen afgerond. ${activeUsers.length} actieve gebruikers gevonden.`);
+      progressCallback(5, `Voorbereidingen afgerond. ${eligibleUsers.length} actieve gebruikers gevonden.`);
     }
     
     // PERFORMANCE FIX: Use precomputed weekend history instead of querying database per user
@@ -1917,7 +1946,7 @@ export class DatabaseStorage implements IStorage {
     
     // Helper functie om te controleren of beroepspersoneel kan worden toegewezen (ALLE STATIONS + SPLIT-DAY SUPPORT)
     const canProfessionalBeAssigned = async (userId: number, shiftDate: Date): Promise<boolean> => {
-      const user = activeUsers.find(u => u.id === userId);
+      const user = eligibleUsers.find(u => u.id === userId);
       if (!user || !user.isProfessional) return true; // Non-professionals are not restricted
       
       // Bereken start en eind van de week (maandag tot zondag)
@@ -1984,7 +2013,7 @@ export class DatabaseStorage implements IStorage {
 
     // Helper functie om te controleren of een gebruiker nog uren kan werken
     const canAssignHours = async (userId: number, hoursToAdd: number, shiftDate: Date): Promise<boolean> => {
-      const user = activeUsers.find(u => u.id === userId);
+      const user = eligibleUsers.find(u => u.id === userId);
       if (!user) return false;
       
       // BEROEPSPERSONEEL BEPERKING: Maximaal 1 shift dag per week (ALLE STATIONS + SPLIT-DAY SUPPORT)
@@ -2021,12 +2050,13 @@ export class DatabaseStorage implements IStorage {
     };
     
     // Bereken gewicht voor toewijzing op basis van huidige uren
+    // CROSS-TEAM FIX: Gebruik getEffectiveHours() voor station-specifieke uren
     const getUserWeight = (userId: number, preferredHours: number = 0): number => {
-      const user = activeUsers.find(u => u.id === userId);
+      const user = eligibleUsers.find(u => u.id === userId);
       if (!user) return 0;
       
       const currentHours = userAssignedHours.get(userId) || 0;
-      const targetHours = user.hours;
+      const targetHours = getEffectiveHours(userId); // CROSS-TEAM FIX: was user.hours
       
       // Nul doeluren betekent dat deze gebruiker niet ingedeeld moet worden
       if (targetHours === 0) {
@@ -2053,13 +2083,15 @@ export class DatabaseStorage implements IStorage {
     };
     
     // PERFORMANCE FIX: Use precomputed data - no more async calls or Promise.all
+    // CROSS-TEAM FIX: Gebruik getEffectiveHours() voor station-specifieke uren
     const getSortedUsersForWeekendAssignment = (availableUserIds: number[]): number[] => {
       const filteredUsers = availableUserIds.filter(userId => {
-        const user = activeUsers.find(u => u.id === userId);
+        const user = eligibleUsers.find(u => u.id === userId);
         if (!user) return false;
-        if (user.hours === 0) return false;
+        const effectiveHrs = getEffectiveHours(userId); // CROSS-TEAM FIX
+        if (effectiveHrs === 0) return false;
         const currentHours = userAssignedHours.get(userId) || 0;
-        return currentHours < user.hours;
+        return currentHours < effectiveHrs;
       });
 
       const usersWithHistory = filteredUsers.map(userId => ({
@@ -2081,17 +2113,19 @@ export class DatabaseStorage implements IStorage {
     };
 
     // Functie om actieve gebruikers te sorteren op basis van werklast en voorkeuren
+    // CROSS-TEAM FIX: Gebruik getEffectiveHours() voor station-specifieke uren
     const getSortedUsersForAssignment = (availableUserIds: number[]): number[] => {
       // Eerst filteren op gebruikers die nog uren kunnen werken
       const filteredUsers = availableUserIds.filter(userId => {
-        const user = activeUsers.find(u => u.id === userId);
+        const user = eligibleUsers.find(u => u.id === userId);
         if (!user) return false;
         
+        const effectiveHrs = getEffectiveHours(userId); // CROSS-TEAM FIX
         // Nul doeluren betekent dat deze gebruiker niet ingedeeld moet worden
-        if (user.hours === 0) return false;
+        if (effectiveHrs === 0) return false;
         
         const currentHours = userAssignedHours.get(userId) || 0;
-        return currentHours < user.hours;
+        return currentHours < effectiveHrs;
       });
       
       // Willekeurigheid toevoegen aan de sortering voor meer variatie
@@ -2105,11 +2139,12 @@ export class DatabaseStorage implements IStorage {
       const lowPriorityUsers: number[] = [];
       
       filteredUsers.forEach(userId => {
-        const user = activeUsers.find(u => u.id === userId);
+        const user = eligibleUsers.find(u => u.id === userId);
         if (!user) return;
         
         const currentHours = userAssignedHours.get(userId) || 0;
-        const percentage = (currentHours / user.hours) * 100;
+        const effectiveHrs = getEffectiveHours(userId); // CROSS-TEAM FIX
+        const percentage = effectiveHrs > 0 ? (currentHours / effectiveHrs) * 100 : 100;
         
         if (percentage < 33) {
           urgentUsers.push(userId);
@@ -2183,7 +2218,7 @@ export class DatabaseStorage implements IStorage {
       const candidatesForDay: number[] = [];
       const candidatesForNight: number[] = [];
       
-      for (const user of activeUsers) {
+      for (const user of eligibleUsers) {
         const key = `${user.id}_${day}`;
         const prefsForThisDay = preferencesIndex.get(key) || [];
         
@@ -2193,9 +2228,10 @@ export class DatabaseStorage implements IStorage {
         );
         if (isUnavailable) continue;
         
-        // Check hours capacity
+        // Check hours capacity - CROSS-TEAM FIX: gebruik effectieve uren
         const currentHours = userAssignedHours.get(user.id) || 0;
-        if (currentHours >= user.hours) continue;
+        const effectiveHrs = getEffectiveHours(user.id);
+        if (currentHours >= effectiveHrs) continue;
         
         // Check for day preferences
         const hasDayPreference = prefsForThisDay.some(pref => pref.type === 'day');
@@ -2318,16 +2354,17 @@ export class DatabaseStorage implements IStorage {
       }
       
       // Update candidate counts na eventuele eerdere toewijzingen
+      // CROSS-TEAM FIX: gebruik effectieve uren voor correcte cross-team limieten
       const updatedAvailableForDay = availableForDay.filter(userId => {
         const currentHours = userAssignedHours.get(userId) || 0;
-        const user = activeUsers.find(u => u.id === userId);
-        return user && currentHours < user.hours;
+        const user = eligibleUsers.find(u => u.id === userId);
+        return user && currentHours < getEffectiveHours(userId);
       });
       
       const updatedAvailableForNight = availableForNight.filter(userId => {
         const currentHours = userAssignedHours.get(userId) || 0;
-        const user = activeUsers.find(u => u.id === userId);
-        return user && currentHours < user.hours;
+        const user = eligibleUsers.find(u => u.id === userId);
+        return user && currentHours < getEffectiveHours(userId);
       });
       
       console.log(`Day ${day} UPDATED availability: Day=${updatedAvailableForDay.length}, Night=${updatedAvailableForNight.length} (original: ${dayInfo.candidateCount})`);
@@ -2846,12 +2883,14 @@ export class DatabaseStorage implements IStorage {
       const shiftHours = openShift.type === "day" ? 12 : 12; // Both 12h now
       
       // Zoek gebruikers met reserve capaciteit (minder dan 80% van hun target)
-      const reserveCapacityUsers = activeUsers.filter(user => {
+      // CROSS-TEAM FIX: gebruik effectieve uren voor correcte cross-team limieten
+      const reserveCapacityUsers = eligibleUsers.filter(user => {
         const currentHours = userAssignedHours.get(user.id) || 0;
-        const utilizationPercent = (currentHours / user.hours) * 100;
+        const effectiveHrs = getEffectiveHours(user.id);
+        const utilizationPercent = effectiveHrs > 0 ? (currentHours / effectiveHrs) * 100 : 100;
         
         // Heeft nog reserve capaciteit EN geen conflict
-        if (utilizationPercent >= 80 || currentHours + shiftHours > user.hours) {
+        if (utilizationPercent >= 80 || currentHours + shiftHours > effectiveHrs) {
           return false;
         }
         
@@ -2872,11 +2911,14 @@ export class DatabaseStorage implements IStorage {
       });
       
       // Sorteer op laagste utilization eerst
+      // CROSS-TEAM FIX: gebruik effectieve uren voor correcte percentage berekening
       reserveCapacityUsers.sort((a, b) => {
         const aHours = userAssignedHours.get(a.id) || 0;
         const bHours = userAssignedHours.get(b.id) || 0;
-        const aUtil = (aHours / a.hours) * 100;
-        const bUtil = (bHours / b.hours) * 100;
+        const aEffective = getEffectiveHours(a.id);
+        const bEffective = getEffectiveHours(b.id);
+        const aUtil = aEffective > 0 ? (aHours / aEffective) * 100 : 100;
+        const bUtil = bEffective > 0 ? (bHours / bEffective) * 100 : 100;
         return aUtil - bUtil;
       });
       
@@ -2957,13 +2999,14 @@ export class DatabaseStorage implements IStorage {
         // Swap alleen als: wil open shift EN huidige toewijzing heeft geen sterke voorkeur
         if (wantsOpenShift && !currentlyHasPreference) {
           // Zoek vervanging voor de assigned shift
-          const replacementCandidates = activeUsers.filter(user => {
+          const replacementCandidates = eligibleUsers.filter(user => {
             if (user.id === assignedUserId) return false;
             
             const currentHours = userAssignedHours.get(user.id) || 0;
             const shiftHours = assignedShift.type === "day" ? 12 : 12;
             
-            if (currentHours + shiftHours > user.hours) return false;
+            const effectiveHrs = getEffectiveHours(user.id); // CROSS-TEAM FIX
+            if (currentHours + shiftHours > effectiveHrs) return false;
             
             // Check preferences voor assigned shift
             const replaceKey = `${user.id}_${assignedDay}`;
@@ -3044,9 +3087,11 @@ export class DatabaseStorage implements IStorage {
       if (shiftDay <= 25) continue;
       
       // Find users with EXPLICIT preference and capacity
-      const lastResortCandidates = activeUsers.filter(user => {
+      // CROSS-TEAM FIX: gebruik effectieve uren
+      const lastResortCandidates = eligibleUsers.filter(user => {
         const currentHours = userAssignedHours.get(user.id) || 0;
-        if (currentHours + shiftHours > user.hours) return false;
+        const effectiveHrs = getEffectiveHours(user.id);
+        if (currentHours + shiftHours > effectiveHrs) return false;
         
         const key = `${user.id}_${shiftDay}`;
         const prefsForThisDay = preferencesIndex.get(key) || [];
@@ -3123,11 +3168,12 @@ export class DatabaseStorage implements IStorage {
         console.log(`  🔴 OPEN: Day ${day} (${dayName}) ${shift.type} shift - NEEDS MANUAL ATTENTION`);
         
         // Analyze why this shift couldn't be filled
+        // CROSS-TEAM FIX: gebruik effectieve uren
         let analysisReason = "Unknown reason";
-        const candidatesWithCapacity = activeUsers.filter(user => {
+        const candidatesWithCapacity = eligibleUsers.filter(user => {
           const currentHours = userAssignedHours.get(user.id) || 0;
           const shiftHours = shift.type === "day" ? 12 : 12;
-          return currentHours + shiftHours <= user.hours;
+          return currentHours + shiftHours <= getEffectiveHours(user.id);
         });
         
         if (candidatesWithCapacity.length === 0) {
@@ -3183,11 +3229,13 @@ export class DatabaseStorage implements IStorage {
             (openShift.splitEndTime.getTime() - openShift.splitStartTime.getTime()) / (1000 * 60 * 60) : 6) : 
           (openShift.type === "day" ? 12 : 12);
         
-        const candidateUsers = activeUsers.filter(user => {
+        // CROSS-TEAM FIX: gebruik effectieve uren
+        const candidateUsers = eligibleUsers.filter(user => {
           const currentHours = userAssignedHours.get(user.id) || 0;
+          const effectiveHrs = getEffectiveHours(user.id);
           // EXTRA STRICT CHECK: Never exceed target hours, especially for admins
-          if (currentHours >= user.hours) {
-            console.log(`SKIP USER: ${user.username} (${user.id}) already at/above target (${currentHours}/${user.hours})`);
+          if (currentHours >= effectiveHrs) {
+            console.log(`SKIP USER: ${user.username} (${user.id}) already at/above target (${currentHours}/${effectiveHrs})`);
             return false;
           }
           
@@ -3215,7 +3263,7 @@ export class DatabaseStorage implements IStorage {
             return false;
           }
           
-          return (currentHours + shiftHours) <= user.hours;
+          return (currentHours + shiftHours) <= effectiveHrs;
         });
         
         const sortedCandidates = candidateUsers
@@ -3268,7 +3316,7 @@ export class DatabaseStorage implements IStorage {
           );
           
           for (const assignedShift of candidateAssignedShifts) {
-            const currentUser = activeUsers.find(u => u.id === assignedShift.userId);
+            const currentUser = eligibleUsers.find(u => u.id === assignedShift.userId);
             if (!currentUser) continue;
             
             const currentUserHours = userAssignedHours.get(currentUser.id) || 0;
@@ -3279,13 +3327,15 @@ export class DatabaseStorage implements IStorage {
                 (openShift.splitEndTime.getTime() - openShift.splitStartTime.getTime()) / (1000 * 60 * 60) : 6) : 
               (openShift.type === "day" ? 12 : 12);
             
-            if (currentUserHours >= currentUser.hours) {
-              console.log(`SKIP SMART SWAP: ${currentUser.username} (${currentUser.id}) already at/above target (${currentUserHours}/${currentUser.hours})`);
+            // CROSS-TEAM FIX: gebruik effectieve uren
+            const currentUserEffectiveHrs = getEffectiveHours(currentUser.id);
+            if (currentUserHours >= currentUserEffectiveHrs) {
+              console.log(`SKIP SMART SWAP: ${currentUser.username} (${currentUser.id}) already at/above target (${currentUserHours}/${currentUserEffectiveHrs})`);
               continue;
             }
             
-            if ((currentUserHours + openShiftHours) > currentUser.hours) {
-              console.log(`SKIP SMART SWAP: Moving ${currentUser.username} to open shift would exceed target (${currentUserHours + openShiftHours} > ${currentUser.hours})`);
+            if ((currentUserHours + openShiftHours) > currentUserEffectiveHrs) {
+              console.log(`SKIP SMART SWAP: Moving ${currentUser.username} to open shift would exceed target (${currentUserHours + openShiftHours} > ${currentUserEffectiveHrs})`);
               continue;
             }
             
@@ -3317,17 +3367,19 @@ export class DatabaseStorage implements IStorage {
                 (assignedShift.splitEndTime.getTime() - assignedShift.splitStartTime.getTime()) / (1000 * 60 * 60) : 6) : 
               (assignedShift.type === "day" ? 12 : 12);
             
-            const replacementCandidates = activeUsers.filter(user => {
+            // CROSS-TEAM FIX: gebruik effectieve uren
+            const replacementCandidates = eligibleUsers.filter(user => {
               const userHours = userAssignedHours.get(user.id) || 0;
+              const effectiveHrs = getEffectiveHours(user.id);
               
               // EXTRA STRICT CHECK voor replacement candidate
-              if (userHours >= user.hours) {
-                console.log(`SKIP REPLACEMENT: ${user.username} (${user.id}) already at/above target (${userHours}/${user.hours})`);
+              if (userHours >= effectiveHrs) {
+                console.log(`SKIP REPLACEMENT: ${user.username} (${user.id}) already at/above target (${userHours}/${effectiveHrs})`);
                 return false;
               }
               
-              if ((userHours + assignedShiftHours) > user.hours) {
-                console.log(`SKIP REPLACEMENT: ${user.username} taking assigned shift would exceed target (${userHours + assignedShiftHours} > ${user.hours})`);
+              if ((userHours + assignedShiftHours) > effectiveHrs) {
+                console.log(`SKIP REPLACEMENT: ${user.username} taking assigned shift would exceed target (${userHours + assignedShiftHours} > ${effectiveHrs})`);
                 return false;
               }
               
@@ -3394,9 +3446,11 @@ export class DatabaseStorage implements IStorage {
     console.log(`=== MONTHLY SCHEDULE GENERATION COMPLETED ===`);
     console.log(`Total shifts generated: ${generatedShifts.length}`);
     
-    for (const user of activeUsers) {
+    // CROSS-TEAM FIX: Log effectieve uren in plaats van primaire uren
+    for (const user of eligibleUsers) {
       const assignedHours = userAssignedHours.get(user.id) || 0;
-      console.log(`User ${user.username} (target: ${user.hours}h): assigned ${assignedHours}h`);
+      const effectiveHrs = getEffectiveHours(user.id);
+      console.log(`User ${user.username} (target: ${effectiveHrs}h): assigned ${assignedHours}h`);
     }
     
     return generatedShifts;
