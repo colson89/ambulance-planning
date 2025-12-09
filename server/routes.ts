@@ -239,22 +239,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Station not found" });
       }
       
-      // Get all users for this station who are admin or supervisor
+      // Get all active admins for this station (no supervisors)
       const allUsers = await storage.getAllUsers();
       const adminContacts = allUsers
-        .filter(u => u.stationId === stationId && (u.role === 'admin' || u.role === 'supervisor') && u.isActive)
+        .filter(u => u.stationId === stationId && u.role === 'admin' && u.isActive !== false)
         .map(u => ({
           firstName: u.firstName,
           lastName: u.lastName,
-          phoneNumber: u.phoneNumber || null,
-          role: u.role
+          phoneNumber: u.phoneNumber || null
         }))
-        .sort((a, b) => {
-          // Sort supervisors first, then admins
-          if (a.role === 'supervisor' && b.role !== 'supervisor') return -1;
-          if (a.role !== 'supervisor' && b.role === 'supervisor') return 1;
-          return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
-        });
+        .sort((a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`));
       
       res.json(adminContacts);
     } catch (error) {

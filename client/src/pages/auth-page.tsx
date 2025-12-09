@@ -60,7 +60,7 @@ export default function AuthPage() {
   });
 
   // Get admin contacts for selected station
-  const { data: adminContacts } = useQuery<{ firstName: string; lastName: string; phoneNumber: string | null; role: string }[]>({
+  const { data: adminContacts } = useQuery<{ firstName: string; lastName: string; phoneNumber: string | null }[]>({
     queryKey: ['/api/stations', selectedStation?.id, 'contacts'],
     queryFn: async () => {
       if (!selectedStation?.id) return [];
@@ -243,9 +243,6 @@ export default function AuthPage() {
                             <div className="flex items-center gap-2">
                               <User className="h-3.5 w-3.5 text-muted-foreground" />
                               <span className="font-medium">{contact.firstName} {contact.lastName}</span>
-                              <span className="text-xs text-muted-foreground">
-                                ({contact.role === 'supervisor' ? 'Supervisor' : 'Beheerder'})
-                              </span>
                             </div>
                             {contact.phoneNumber && (
                               <a 
