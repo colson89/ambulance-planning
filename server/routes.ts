@@ -152,25 +152,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return { stationId: null, error: "Ongeldige stationId" };
     }
     
-    // Alleen supervisors mogen een ander station selecteren
-    if (user.role !== 'supervisor') {
-      // Voor niet-supervisors: alleen hun eigen station is toegestaan
-      if (parsedStationId !== user.stationId) {
+    // Supervisors en admins met cross-team toegang mogen andere stations selecteren
+    if (user.role === 'supervisor' || user.role === 'admin') {
+      // Haal toegankelijke stations op (primair station + cross-team assignments)
+      const accessibleStations = await storage.getUserAccessibleStations(user.id, false);
+      const hasAccess = accessibleStations.some(s => s.id === parsedStationId);
+      
+      if (!hasAccess) {
+        console.log(`[SECURITY] ${user.role} ${user.id} probeerde toegang tot niet-geautoriseerd station ${parsedStationId}`);
         return { stationId: null, error: "Geen toegang tot dit station" };
       }
-      return { stationId: user.stationId };
+      
+      return { stationId: parsedStationId };
     }
     
-    // Voor supervisors: valideer dat het station toegankelijk is
-    const accessibleStations = await storage.getUserAccessibleStations(user.id, false);
-    const hasAccess = accessibleStations.some(s => s.id === parsedStationId);
-    
-    if (!hasAccess) {
-      console.log(`[SECURITY] Supervisor ${user.id} probeerde toegang tot niet-geautoriseerd station ${parsedStationId}`);
+    // Voor ambulanciers: alleen hun eigen station is toegestaan
+    if (parsedStationId !== user.stationId) {
       return { stationId: null, error: "Geen toegang tot dit station" };
     }
-    
-    return { stationId: parsedStationId };
+    return { stationId: user.stationId };
   }
 
   // Version endpoint for deployment verification
@@ -333,10 +333,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json(users);
         }
       } else {
-        // Regular admin - only their station (including cross-station users with cross-team info)
-        const adminStationId = (req.user as any).stationId;
-        const usersWithCrossTeamInfo = await storage.getUsersByStationWithCrossTeamInfo(adminStationId);
-        console.log(`Admin gets users for station ${adminStationId}: ${usersWithCrossTeamInfo.length} users (with cross-team info)`);
+        // Regular admin - check if they requested a specific station (multi-station admin support)
+        const { stationId: authorizedStationId, error } = await getAuthorizedStationId(req, req.query.stationId);
+        
+        if (error || !authorizedStationId) {
+          console.log(`Admin station access denied: ${error}`);
+          return res.status(403).json({ message: error || "Geen toegang tot dit station" });
+        }
+        
+        const usersWithCrossTeamInfo = await storage.getUsersByStationWithCrossTeamInfo(authorizedStationId);
+        console.log(`Admin gets users for station ${authorizedStationId}: ${usersWithCrossTeamInfo.length} users (with cross-team info)`);
         
         // SECURITY FIX: Remove password fields
         const users = usersWithCrossTeamInfo.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
@@ -2311,20 +2317,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/preferences/all", requireAdmin, async (req, res) => {
     try {
       // Get month and year from query parameters, fallback to current date
-      const { month, year } = req.query;
+      const { month, year, stationId } = req.query;
       const targetMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
       const targetYear = year ? parseInt(year as string) : new Date().getFullYear();
       
-      // Get all shift preferences for the specified month/year using SQL query
+      // MULTI-STATION ADMIN FIX: Validate station access
+      const { stationId: authorizedStationId, error } = await getAuthorizedStationId(
+        req, 
+        stationId as string | undefined
+      );
+      
+      if (error || !authorizedStationId) {
+        return res.status(403).json({ message: error || "Geen toegang tot dit station" });
+      }
+      
+      // Get all shift preferences for the specified month/year/station using SQL query
       const startDate = new Date(targetYear, targetMonth - 1, 1);
       const endDate = new Date(targetYear, targetMonth, 0);
+      
+      // Get users from the authorized station (including cross-team users)
+      const stationUsers = await storage.getUsersByStationWithCrossTeamInfo(authorizedStationId);
+      const stationUserIds = stationUsers.map(u => u.id);
       
       const allPreferences = await db.select()
         .from(shiftPreferences)
         .where(
           and(
             gte(shiftPreferences.date, startDate),
-            lte(shiftPreferences.date, endDate)
+            lte(shiftPreferences.date, endDate),
+            inArray(shiftPreferences.userId, stationUserIds)
           )
         )
         .orderBy(asc(shiftPreferences.date), asc(shiftPreferences.userId));
@@ -3547,16 +3568,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Weekday configuration routes
   app.get("/api/weekday-configs", requireAuth, async (req, res) => {
     try {
-      const userRole = (req.user as any).role;
-      const userStationId = (req.user as any).stationId;
+      // MULTI-STATION ADMIN FIX: Validate station access for admins and supervisors
+      const { stationId: authorizedStationId, error } = await getAuthorizedStationId(
+        req, 
+        req.query.stationId as string | undefined
+      );
       
-      // For supervisors, allow them to specify stationId via query parameter
-      let targetStationId = userStationId;
-      if (userRole === 'supervisor' && req.query.stationId) {
-        targetStationId = parseInt(req.query.stationId as string);
+      if (error || !authorizedStationId) {
+        return res.status(403).json({ message: error || "Geen toegang tot dit station" });
       }
       
-      const configs = await storage.getWeekdayConfigs(targetStationId);
+      const configs = await storage.getWeekdayConfigs(authorizedStationId);
       res.json(configs);
     } catch (error) {
       console.error("Error getting weekday configs:", error);
@@ -3567,16 +3589,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/weekday-configs/:dayOfWeek", requireAuth, async (req, res) => {
     try {
       const dayOfWeek = parseInt(req.params.dayOfWeek);
-      const userRole = (req.user as any).role;
-      const userStationId = (req.user as any).stationId;
       
-      // For supervisors, allow them to specify stationId via query parameter
-      let targetStationId = userStationId;
-      if (userRole === 'supervisor' && req.query.stationId) {
-        targetStationId = parseInt(req.query.stationId as string);
+      // MULTI-STATION ADMIN FIX: Validate station access for admins and supervisors
+      const { stationId: authorizedStationId, error } = await getAuthorizedStationId(
+        req, 
+        req.query.stationId as string | undefined
+      );
+      
+      if (error || !authorizedStationId) {
+        return res.status(403).json({ message: error || "Geen toegang tot dit station" });
       }
       
-      const config = await storage.getWeekdayConfig(dayOfWeek, targetStationId);
+      const config = await storage.getWeekdayConfig(dayOfWeek, authorizedStationId);
       if (!config) {
         return res.status(404).json({ message: "Configuration not found" });
       }
@@ -4089,29 +4113,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/comments/all/:month/:year", requireAdmin, async (req, res) => {
     try {
       const { month, year } = req.params;
-      const user = req.user as any;
       const { stationId } = req.query;
       
-      // Determine target station ID: supervisor can choose, admin gets own station
-      let targetStationId = user.stationId; // Default to user's own station
+      // MULTI-STATION ADMIN FIX: Validate station access
+      const { stationId: authorizedStationId, error } = await getAuthorizedStationId(
+        req, 
+        stationId as string | undefined
+      );
       
-      if (user.role === 'supervisor' && stationId) {
-        const parsedStationId = Number(stationId);
-        // Only allow valid positive integers, otherwise fall back to user's station
-        if (Number.isInteger(parsedStationId) && parsedStationId > 0) {
-          targetStationId = parsedStationId;
-        }
+      if (error || !authorizedStationId) {
+        return res.status(403).json({ message: error || "Geen toegang tot dit station" });
       }
       
-      console.log(`Fetching comments for month: ${month}, year: ${year}, station: ${targetStationId}`);
+      console.log(`Fetching comments for month: ${month}, year: ${year}, station: ${authorizedStationId}`);
       
       const comments = await storage.getAllUserComments(
         parseInt(month),
         parseInt(year),
-        targetStationId // 🔒 Station filtering added!
+        authorizedStationId
       );
       
-      console.log(`Found ${comments.length} comments for station ${targetStationId}:`, comments);
+      console.log(`Found ${comments.length} comments for station ${authorizedStationId}:`, comments);
       
       // Get user details for each comment (all users, will filter by station in mapping)
       const users = await storage.getAllUsers();
@@ -4128,7 +4150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       });
       
-      console.log(`Returning ${commentsWithUsers.length} comments with user details for station ${targetStationId}`);
+      console.log(`Returning ${commentsWithUsers.length} comments with user details for station ${authorizedStationId}`);
       res.json(commentsWithUsers);
     } catch (error) {
       console.error("Error getting all comments:", error);
