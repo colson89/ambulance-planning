@@ -24,7 +24,7 @@ import { Pencil, Trash2, UserPlus, KeyRound, Home, Users, Settings, Plus, Minus,
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Calendar } from "@/components/ui/calendar";
-import { Eye } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -74,6 +74,10 @@ export default function UserManagement() {
   
   // State for create user photo
   const [createUserPhotoFile, setCreateUserPhotoFile] = useState<File | null>(null);
+  
+  // State for password visibility
+  const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   
   // Query om stations op te halen (voor supervisors)
   const { data: stations = [] } = useQuery({
@@ -356,6 +360,7 @@ export default function UserManagement() {
       });
       createUserForm.reset();
       setCreateUserPhotoFile(null);
+      setShowCreatePassword(false);
     },
     onError: (error: Error) => {
       toast({
@@ -401,6 +406,7 @@ export default function UserManagement() {
         description: "Het wachtwoord is succesvol bijgewerkt",
       });
       changePasswordForm.reset();
+      setShowChangePassword(false);
       setChangePasswordDialogOpen(false);
     },
     onError: (error: Error) => {
@@ -643,11 +649,26 @@ export default function UserManagement() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Wachtwoord</label>
                     <p className="text-sm text-muted-foreground">Minimaal 6 karakters</p>
-                    <Input
-                      type="password"
-                      placeholder="Wachtwoord"
-                      {...createUserForm.register("password")}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={showCreatePassword ? "text" : "password"}
+                        placeholder="Wachtwoord"
+                        {...createUserForm.register("password")}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowCreatePassword(!showCreatePassword)}
+                      >
+                        {showCreatePassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -1404,7 +1425,10 @@ export default function UserManagement() {
                     </DialogContent>
                   </Dialog>
 
-                  <Dialog open={changePasswordDialogOpen} onOpenChange={setChangePasswordDialogOpen}>
+                  <Dialog open={changePasswordDialogOpen} onOpenChange={(open) => {
+                    setChangePasswordDialogOpen(open);
+                    if (!open) setShowChangePassword(false);
+                  }}>
                     <DialogTrigger asChild>
                       <Button 
                         variant="outline" 
@@ -1441,11 +1465,26 @@ export default function UserManagement() {
                           <div className="space-y-2">
                             <label className="text-sm font-medium">Nieuw Wachtwoord</label>
                             <p className="text-sm text-muted-foreground">Minimaal 6 karakters</p>
-                            <Input
-                              type="password"
-                              placeholder="Nieuw wachtwoord"
-                              {...changePasswordForm.register("password")}
-                            />
+                            <div className="relative">
+                              <Input
+                                type={showChangePassword ? "text" : "password"}
+                                placeholder="Nieuw wachtwoord"
+                                {...changePasswordForm.register("password")}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                onClick={() => setShowChangePassword(!showChangePassword)}
+                              >
+                                {showChangePassword ? (
+                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                           <Button 
                             type="submit"
