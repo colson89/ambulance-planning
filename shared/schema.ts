@@ -608,3 +608,39 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
 });
 
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+// Custom Push Notifications - door admins/supervisors verstuurde meldingen
+export const customNotifications = pgTable("custom_notifications", {
+  id: serial("id").primaryKey(),
+  senderId: integer("sender_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const insertCustomNotificationSchema = createInsertSchema(customNotifications).omit({
+  id: true,
+  createdAt: true
+});
+export type CustomNotification = typeof customNotifications.$inferSelect;
+export type InsertCustomNotification = z.infer<typeof insertCustomNotificationSchema>;
+
+// Custom Notification Recipients - wie heeft de melding ontvangen
+export const customNotificationRecipients = pgTable("custom_notification_recipients", {
+  id: serial("id").primaryKey(),
+  notificationId: integer("notification_id").notNull().references(() => customNotifications.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  deliveryStatus: text("delivery_status", { 
+    enum: ["pending", "sent", "failed", "no_subscription"] 
+  }).notNull().default("pending"),
+  errorMessage: text("error_message"),
+  sentAt: timestamp("sent_at")
+});
+
+export const insertCustomNotificationRecipientSchema = createInsertSchema(customNotificationRecipients).omit({
+  id: true,
+  sentAt: true
+});
+export type CustomNotificationRecipient = typeof customNotificationRecipients.$inferSelect;
+export type InsertCustomNotificationRecipient = z.infer<typeof insertCustomNotificationRecipientSchema>;

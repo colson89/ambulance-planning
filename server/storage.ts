@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftBids, undoHistory, passwordResetTokens, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -160,6 +160,14 @@ export interface IStorage {
   getPasswordResetToken(token: string): Promise<PasswordResetToken | undefined>;
   markPasswordResetTokenUsed(token: string): Promise<void>;
   deleteExpiredPasswordResetTokens(): Promise<void>;
+  
+  // Custom Notifications
+  getPushSubscriptionsByStation(stationId: number): Promise<Array<{userId: number, subscriptions: PushSubscription[]}>>;
+  createCustomNotification(senderId: number, stationId: number, title: string, message: string): Promise<CustomNotification>;
+  createCustomNotificationRecipient(notificationId: number, userId: number, deliveryStatus: string, errorMessage?: string): Promise<CustomNotificationRecipient>;
+  updateCustomNotificationRecipient(id: number, deliveryStatus: string, errorMessage?: string): Promise<void>;
+  getCustomNotifications(stationId: number, limit?: number): Promise<Array<CustomNotification & {sender: User, recipients: Array<CustomNotificationRecipient & {user: User}>}>>;
+  getCustomNotification(id: number): Promise<(CustomNotification & {sender: User, recipients: Array<CustomNotificationRecipient & {user: User}>}) | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5030,6 +5038,126 @@ export class DatabaseStorage implements IStorage {
   async deleteExpiredPasswordResetTokens(): Promise<void> {
     await db.delete(passwordResetTokens)
       .where(lt(passwordResetTokens.expiresAt, new Date()));
+  }
+  
+  // Custom Notifications implementation
+  async getPushSubscriptionsByStation(stationId: number): Promise<Array<{userId: number, subscriptions: PushSubscription[]}>> {
+    // Get all users for this station (including cross-team members)
+    const stationUsers = await this.getUsersByStation(stationId);
+    const crossTeamUsers = await this.getCrossTeamUsersForStation(stationId);
+    
+    // Combine user IDs (primary station + cross-team)
+    const userIds = new Set<number>();
+    stationUsers.forEach(u => userIds.add(u.id));
+    crossTeamUsers.forEach(ct => userIds.add(ct.user.id));
+    
+    const result: Array<{userId: number, subscriptions: PushSubscription[]}> = [];
+    
+    for (const userId of userIds) {
+      const subs = await this.getAllPushSubscriptions(userId);
+      result.push({ userId, subscriptions: subs });
+    }
+    
+    return result;
+  }
+  
+  async createCustomNotification(senderId: number, stationId: number, title: string, message: string): Promise<CustomNotification> {
+    const [notification] = await db
+      .insert(customNotifications)
+      .values({ senderId, stationId, title, message })
+      .returning();
+    return notification;
+  }
+  
+  async createCustomNotificationRecipient(notificationId: number, userId: number, deliveryStatus: string, errorMessage?: string): Promise<CustomNotificationRecipient> {
+    const [recipient] = await db
+      .insert(customNotificationRecipients)
+      .values({ 
+        notificationId, 
+        userId, 
+        deliveryStatus: deliveryStatus as "pending" | "sent" | "failed" | "no_subscription",
+        errorMessage,
+        sentAt: deliveryStatus === 'sent' ? new Date() : null
+      })
+      .returning();
+    return recipient;
+  }
+  
+  async updateCustomNotificationRecipient(id: number, deliveryStatus: string, errorMessage?: string): Promise<void> {
+    await db
+      .update(customNotificationRecipients)
+      .set({ 
+        deliveryStatus: deliveryStatus as "pending" | "sent" | "failed" | "no_subscription",
+        errorMessage,
+        sentAt: deliveryStatus === 'sent' ? new Date() : undefined
+      })
+      .where(eq(customNotificationRecipients.id, id));
+  }
+  
+  async getCustomNotifications(stationId: number, limit: number = 50): Promise<Array<CustomNotification & {sender: User, recipients: Array<CustomNotificationRecipient & {user: User}>}>> {
+    // Get notifications for this station
+    const notifications = await db
+      .select()
+      .from(customNotifications)
+      .where(eq(customNotifications.stationId, stationId))
+      .orderBy(desc(customNotifications.createdAt))
+      .limit(limit);
+    
+    const result: Array<CustomNotification & {sender: User, recipients: Array<CustomNotificationRecipient & {user: User}>}> = [];
+    
+    for (const notification of notifications) {
+      // Get sender
+      const [sender] = await db.select().from(users).where(eq(users.id, notification.senderId));
+      
+      // Get recipients with user info
+      const recipientRows = await db
+        .select()
+        .from(customNotificationRecipients)
+        .where(eq(customNotificationRecipients.notificationId, notification.id));
+      
+      const recipients: Array<CustomNotificationRecipient & {user: User}> = [];
+      for (const recipient of recipientRows) {
+        const [user] = await db.select().from(users).where(eq(users.id, recipient.userId));
+        if (user) {
+          recipients.push({ ...recipient, user });
+        }
+      }
+      
+      if (sender) {
+        result.push({ ...notification, sender, recipients });
+      }
+    }
+    
+    return result;
+  }
+  
+  async getCustomNotification(id: number): Promise<(CustomNotification & {sender: User, recipients: Array<CustomNotificationRecipient & {user: User}>}) | undefined> {
+    const [notification] = await db
+      .select()
+      .from(customNotifications)
+      .where(eq(customNotifications.id, id));
+    
+    if (!notification) return undefined;
+    
+    // Get sender
+    const [sender] = await db.select().from(users).where(eq(users.id, notification.senderId));
+    if (!sender) return undefined;
+    
+    // Get recipients with user info
+    const recipientRows = await db
+      .select()
+      .from(customNotificationRecipients)
+      .where(eq(customNotificationRecipients.notificationId, notification.id));
+    
+    const recipients: Array<CustomNotificationRecipient & {user: User}> = [];
+    for (const recipient of recipientRows) {
+      const [user] = await db.select().from(users).where(eq(users.id, recipient.userId));
+      if (user) {
+        recipients.push({ ...recipient, user });
+      }
+    }
+    
+    return { ...notification, sender, recipients };
   }
 }
 
