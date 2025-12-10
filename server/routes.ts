@@ -737,12 +737,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Supervisors can delete users in any station except supervisor station (8)
+      // Supervisors can delete users in any station (including other supervisors and admins)
       if (adminRole === 'supervisor') {
-        if (targetUser.stationId === 8) {
-          return res.status(403).json({ message: "Cannot access supervisor station users" });
-        }
-        
         // Create undo record before deletion
         const now = new Date();
         await storage.createUndoRecord({
