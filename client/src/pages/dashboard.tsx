@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer, FileText, RefreshCw } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer, FileText, RefreshCw, Bell } from "lucide-react";
 import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { OvertimeDialog } from "@/components/overtime-dialog";
 import { ShiftSwapDialog } from "@/components/shift-swap-dialog";
@@ -637,6 +637,13 @@ export default function Dashboard() {
                     </Badge>
                   )}
                 </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setLocation("/push-notifications")}
+                >
+                  <Bell className="h-4 w-4 mr-2" />
+                  Push Meldingen
+                </Button>
                 <div className="w-px h-6 bg-border mx-1" />
               </>
             )}
@@ -717,6 +724,14 @@ export default function Dashboard() {
                         {pendingSwapCount}
                       </Badge>
                     )}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/push-notifications"); setMobileMenuOpen(false); }}
+                  >
+                    <Bell className="h-4 w-4 mr-2" />
+                    Push Meldingen
                   </Button>
                 </>
               )}
