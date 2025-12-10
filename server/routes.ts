@@ -7677,7 +7677,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             new Date(requesterShift.date),
             requesterShift.type as 'day' | 'night',
             'approved',
-            adminNote
+            adminNote,
+            request.stationId
           );
         } catch (pushError) {
           console.error("Failed to send push notification for shift swap approval:", pushError);
@@ -7759,7 +7760,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             new Date(requesterShift.date),
             requesterShift.type as 'day' | 'night',
             'rejected',
-            adminNote
+            adminNote,
+            request.stationId
           );
         } catch (pushError) {
           console.error("Failed to send push notification for shift swap rejection:", pushError);
@@ -7900,6 +7902,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       // Send push notification to admins/supervisors
       try {
         const station = await storage.getStation(shift.stationId);
+        const stationPrefix = station ? `[${station.displayName}] ` : '';
         const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
         const shiftType = shift.type === 'day' ? 'Dagshift' : 'Nachtshift';
         
@@ -7910,7 +7913,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         for (const admin of adminUsers) {
           await sendPushNotificationToUser(
             admin.id,
-            'Nieuwe Bieding',
+            `${stationPrefix}Nieuwe Bieding`,
             `${user.firstName} ${user.lastName} wil ${shiftType} op ${shiftDate} doen`,
             `/schedule`
           );
@@ -8151,11 +8154,13 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       // Send push notification to the bidder
       try {
         if (shift) {
+          const station = await storage.getStation(bid.stationId);
+          const stationPrefix = station ? `[${station.displayName}] ` : '';
           const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
           const shiftType = shift.type === 'day' ? 'Dagshift' : 'Nachtshift';
           await sendPushNotificationToUser(
             bid.userId,
-            'Bieding Geaccepteerd!',
+            `${stationPrefix}Bieding Geaccepteerd!`,
             `Je bieding voor ${shiftType} op ${shiftDate} is geaccepteerd. De shift is aan jou toegewezen.`,
             `/dashboard`
           );
@@ -8220,11 +8225,13 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       // Send push notification to the bidder about rejection
       try {
         if (shift) {
+          const station = await storage.getStation(bid.stationId);
+          const stationPrefix = station ? `[${station.displayName}] ` : '';
           const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
           const shiftType = shift.type === 'day' ? 'Dagshift' : 'Nachtshift';
           await sendPushNotificationToUser(
             bid.userId,
-            'Bieding Afgewezen',
+            `${stationPrefix}Bieding Afgewezen`,
             `Je bieding voor ${shiftType} op ${shiftDate} is helaas afgewezen.`,
             `/dashboard`
           );

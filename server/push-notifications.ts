@@ -117,6 +117,10 @@ export async function notifyNewPlanningPublished(
   month: number,
   year: number
 ): Promise<void> {
+  // Get station for display name
+  const station = await storage.getStation(stationId);
+  const stationPrefix = station ? `[${station.displayName}] ` : '';
+  
   // Get all users from this station
   const users = await storage.getUsersByStation(stationId);
   
@@ -140,7 +144,7 @@ export async function notifyNewPlanningPublished(
   ];
 
   await sendPushToSubscriptions(enabledSubscriptions, {
-    title: 'Nieuwe Planning Gepubliceerd',
+    title: `${stationPrefix}Nieuwe Planning Gepubliceerd`,
     body: `De planning voor ${monthNames[month - 1]} ${year} is beschikbaar.`,
     icon: '/icon-192x192.png',
     url: '/schedule',
@@ -235,7 +239,7 @@ export const sendPlanningPublishedNotification = notifyNewPlanningPublished;
 
 export async function sendShiftChangedNotification(
   userId: number,
-  shift: { date: Date; type: 'day' | 'night' | 'day-half-1' | 'day-half-2' | 'night-half-1' | 'night-half-2' },
+  shift: { date: Date; type: 'day' | 'night' | 'day-half-1' | 'day-half-2' | 'night-half-1' | 'night-half-2'; stationId?: number },
   action: 'assigned' | 'removed' = 'assigned'
 ): Promise<void> {
   const subscriptions = await storage.getAllPushSubscriptions(userId);
@@ -247,6 +251,15 @@ export async function sendShiftChangedNotification(
     return;
   }
 
+  // Get station for display name
+  let stationPrefix = '';
+  if (shift.stationId) {
+    const station = await storage.getStation(shift.stationId);
+    if (station) {
+      stationPrefix = `[${station.displayName}] `;
+    }
+  }
+
   const dateStr = shift.date.toLocaleDateString('nl-BE', {
     day: 'numeric',
     month: 'long',
@@ -256,7 +269,8 @@ export async function sendShiftChangedNotification(
   const shiftType = shift.type.startsWith('day') ? 'day' as const : 'night' as const;
   const shiftTypeText = shiftType === 'day' ? 'dagdienst' : 'nachtdienst';
 
-  const title = action === 'assigned' ? 'Dienst Toegewezen' : 'Dienst Verwijderd';
+  const baseTitle = action === 'assigned' ? 'Dienst Toegewezen' : 'Dienst Verwijderd';
+  const title = `${stationPrefix}${baseTitle}`;
   const body = action === 'assigned' 
     ? `Je bent ingepland voor een ${shiftTypeText} op ${dateStr}.`
     : `Je ${shiftTypeText} op ${dateStr} is niet meer toegewezen aan jou.`;
@@ -283,6 +297,10 @@ export async function notifyNewShiftSwapRequest(
   shiftDate: Date,
   shiftType: 'day' | 'night'
 ): Promise<void> {
+  // Get station for display name
+  const station = await storage.getStation(stationId);
+  const stationPrefix = station ? `[${station.displayName}] ` : '';
+  
   // Get all admin/supervisor users for this station
   const allUsers = await storage.getAllUsers();
   const adminUsers = allUsers.filter(
@@ -308,7 +326,7 @@ export async function notifyNewShiftSwapRequest(
 
     if (enabledSubscriptions.length > 0) {
       await sendPushToSubscriptions(enabledSubscriptions, {
-        title: 'Nieuw Ruilverzoek',
+        title: `${stationPrefix}Nieuw Ruilverzoek`,
         body: `${requesterName} wil de ${shiftTypeText} van ${dateStr} ruilen.`,
         icon: '/icon-192x192.png',
         url: '/shift-swaps',
@@ -327,8 +345,18 @@ export async function notifyShiftSwapStatusChanged(
   shiftDate: Date,
   shiftType: 'day' | 'night',
   status: 'approved' | 'rejected',
-  adminNote?: string
+  adminNote?: string,
+  stationId?: number
 ): Promise<void> {
+  // Get station for display name
+  let stationPrefix = '';
+  if (stationId) {
+    const station = await storage.getStation(stationId);
+    if (station) {
+      stationPrefix = `[${station.displayName}] `;
+    }
+  }
+
   const dateStr = shiftDate.toLocaleDateString('nl-BE', {
     day: 'numeric',
     month: 'long',
@@ -341,7 +369,8 @@ export async function notifyShiftSwapStatusChanged(
   const requesterEnabledSubs = requesterSubscriptions.filter(sub => sub.notifyMyShiftChanged);
 
   if (requesterEnabledSubs.length > 0) {
-    const title = status === 'approved' ? 'Ruilverzoek Goedgekeurd' : 'Ruilverzoek Afgewezen';
+    const baseTitle = status === 'approved' ? 'Ruilverzoek Goedgekeurd' : 'Ruilverzoek Afgewezen';
+    const title = `${stationPrefix}${baseTitle}`;
     let body = status === 'approved'
       ? `Je ruilverzoek voor de ${shiftTypeText} op ${dateStr} is goedgekeurd.`
       : `Je ruilverzoek voor de ${shiftTypeText} op ${dateStr} is afgewezen.`;
@@ -366,7 +395,7 @@ export async function notifyShiftSwapStatusChanged(
 
     if (targetEnabledSubs.length > 0) {
       await sendPushToSubscriptions(targetEnabledSubs, {
-        title: 'Nieuwe Dienst Toegewezen',
+        title: `${stationPrefix}Nieuwe Dienst Toegewezen`,
         body: `Je hebt de ${shiftTypeText} op ${dateStr} overgenomen via een ruilverzoek.`,
         icon: '/icon-192x192.png',
         url: '/dashboard',
