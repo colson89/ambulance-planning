@@ -1378,6 +1378,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get user's accessible stations (for their own use - station selector in push notifications, etc.)
+  app.get("/api/users/:userId/accessible-stations", requireAuth, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Input validation
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Ongeldige gebruiker ID" });
+      }
+      
+      const currentUser = req.user;
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      // Users can only query their own accessible stations (unless supervisor)
+      if (currentUser.id !== userId && currentUser.role !== 'supervisor') {
+        return res.status(403).json({ message: "Geen toegang" });
+      }
+      
+      // Get all accessible stations for this user
+      const accessibleStations = await storage.getUserAccessibleStations(userId);
+      
+      // Filter out supervisor station (id 8) for non-supervisors
+      const filteredStations = currentUser.role === 'supervisor' 
+        ? accessibleStations 
+        : accessibleStations.filter(s => s.id !== 8);
+      
+      res.json(filteredStations);
+    } catch (error) {
+      console.error("Error getting user accessible stations:", error);
+      res.status(500).json({ message: "Failed to get accessible stations" });
+    }
+  });
+
   // Change user's primary station (supervisor only)
   app.put("/api/users/:userId/primary-station", requireAdmin, async (req, res) => {
     try {
