@@ -44,6 +44,7 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
   - [Feestdagen Beheren](#-feestdagen-beheren)
   - [Statistieken Bekijken](#-statistieken-bekijken)
   - [Weekdag Instellingen](#-weekdag-instellingen)
+  - [Push Meldingen Versturen](#-push-meldingen-versturen)
   - [Integraties Beheer](#-integraties-beheer)
   - [Verdi Integratie](#-verdi-integratie)
   - [Reportage Personeelsdienst](#-reportage-personeelsdienst)
@@ -1949,6 +1950,95 @@ Als admin/supervisor vindt u een nieuwe **"Ruilverzoeken"** knop in het dashboar
 - De aanvrager krijgt de shift van de collega, en vice versa
 - Beide gebruikers ontvangen een push notificatie (indien ingeschakeld)
 - De ruil is direct zichtbaar in de planning
+
+### 📢 Push Meldingen Versturen
+
+**Gerichte communicatie met uw team**
+
+Als admin of supervisor kunt u aangepaste push notificaties versturen naar alle medewerkers van een station. Dit is ideaal voor dringende mededelingen, belangrijke updates of andere berichten die direct aandacht vereisen.
+
+#### Toegang tot Push Meldingen
+
+**Wie kan push meldingen versturen?**
+- ✅ **Admins**: Kunnen meldingen versturen naar hun eigen station
+- ✅ **Multi-Station Admins**: Kunnen kiezen naar welk station zij de melding versturen
+- ✅ **Supervisors**: Kunnen meldingen versturen naar elk station
+
+**Push Meldingen Pagina Openen:**
+1. Klik op **"Push Meldingen"** in het dashboard menu (Desktop: hoofdmenu | Mobiel: hamburger menu)
+2. U ziet het notificatie verstuurformulier en de verzendgeschiedenis
+
+#### Melding Versturen
+
+**Stap-voor-stap:**
+
+1. **Selecteer Station** (alleen voor multi-station admins/supervisors)
+   - Kies het station naar welke u de melding wilt versturen
+   - Alle gebruikers van dit station met push notificaties ingeschakeld ontvangen het bericht
+
+2. **Vul de Titel in**
+   - Korte, duidelijke titel (max 100 karakters)
+   - Dit wordt als koptekst van de notificatie getoond
+   - Voorbeeld: "Dringende Planning Wijziging"
+
+3. **Vul het Bericht in**
+   - Het volledige bericht dat gebruikers zien
+   - Voorbeeld: "Er is een wijziging in de planning van morgen. Controleer uw shifts."
+
+4. **Klik op "Verstuur Notificatie"**
+   - De melding wordt direct verstuurd naar alle station-medewerkers
+   - U ziet een overzicht van wie de melding heeft ontvangen
+
+#### Verzendgeschiedenis
+
+Na het versturen van een melding verschijnt deze in de **Verzendgeschiedenis** sectie:
+
+| Kolom | Uitleg |
+|-------|--------|
+| **Datum** | Wanneer de melding is verstuurd |
+| **Station** | Naar welk station de melding is verstuurd |
+| **Titel** | De titel van de melding |
+| **Verzonden door** | Wie de melding heeft verstuurd |
+| **Ontvangen** | Aantal gebruikers die de melding succesvol hebben ontvangen |
+| **Niet ontvangen** | Aantal gebruikers zonder push notificatie abonnement |
+
+**Details bekijken:**
+- Klik op **"Details"** bij een melding om per ontvanger te zien:
+  - ✅ **Verzonden**: Melding succesvol afgeleverd
+  - ❌ **Geen abonnement**: Gebruiker heeft geen push notificaties ingeschakeld
+
+#### Vereisten voor Ontvangst
+
+Gebruikers ontvangen uw melding alleen als:
+
+1. ✅ Zij push notificaties hebben ingeschakeld in hun Profiel
+2. ✅ Zij lid zijn van het geselecteerde station
+3. ✅ Zij toestemming hebben gegeven in hun browser/apparaat
+
+**Tip:** Moedig medewerkers aan om push notificaties in te schakelen via Profiel → Push Notificaties sectie.
+
+#### Voorbeelden van Gebruik
+
+| Situatie | Titel | Bericht |
+|----------|-------|---------|
+| **Spoedmelding** | "Dringende Planning Update" | "De shift van morgen 08:00 is gewijzigd. Controleer uw planning." |
+| **Vergadering** | "Teamvergadering" | "Reminder: Morgen om 10:00 teambespreking in de kantine." |
+| **Systeem Update** | "Nieuw Systeem Feature" | "Er is nu shift ruilen mogelijk! Bekijk de handleiding voor meer info." |
+| **Feestdag** | "Prettige Feestdagen" | "Het team wenst iedereen een fijne kerst!" |
+
+#### Veelgestelde Vragen Push Meldingen Versturen
+
+**V: Kan ik zien wie de melding niet heeft ontvangen?**
+A: Ja, in de details ziet u per gebruiker of ze een actief push abonnement hebben.
+
+**V: Worden meldingen bewaard?**
+A: Ja, de volledige verzendgeschiedenis is beschikbaar voor audit doeleinden.
+
+**V: Kan ik een melding intrekken?**
+A: Nee, eenmaal verstuurd kan een push notificatie niet worden ingetrokken.
+
+**V: Waarom hebben sommige gebruikers "Geen abonnement"?**
+A: Deze gebruikers hebben push notificaties niet ingeschakeld in hun Profiel.
 
 ### 🔌 Integraties Beheer
 
