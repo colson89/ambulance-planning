@@ -6984,6 +6984,221 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // ========================================
+  // CUSTOM PUSH NOTIFICATIONS ENDPOINTS
+  // ========================================
+
+  // Send custom notification to station users (admin/supervisor only)
+  app.post("/api/notifications/send", requireAdmin, async (req, res) => {
+    try {
+      const { title, message, stationId } = req.body;
+      const currentUser = req.user as User;
+      
+      if (!title || !message || !stationId) {
+        return res.status(400).json({ message: "Titel, bericht en station zijn verplicht" });
+      }
+      
+      // Validate station access
+      const hasAccess = await storage.userHasAccessToStation(currentUser.id, stationId);
+      if (!hasAccess && currentUser.role !== 'supervisor') {
+        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      }
+      
+      // Create notification record
+      const notification = await storage.createCustomNotification(currentUser.id, stationId, title, message);
+      
+      // Get all users for this station with their push subscriptions
+      const userSubscriptions = await storage.getPushSubscriptionsByStation(stationId);
+      
+      const results: Array<{userId: number, firstName: string, lastName: string, status: string, error?: string}> = [];
+      
+      // Import push notification function
+      const { sendPushNotification } = await import('./push-notifications');
+      
+      for (const userSub of userSubscriptions) {
+        const user = await storage.getUser(userSub.userId);
+        if (!user) continue;
+        
+        if (userSub.subscriptions.length === 0) {
+          // User has no push subscription
+          await storage.createCustomNotificationRecipient(notification.id, userSub.userId, 'no_subscription');
+          results.push({
+            userId: userSub.userId,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            status: 'no_subscription'
+          });
+          continue;
+        }
+        
+        let sent = false;
+        let lastError = '';
+        
+        for (const subscription of userSub.subscriptions) {
+          try {
+            await sendPushNotification(subscription, {
+              title,
+              body: message,
+              url: '/dashboard'
+            });
+            sent = true;
+          } catch (error: any) {
+            lastError = error.message || 'Onbekende fout';
+            console.error(`Failed to send push to user ${userSub.userId}:`, error);
+          }
+        }
+        
+        if (sent) {
+          await storage.createCustomNotificationRecipient(notification.id, userSub.userId, 'sent');
+          results.push({
+            userId: userSub.userId,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            status: 'sent'
+          });
+        } else {
+          await storage.createCustomNotificationRecipient(notification.id, userSub.userId, 'failed', lastError);
+          results.push({
+            userId: userSub.userId,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            status: 'failed',
+            error: lastError
+          });
+        }
+      }
+      
+      // Log activity
+      await logActivity({
+        userId: currentUser.id,
+        stationId: stationId,
+        action: 'CUSTOM_NOTIFICATION_SENT',
+        category: 'NOTIFICATION',
+        details: `Push melding "${title}" verstuurd naar ${results.filter(r => r.status === 'sent').length}/${results.length} gebruikers`,
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      });
+      
+      const sentCount = results.filter(r => r.status === 'sent').length;
+      const failedCount = results.filter(r => r.status === 'failed').length;
+      const noSubCount = results.filter(r => r.status === 'no_subscription').length;
+      
+      res.json({
+        success: true,
+        notificationId: notification.id,
+        summary: {
+          total: results.length,
+          sent: sentCount,
+          failed: failedCount,
+          noSubscription: noSubCount
+        },
+        recipients: results
+      });
+    } catch (error: any) {
+      console.error('Error sending custom notification:', error);
+      res.status(500).json({ message: "Fout bij verzenden van melding" });
+    }
+  });
+
+  // Get notification history for station (admin/supervisor only)
+  app.get("/api/notifications/history", requireAdmin, async (req, res) => {
+    try {
+      const currentUser = req.user as User;
+      const stationId = parseInt(req.query.stationId as string);
+      
+      if (!stationId) {
+        return res.status(400).json({ message: "Station ID is verplicht" });
+      }
+      
+      // Validate station access
+      const hasAccess = await storage.userHasAccessToStation(currentUser.id, stationId);
+      if (!hasAccess && currentUser.role !== 'supervisor') {
+        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      }
+      
+      const notifications = await storage.getCustomNotifications(stationId);
+      
+      res.json(notifications.map(n => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        createdAt: n.createdAt,
+        sender: {
+          id: n.sender.id,
+          firstName: n.sender.firstName,
+          lastName: n.sender.lastName
+        },
+        recipients: n.recipients.map(r => ({
+          userId: r.userId,
+          firstName: r.user.firstName,
+          lastName: r.user.lastName,
+          status: r.deliveryStatus,
+          error: r.errorMessage,
+          sentAt: r.sentAt
+        })),
+        summary: {
+          total: n.recipients.length,
+          sent: n.recipients.filter(r => r.deliveryStatus === 'sent').length,
+          failed: n.recipients.filter(r => r.deliveryStatus === 'failed').length,
+          noSubscription: n.recipients.filter(r => r.deliveryStatus === 'no_subscription').length
+        }
+      })));
+    } catch (error: any) {
+      console.error('Error fetching notification history:', error);
+      res.status(500).json({ message: "Fout bij ophalen van meldingen geschiedenis" });
+    }
+  });
+
+  // Get single notification details (admin/supervisor only)
+  app.get("/api/notifications/:id", requireAdmin, async (req, res) => {
+    try {
+      const currentUser = req.user as User;
+      const notificationId = parseInt(req.params.id);
+      
+      const notification = await storage.getCustomNotification(notificationId);
+      
+      if (!notification) {
+        return res.status(404).json({ message: "Melding niet gevonden" });
+      }
+      
+      // Validate station access
+      const hasAccess = await storage.userHasAccessToStation(currentUser.id, notification.stationId);
+      if (!hasAccess && currentUser.role !== 'supervisor') {
+        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      }
+      
+      res.json({
+        id: notification.id,
+        title: notification.title,
+        message: notification.message,
+        stationId: notification.stationId,
+        createdAt: notification.createdAt,
+        sender: {
+          id: notification.sender.id,
+          firstName: notification.sender.firstName,
+          lastName: notification.sender.lastName
+        },
+        recipients: notification.recipients.map(r => ({
+          userId: r.userId,
+          firstName: r.user.firstName,
+          lastName: r.user.lastName,
+          status: r.deliveryStatus,
+          error: r.errorMessage,
+          sentAt: r.sentAt
+        })),
+        summary: {
+          total: notification.recipients.length,
+          sent: notification.recipients.filter(r => r.deliveryStatus === 'sent').length,
+          failed: notification.recipients.filter(r => r.deliveryStatus === 'failed').length,
+          noSubscription: notification.recipients.filter(r => r.deliveryStatus === 'no_subscription').length
+        }
+      });
+    } catch (error: any) {
+      console.error('Error fetching notification:', error);
+      res.status(500).json({ message: "Fout bij ophalen van melding" });
+    }
+  });
+
+  // ========================================
   // SHIFT SWAP / RUIL ENDPOINTS
   // ========================================
 
