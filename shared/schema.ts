@@ -343,6 +343,8 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   notifyNewPlanningPublished: boolean("notify_new_planning_published").notNull().default(false),
   notifyMyShiftChanged: boolean("notify_my_shift_changed").notNull().default(false),
   notifyAvailabilityDeadline: boolean("notify_availability_deadline").notNull().default(true),
+  notifyShiftSwapUpdates: boolean("notify_shift_swap_updates").notNull().default(true), // Ruilverzoek updates
+  notifyBidUpdates: boolean("notify_bid_updates").notNull().default(true), // Bieding updates
   deadlineWarningDays: integer("deadline_warning_days").notNull().default(3), // Hoeveel dagen van tevoren waarschuwen
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
