@@ -1506,7 +1506,10 @@ export default function Dashboard() {
           onOpenChange={setShiftSwapDialogOpen}
           shift={selectedSwapShift}
           currentUser={user}
-          stationUsers={colleagues.filter(u => u.stationId === selectedSwapShift.stationId)}
+          stationUsers={colleagues.filter(u => 
+            u.accessibleStationIds?.includes(selectedSwapShift.stationId) || 
+            u.stationId === selectedSwapShift.stationId
+          )}
         />
       )}
     </div>

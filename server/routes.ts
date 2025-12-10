@@ -380,6 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`User ${currentUser.username} has access to stations: ${Array.from(accessibleStationIds).join(', ')}`);
       
       // Collect all colleagues from all accessible stations (including cross-team members)
+      // Track which stations each user can work at for shift swap filtering
       const allColleagues = new Map<number, any>(); // Use Map to deduplicate by user ID
       
       for (const stationId of accessibleStationIds) {
@@ -401,9 +402,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
               stationId: user.stationId,
               hours: user.hours || 0, // Needed for availability calculations
               effectiveHours: user.effectiveHours || user.hours || 0,
-              isCrossTeam: user.isCrossTeam || false
+              isCrossTeam: user.isCrossTeam || false,
+              accessibleStationIds: [stationId] // Track stations where this user can work
             });
+          } else {
+            // User already exists, add this station to their accessible stations
+            const existing = allColleagues.get(user.id);
+            // Defensive: ensure accessibleStationIds array exists
+            if (!existing.accessibleStationIds) {
+              existing.accessibleStationIds = [existing.stationId];
+            }
+            if (!existing.accessibleStationIds.includes(stationId)) {
+              existing.accessibleStationIds.push(stationId);
+            }
           }
+        }
+      }
+      
+      // Ensure primary station is always in accessibleStationIds for each user
+      for (const colleague of allColleagues.values()) {
+        if (!colleague.accessibleStationIds.includes(colleague.stationId)) {
+          colleague.accessibleStationIds.push(colleague.stationId);
         }
       }
       
