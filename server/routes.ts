@@ -12,7 +12,7 @@ import { and, gte, lte, asc, ne, eq, inArray, isNull, or } from "drizzle-orm";
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import multer from 'multer';
-import { sendPlanningPublishedNotification, sendShiftChangedNotification, notifyNewShiftSwapRequest, notifyShiftSwapStatusChanged } from "./push-notifications";
+import { sendPlanningPublishedNotification, sendShiftChangedNotification, notifyNewShiftSwapRequest, notifyShiftSwapStatusChanged, sendPushNotificationToUser } from "./push-notifications";
 import { logActivity, getActivityLogs, getActivityLogsCount, getClientInfo, ActivityActions, type ActivityCategory } from "./activity-logger";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -7915,7 +7915,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             admin.id,
             `${stationPrefix}Nieuwe Bieding`,
             `${user.firstName} ${user.lastName} wil ${shiftType} op ${shiftDate} doen`,
-            `/schedule`
+            `/schedule`,
+            'notifyBidUpdates'
           );
         }
       } catch (notifyError) {
@@ -8162,7 +8163,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             bid.userId,
             `${stationPrefix}Bieding Geaccepteerd!`,
             `Je bieding voor ${shiftType} op ${shiftDate} is geaccepteerd. De shift is aan jou toegewezen.`,
-            `/dashboard`
+            `/dashboard`,
+            'notifyBidUpdates'
           );
         }
       } catch (notifyError) {
@@ -8233,7 +8235,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             bid.userId,
             `${stationPrefix}Bieding Afgewezen`,
             `Je bieding voor ${shiftType} op ${shiftDate} is helaas afgewezen.`,
-            `/dashboard`
+            `/dashboard`,
+            'notifyBidUpdates'
           );
         }
       } catch (notifyError) {

@@ -111,6 +111,44 @@ export async function sendPushToMultipleUsers(
   await Promise.all(promises);
 }
 
+/**
+ * Send push notification to a specific user with optional preference filtering
+ * Used for bid notifications and other specific notification types
+ */
+export async function sendPushNotificationToUser(
+  userId: number,
+  title: string,
+  body: string,
+  url: string = '/dashboard',
+  preferenceFilter?: 'notifyBidUpdates' | 'notifyShiftSwapUpdates' | 'notifyMyShiftChanged' | 'notifyNewPlanningPublished'
+): Promise<void> {
+  const subscriptions = await storage.getAllPushSubscriptions(userId);
+  
+  if (subscriptions.length === 0) {
+    console.log(`No push subscriptions found for user ${userId}`);
+    return;
+  }
+
+  // Filter by preference if specified
+  let enabledSubs = subscriptions;
+  if (preferenceFilter) {
+    enabledSubs = subscriptions.filter(sub => sub[preferenceFilter]);
+  }
+
+  if (enabledSubs.length === 0) {
+    console.log(`No enabled subscriptions for user ${userId} with preference ${preferenceFilter}`);
+    return;
+  }
+
+  await sendPushToSubscriptions(enabledSubs, {
+    title,
+    body,
+    icon: '/icon-192x192.png',
+    url,
+    data: { type: preferenceFilter || 'general' }
+  });
+}
+
 // Notification helpers for specific events
 export async function notifyNewPlanningPublished(
   stationId: number,
@@ -319,10 +357,10 @@ export async function notifyNewShiftSwapRequest(
   });
   const shiftTypeText = shiftType === 'day' ? 'dagdienst' : 'nachtdienst';
 
-  // Send to all admins/supervisors who have shift change notifications enabled
+  // Send to all admins/supervisors who have shift swap notifications enabled
   for (const admin of adminUsers) {
     const subscriptions = await storage.getAllPushSubscriptions(admin.id);
-    const enabledSubscriptions = subscriptions.filter(sub => sub.notifyMyShiftChanged);
+    const enabledSubscriptions = subscriptions.filter(sub => sub.notifyShiftSwapUpdates);
 
     if (enabledSubscriptions.length > 0) {
       await sendPushToSubscriptions(enabledSubscriptions, {
@@ -366,7 +404,7 @@ export async function notifyShiftSwapStatusChanged(
 
   // Notify requester
   const requesterSubscriptions = await storage.getAllPushSubscriptions(requesterId);
-  const requesterEnabledSubs = requesterSubscriptions.filter(sub => sub.notifyMyShiftChanged);
+  const requesterEnabledSubs = requesterSubscriptions.filter(sub => sub.notifyShiftSwapUpdates);
 
   if (requesterEnabledSubs.length > 0) {
     const baseTitle = status === 'approved' ? 'Ruilverzoek Goedgekeurd' : 'Ruilverzoek Afgewezen';
@@ -391,7 +429,7 @@ export async function notifyShiftSwapStatusChanged(
   // Notify target user if approved
   if (status === 'approved') {
     const targetSubscriptions = await storage.getAllPushSubscriptions(targetUserId);
-    const targetEnabledSubs = targetSubscriptions.filter(sub => sub.notifyMyShiftChanged);
+    const targetEnabledSubs = targetSubscriptions.filter(sub => sub.notifyShiftSwapUpdates);
 
     if (targetEnabledSubs.length > 0) {
       await sendPushToSubscriptions(targetEnabledSubs, {
