@@ -7038,6 +7038,12 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(403).json({ message: "Geen toegang tot dit station" });
       }
       
+      // Get station for display name
+      const station = await storage.getStation(stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station niet gevonden" });
+      }
+      
       // Create notification record
       const notification = await storage.createCustomNotification(currentUser.id, stationId, title, message);
       
@@ -7071,7 +7077,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         for (const subscription of userSub.subscriptions) {
           try {
             await sendPushNotification(subscription, {
-              title,
+              title: `[${station.displayName}] ${title}`,
               body: message,
               url: '/dashboard'
             });
