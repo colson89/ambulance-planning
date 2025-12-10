@@ -23,6 +23,8 @@ interface PushSubscriptionSettings {
   notifyNewPlanningPublished: boolean;
   notifyMyShiftChanged: boolean;
   notifyAvailabilityDeadline: boolean;
+  notifyShiftSwapUpdates: boolean;
+  notifyBidUpdates: boolean;
   deadlineWarningDays: number;
 }
 
@@ -125,6 +127,8 @@ export function PushNotificationSettings() {
         notifyNewPlanningPublished: newSettings.notifyNewPlanningPublished,
         notifyMyShiftChanged: newSettings.notifyMyShiftChanged,
         notifyAvailabilityDeadline: newSettings.notifyAvailabilityDeadline,
+        notifyShiftSwapUpdates: newSettings.notifyShiftSwapUpdates,
+        notifyBidUpdates: newSettings.notifyBidUpdates,
         deadlineWarningDays: newSettings.deadlineWarningDays
       });
 
@@ -261,6 +265,40 @@ export function PushNotificationSettings() {
                     checked={settings.notifyMyShiftChanged}
                     onCheckedChange={(checked) =>
                       handlePreferenceChange('notifyMyShiftChanged', checked)
+                    }
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="notify-swap" className="flex-1 cursor-pointer">
+                    <div className="text-sm font-medium">Ruilverzoek Updates</div>
+                    <div className="text-xs text-muted-foreground">
+                      Wanneer je ruilverzoek wordt goedgekeurd of afgewezen
+                    </div>
+                  </Label>
+                  <Switch
+                    id="notify-swap"
+                    checked={settings.notifyShiftSwapUpdates}
+                    onCheckedChange={(checked) =>
+                      handlePreferenceChange('notifyShiftSwapUpdates', checked)
+                    }
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="notify-bid" className="flex-1 cursor-pointer">
+                    <div className="text-sm font-medium">Bieding Updates</div>
+                    <div className="text-xs text-muted-foreground">
+                      Wanneer je bieding op een open shift wordt geaccepteerd of afgewezen
+                    </div>
+                  </Label>
+                  <Switch
+                    id="notify-bid"
+                    checked={settings.notifyBidUpdates}
+                    onCheckedChange={(checked) =>
+                      handlePreferenceChange('notifyBidUpdates', checked)
                     }
                     disabled={isLoading}
                   />

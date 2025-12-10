@@ -144,6 +144,8 @@ export async function updatePushPreferences(
     notifyNewPlanningPublished?: boolean;
     notifyMyShiftChanged?: boolean;
     notifyAvailabilityDeadline?: boolean;
+    notifyShiftSwapUpdates?: boolean;
+    notifyBidUpdates?: boolean;
     deadlineWarningDays?: number;
   }
 ): Promise<void> {
