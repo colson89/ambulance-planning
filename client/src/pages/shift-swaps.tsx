@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -83,6 +83,94 @@ export default function ShiftSwapsPage() {
   const { data: stations = [] } = useQuery<Station[]>({
     queryKey: ["/api/stations"],
   });
+  
+  // Query voor stations waar de huidige gebruiker toegang tot heeft (voor supervisors en admins)
+  const { data: accessibleStations = [] } = useQuery<Station[]>({
+    queryKey: ["/api/user/stations", user?.id, user?.role],
+    enabled: user?.role === 'supervisor' || user?.role === 'admin',
+  });
+  
+  // Check of admin meerdere stations heeft
+  const isMultiStationAdmin = useMemo(() => {
+    return user?.role === 'admin' && accessibleStations && accessibleStations.length > 1;
+  }, [user?.role, accessibleStations]);
+  
+  // Station selector state - lees uit sessionStorage indien beschikbaar
+  const [selectedStationId, setSelectedStationId] = useState<number | null>(() => {
+    try {
+      const stationData = sessionStorage.getItem('selectedStation');
+      if (stationData) {
+        const parsed = JSON.parse(stationData);
+        return parsed.id || null;
+      }
+    } catch {
+      // Ignore parsing errors
+    }
+    return user?.stationId || null;
+  });
+  
+  // Handler to update station selection and persist to sessionStorage
+  const handleStationChange = (stationId: number) => {
+    setSelectedStationId(stationId);
+    const station = accessibleStations?.find(s => s.id === stationId);
+    if (station) {
+      sessionStorage.setItem('selectedStation', JSON.stringify({ id: station.id, displayName: station.displayName }));
+    }
+  };
+  
+  // Sync selectedStationId from sessionStorage when user becomes available
+  // Also validate that the stored station is still accessible
+  useEffect(() => {
+    if ((user?.role === 'supervisor' || user?.role === 'admin') && accessibleStations.length > 0) {
+      // Controleer of de opgeslagen station nog steeds toegankelijk is
+      if (selectedStationId !== null) {
+        const isAccessible = accessibleStations.some(s => s.id === selectedStationId);
+        if (!isAccessible) {
+          // Reset naar primary station of eerste toegankelijke station
+          const fallbackStation = accessibleStations.find(s => s.id === user.stationId) 
+            || accessibleStations.find(s => s.code !== 'SUPERVISOR');
+          if (fallbackStation) {
+            setSelectedStationId(fallbackStation.id);
+            sessionStorage.setItem('selectedStation', JSON.stringify({ id: fallbackStation.id, displayName: fallbackStation.displayName }));
+          }
+          return;
+        }
+      }
+      
+      // Als er nog geen selectie is, probeer uit sessionStorage of fallback naar primary
+      if (selectedStationId === null) {
+        try {
+          const stationData = sessionStorage.getItem('selectedStation');
+          if (stationData) {
+            const parsed = JSON.parse(stationData);
+            if (parsed.id && accessibleStations.some(s => s.id === parsed.id)) {
+              setSelectedStationId(parsed.id);
+              return;
+            }
+          }
+        } catch {
+          // Ignore parsing errors
+        }
+        // Default to primary station or first accessible station
+        const defaultStation = accessibleStations.find(s => s.id === user.stationId) 
+          || accessibleStations.find(s => s.code !== 'SUPERVISOR');
+        if (defaultStation) {
+          setSelectedStationId(defaultStation.id);
+        }
+      }
+    }
+  }, [user?.role, user?.stationId, selectedStationId, accessibleStations]);
+  
+  // Effectieve station ID
+  const effectiveStationId = useMemo(() => {
+    if (user?.role === 'supervisor') {
+      return selectedStationId;
+    }
+    if (isMultiStationAdmin) {
+      return selectedStationId || user?.stationId;
+    }
+    return user?.stationId || null;
+  }, [user?.role, user?.stationId, selectedStationId, isMultiStationAdmin]);
 
   // Supervisors kunnen alle gebruikers ophalen, admins alleen hun station
   const usersEndpoint = user?.role === 'supervisor' ? "/api/users/all" : "/api/users";
@@ -290,7 +378,16 @@ export default function ShiftSwapsPage() {
     }
   };
 
-  const requests = statusFilter === "pending" ? pendingRequests : allRequests;
+  // Filter requests op basis van status en geselecteerd station
+  const filteredByStatus = statusFilter === "pending" ? pendingRequests : allRequests;
+  const requests = useMemo(() => {
+    // Voor alle admins en supervisors: filter op effectieve station ID
+    // Dit zorgt ervoor dat single-station admins alleen hun eigen station zien
+    if (effectiveStationId) {
+      return filteredByStatus.filter(req => req.stationId === effectiveStationId);
+    }
+    return filteredByStatus;
+  }, [filteredByStatus, effectiveStationId]);
   const isLoading = statusFilter === "pending" ? isPendingLoading : isAllLoading;
 
   return (
@@ -300,7 +397,7 @@ export default function ShiftSwapsPage() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Terug
         </Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <RefreshCw className="h-6 w-6" />
             Ruilverzoeken Beheren
@@ -309,6 +406,32 @@ export default function ShiftSwapsPage() {
             Bekijk en beheer shift ruilverzoeken
           </p>
         </div>
+        
+        {/* Station selector voor supervisors en multi-station admins */}
+        {(user?.role === 'supervisor' || isMultiStationAdmin) && (
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="station-select" className="text-sm font-medium">
+              Station
+            </Label>
+            <Select 
+              value={(selectedStationId || effectiveStationId)?.toString() || ""} 
+              onValueChange={(value) => handleStationChange(parseInt(value))}
+            >
+              <SelectTrigger className="w-[180px]" data-testid="select-station">
+                <SelectValue placeholder="Kies station..." />
+              </SelectTrigger>
+              <SelectContent>
+                {accessibleStations
+                  ?.filter(station => station.code !== 'SUPERVISOR')
+                  ?.map((station) => (
+                    <SelectItem key={station.id} value={station.id.toString()}>
+                      {station.displayName}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       <Card>
