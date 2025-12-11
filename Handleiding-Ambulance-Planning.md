@@ -610,8 +610,9 @@ Push notificaties zijn berichten die u ontvangt op uw smartphone, tablet of comp
 - **Wat**: Herinnering om uw beschikbaarheid in te vullen
 - **Wanneer**: X dagen voor de deadline (instelbaar: 1-7 dagen)
 - **Standaard**: AAN met 3 dagen waarschuwing
-- **Voorbeeld**: "Deadline Beschikbaarheid Nadert - Je hebt nog 3 dagen om je beschikbaarheid voor februari 2026 in te vullen."
+- **Voorbeeld**: "[PIT Geel] Deadline Beschikbaarheid Nadert - Je hebt nog 3 dagen om je beschikbaarheid voor februari 2026 in te vullen."
 - **Instelbaar**: Pas aan hoeveel dagen van tevoren u gewaarschuwd wilt worden (1 t/m 7 dagen)
+- **Cross-Team**: Als u toegang heeft tot meerdere stations, ontvangt u een **aparte melding per station** zodat u duidelijk weet voor welke stations u nog beschikbaarheid moet invullen
 
 #### Instellingen Aanpassen
 
