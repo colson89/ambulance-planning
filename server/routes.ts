@@ -2684,12 +2684,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: error });
       }
       
+      const currentUser = req.user as any;
+      const isAdminOrSupervisor = currentUser.role === 'admin' || currentUser.role === 'supervisor';
+      
       if (req.query.month && req.query.year) {
         const month = parseInt(req.query.month as string);
         const year = parseInt(req.query.year as string);
+        
+        // For ambulanciers: check if planning is published
+        // NOTE: If no planning period record exists, treat as published (backwards compatibility)
+        if (!isAdminOrSupervisor) {
+          const planningPeriod = await storage.getPlanningPeriod(effectiveStationId!, month, year);
+          // Only hide if explicitly marked as unpublished (isPublished === false)
+          if (planningPeriod && planningPeriod.isPublished === false) {
+            // Return empty array if planning is explicitly unpublished
+            return res.status(200).json([]);
+          }
+        }
+        
         shifts = await storage.getShiftsByMonth(month, year, effectiveStationId!);
       } else {
+        // For getAllShifts without month/year filter, we need to filter by published periods
+        // This is typically used for dashboard/calendar views
         shifts = await storage.getAllShifts(effectiveStationId!);
+        
+        // For ambulanciers: filter out shifts from explicitly unpublished planning periods
+        // NOTE: If no planning period record exists, treat as published (backwards compatibility)
+        if (!isAdminOrSupervisor && shifts.length > 0) {
+          const shiftsWithPublishCheck: typeof shifts = [];
+          const checkedPeriods = new Map<string, boolean>();
+          
+          for (const shift of shifts) {
+            const periodKey = `${shift.stationId}-${shift.month}-${shift.year}`;
+            
+            if (!checkedPeriods.has(periodKey)) {
+              const planningPeriod = await storage.getPlanningPeriod(shift.stationId, shift.month, shift.year);
+              // Treat as published if no record exists OR if explicitly published
+              const isPublished = !planningPeriod || planningPeriod.isPublished !== false;
+              checkedPeriods.set(periodKey, isPublished);
+            }
+            
+            if (checkedPeriods.get(periodKey)) {
+              shiftsWithPublishCheck.push(shift);
+            }
+          }
+          
+          shifts = shiftsWithPublishCheck;
+        }
       }
       
       res.status(200).json(shifts);

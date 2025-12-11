@@ -1169,6 +1169,33 @@ Als admin ziet u extra knoppen:
 - Klik op shift om handmatig toe te wijzen
 - Selecteer beschikbare medewerker
 
+#### 📢 Planning Publiceren
+
+Na het genereren van een planning is deze **nog niet zichtbaar** voor medewerkers. Dit geeft u de mogelijkheid om eerst handmatige aanpassingen te maken voordat de planning wordt gedeeld.
+
+**Concept Fase (Niet Gepubliceerd):**
+- Na het genereren ziet u een gele banner: "Planning nog niet gepubliceerd"
+- Medewerkers kunnen de planning nog niet zien op hun dashboard
+- U kunt in rust de planning controleren en aanpassen
+- Er worden nog geen push notificaties verzonden
+
+**Planning Publiceren:**
+1. Controleer alle shifts en maak eventuele aanpassingen
+2. Klik op de **"Planning Publiceren"** knop (oranje)
+3. De planning wordt direct zichtbaar voor alle medewerkers
+4. Alle medewerkers met push notificaties ontvangen een melding
+5. De banner wordt groen: "Planning gepubliceerd"
+
+**Publicatie Intrekken:**
+- Klik op "Intrekken" om de planning weer te verbergen
+- Handig als u grote wijzigingen moet maken
+- Medewerkers zien de shifts niet meer totdat u opnieuw publiceert
+
+**Belangrijk:**
+- Bestaande planningen (voor deze update) worden automatisch als gepubliceerd behandeld
+- U kunt een gepubliceerde planning nog steeds bewerken - wijzigingen zijn direct zichtbaar
+- Alleen bij grotere aanpassingen is het verstandig om eerst in te trekken
+
 #### ↩️ Undo Historie (Wijzigingen Terugdraaien)
 
 Als admin of supervisor kunt u recente handmatige wijzigingen aan de planning ongedaan maken. Dit is handig wanneer u per ongeluk de verkeerde persoon hebt toegewezen of een wijziging wilt terugdraaien.
