@@ -61,6 +61,8 @@ interface ShiftSwapRequest {
   approvedBy: number | null;
   createdAt: Date;
   updatedAt: Date;
+  targetUserStationId?: number | null;
+  requesterStationId?: number | null;
 }
 
 export default function ShiftSwapsPage() {
@@ -133,9 +135,10 @@ export default function ShiftSwapsPage() {
       }
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/shift-swaps"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/shift-swaps/pending"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/shift-swaps/all"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
       toast({
         title: "Ruilverzoek goedgekeurd",
         description: "De shifts zijn succesvol geruild.",
@@ -162,8 +165,9 @@ export default function ShiftSwapsPage() {
       }
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/shift-swaps"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/shift-swaps/pending"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/shift-swaps/all"] });
       toast({
         title: "Ruilverzoek afgewezen",
         description: "Het ruilverzoek is afgewezen.",
@@ -239,6 +243,16 @@ export default function ShiftSwapsPage() {
   const getStationName = (stationId: number) => {
     const station = stations.find((s) => s.id === stationId);
     return station?.displayName || station?.name || "Onbekend";
+  };
+
+  const getTargetUserStation = (request: ShiftSwapRequest) => {
+    if (!request.targetUserStationId) return null;
+    return stations.find((s) => s.id === request.targetUserStationId) || null;
+  };
+
+  const isCrossTeamRequest = (request: ShiftSwapRequest) => {
+    if (!request.targetUserStationId) return false;
+    return request.targetUserStationId !== request.stationId;
   };
 
   const getStatusBadge = (status: string) => {
@@ -382,7 +396,25 @@ export default function ShiftSwapsPage() {
 
                       <div className="text-sm mb-3">
                         <span className="font-medium">{isSwap ? "Ruilen met" : "Overnemen door"}:</span>{" "}
-                        {getUserName(request.targetUserId)}
+                        <span className="inline-flex items-center gap-2">
+                          {getUserName(request.targetUserId)}
+                          {isCrossTeamRequest(request) && (
+                            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                              Cross-team
+                            </Badge>
+                          )}
+                        </span>
+                        {isCrossTeamRequest(request) && (() => {
+                          const targetStation = getTargetUserStation(request);
+                          if (targetStation) {
+                            return (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Station: {targetStation.displayName || targetStation.name}
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
 
                       {isSwap && targetShiftInfo && (
@@ -493,7 +525,25 @@ export default function ShiftSwapsPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="font-medium">{getUserName(request.targetUserId)}</div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{getUserName(request.targetUserId)}</span>
+                              {isCrossTeamRequest(request) && (
+                                <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                                  Cross-team
+                                </Badge>
+                              )}
+                            </div>
+                            {(() => {
+                              const targetStation = getTargetUserStation(request);
+                              if (targetStation && isCrossTeamRequest(request)) {
+                                return (
+                                  <div className="text-xs text-muted-foreground">
+                                    Station: {targetStation.displayName || targetStation.name}
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
                             {isSwap && targetShiftInfo && (
                               <div className="text-xs text-purple-600">
                                 {targetShiftInfo.date} - {targetShiftInfo.type}
@@ -567,7 +617,25 @@ export default function ShiftSwapsPage() {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Overnemer:</span>
-                    <div className="font-medium">{getUserName(selectedRequest.targetUserId)}</div>
+                    <div className="font-medium flex items-center gap-2">
+                      {getUserName(selectedRequest.targetUserId)}
+                      {isCrossTeamRequest(selectedRequest) && (
+                        <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                          Cross-team
+                        </Badge>
+                      )}
+                    </div>
+                    {isCrossTeamRequest(selectedRequest) && (() => {
+                      const targetStation = getTargetUserStation(selectedRequest);
+                      if (targetStation) {
+                        return (
+                          <div className="text-xs text-muted-foreground">
+                            Station: {targetStation.displayName || targetStation.name}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                   <div className="col-span-2">
                     <span className="text-muted-foreground">Shift:</span>

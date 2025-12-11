@@ -7662,13 +7662,25 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       const user = req.user as any;
       
       // Supervisor kan alle stations zien, admin alleen zijn eigen station
+      let requests;
       if (user.role === 'supervisor') {
-        const requests = await storage.getAllPendingShiftSwapRequests();
-        res.json(requests);
+        requests = await storage.getAllPendingShiftSwapRequests();
       } else {
-        const requests = await storage.getPendingShiftSwapRequestsForStation(user.stationId);
-        res.json(requests);
+        requests = await storage.getPendingShiftSwapRequestsForStation(user.stationId);
       }
+      
+      // Enrich requests with target user's station info for cross-team visibility
+      const enrichedRequests = await Promise.all(requests.map(async (request: any) => {
+        const targetUser = await storage.getUser(request.targetUserId);
+        const requesterUser = await storage.getUser(request.requesterId);
+        return {
+          ...request,
+          targetUserStationId: targetUser?.stationId || null,
+          requesterStationId: requesterUser?.stationId || null,
+        };
+      }));
+      
+      res.json(enrichedRequests);
     } catch (error: any) {
       console.error("Error getting pending shift swap requests:", error);
       res.status(500).json({ message: "Fout bij ophalen wachtende ruil verzoeken" });
@@ -7700,13 +7712,25 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       const user = req.user as any;
       
       // Supervisor kan alle stations zien, admin alleen zijn eigen station
+      let requests;
       if (user.role === 'supervisor') {
-        const requests = await storage.getAllShiftSwapRequests();
-        res.json(requests);
+        requests = await storage.getAllShiftSwapRequests();
       } else {
-        const requests = await storage.getShiftSwapRequestsByStation(user.stationId);
-        res.json(requests);
+        requests = await storage.getShiftSwapRequestsByStation(user.stationId);
       }
+      
+      // Enrich requests with target user's station info for cross-team visibility
+      const enrichedRequests = await Promise.all(requests.map(async (request: any) => {
+        const targetUser = await storage.getUser(request.targetUserId);
+        const requesterUser = await storage.getUser(request.requesterId);
+        return {
+          ...request,
+          targetUserStationId: targetUser?.stationId || null,
+          requesterStationId: requesterUser?.stationId || null,
+        };
+      }));
+      
+      res.json(enrichedRequests);
     } catch (error: any) {
       console.error("Error getting all shift swap requests:", error);
       res.status(500).json({ message: "Fout bij ophalen ruil verzoeken" });
