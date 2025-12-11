@@ -2745,8 +2745,8 @@ function ScheduleGenerator() {
               </div>
               
               <div className="space-y-6">
-                {/* Dag shift (alleen voor weekend) */}
-                {selectedDate && isWeekend(selectedDate) && (
+                {/* Dag shift (altijd tonen - zowel weekdag als weekend) */}
+                {selectedDate && (
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Dag Shift (07:00 - 19:00)</h3>
                     <div className="overflow-x-auto">
