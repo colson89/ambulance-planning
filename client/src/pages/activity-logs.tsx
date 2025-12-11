@@ -130,6 +130,7 @@ export default function ActivityLogsPage() {
   const [currentPage, setCurrentPage] = useState(0);
   const [userSearchText, setUserSearchText] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [detailsSearchText, setDetailsSearchText] = useState("");
   const limit = 50;
 
   const allCategories = [
@@ -246,6 +247,9 @@ export default function ActivityLogsPage() {
     if (isSupervisor && selectedStationIds.length > 0) {
       params.append('stationIds', selectedStationIds.join(','));
     }
+    if (detailsSearchText.trim()) {
+      params.append('detailsSearch', detailsSearchText.trim());
+    }
     
     params.append('limit', limit.toString());
     params.append('offset', (currentPage * limit).toString());
@@ -254,7 +258,7 @@ export default function ActivityLogsPage() {
   };
 
   const { data: logsData, isLoading, error } = useQuery<ActivityLogsResponse>({
-    queryKey: ["/api/activity-logs", startDate, endDate, selectedCategories, selectedUserId, selectedStationIds, currentPage],
+    queryKey: ["/api/activity-logs", startDate, endDate, selectedCategories, selectedUserId, selectedStationIds, detailsSearchText.trim(), currentPage],
     queryFn: async () => {
       const res = await apiRequest("GET", `/api/activity-logs?${buildQueryParams()}`);
       if (!res.ok) {
@@ -280,6 +284,7 @@ export default function ActivityLogsPage() {
       }
       if (selectedUserId !== "all") params.append('userId', selectedUserId);
       if (isSupervisor && selectedStationIds.length > 0) params.append('stationIds', selectedStationIds.join(','));
+      if (detailsSearchText.trim()) params.append('detailsSearch', detailsSearchText.trim());
 
       const response = await fetch(`/api/activity-logs/export?${params.toString()}`, {
         credentials: 'include',
@@ -578,6 +583,43 @@ export default function ActivityLogsPage() {
                   </Popover>
                 </div>
               )}
+            </div>
+            
+            <div className="mt-4 pt-4 border-t">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1">
+                  <Search className="h-4 w-4" />
+                  Zoek in details
+                </Label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Zoek in details tekst... (bijv. naam, datum, actie)"
+                      value={detailsSearchText}
+                      onChange={(e) => {
+                        setDetailsSearchText(e.target.value);
+                        setCurrentPage(0);
+                      }}
+                      className="pl-8"
+                    />
+                  </div>
+                  {detailsSearchText.trim() !== "" && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-10 w-10 shrink-0"
+                      onClick={() => {
+                        setDetailsSearchText("");
+                        setCurrentPage(0);
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
