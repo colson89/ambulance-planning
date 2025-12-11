@@ -3174,8 +3174,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Gebruiker niet gevonden" });
       }
       
-      // Security: only allow fetching shifts for users in the same station (or supervisors)
-      if (user.role !== 'supervisor' && user.stationId !== targetUser.stationId) {
+      // Security: allow fetching shifts for:
+      // 1. Supervisors (access to all)
+      // 2. Users in the same primary station
+      // 3. Cross-team colleagues (target user has access to requester's station via user_stations)
+      let hasAccess = user.role === 'supervisor' || user.stationId === targetUser.stationId;
+      
+      if (!hasAccess) {
+        // Check if target user is a cross-team member with access to requester's station
+        const targetUserCrossTeamStations = await storage.getUserCrossTeamStations(targetUser.id);
+        hasAccess = targetUserCrossTeamStations.some(s => s.stationId === user.stationId);
+      }
+      
+      if (!hasAccess) {
+        // Also check if requester has cross-team access to target user's station
+        const requesterCrossTeamStations = await storage.getUserCrossTeamStations(user.id);
+        hasAccess = requesterCrossTeamStations.some(s => s.stationId === targetUser.stationId);
+      }
+      
+      if (!hasAccess) {
         return res.status(403).json({ message: "Geen toegang tot shifts van deze gebruiker" });
       }
       
