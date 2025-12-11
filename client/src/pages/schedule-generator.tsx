@@ -215,6 +215,24 @@ function ScheduleGenerator() {
   const [lastGeneratedDate, setLastGeneratedDate] = useState<Date | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number>(0);
   
+  // Query voor planning publicatie status
+  const { data: planningStatus, refetch: refetchPlanningStatus } = useQuery<{
+    hasShifts: boolean;
+    shiftCount: number;
+    isPublished: boolean;
+    publishedAt: string | null;
+    generatedAt: string | null;
+  }>({
+    queryKey: ["/api/schedule/status", selectedMonth + 1, selectedYear, effectiveStationId],
+    queryFn: async () => {
+      const url = `/api/schedule/status?month=${selectedMonth + 1}&year=${selectedYear}&stationId=${effectiveStationId}`;
+      const res = await fetch(url, { credentials: 'include' });
+      if (!res.ok) throw new Error("Kon planning status niet ophalen");
+      return res.json();
+    },
+    enabled: !!effectiveStationId && (user?.role === 'admin' || user?.role === 'supervisor'),
+  });
+  
   // Navigatie functies voor maand/jaar
   const prevMonth = () => {
     if (selectedMonth === 0) {
@@ -424,9 +442,10 @@ function ScheduleGenerator() {
       setLastGeneratedDate(new Date());
       toast({
         title: "Succes",
-        description: "Planning gegenereerd voor " + format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl }),
+        description: "Planning gegenereerd voor " + format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl }) + ". Vergeet niet te publiceren!",
       });
       refetchShifts();
+      refetchPlanningStatus();
       // Vernieuw ook de planning timestamp voor de huidige maand
       queryClient.invalidateQueries({ queryKey: ["/api/system/settings/last-schedule-generated", selectedMonth + 1, selectedYear, effectiveStationId, user?.id, user?.role] });
     },
@@ -471,6 +490,70 @@ function ScheduleGenerator() {
       toast({
         title: "Fout",
         description: error.message || "Er is een fout opgetreden bij het verwijderen van shifts",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Mutatie om planning te publiceren
+  const publishPlanningMutation = useMutation({
+    mutationFn: async () => {
+      const requestBody = {
+        month: selectedMonth + 1,
+        year: selectedYear,
+        stationId: effectiveStationId
+      };
+      
+      const res = await apiRequest("POST", "/api/schedule/publish", requestBody);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Kon planning niet publiceren");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Planning Gepubliceerd",
+        description: `${data.shiftCount} shifts zijn nu zichtbaar voor medewerkers. Push meldingen zijn verzonden.`,
+      });
+      refetchPlanningStatus();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message || "Er is een fout opgetreden bij het publiceren",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Mutatie om planning publicatie in te trekken
+  const unpublishPlanningMutation = useMutation({
+    mutationFn: async () => {
+      const requestBody = {
+        month: selectedMonth + 1,
+        year: selectedYear,
+        stationId: effectiveStationId
+      };
+      
+      const res = await apiRequest("POST", "/api/schedule/unpublish", requestBody);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Kon publicatie niet intrekken");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Publicatie Ingetrokken",
+        description: "Planning is niet langer zichtbaar voor medewerkers.",
+      });
+      refetchPlanningStatus();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message || "Er is een fout opgetreden bij het intrekken",
         variant: "destructive",
       });
     },
@@ -1870,6 +1953,77 @@ function ScheduleGenerator() {
                   </AlertDialogContent>
                 </AlertDialog>
               </div>
+              
+              {/* Publicatie Status Banner en Knoppen */}
+              {planningStatus?.hasShifts && (
+                <div className="mt-6 border-t pt-6">
+                  {planningStatus.isPublished ? (
+                    <Alert className="bg-green-50 border-green-200">
+                      <Check className="h-4 w-4 text-green-600" />
+                      <AlertDescription className="text-green-800">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <strong>Planning gepubliceerd</strong>
+                            <p className="text-sm mt-1">
+                              Deze planning is zichtbaar voor medewerkers.
+                              {planningStatus.publishedAt && (
+                                <span className="ml-1">
+                                  (Gepubliceerd op {format(new Date(planningStatus.publishedAt), "d MMMM yyyy 'om' HH:mm", { locale: nl })})
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => unpublishPlanningMutation.mutate()}
+                            disabled={unpublishPlanningMutation.isPending}
+                            className="border-green-300 text-green-700 hover:bg-green-100"
+                          >
+                            {unpublishPlanningMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Intrekken"
+                            )}
+                          </Button>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert className="bg-amber-50 border-amber-200">
+                      <AlertCircle className="h-4 w-4 text-amber-600" />
+                      <AlertDescription className="text-amber-800">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <strong>Planning nog niet gepubliceerd</strong>
+                            <p className="text-sm mt-1">
+                              Medewerkers kunnen deze planning nog niet zien. 
+                              Maak eventuele aanpassingen en publiceer de planning wanneer deze gereed is.
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => publishPlanningMutation.mutate()}
+                            disabled={publishPlanningMutation.isPending}
+                            className="bg-amber-600 hover:bg-amber-700"
+                          >
+                            {publishPlanningMutation.isPending ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Publiceren...
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="h-4 w-4 mr-2" />
+                                Planning Publiceren
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -646,3 +646,27 @@ export const insertCustomNotificationRecipientSchema = createInsertSchema(custom
 });
 export type CustomNotificationRecipient = typeof customNotificationRecipients.$inferSelect;
 export type InsertCustomNotificationRecipient = z.infer<typeof insertCustomNotificationRecipientSchema>;
+
+// Planning Periods - houdt publicatie status bij per maand/station
+export const planningPeriods = pgTable("planning_periods", {
+  id: serial("id").primaryKey(),
+  stationId: integer("station_id").notNull().references(() => stations.id, { onDelete: 'cascade' }),
+  month: integer("month").notNull(), // 1-12
+  year: integer("year").notNull(),
+  isPublished: boolean("is_published").notNull().default(false),
+  publishedAt: timestamp("published_at"),
+  publishedById: integer("published_by_id").references(() => users.id, { onDelete: 'set null' }),
+  generatedAt: timestamp("generated_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+}, (table) => ({
+  uniqueStationMonthYear: unique().on(table.stationId, table.month, table.year)
+}));
+
+export const insertPlanningPeriodSchema = createInsertSchema(planningPeriods).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type PlanningPeriod = typeof planningPeriods.$inferSelect;
+export type InsertPlanningPeriod = z.infer<typeof insertPlanningPeriodSchema>;

@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -168,6 +168,12 @@ export interface IStorage {
   updateCustomNotificationRecipient(id: number, deliveryStatus: string, errorMessage?: string): Promise<void>;
   getCustomNotifications(stationId: number, limit?: number): Promise<Array<CustomNotification & {sender: User, recipients: Array<CustomNotificationRecipient & {user: User}>}>>;
   getCustomNotification(id: number): Promise<(CustomNotification & {sender: User, recipients: Array<CustomNotificationRecipient & {user: User}>}) | undefined>;
+  
+  // Planning Periods - publicatie status per maand/station
+  getPlanningPeriod(stationId: number, month: number, year: number): Promise<PlanningPeriod | undefined>;
+  createOrUpdatePlanningPeriod(stationId: number, month: number, year: number, data: Partial<PlanningPeriod>): Promise<PlanningPeriod>;
+  publishPlanningPeriod(stationId: number, month: number, year: number, publishedById: number): Promise<PlanningPeriod>;
+  unpublishPlanningPeriod(stationId: number, month: number, year: number): Promise<PlanningPeriod>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5158,6 +5164,59 @@ export class DatabaseStorage implements IStorage {
     }
     
     return { ...notification, sender, recipients };
+  }
+  
+  // Planning Periods - publicatie status per maand/station
+  async getPlanningPeriod(stationId: number, month: number, year: number): Promise<PlanningPeriod | undefined> {
+    const [period] = await db
+      .select()
+      .from(planningPeriods)
+      .where(and(
+        eq(planningPeriods.stationId, stationId),
+        eq(planningPeriods.month, month),
+        eq(planningPeriods.year, year)
+      ));
+    return period;
+  }
+  
+  async createOrUpdatePlanningPeriod(stationId: number, month: number, year: number, data: Partial<PlanningPeriod>): Promise<PlanningPeriod> {
+    const existing = await this.getPlanningPeriod(stationId, month, year);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(planningPeriods)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(planningPeriods.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(planningPeriods)
+        .values({
+          stationId,
+          month,
+          year,
+          ...data
+        })
+        .returning();
+      return created;
+    }
+  }
+  
+  async publishPlanningPeriod(stationId: number, month: number, year: number, publishedById: number): Promise<PlanningPeriod> {
+    return this.createOrUpdatePlanningPeriod(stationId, month, year, {
+      isPublished: true,
+      publishedAt: new Date(),
+      publishedById
+    });
+  }
+  
+  async unpublishPlanningPeriod(stationId: number, month: number, year: number): Promise<PlanningPeriod> {
+    return this.createOrUpdatePlanningPeriod(stationId, month, year, {
+      isPublished: false,
+      publishedAt: null,
+      publishedById: null
+    });
   }
 }
 

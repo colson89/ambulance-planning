@@ -2977,11 +2977,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ipAddress: getClientInfo(req).ipAddress
       });
       
-      // Send push notification to all users with subscriptions enabled
-      console.log(`📱 Sending planning published notifications for ${month}/${year} at station ${effectiveStationId}`);
-      sendPlanningPublishedNotification(effectiveStationId, month, year).catch(err => {
-        console.error('Failed to send planning published notifications:', err);
+      // Create planning period record (unpublished by default)
+      await storage.createOrUpdatePlanningPeriod(effectiveStationId, month, year, {
+        isPublished: false,
+        generatedAt: new Date()
       });
+      
+      // NOTE: Push notifications are now sent when the planning is PUBLISHED, not generated
+      // This allows admins to make manual adjustments before publishing
       
       res.status(200).json(generatedShifts);
     } catch (error) {
@@ -2990,6 +2993,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get planning period status (published/unpublished)
+  app.get("/api/schedule/status", requireAdmin, async (req, res) => {
+    try {
+      const { month, year, stationId: queryStationId } = req.query;
+      
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+      
+      const { stationId: effectiveStationId, error } = await getAuthorizedStationId(req, queryStationId ? parseInt(queryStationId as string) : undefined);
+      
+      if (error || !effectiveStationId) {
+        return res.status(403).json({ message: error || "No access to station" });
+      }
+      
+      const period = await storage.getPlanningPeriod(effectiveStationId, parseInt(month as string), parseInt(year as string));
+      
+      // Check if shifts exist for this period
+      const shifts = await storage.getShiftsByMonth(parseInt(month as string), parseInt(year as string), effectiveStationId);
+      
+      res.json({
+        hasShifts: shifts.length > 0,
+        shiftCount: shifts.length,
+        isPublished: period?.isPublished || false,
+        publishedAt: period?.publishedAt || null,
+        generatedAt: period?.generatedAt || null
+      });
+    } catch (error) {
+      console.error("Error getting planning status:", error);
+      res.status(500).json({ message: "Failed to get planning status" });
+    }
+  });
+  
+  // Publish planning - makes it visible to ambulanciers and sends notifications
+  app.post("/api/schedule/publish", requireAdmin, async (req, res) => {
+    try {
+      const { month, year, stationId: bodyStationId } = req.body;
+      
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+      
+      const { stationId: effectiveStationId, error } = await getAuthorizedStationId(req, bodyStationId);
+      
+      if (error || !effectiveStationId) {
+        return res.status(403).json({ message: error || "No access to station" });
+      }
+      
+      // Verify shifts exist
+      const shifts = await storage.getShiftsByMonth(month, year, effectiveStationId);
+      if (shifts.length === 0) {
+        return res.status(400).json({ message: "Geen planning gevonden om te publiceren" });
+      }
+      
+      // Publish the planning
+      const period = await storage.publishPlanningPeriod(effectiveStationId, month, year, req.user!.id);
+      
+      // Log activity
+      await logActivity({
+        userId: req.user!.id,
+        stationId: effectiveStationId,
+        action: ActivityActions.SCHEDULE.GENERATED, // Reuse existing action type
+        category: 'SCHEDULE',
+        details: `Planning gepubliceerd voor ${month}/${year} - ${shifts.length} shifts zichtbaar gemaakt`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
+      // Send push notification to all users with subscriptions enabled
+      console.log(`📱 Sending planning published notifications for ${month}/${year} at station ${effectiveStationId}`);
+      sendPlanningPublishedNotification(effectiveStationId, month, year).catch(err => {
+        console.error('Failed to send planning published notifications:', err);
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "Planning gepubliceerd",
+        period,
+        shiftCount: shifts.length
+      });
+    } catch (error) {
+      console.error("Error publishing planning:", error);
+      res.status(500).json({ message: "Failed to publish planning" });
+    }
+  });
+  
+  // Unpublish planning - hides it from ambulanciers
+  app.post("/api/schedule/unpublish", requireAdmin, async (req, res) => {
+    try {
+      const { month, year, stationId: bodyStationId } = req.body;
+      
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+      
+      const { stationId: effectiveStationId, error } = await getAuthorizedStationId(req, bodyStationId);
+      
+      if (error || !effectiveStationId) {
+        return res.status(403).json({ message: error || "No access to station" });
+      }
+      
+      // Unpublish the planning
+      const period = await storage.unpublishPlanningPeriod(effectiveStationId, month, year);
+      
+      // Log activity
+      await logActivity({
+        userId: req.user!.id,
+        stationId: effectiveStationId,
+        action: ActivityActions.SCHEDULE.GENERATED,
+        category: 'SCHEDULE',
+        details: `Planning ingetrokken voor ${month}/${year}`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
+      res.json({ 
+        success: true, 
+        message: "Planning ingetrokken",
+        period
+      });
+    } catch (error) {
+      console.error("Error unpublishing planning:", error);
+      res.status(500).json({ message: "Failed to unpublish planning" });
+    }
+  });
   
   // Get shifts for a specific user (for shift swap feature)
   app.get("/api/shifts/user/:userId", requireAuth, async (req, res) => {
