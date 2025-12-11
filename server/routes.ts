@@ -7531,6 +7531,21 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(403).json({ message: "Shift ruilen is niet ingeschakeld voor dit station" });
       }
 
+      // Controleer of de target user lid is van hetzelfde station (primair of cross-team)
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "Collega niet gevonden" });
+      }
+      
+      const isTargetPrimaryMember = targetUser.stationId === shift.stationId;
+      const isTargetCrossTeamMember = !isTargetPrimaryMember 
+        ? await storage.isUserCrossTeamMemberOfStation(targetUserId, shift.stationId)
+        : false;
+      
+      if (!isTargetPrimaryMember && !isTargetCrossTeamMember) {
+        return res.status(400).json({ message: "Je kunt alleen ruilen met collega's van hetzelfde station" });
+      }
+
       // Controleer of er al een pending swap request is voor deze shift
       const hasPendingSwap = await storage.hasExistingPendingSwapForShift(requesterShiftId);
       if (hasPendingSwap) {
@@ -7593,7 +7608,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
 
       // Log activity
       try {
-        const targetUser = await storage.getUser(targetUserId);
+        // targetUser already fetched earlier for validation
         const targetShift = targetShiftId ? await storage.getShift(targetShiftId) : null;
         const shiftDate = new Date(shift.date).toLocaleDateString('nl-BE');
         const shiftType = shift.type.startsWith('day') ? 'dagdienst' : 'nachtdienst';
