@@ -230,6 +230,9 @@ export async function checkAndNotifyDeadlines(): Promise<void> {
       continue;
     }
     
+    // Get all stations this user has access to (primary + cross-team)
+    const userStationIds = await storage.getUserAllStations(user.id);
+    
     // Group subscriptions by warning days to avoid duplicates
     const subscriptionsByWarningDays = new Map<number, DBPushSubscription[]>();
     for (const subscription of enabledSubscriptions) {
@@ -251,18 +254,25 @@ export async function checkAndNotifyDeadlines(): Promise<void> {
         currentDate.getMonth() === notificationDate.getMonth() &&
         currentDate.getFullYear() === notificationDate.getFullYear()
       ) {
-        await sendPushToSubscriptions(subs, {
-          title: 'Deadline Beschikbaarheid Nadert',
-          body: `Je hebt nog ${warningDays} dagen om je beschikbaarheid voor ${monthNames[nextMonth - 1]} ${nextYear} in te vullen.`,
-          icon: '/icon-192x192.png',
-          url: '/preferences',
-          data: { 
-            type: 'deadline_warning', 
-            month: nextMonth, 
-            year: nextYear,
-            daysRemaining: warningDays
-          }
-        });
+        // Send a separate notification for EACH station the user has access to
+        for (const stationId of userStationIds) {
+          const station = await storage.getStation(stationId);
+          const stationPrefix = station ? `[${station.displayName}] ` : '';
+          
+          await sendPushToSubscriptions(subs, {
+            title: `${stationPrefix}Deadline Beschikbaarheid Nadert`,
+            body: `Je hebt nog ${warningDays} dagen om je beschikbaarheid voor ${monthNames[nextMonth - 1]} ${nextYear} in te vullen.`,
+            icon: '/icon-192x192.png',
+            url: '/preferences',
+            data: { 
+              type: 'deadline_warning', 
+              month: nextMonth, 
+              year: nextYear,
+              daysRemaining: warningDays,
+              stationId: stationId
+            }
+          });
+        }
       }
     }
   }
