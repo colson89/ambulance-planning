@@ -1717,6 +1717,52 @@ export class DatabaseStorage implements IStorage {
     const daysInMonth = new Date(year, month, 0).getDate();
     const generatedShifts: Shift[] = [];
     
+    // === CROSS-STATION DOUBLE-BOOKING PREVENTION ===
+    // Preload alle bestaande shifts van ALLE stations voor deze maand om dubbele inplanning te voorkomen
+    // INCLUSIEF aangrenzende maanden voor nachtdiensten die maandgrenzen overschrijden
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0); // Laatste dag van de maand
+    const previousMonthEnd = new Date(year, month - 1, 0); // Laatste dag vorige maand
+    const nextMonthStart = new Date(year, month, 1); // Eerste dag volgende maand
+    
+    // Query shifts die overlappen met deze maand (inclusief nachtdiensten van vorige/naar volgende maand)
+    const existingAllStationShifts = await db.select()
+      .from(shifts)
+      .where(and(
+        // Shifts waarvan de endTime >= eerste dag van deze maand EN startTime <= laatste dag van deze maand
+        gte(shifts.endTime, monthStart),
+        lte(shifts.startTime, new Date(year, month, 0, 23, 59, 59)),
+        ne(shifts.status, "open")
+      ));
+    
+    // Helper om YYYY-MM-DD string te maken
+    const formatDateKey = (date: Date): string => {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
+    
+    // Bouw een user→date→stationId map om te tracken wie al is ingepland op welke dag
+    // Key format: "userId_YYYY-MM-DD" (bijv. "42_2026-01-09" voor user 42 op 9 januari 2026)
+    const userDayAssignments = new Map<string, number>(); // userId_YYYY-MM-DD -> stationId
+    for (const existingShift of existingAllStationShifts) {
+      if (existingShift.userId && existingShift.stationId !== stationId) {
+        // Alleen shifts van ANDERE stations tellen (dit station wordt opnieuw gegenereerd)
+        // Bepaal welke dagen deze shift dekt op basis van start/end times
+        const startDateKey = formatDateKey(existingShift.startTime);
+        const endDateKey = formatDateKey(existingShift.endTime);
+        
+        // Voeg de startdag toe
+        const startKey = `${existingShift.userId}_${startDateKey}`;
+        userDayAssignments.set(startKey, existingShift.stationId);
+        
+        // Als de shift meerdere dagen overspant (nachtdienst), voeg ook de einddag toe
+        if (endDateKey !== startDateKey) {
+          const endKey = `${existingShift.userId}_${endDateKey}`;
+          userDayAssignments.set(endKey, existingShift.stationId);
+        }
+      }
+    }
+    console.log(`🔒 DOUBLE-BOOKING GUARD: Loaded ${userDayAssignments.size} cross-station day assignments for ${month}/${year}`);
+    
     // Bijhouden hoeveel uren elke medewerker al is ingepland
     const userAssignedHours = new Map<number, number>();
     
@@ -1762,6 +1808,29 @@ export class DatabaseStorage implements IStorage {
     // KRITIEKE VEILIGHEIDSCHECK: Voorkom dat mensen opeenvolgende shiften krijgen
     const hasConsecutiveShiftConflict = async (userId: number, proposedDate: Date, proposedStartTime: Date, proposedEndTime: Date): Promise<boolean> => {
       const proposedDay = proposedDate.getDate();
+      
+      // REGEL 0: CROSS-STATION DOUBLE-BOOKING CHECK
+      // Controleer of deze gebruiker al is ingepland op dezelfde dag in een ANDER station
+      // Check ZOWEL startdag ALS einddag (voor nachtdiensten die 2 dagen overspannen)
+      const proposedStartDateKey = formatDateKey(proposedStartTime);
+      const proposedEndDateKey = formatDateKey(proposedEndTime);
+      
+      const crossStationKeyStart = `${userId}_${proposedStartDateKey}`;
+      if (userDayAssignments.has(crossStationKeyStart)) {
+        const otherStationId = userDayAssignments.get(crossStationKeyStart);
+        console.log(`🚨 CROSS-STATION DOUBLE-BOOKING BLOCKED: User ${userId} already has shift on ${proposedStartDateKey} in station ${otherStationId} - cannot assign to station ${stationId}`);
+        return true;
+      }
+      
+      // Check ook de einddag als deze verschilt (voor nachtdiensten)
+      if (proposedEndDateKey !== proposedStartDateKey) {
+        const crossStationKeyEnd = `${userId}_${proposedEndDateKey}`;
+        if (userDayAssignments.has(crossStationKeyEnd)) {
+          const otherStationId = userDayAssignments.get(crossStationKeyEnd);
+          console.log(`🚨 CROSS-STATION DOUBLE-BOOKING BLOCKED: User ${userId} already has shift on ${proposedEndDateKey} in station ${otherStationId} - cannot assign to station ${stationId}`);
+          return true;
+        }
+      }
       
       // Controleer bestaande shifts voor deze gebruiker in deze maand
       const existingUserShifts = generatedShifts.filter(shift => shift.userId === userId && shift.status === 'planned');
