@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.14 - Laatst bijgewerkt: 5 december 2025**
+**Versie 2025.16 - Laatst bijgewerkt: 11 december 2025**
 
 ---
 
@@ -1967,6 +1967,22 @@ Als admin/supervisor vindt u een nieuwe **"Ruilverzoeken"** knop in het dashboar
 - Verzoeken afwijzen met een optionele reden
 - Gefilterd bekijken op status (in behandeling / alle)
 
+**Multi-Station Admins en Supervisors:**
+
+Wanneer u toegang heeft tot meerdere stations, ziet u rechtsboven een **station-selector dropdown**:
+
+1. **Selecteer het station** waarvoor u ruilverzoeken wilt beheren
+2. Alleen verzoeken van het geselecteerde station worden getoond
+3. Uw selectie wordt **onthouden** zodat u niet steeds opnieuw hoeft te kiezen
+4. Bij elk verzoek ziet u ook een **stationbadge** zodat u direct ziet bij welk station het hoort
+
+**Cross-Team Verzoeken:**
+
+Bij ruilverzoeken van medewerkers die bij meerdere stations werken:
+- De **stationbadge** toont bij welk station de shift hoort
+- Shifts kunnen **alleen geruild worden binnen hetzelfde station**
+- U ziet zowel het primaire station als cross-team stations van de betrokken medewerkers
+
 **Bij Goedkeuring van Overname:**
 - De shift wordt automatisch overgedragen naar de overnemer
 - Beide gebruikers ontvangen een push notificatie (indien ingeschakeld)
@@ -3141,6 +3157,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 
 | Versie | Datum | Belangrijkste Verbeteringen |
 |--------|-------|----------------------------|
+| **2025.16** | Dec 2025 | Multi-station admin verbeteringen: station-selector op ruilverzoeken pagina, cross-team visibility met station badges, verbeterde cross-station dubbele inplanning preventie |
 | **2025.15** | Dec 2025 | Wachtwoord reset via e-mail (self-service), undo historie voor gebruikersbeheer |
 | **2025.14** | Dec 2025 | Uitgebreide audit logging voor handmatige shift wijzigingen (aanmaken, wijzigen, verwijderen, splitsen, samenvoegen), shift biedingen, station instellingen |
 | **2025.13** | Dec 2025 | Biedingssysteem voor open shifts |
@@ -3156,6 +3173,8 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 | **2025.1** | Okt 2025 | Planning algoritme, cross-team functionaliteit |
 
 **Huidige functies:**
+- Multi-station admin ondersteuning met station-selector op alle beheerpagina's
+- Cross-team visibility met station badges bij ruilverzoeken
 - Wachtwoord reset via e-mail (self-service, supervisor-gecontroleerd)
 - Undo historie voor gebruikersbeheer en shift planning
 - Biedingssysteem voor open shifts (ambulanciers kunnen zich aanmelden)
