@@ -233,12 +233,13 @@ interface GetActivityLogsParams {
   categories?: ActivityCategory[];
   startDate?: Date;
   endDate?: Date;
+  detailsSearch?: string;
   limit?: number;
   offset?: number;
 }
 
 export async function getActivityLogs(params: GetActivityLogsParams = {}) {
-  const { stationId, stationIds, userId, category, categories, startDate, endDate, limit = 100, offset = 0 } = params;
+  const { stationId, stationIds, userId, category, categories, startDate, endDate, detailsSearch, limit = 100, offset = 0 } = params;
 
   const conditions = [];
 
@@ -264,6 +265,10 @@ export async function getActivityLogs(params: GetActivityLogsParams = {}) {
 
   if (endDate) {
     conditions.push(lte(activityLogs.createdAt, endDate));
+  }
+
+  if (detailsSearch && detailsSearch.trim()) {
+    conditions.push(sql`${activityLogs.details} ILIKE ${'%' + detailsSearch.trim() + '%'}`);
   }
 
   const logs = await db
@@ -278,7 +283,7 @@ export async function getActivityLogs(params: GetActivityLogsParams = {}) {
 }
 
 export async function getActivityLogsCount(params: Omit<GetActivityLogsParams, 'limit' | 'offset'> = {}) {
-  const { stationId, stationIds, userId, category, categories, startDate, endDate } = params;
+  const { stationId, stationIds, userId, category, categories, startDate, endDate, detailsSearch } = params;
 
   const conditions = [];
 
@@ -304,6 +309,10 @@ export async function getActivityLogsCount(params: Omit<GetActivityLogsParams, '
 
   if (endDate) {
     conditions.push(lte(activityLogs.createdAt, endDate));
+  }
+
+  if (detailsSearch && detailsSearch.trim()) {
+    conditions.push(sql`${activityLogs.details} ILIKE ${'%' + detailsSearch.trim() + '%'}`);
   }
 
   const result = await db

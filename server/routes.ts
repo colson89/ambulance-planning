@@ -6682,7 +6682,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
 
     try {
-      const { stationId, stationIds, userId, category, categories, startDate, endDate, limit, offset } = req.query;
+      const { stationId, stationIds, userId, category, categories, startDate, endDate, detailsSearch, limit, offset } = req.query;
       
       // Parse stationIds - can be comma-separated string or single value
       let parsedStationIds: number[] | undefined;
@@ -6713,6 +6713,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         categories: parsedCategories,
         startDate: startDate ? new Date(startDate as string) : undefined,
         endDate: endDate ? new Date(endDate as string) : undefined,
+        detailsSearch: detailsSearch ? (detailsSearch as string) : undefined,
         limit: limit ? parseInt(limit as string) : 100,
         offset: offset ? parseInt(offset as string) : 0,
       });
@@ -6723,6 +6724,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         categories: parsedCategories,
         startDate: startDate ? new Date(startDate as string) : undefined,
         endDate: endDate ? new Date(endDate as string) : undefined,
+        detailsSearch: detailsSearch ? (detailsSearch as string) : undefined,
       });
 
       const usersMap = new Map<number, { firstName: string; lastName: string; username: string }>();
@@ -6769,7 +6771,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
 
     try {
-      const { stationId, stationIds, userId, category, categories, startDate, endDate } = req.query;
+      const { stationId, stationIds, userId, category, categories, startDate, endDate, detailsSearch } = req.query;
       
       // Parse stationIds - can be comma-separated string or single value
       let parsedStationIds: number[] | undefined;
@@ -6800,6 +6802,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         categories: parsedCategories,
         startDate: startDate ? new Date(startDate as string) : undefined,
         endDate: endDate ? new Date(endDate as string) : undefined,
+        detailsSearch: detailsSearch ? (detailsSearch as string) : undefined,
         limit: 10000,
         offset: 0,
       });
