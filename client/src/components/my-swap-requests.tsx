@@ -24,8 +24,12 @@ interface ShiftSwapRequest {
   id: number;
   requesterId: number;
   requesterShiftId: number;
+  requesterShiftDate: string | null;
+  requesterShiftType: string | null;
   targetUserId: number;
   targetShiftId: number | null;
+  targetShiftDate: string | null;
+  targetShiftType: string | null;
   stationId: number;
   status: string;
   requesterNote: string | null;
@@ -111,12 +115,29 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
     }
   };
 
-  const getShiftInfo = (shiftId: number) => {
+  const getShiftTypeLabel = (type: string) => {
+    if (type === "day") return "Dagshift";
+    if (type === "night") return "Nachtshift";
+    if (type === "day-half-1" || type === "day-half-2") return "Halve dagshift";
+    if (type === "night-half-1" || type === "night-half-2") return "Halve nachtshift";
+    return type.startsWith("day") ? "Dagshift" : "Nachtshift";
+  };
+
+  const getShiftInfo = (shiftId: number, snapshotDate?: string | null, snapshotType?: string | null) => {
+    // First try to use stored snapshot data (always works, even after shift is deleted/modified)
+    if (snapshotDate && snapshotType) {
+      return {
+        date: format(new Date(snapshotDate), "EEE d MMM yyyy", { locale: nl }),
+        type: getShiftTypeLabel(snapshotType),
+      };
+    }
+    
+    // Fallback to dynamic lookup (for older requests without snapshot data)
     const shift = shifts.find((s) => s.id === shiftId);
     if (!shift) return null;
     return {
       date: format(new Date(shift.date), "EEE d MMM yyyy", { locale: nl }),
-      type: shift.type === "day" ? "Dagshift" : "Nachtshift",
+      type: getShiftTypeLabel(shift.type),
     };
   };
 
@@ -158,8 +179,8 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-muted-foreground">In behandeling</h4>
             {pendingRequests.map((request) => {
-              const shiftInfo = getShiftInfo(request.requesterShiftId);
-              const targetShiftInfo = request.targetShiftId ? getShiftInfo(request.targetShiftId) : null;
+              const shiftInfo = getShiftInfo(request.requesterShiftId, request.requesterShiftDate, request.requesterShiftType);
+              const targetShiftInfo = request.targetShiftId ? getShiftInfo(request.targetShiftId, request.targetShiftDate, request.targetShiftType) : null;
               const isSwap = request.targetShiftId !== null;
               return (
                 <div
@@ -237,8 +258,8 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-muted-foreground">Afgehandeld</h4>
             {otherRequests.slice(0, 5).map((request) => {
-              const shiftInfo = getShiftInfo(request.requesterShiftId);
-              const targetShiftInfo = request.targetShiftId ? getShiftInfo(request.targetShiftId) : null;
+              const shiftInfo = getShiftInfo(request.requesterShiftId, request.requesterShiftDate, request.requesterShiftType);
+              const targetShiftInfo = request.targetShiftId ? getShiftInfo(request.targetShiftId, request.targetShiftDate, request.targetShiftType) : null;
               const isSwap = request.targetShiftId !== null;
               return (
                 <div

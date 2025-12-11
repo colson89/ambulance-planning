@@ -495,9 +495,15 @@ export const shiftSwapRequests = pgTable("shift_swap_requests", {
   // Aanvrager info
   requesterId: integer("requester_id").notNull().references(() => users.id),
   requesterShiftId: integer("requester_shift_id").notNull().references(() => shifts.id),
+  // Snapshot van aanvrager shift (voor historie, zelfs nadat shift gewijzigd/verwijderd is)
+  requesterShiftDate: timestamp("requester_shift_date"),
+  requesterShiftType: text("requester_shift_type"),
   // Doelcollega info (wie de shift overneemt)
   targetUserId: integer("target_user_id").notNull().references(() => users.id),
   targetShiftId: integer("target_shift_id").references(() => shifts.id), // Optioneel: als ze ook ruilen
+  // Snapshot van target shift (voor ruilen)
+  targetShiftDate: timestamp("target_shift_date"),
+  targetShiftType: text("target_shift_type"),
   // Station (voor filtering)
   stationId: integer("station_id").notNull().references(() => stations.id),
   // Status workflow: pending -> accepted_by_target -> approved/rejected

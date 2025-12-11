@@ -7584,11 +7584,18 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         }
       }
 
+      // Get target shift for snapshot if it's a real swap
+      const targetShiftForSnapshot = targetShiftId ? await storage.getShift(targetShiftId) : null;
+      
       const swapRequest = await storage.createShiftSwapRequest({
         requesterId: user.id,
         requesterShiftId,
+        requesterShiftDate: new Date(shift.date),
+        requesterShiftType: shift.type,
         targetUserId,
         targetShiftId: targetShiftId || null,
+        targetShiftDate: targetShiftForSnapshot ? new Date(targetShiftForSnapshot.date) : null,
+        targetShiftType: targetShiftForSnapshot?.type || null,
         stationId: shift.stationId,
         requesterNote: requesterNote || null
       });
