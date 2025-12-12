@@ -5039,6 +5039,12 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       const existingConfigMap = new Map(existingConfigs.map(c => [c.stationId, c.config]));
 
       for (const [, sheetData] of shiftSheetMap) {
+        // Filter: alleen ShiftSheets met "ZW" of "PIT" in de naam verwerken
+        const sheetNameUpper = sheetData.name.toUpperCase();
+        if (!sheetNameUpper.includes('ZW') && !sheetNameUpper.includes('PIT')) {
+          continue; // Sla niet-ambulance ShiftSheets over (bv. Officier, Ooffr, etc.)
+        }
+        
         // Probeer station te matchen op basis van naam
         // ShiftSheetName formaat: "ZW Geel", "ZW Mol", etc.
         const sheetNameNormalized = normalizeString(sheetData.name);
