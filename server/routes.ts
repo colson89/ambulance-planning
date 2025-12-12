@@ -6003,7 +6003,25 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           );
           
           // Filter out any null users (shouldn't happen but safety check)
-          const validUsers = assignedUsers.filter((u): u is User => u !== null && u !== undefined);
+          const filteredUsers = assignedUsers.filter((u): u is User => u !== null && u !== undefined);
+          
+          // 🚗 KRITIEKE VEILIGHEID: Sorteer users zodat degenen MET rijbewijs C eerst komen
+          // Dit zorgt ervoor dat de persoon met rijbewijs C altijd op positie 1 (Chauffeur) terecht komt bij Verdi
+          // Positie 1 = eerste persoon in array = Chauffeur
+          const validUsers = [...filteredUsers].sort((a, b) => {
+            // Users met rijbewijs C komen eerst (true = 1, false = 0, sorteer aflopend)
+            const aHasLicense = a.hasDrivingLicenseC ? 1 : 0;
+            const bHasLicense = b.hasDrivingLicenseC ? 1 : 0;
+            return bHasLicense - aHasLicense; // Rijbewijs C houders eerst
+          });
+          
+          // Log de sortering voor debugging
+          if (validUsers.length > 1) {
+            console.log(`🚗 Verdi positie volgorde voor ${groupKey}:`, 
+              validUsers.map((u, i) => `${i+1}. ${u.firstName} ${u.lastName} (rijbewijs C: ${u.hasDrivingLicenseC ? 'JA' : 'NEE'})`).join(', ')
+            );
+          }
+          
           if (validUsers.length === 0) {
             console.log(`Skipping shift group ${groupKey}: geen geldige gebruikers gevonden`);
             skipped++;
