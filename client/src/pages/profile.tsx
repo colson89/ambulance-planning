@@ -631,6 +631,9 @@ export default function Profile() {
                   <p className="text-xs text-muted-foreground mt-2">
                     Voorbeeld: als een shift om 07:00 zou moeten starten maar om 06:00 in je agenda staat, kies dan +1 uur.
                   </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    De wijziging wordt binnen enkele uren zichtbaar in je kalender app wanneer deze opnieuw synchroniseert. Er hoeft geen nieuwe planning te worden gegenereerd.
+                  </p>
                 </div>
 
                 <Collapsible open={isInstructionsOpen} onOpenChange={setIsInstructionsOpen}>
