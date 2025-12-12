@@ -9,10 +9,11 @@ import { z } from "zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Home, Calendar, Copy, RefreshCw, ChevronDown, Upload, User as UserIcon, Phone } from "lucide-react";
+import { Home, Calendar, Copy, RefreshCw, ChevronDown, Upload, User as UserIcon, Phone, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 import type { User } from "@shared/schema";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PushNotificationSettings } from "@/components/push-notification-settings";
@@ -170,6 +171,36 @@ export default function Profile() {
       toast({
         title: "Link Vernieuwd",
         description: "Je kalender link is vernieuwd. Oude links werken niet meer.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Calendar offset state
+  const [calendarOffset, setCalendarOffset] = useState<number>(user?.calendarOffset ?? 0);
+  
+  useEffect(() => {
+    if (user?.calendarOffset !== undefined) {
+      setCalendarOffset(user.calendarOffset);
+    }
+  }, [user?.calendarOffset]);
+
+  const updateCalendarOffsetMutation = useMutation({
+    mutationFn: async (offset: number) => {
+      const res = await apiRequest("PATCH", `/api/users/${user!.id}/calendar-offset`, { calendarOffset: offset });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Opgeslagen",
+        description: "Kalender tijdcorrectie is bijgewerkt. De wijziging is actief bij de volgende synchronisatie.",
       });
     },
     onError: (error: Error) => {
@@ -560,6 +591,45 @@ export default function Profile() {
                   <p className="text-sm text-blue-800">
                     Voeg deze link toe aan je kalender app (Google Calendar, Outlook, Apple Agenda). 
                     Je shifts worden automatisch gesynchroniseerd en blijven up-to-date.
+                  </p>
+                </div>
+
+                <div className="border rounded-lg p-4 bg-muted/30">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <label className="text-sm font-medium">Tijdcorrectie voor kalender</label>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Sommige kalender apps tonen shifts een uurtje te vroeg of te laat. 
+                    Pas hier de tijd aan zodat de shifts correct verschijnen in jouw agenda.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Select
+                      value={calendarOffset.toString()}
+                      onValueChange={(value) => {
+                        const offset = parseInt(value);
+                        setCalendarOffset(offset);
+                        updateCalendarOffsetMutation.mutate(offset);
+                      }}
+                      disabled={updateCalendarOffsetMutation.isPending}
+                    >
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Selecteer correctie" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="-120">-2 uur (vroeger)</SelectItem>
+                        <SelectItem value="-60">-1 uur (vroeger)</SelectItem>
+                        <SelectItem value="0">Geen correctie</SelectItem>
+                        <SelectItem value="60">+1 uur (later)</SelectItem>
+                        <SelectItem value="120">+2 uur (later)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {updateCalendarOffsetMutation.isPending && (
+                      <span className="text-xs text-muted-foreground">Opslaan...</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Voorbeeld: als een shift om 07:00 zou moeten starten maar om 06:00 in je agenda staat, kies dan +1 uur.
                   </p>
                 </div>
 

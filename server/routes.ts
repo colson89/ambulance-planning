@@ -1047,6 +1047,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update calendar offset (users can update their own setting)
+  app.patch("/api/users/:id/calendar-offset", requireAuth, async (req, res) => {
+    try {
+      const targetUserId = parseInt(req.params.id);
+      const currentUserId = (req.user as any).id;
+
+      // Users can only update their own calendar offset
+      if (currentUserId !== targetUserId) {
+        return res.status(403).json({ message: "Je kunt alleen je eigen kalender offset aanpassen" });
+      }
+
+      const schema = z.object({
+        calendarOffset: z.number().min(-120).max(120)
+      });
+
+      const validatedData = schema.parse(req.body);
+      
+      const updatedUser = await storage.updateUser(targetUserId, { 
+        calendarOffset: validatedData.calendarOffset 
+      });
+
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json(error.errors);
+      } else {
+        console.error("Calendar offset update error:", error);
+        res.status(500).json({ message: "Fout bij opslaan kalender offset" });
+      }
+    }
+  });
+
   // Multi-station management routes
   
   // Get accessible stations for current user
