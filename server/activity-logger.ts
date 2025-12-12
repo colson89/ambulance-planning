@@ -399,4 +399,12 @@ export const ActivityActions = {
     REJECTED: "Bieding afgewezen",
     WITHDRAWN: "Bieding ingetrokken",
   },
+  REPORTAGE: {
+    SMTP_CONFIG_UPDATED: "SMTP configuratie gewijzigd",
+    CONFIG_UPDATED: "Reportage configuratie gewijzigd",
+    RECIPIENT_ADDED: "Reportage ontvanger toegevoegd",
+    RECIPIENT_UPDATED: "Reportage ontvanger gewijzigd",
+    RECIPIENT_DELETED: "Reportage ontvanger verwijderd",
+    REPORT_SENT: "Reportage verzonden",
+  },
 } as const;

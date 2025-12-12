@@ -4973,6 +4973,10 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     try {
       const stationId = parseInt(req.params.stationId);
       const { verdiUrl, authId, authSecret, shiftSheetGuid, enabled } = req.body;
+      const user = req.user!;
+      
+      // Get old config for comparison
+      const oldConfig = await storage.getVerdiStationConfig(stationId);
       
       const config = await storage.upsertVerdiStationConfig(stationId, {
         verdiUrl,
@@ -4980,6 +4984,37 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         authSecret,
         shiftSheetGuid,
         enabled
+      });
+      
+      // Log activity (redact sensitive values)
+      const station = await storage.getStation(stationId);
+      const changes: string[] = [];
+      if (oldConfig?.enabled !== enabled) {
+        changes.push(enabled ? 'Verdi ingeschakeld' : 'Verdi uitgeschakeld');
+      }
+      if (oldConfig?.verdiUrl !== verdiUrl) {
+        changes.push('URL gewijzigd');
+      }
+      if (authId && oldConfig?.authId !== authId) {
+        changes.push('Auth credentials gewijzigd');
+      }
+      if (authSecret) {
+        changes.push('Auth credentials gewijzigd');
+      }
+      if (oldConfig?.shiftSheetGuid !== shiftSheetGuid) {
+        changes.push('Shift Sheet gewijzigd');
+      }
+      
+      // Deduplicate 'Auth credentials gewijzigd' if both authId and authSecret changed
+      const uniqueChanges = [...new Set(changes)];
+      
+      await logActivity({
+        userId: user.id,
+        stationId,
+        action: ActivityActions.VERDI.CONFIG_UPDATED,
+        category: 'SETTINGS',
+        details: `[${station?.name || `Station ${stationId}`}] Verdi configuratie gewijzigd: ${uniqueChanges.length > 0 ? uniqueChanges.join(', ') : 'geen wijzigingen'}`,
+        ipAddress: getClientInfo(req).ipAddress
       });
       
       res.json(config);
@@ -5017,14 +5052,31 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   // Update Verdi user mapping
   app.post("/api/verdi/mapping/user/:userId", requireAdmin, async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const targetUserId = parseInt(req.params.userId);
       const { personGuid } = req.body;
+      const user = req.user!;
       
       if (!personGuid) {
         return res.status(400).json({ message: "personGuid is required" });
       }
       
-      const mapping = await storage.upsertVerdiUserMapping(userId, personGuid);
+      // Get target user info for logging
+      const targetUser = await storage.getUser(targetUserId);
+      const oldMapping = await storage.getVerdiUserMapping(targetUserId);
+      
+      const mapping = await storage.upsertVerdiUserMapping(targetUserId, personGuid);
+      
+      // Log activity
+      const station = targetUser?.stationId ? await storage.getStation(targetUser.stationId) : null;
+      await logActivity({
+        userId: user.id,
+        stationId: targetUser?.stationId || user.stationId || null,
+        action: ActivityActions.VERDI.MAPPING_UPDATED,
+        category: 'SETTINGS',
+        details: `[${station?.name || 'Onbekend'}] Verdi mapping ${oldMapping ? 'gewijzigd' : 'toegevoegd'} voor ${targetUser?.firstName} ${targetUser?.lastName} (${targetUser?.username})`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
       res.json(mapping);
     } catch (error) {
       console.error("Error updating Verdi user mapping:", error);
@@ -6097,6 +6149,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
     
     try {
+      const user = req.user;
       const { smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromAddress, smtpFromName, smtpSecure } = req.body;
       
       const updateData: any = {
@@ -6133,6 +6186,24 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           });
         }
       }
+      
+      // Log activity (redact sensitive values - only log what changed, not actual values)
+      const changes: string[] = [];
+      if (smtpHost) changes.push('SMTP server gewijzigd');
+      if (smtpUser) changes.push('SMTP gebruiker gewijzigd');
+      if (smtpPassword) changes.push('SMTP wachtwoord gewijzigd');
+      if (smtpFromAddress) changes.push('Afzender adres gewijzigd');
+      if (smtpFromName) changes.push('Afzender naam gewijzigd');
+      if (smtpSecure !== undefined) changes.push('Beveiligingsinstelling gewijzigd');
+      
+      await logActivity({
+        userId: user.id,
+        stationId: user.stationId || null,
+        action: ActivityActions.REPORTAGE.SMTP_CONFIG_UPDATED,
+        category: 'SETTINGS',
+        details: `SMTP configuratie gewijzigd: ${changes.length > 0 ? changes.join(', ') : 'instellingen bijgewerkt'}`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
       
       res.json({ 
         success: true,
@@ -6214,7 +6285,25 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
     
     try {
+      const user = req.user;
+      const { enabled, daysAfterMonthEnd } = req.body;
+      
       const config = await storage.createOrUpdateReportageConfig(req.body);
+      
+      // Log activity
+      const changes: string[] = [];
+      if (enabled !== undefined) changes.push(enabled ? 'Reportage ingeschakeld' : 'Reportage uitgeschakeld');
+      if (daysAfterMonthEnd !== undefined) changes.push(`Verzenddag: ${daysAfterMonthEnd} dagen na maandeinde`);
+      
+      await logActivity({
+        userId: user.id,
+        stationId: user.stationId || null,
+        action: ActivityActions.REPORTAGE.CONFIG_UPDATED,
+        category: 'SETTINGS',
+        details: `Reportage configuratie gewijzigd: ${changes.length > 0 ? changes.join(', ') : 'geen wijzigingen'}`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
       res.json(config);
     } catch (error: any) {
       res.status(500).json({ message: "Failed to update config", error: error.message });
@@ -6248,11 +6337,23 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
     
     try {
+      const user = req.user;
       const { email, name } = req.body;
       if (!email) {
         return res.status(400).json({ message: "Email adres is verplicht" });
       }
       const recipient = await storage.createReportageRecipient({ email, name, isActive: true });
+      
+      // Log activity
+      await logActivity({
+        userId: user.id,
+        stationId: user.stationId || null,
+        action: ActivityActions.REPORTAGE.RECIPIENT_ADDED,
+        category: 'SETTINGS',
+        details: `Reportage ontvanger toegevoegd: ${name || email} (${email})`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
       res.json(recipient);
     } catch (error: any) {
       res.status(500).json({ message: "Failed to add recipient", error: error.message });
@@ -6269,8 +6370,25 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
     
     try {
+      const user = req.user;
       const id = parseInt(req.params.id);
       const recipient = await storage.updateReportageRecipient(id, req.body);
+      
+      // Log activity
+      const changes: string[] = [];
+      if (req.body.email) changes.push(`Email: ${req.body.email}`);
+      if (req.body.name !== undefined) changes.push(`Naam: ${req.body.name || '(leeg)'}`);
+      if (req.body.isActive !== undefined) changes.push(req.body.isActive ? 'Geactiveerd' : 'Gedeactiveerd');
+      
+      await logActivity({
+        userId: user.id,
+        stationId: user.stationId || null,
+        action: ActivityActions.REPORTAGE.RECIPIENT_UPDATED,
+        category: 'SETTINGS',
+        details: `Reportage ontvanger gewijzigd: ${recipient?.name || recipient?.email} - ${changes.join(', ')}`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
       res.json(recipient);
     } catch (error: any) {
       res.status(500).json({ message: "Failed to update recipient", error: error.message });
@@ -6287,8 +6405,25 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
     
     try {
+      const user = req.user;
       const id = parseInt(req.params.id);
+      
+      // Get recipient info before deletion for logging
+      const recipients = await storage.getReportageRecipients();
+      const recipient = recipients.find(r => r.id === id);
+      
       await storage.deleteReportageRecipient(id);
+      
+      // Log activity
+      await logActivity({
+        userId: user.id,
+        stationId: user.stationId || null,
+        action: ActivityActions.REPORTAGE.RECIPIENT_DELETED,
+        category: 'SETTINGS',
+        details: `Reportage ontvanger verwijderd: ${recipient?.name || recipient?.email || `ID ${id}`}`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ message: "Failed to delete recipient", error: error.message });

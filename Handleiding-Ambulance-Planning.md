@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.16 - Laatst bijgewerkt: 11 december 2025**
+**Versie 2025.17 - Laatst bijgewerkt: 12 december 2025**
 
 ---
 
@@ -2763,7 +2763,18 @@ De Activiteitenlog biedt een uitgebreid overzicht van alle belangrijke acties in
 | **SHIFT_SWAP** | Shift ruil- en overnameverzoeken (aanvragen, goedkeuringen, afwijzingen, annuleringen) | Paars |
 | **SHIFT_MANUAL** | Handmatige shift wijzigingen (aanmaken, wijzigen, verwijderen, splitsen, samenvoegen) | Blauw |
 | **SHIFT_BID** | Shift biedingen (ingediend, geaccepteerd, afgewezen, ingetrokken) | Oranje |
-| **SETTINGS** | Systeeminstellingen wijzigingen (station instellingen, voorkeuren wissen) | Grijs |
+| **SETTINGS** | Systeeminstellingen wijzigingen (station instellingen, voorkeuren wissen, integratie configuratie) | Grijs |
+
+**Integratie Logging (Nieuw in 2025.17):**
+
+Alle wijzigingen aan integratie-instellingen worden nu gelogd in de SETTINGS categorie:
+
+| Integratie | Wat wordt gelogd |
+|------------|------------------|
+| **Verdi** | Configuratie wijzigingen (URL, credentials, in-/uitschakelen), gebruikers-mapping wijzigingen |
+| **Reportage** | SMTP configuratie, reportage instellingen, ontvangers (toevoegen, wijzigen, verwijderen) |
+
+Dit zorgt voor volledige traceerbaarheid van alle integratie-aanpassingen.
 
 **SHIFT_MANUAL Details (uitgebreide audit trail):**
 Elke handmatige shift wijziging wordt gelogd met volledige details:
@@ -3158,6 +3169,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 
 | Versie | Datum | Belangrijkste Verbeteringen |
 |--------|-------|----------------------------|
+| **2025.17** | Dec 2025 | Integratie logging: alle wijzigingen aan Verdi en Reportage instellingen worden nu gelogd in activiteitenlogboek |
 | **2025.16** | Dec 2025 | Multi-station admin verbeteringen: station-selector op ruilverzoeken pagina, cross-team visibility met station badges, verbeterde cross-station dubbele inplanning preventie |
 | **2025.15** | Dec 2025 | Wachtwoord reset via e-mail (self-service), undo historie voor gebruikersbeheer |
 | **2025.14** | Dec 2025 | Uitgebreide audit logging voor handmatige shift wijzigingen (aanmaken, wijzigen, verwijderen, splitsen, samenvoegen), shift biedingen, station instellingen |
