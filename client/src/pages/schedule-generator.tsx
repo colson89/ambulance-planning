@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO, addDays } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X, CheckCircle, XCircle } from "lucide-react";
 import { UndoHistoryPanel } from "@/components/undo-history-panel";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -98,6 +98,29 @@ function ScheduleGenerator() {
   // Shift bid viewing state (voor admins/supervisors)
   const [showBidsDialog, setShowBidsDialog] = useState(false);
   const [selectedBidShift, setSelectedBidShift] = useState<Shift | null>(null);
+  
+  // Verdi sync results dialog state
+  const [showVerdiSyncResultsDialog, setShowVerdiSyncResultsDialog] = useState(false);
+  const [verdiSyncResults, setVerdiSyncResults] = useState<{
+    success: boolean;
+    message: string;
+    synced: number;
+    errors: number;
+    skipped: number;
+    updated: number;
+    deleted: number;
+    deleteErrors: number;
+    total: number;
+    results: Array<{
+      shiftId: number;
+      date: string;
+      userCount: number;
+      users: string;
+      success: boolean;
+      errors: string[];
+      warnings: string[];
+    }>;
+  } | null>(null);
   
   // Query voor stations (voor supervisors en admins)
   const { data: stations, isLoading: isLoadingStations } = useQuery<Station[]>({
@@ -577,10 +600,9 @@ function ScheduleGenerator() {
       return res.json();
     },
     onSuccess: (data) => {
-      toast({
-        title: "Synchronisatie Voltooid",
-        description: `${data.successful} shifts gesynchroniseerd, ${data.failed} fouten`,
-      });
+      // Store results and open dialog instead of just toast
+      setVerdiSyncResults(data);
+      setShowVerdiSyncResultsDialog(true);
       
       // Force refresh van alle shift-gerelateerde data om sync status bij te werken
       queryClient.invalidateQueries({ queryKey: ["/api/shifts"] });
@@ -2983,6 +3005,112 @@ function ScheduleGenerator() {
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowContactDialog(false)}>
+              Sluiten
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Verdi Sync Results Dialog */}
+      <Dialog open={showVerdiSyncResultsDialog} onOpenChange={setShowVerdiSyncResultsDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {verdiSyncResults?.errors === 0 ? (
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              )}
+              Verdi Synchronisatie Resultaat
+            </DialogTitle>
+            <DialogDescription>
+              {verdiSyncResults?.message}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto space-y-4 py-4 max-h-[50vh]">
+            {/* Summary stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-green-700">{verdiSyncResults?.synced || 0}</div>
+                <div className="text-xs text-green-600">Geslaagd</div>
+              </div>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-red-700">{verdiSyncResults?.errors || 0}</div>
+                <div className="text-xs text-red-600">Fouten</div>
+              </div>
+              {(verdiSyncResults?.updated || 0) > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-blue-700">{verdiSyncResults?.updated}</div>
+                  <div className="text-xs text-blue-600">Bijgewerkt</div>
+                </div>
+              )}
+              {(verdiSyncResults?.skipped || 0) > 0 && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-gray-700">{verdiSyncResults?.skipped}</div>
+                  <div className="text-xs text-gray-600">Overgeslagen</div>
+                </div>
+              )}
+            </div>
+            
+            {/* Detailed results */}
+            {verdiSyncResults?.results && verdiSyncResults.results.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm text-muted-foreground">Details per shift:</h4>
+                <div className="space-y-2">
+                  {verdiSyncResults.results.map((result, index) => (
+                    <div 
+                      key={index} 
+                      className={`p-3 rounded-lg border ${
+                        result.success 
+                          ? 'bg-green-50/50 border-green-200' 
+                          : 'bg-red-50/50 border-red-200'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            {result.success ? (
+                              <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                            )}
+                            <span className="font-medium text-sm">
+                              {format(new Date(result.date), "dd MMM yyyy", { locale: nl })}
+                            </span>
+                          </div>
+                          <div className="text-sm text-muted-foreground ml-6 truncate">
+                            {result.users} ({result.userCount} {result.userCount === 1 ? 'persoon' : 'personen'})
+                          </div>
+                          {result.errors && result.errors.length > 0 && (
+                            <div className="ml-6 mt-1">
+                              {result.errors.map((err, i) => (
+                                <div key={i} className="text-xs text-red-600">
+                                  {err}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {result.warnings && result.warnings.length > 0 && (
+                            <div className="ml-6 mt-1">
+                              {result.warnings.map((warn, i) => (
+                                <div key={i} className="text-xs text-amber-600">
+                                  ⚠ {warn}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button onClick={() => setShowVerdiSyncResultsDialog(false)}>
               Sluiten
             </Button>
           </DialogFooter>
