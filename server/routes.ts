@@ -5306,6 +5306,253 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // Import ShiftSheet GUID en position mappings vanuit Verdi Excel export
+  app.post("/api/verdi/config/import", requireAdmin, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Geen bestand geüpload" });
+      }
+
+      // Parse Excel bestand
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const excelData = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as Array<{
+        GuidShiftSheet: string;
+        ShiftSheetName: string;
+        GuidShiftSheetGroup: string;
+        ShiftSheetGroupName: string;
+        GuidShiftSheetGroupItem: string;
+        ShiftSheetGroupItemName: string;
+      }>;
+
+      if (excelData.length === 0) {
+        return res.status(400).json({ message: "Excel bestand is leeg" });
+      }
+
+      // Valideer dat de juiste kolommen aanwezig zijn
+      const firstRow = excelData[0];
+      if (!('GuidShiftSheet' in firstRow) || !('ShiftSheetName' in firstRow) || !('GuidShiftSheetGroupItem' in firstRow)) {
+        return res.status(400).json({ 
+          message: "Excel bestand mist verplichte kolommen (GuidShiftSheet, ShiftSheetName, GuidShiftSheetGroupItem)" 
+        });
+      }
+
+      // Haal alle stations op
+      const stations = await storage.getAllStations();
+      
+      // Normaliseer strings voor matching
+      const normalizeString = (str: string) => 
+        str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
+
+      // Groepeer Excel data per ShiftSheet (station)
+      const shiftSheetMap = new Map<string, {
+        guid: string;
+        name: string;
+        positions: Array<{ guid: string; name: string }>;
+      }>();
+
+      excelData.forEach(row => {
+        const sheetGuid = row.GuidShiftSheet;
+        if (!shiftSheetMap.has(sheetGuid)) {
+          shiftSheetMap.set(sheetGuid, {
+            guid: sheetGuid,
+            name: row.ShiftSheetName,
+            positions: []
+          });
+        }
+        const sheet = shiftSheetMap.get(sheetGuid)!;
+        // Voeg positie toe als nog niet aanwezig
+        if (!sheet.positions.some(p => p.guid === row.GuidShiftSheetGroupItem)) {
+          sheet.positions.push({
+            guid: row.GuidShiftSheetGroupItem,
+            name: row.ShiftSheetGroupItemName
+          });
+        }
+      });
+
+      // Match ShiftSheets met stations
+      const matched: Array<{
+        stationId: number;
+        stationName: string;
+        shiftSheetGuid: string;
+        shiftSheetName: string;
+        position1Guid: string | null;
+        position1Name: string | null;
+        position2Guid: string | null;
+        position2Name: string | null;
+        hasExistingConfig: boolean;
+        existingShiftSheetGuid: string | null;
+      }> = [];
+
+      const notMatched: Array<{
+        shiftSheetGuid: string;
+        shiftSheetName: string;
+        positions: Array<{ guid: string; name: string }>;
+      }> = [];
+
+      // Haal bestaande configs op voor conflict detectie
+      const existingConfigs = await Promise.all(
+        stations.map(s => storage.getVerdiConfig(s.id).then(config => ({ stationId: s.id, config })))
+      );
+      const existingConfigMap = new Map(existingConfigs.map(c => [c.stationId, c.config]));
+
+      for (const [, sheetData] of shiftSheetMap) {
+        // Probeer station te matchen op basis van naam
+        // ShiftSheetName formaat: "ZW Geel", "ZW Mol", etc.
+        const sheetNameNormalized = normalizeString(sheetData.name);
+        
+        let matchedStation = null;
+        for (const station of stations) {
+          const stationNameNormalized = normalizeString(station.name);
+          const displayNameNormalized = normalizeString(station.displayName || station.name);
+          
+          // Check verschillende match patronen
+          if (sheetNameNormalized.includes(stationNameNormalized) || 
+              stationNameNormalized.includes(sheetNameNormalized) ||
+              sheetNameNormalized.includes(displayNameNormalized) ||
+              displayNameNormalized.includes(sheetNameNormalized) ||
+              // Check voor "ZW <stationname>" patroon
+              sheetNameNormalized === `zw${stationNameNormalized}` ||
+              sheetNameNormalized.endsWith(stationNameNormalized)) {
+            matchedStation = station;
+            break;
+          }
+        }
+
+        if (matchedStation) {
+          // Identificeer posities: "Ambulancier C" = positie 1 (chauffeur), "Ambulancier" = positie 2 (bijrijder)
+          let position1: { guid: string; name: string } | null = null;
+          let position2: { guid: string; name: string } | null = null;
+
+          for (const pos of sheetData.positions) {
+            const posName = pos.name.toLowerCase().trim();
+            // Positie 1 = exact "ambulancier c" (rijbewijs C vereist, chauffeur)
+            if (posName === 'ambulancier c') {
+              position1 = pos;
+            }
+            // Positie 2 = exact "ambulancier" (bijrijder, geen C)
+            else if (posName === 'ambulancier') {
+              position2 = pos;
+            }
+          }
+
+          const existingConfig = existingConfigMap.get(matchedStation.id);
+          
+          matched.push({
+            stationId: matchedStation.id,
+            stationName: matchedStation.displayName || matchedStation.name,
+            shiftSheetGuid: sheetData.guid,
+            shiftSheetName: sheetData.name,
+            position1Guid: position1?.guid || null,
+            position1Name: position1?.name || null,
+            position2Guid: position2?.guid || null,
+            position2Name: position2?.name || null,
+            hasExistingConfig: !!existingConfig?.shiftSheetGuid,
+            existingShiftSheetGuid: existingConfig?.shiftSheetGuid || null
+          });
+        } else {
+          notMatched.push({
+            shiftSheetGuid: sheetData.guid,
+            shiftSheetName: sheetData.name,
+            positions: sheetData.positions
+          });
+        }
+      }
+
+      res.json({
+        matched,
+        notMatched,
+        stats: {
+          totalShiftSheets: shiftSheetMap.size,
+          matchedCount: matched.length,
+          notMatchedCount: notMatched.length
+        }
+      });
+    } catch (error) {
+      console.error("Error parsing Verdi config Excel:", error);
+      res.status(500).json({ 
+        message: "Failed to parse Excel file",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Bevestig en sla geïmporteerde config en position mappings op
+  app.post("/api/verdi/config/import/confirm", requireAdmin, async (req, res) => {
+    try {
+      const { configs } = req.body as { 
+        configs: Array<{
+          stationId: number;
+          shiftSheetGuid: string;
+          position1Guid: string | null;
+          position2Guid: string | null;
+        }> 
+      };
+
+      if (!configs || !Array.isArray(configs)) {
+        return res.status(400).json({ message: "Ongeldige configs data" });
+      }
+
+      const results = [];
+      for (const config of configs) {
+        // Update ShiftSheet GUID in config
+        const existingConfig = await storage.getVerdiConfig(config.stationId);
+        if (existingConfig) {
+          await storage.updateVerdiConfig(config.stationId, {
+            shiftSheetGuid: config.shiftSheetGuid
+          });
+        } else {
+          // Maak nieuwe config aan met alleen shiftSheetGuid
+          await storage.createVerdiConfig({
+            stationId: config.stationId,
+            verdiUrl: '',
+            authId: '',
+            authSecret: '',
+            shiftSheetGuid: config.shiftSheetGuid,
+            enabled: false
+          });
+        }
+
+        // Sla positie mappings op
+        if (config.position1Guid) {
+          await storage.upsertVerdiPositionMapping(config.stationId, 1, config.position1Guid, true);
+        }
+        if (config.position2Guid) {
+          await storage.upsertVerdiPositionMapping(config.stationId, 2, config.position2Guid, false);
+        }
+
+        results.push({
+          stationId: config.stationId,
+          success: true
+        });
+      }
+
+      // Log activity
+      const user = req.user!;
+      await logActivity({
+        userId: user.id,
+        stationId: user.stationId || null,
+        action: ActivityActions.VERDI.CONFIG_UPDATED,
+        category: 'SETTINGS',
+        details: `Verdi configuratie geïmporteerd uit Excel voor ${results.length} station(s)`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+
+      res.json({
+        success: true,
+        imported: results.length,
+        message: `Configuratie voor ${results.length} station(s) succesvol geïmporteerd`
+      });
+    } catch (error) {
+      console.error("Error confirming Verdi config import:", error);
+      res.status(500).json({ 
+        message: "Failed to confirm import",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // Get Verdi position mappings voor station
   app.get("/api/verdi/mappings/positions/:stationId", requireAdmin, async (req, res) => {
     try {

@@ -140,7 +140,7 @@ export default function VerdiSettings() {
       : <ArrowDown className="ml-1 h-4 w-4" />;
   };
   
-  // Excel import state
+  // Excel import state for user mappings
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importResults, setImportResults] = useState<{
     matched: Array<{ userId: number; username: string; firstName: string; lastName: string; personGuid: string; excelPost?: string; hasExistingMapping?: boolean; existingGuid?: string }>;
@@ -148,6 +148,30 @@ export default function VerdiSettings() {
     noMatch: Array<{ userId: number; username: string; firstName: string; lastName: string }>;
     stats: { totalExcelRows: number; uniquePersons: number; matchedCount: number; notFoundCount: number; noMatchCount: number };
   } | null>(null);
+
+  // Config import state (ShiftSheet GUID + position mappings)
+  const [configImportDialogOpen, setConfigImportDialogOpen] = useState(false);
+  const [configImportResults, setConfigImportResults] = useState<{
+    matched: Array<{
+      stationId: number;
+      stationName: string;
+      shiftSheetGuid: string;
+      shiftSheetName: string;
+      position1Guid: string | null;
+      position1Name: string | null;
+      position2Guid: string | null;
+      position2Name: string | null;
+      hasExistingConfig: boolean;
+      existingShiftSheetGuid: string | null;
+    }>;
+    notMatched: Array<{
+      shiftSheetGuid: string;
+      shiftSheetName: string;
+      positions: Array<{ guid: string; name: string }>;
+    }>;
+    stats: { totalShiftSheets: number; matchedCount: number; notMatchedCount: number };
+  } | null>(null);
+  const [selectedConfigMatches, setSelectedConfigMatches] = useState<Set<number>>(new Set());
   const [selectedMatches, setSelectedMatches] = useState<Set<number>>(new Set());
   const previousConfigRef = useRef<string>("");
 
@@ -360,6 +384,111 @@ export default function VerdiSettings() {
     },
   });
 
+  // Config import mutations (ShiftSheet GUID + position mappings)
+  const importConfigMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/verdi/config/import', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Kon Excel bestand niet importeren");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setConfigImportResults(data);
+      // Select all matched stations by default
+      setSelectedConfigMatches(new Set(data.matched.map((m: any) => m.stationId)));
+      setConfigImportDialogOpen(true);
+      toast({
+        title: "Excel geïmporteerd",
+        description: `${data.stats.matchedCount} station matches gevonden`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Import fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const confirmConfigImportMutation = useMutation({
+    mutationFn: async (configs: Array<{ stationId: number; shiftSheetGuid: string; position1Guid: string | null; position2Guid: string | null }>) => {
+      const res = await apiRequest("POST", "/api/verdi/config/import/confirm", { configs });
+      if (!res.ok) throw new Error("Kon configuratie niet opslaan");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/verdi/config"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/verdi/mappings/positions"] });
+      setConfigImportDialogOpen(false);
+      setConfigImportResults(null);
+      setSelectedConfigMatches(new Set());
+      // Reset file input
+      const fileInput = document.getElementById('config-excel-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      toast({
+        title: "Import voltooid",
+        description: data.message,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Import fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleConfigFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      importConfigMutation.mutate(file);
+    }
+  };
+
+  const handleConfirmConfigImport = () => {
+    if (!configImportResults) return;
+    
+    const selectedConfigs = configImportResults.matched
+      .filter(m => selectedConfigMatches.has(m.stationId))
+      .map(m => ({
+        stationId: m.stationId,
+        shiftSheetGuid: m.shiftSheetGuid,
+        position1Guid: m.position1Guid,
+        position2Guid: m.position2Guid
+      }));
+    
+    confirmConfigImportMutation.mutate(selectedConfigs);
+  };
+
+  const toggleConfigMatch = (stationId: number) => {
+    const newSet = new Set(selectedConfigMatches);
+    if (newSet.has(stationId)) {
+      newSet.delete(stationId);
+    } else {
+      newSet.add(stationId);
+    }
+    setSelectedConfigMatches(newSet);
+  };
+
+  const toggleAllConfigMatches = () => {
+    if (!configImportResults) return;
+    if (selectedConfigMatches.size === configImportResults.matched.length) {
+      setSelectedConfigMatches(new Set());
+    } else {
+      setSelectedConfigMatches(new Set(configImportResults.matched.map(m => m.stationId)));
+    }
+  };
+
   const handleConfigSave = () => {
     updateConfigMutation.mutate(configForm);
   };
@@ -540,10 +669,31 @@ export default function VerdiSettings() {
         <TabsContent value="config" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Station Configuratie</CardTitle>
-              <CardDescription>
-                Configureer Verdi verbinding en authenticatie voor dit station
-              </CardDescription>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle>Station Configuratie</CardTitle>
+                  <CardDescription>
+                    Configureer Verdi verbinding en authenticatie voor dit station
+                  </CardDescription>
+                </div>
+                <div>
+                  <input
+                    type="file"
+                    id="config-excel-upload"
+                    accept=".xlsx,.xls"
+                    onChange={handleConfigFileSelect}
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => document.getElementById('config-excel-upload')?.click()}
+                    disabled={importConfigMutation.isPending}
+                  >
+                    <FileUp className="mr-2 h-4 w-4" />
+                    {importConfigMutation.isPending ? "Importeren..." : "Import uit Verdi Excel"}
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -981,6 +1131,155 @@ export default function VerdiSettings() {
               disabled={confirmImportMutation.isPending || selectedMatches.size === 0}
             >
               {confirmImportMutation.isPending ? "Importeren..." : `Importeer ${selectedMatches.size} mappings`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Config Import Preview Dialog (ShiftSheet GUID + Position Mappings) */}
+      <Dialog open={configImportDialogOpen} onOpenChange={setConfigImportDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Verdi Configuratie Import</DialogTitle>
+            <DialogDescription>
+              Importeer ShiftSheet GUIDs en positie mappings voor alle stations
+            </DialogDescription>
+          </DialogHeader>
+
+          {configImportResults && (
+            <div className="space-y-6">
+              {/* Statistics */}
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Import Statistieken</AlertTitle>
+                <AlertDescription className="mt-2 space-y-1">
+                  <div>Totaal ShiftSheets in Excel: <strong>{configImportResults.stats.totalShiftSheets}</strong></div>
+                  <div className="text-green-600">✓ Stations gematcht: <strong>{configImportResults.stats.matchedCount}</strong></div>
+                  <div className="text-amber-600">⚠ Niet gematcht: <strong>{configImportResults.stats.notMatchedCount}</strong></div>
+                </AlertDescription>
+              </Alert>
+
+              {/* Matched Stations */}
+              {configImportResults.matched.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      Gematchte Stations ({selectedConfigMatches.size}/{configImportResults.matched.length} geselecteerd)
+                    </h3>
+                    <Button variant="outline" size="sm" onClick={toggleAllConfigMatches}>
+                      {selectedConfigMatches.size === configImportResults.matched.length ? "Deselecteer alles" : "Selecteer alles"}
+                    </Button>
+                  </div>
+                  <div className="border rounded-lg max-h-80 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12"></TableHead>
+                          <TableHead>Station</TableHead>
+                          <TableHead>Verdi ShiftSheet</TableHead>
+                          <TableHead>Positie 1 (Chauffeur)</TableHead>
+                          <TableHead>Positie 2 (Bijrijder)</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {configImportResults.matched.map((match) => (
+                          <TableRow key={match.stationId} className={match.hasExistingConfig ? "bg-amber-50" : ""}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedConfigMatches.has(match.stationId)}
+                                onCheckedChange={() => toggleConfigMatch(match.stationId)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium">{match.stationName}</div>
+                              {match.hasExistingConfig && (
+                                <span className="text-xs text-amber-600">(heeft bestaande config)</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm text-muted-foreground">{match.shiftSheetName}</div>
+                              <div className="font-mono text-xs">{match.shiftSheetGuid.substring(0, 18)}...</div>
+                              {match.hasExistingConfig && match.existingShiftSheetGuid !== match.shiftSheetGuid && (
+                                <div className="text-xs text-amber-600 mt-1">
+                                  Was: {match.existingShiftSheetGuid?.substring(0, 18)}...
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {match.position1Name ? (
+                                <div>
+                                  <div className="text-sm">{match.position1Name}</div>
+                                  <div className="font-mono text-xs text-muted-foreground">{match.position1Guid?.substring(0, 8)}...</div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">Niet gevonden</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {match.position2Name ? (
+                                <div>
+                                  <div className="text-sm">{match.position2Name}</div>
+                                  <div className="font-mono text-xs text-muted-foreground">{match.position2Guid?.substring(0, 8)}...</div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">Niet gevonden</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {/* Not Matched ShiftSheets */}
+              {configImportResults.notMatched.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5 text-amber-600" />
+                    Niet gematchte ShiftSheets ({configImportResults.notMatched.length})
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Deze ShiftSheets uit Verdi konden niet automatisch gekoppeld worden aan een station
+                  </p>
+                  <div className="border rounded-lg max-h-48 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>ShiftSheet Naam</TableHead>
+                          <TableHead>GUID</TableHead>
+                          <TableHead>Posities</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {configImportResults.notMatched.map((item, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>{item.shiftSheetName}</TableCell>
+                            <TableCell className="font-mono text-xs">{item.shiftSheetGuid.substring(0, 18)}...</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {item.positions.map(p => p.name).join(', ')}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfigImportDialogOpen(false)}>
+              Annuleren
+            </Button>
+            <Button 
+              onClick={handleConfirmConfigImport}
+              disabled={confirmConfigImportMutation.isPending || selectedConfigMatches.size === 0}
+            >
+              {confirmConfigImportMutation.isPending ? "Importeren..." : `Importeer ${selectedConfigMatches.size} configuraties`}
             </Button>
           </DialogFooter>
         </DialogContent>
