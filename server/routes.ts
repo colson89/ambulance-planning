@@ -4891,12 +4891,19 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         ...vtimezone
       ];
       
+      // Haal de gebruiker's calendar offset op (in minuten, default 0)
+      const calendarOffsetMinutes = user.calendarOffset ?? 0;
+      
       // Helper: Format tijd voor ICS met TZID (YYYYMMDDTHHmmss formaat, geen Z suffix)
       // Converteert de datum naar Europe/Brussels tijdzone om correcte lokale tijd te krijgen
+      // Past de gebruiker's calendar offset toe om tijdzone problemen in externe kalender apps op te lossen
       const formatLocalICSDate = (date: Date) => {
+        // Pas de gebruiker's offset toe (in minuten)
+        const adjustedDate = new Date(date.getTime() + calendarOffsetMinutes * 60 * 1000);
+        
         // Converteer naar Europe/Brussels tijdzone om de correcte lokale tijd te krijgen
         // Dit zorgt ervoor dat de server tijdzone (UTC) geen invloed heeft
-        const brusselsTime = toZonedTime(date, 'Europe/Brussels');
+        const brusselsTime = toZonedTime(adjustedDate, 'Europe/Brussels');
         
         // Format als ICS datum string
         return formatTz(brusselsTime, 'yyyyMMdd\'T\'HHmmss', { timeZone: 'Europe/Brussels' });

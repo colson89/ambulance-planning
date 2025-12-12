@@ -560,6 +560,18 @@ A: Ze kunnen dan al uw shifts zien. Deel de link dus nooit! Genereer een nieuwe 
 **Q: Werkt dit ook op mijn telefoon?**
 A: Ja! Eenmaal ingesteld synchroniseert uw kalender app automatisch op al uw apparaten (telefoon, tablet, computer).
 
+**Q: Mijn shifts staan een uur te vroeg of te laat in mijn kalender. Hoe los ik dit op?**
+A: Gebruik de **Tijdcorrectie voor kalender** instelling:
+1. Ga naar uw Profiel
+2. Scroll naar de "Kalender Synchronisatie" sectie
+3. Zoek "Tijdcorrectie voor kalender"
+4. Kies de juiste correctie:
+   - Als een shift om 07:00 zou moeten starten maar om 06:00 in uw agenda staat, kies **+1 uur**
+   - Als een shift om 07:00 zou moeten starten maar om 08:00 in uw agenda staat, kies **-1 uur**
+5. De wijziging wordt actief bij de volgende synchronisatie van uw kalender app
+
+**💡 Tip**: Dit probleem komt voor bij sommige kalender apps die tijdzones anders interpreteren. De tijdcorrectie compenseert dit verschil.
+
 ---
 
 ### 🔔 Push Notificaties
