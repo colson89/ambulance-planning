@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer, FileText, RefreshCw, Bell } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer, FileText, RefreshCw, Bell, HelpCircle } from "lucide-react";
 import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { OvertimeDialog } from "@/components/overtime-dialog";
 import { ShiftSwapDialog } from "@/components/shift-swap-dialog";
@@ -654,6 +654,14 @@ export default function Dashboard() {
               <UserIcon className="h-4 w-4 mr-2" />
               Profiel
             </Button>
+            <Button 
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocation("/manual")}
+              title="Handleiding"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </Button>
             <StationSwitcher />
             <Button 
               variant="outline" 
@@ -758,6 +766,14 @@ export default function Dashboard() {
               >
                 <Timer className="h-4 w-4 mr-2" />
                 Overuren
+              </Button>
+              <Button 
+                variant="outline"
+                className="justify-start h-12"
+                onClick={() => { setLocation("/manual"); setMobileMenuOpen(false); }}
+              >
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Handleiding
               </Button>
               <div className="col-span-2">
                 <StationSwitcher />

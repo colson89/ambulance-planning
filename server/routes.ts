@@ -173,6 +173,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return { stationId: user.stationId };
   }
 
+  // User manual endpoint - accessible for all authenticated users
+  app.get("/api/manual", requireAuth, async (req, res) => {
+    try {
+      const manualPath = path.join(process.cwd(), 'Handleiding-Ambulance-Planning.md');
+      if (fs.existsSync(manualPath)) {
+        const content = fs.readFileSync(manualPath, 'utf-8');
+        res.json({ content });
+      } else {
+        res.status(404).json({ message: "Handleiding niet gevonden" });
+      }
+    } catch (error) {
+      console.error("Error reading manual:", error);
+      res.status(500).json({ message: "Fout bij laden handleiding" });
+    }
+  });
+
   // Version endpoint for deployment verification
   app.get("/api/version", (req, res) => {
     const version = {

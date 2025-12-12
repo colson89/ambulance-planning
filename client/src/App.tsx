@@ -30,6 +30,7 @@ const ShiftSwaps = lazy(() => import("@/pages/shift-swaps"));
 const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
 const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const PushNotifications = lazy(() => import("@/pages/push-notifications"));
+const Manual = lazy(() => import("@/pages/manual"));
 
 // Loading component for Suspense boundaries
 function PageLoader() {
@@ -61,6 +62,7 @@ function Router() {
         <ProtectedRoute path="/activity-logs" component={ActivityLogs} />
         <ProtectedRoute path="/shift-swaps" component={ShiftSwaps} />
         <ProtectedRoute path="/push-notifications" component={PushNotifications} />
+        <ProtectedRoute path="/manual" component={Manual} />
         <Route path="/station-select" component={StationSelect} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/forgot-password" component={ForgotPassword} />
