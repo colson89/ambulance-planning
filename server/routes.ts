@@ -5393,7 +5393,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
 
       // Haal bestaande configs op voor conflict detectie
       const existingConfigs = await Promise.all(
-        stations.map(s => storage.getVerdiConfig(s.id).then(config => ({ stationId: s.id, config })))
+        stations.map(s => storage.getVerdiStationConfig(s.id).then(config => ({ stationId: s.id, config })))
       );
       const existingConfigMap = new Map(existingConfigs.map(c => [c.stationId, c.config]));
 
@@ -5496,23 +5496,10 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
 
       const results = [];
       for (const config of configs) {
-        // Update ShiftSheet GUID in config
-        const existingConfig = await storage.getVerdiConfig(config.stationId);
-        if (existingConfig) {
-          await storage.updateVerdiConfig(config.stationId, {
-            shiftSheetGuid: config.shiftSheetGuid
-          });
-        } else {
-          // Maak nieuwe config aan met alleen shiftSheetGuid
-          await storage.createVerdiConfig({
-            stationId: config.stationId,
-            verdiUrl: '',
-            authId: '',
-            authSecret: '',
-            shiftSheetGuid: config.shiftSheetGuid,
-            enabled: false
-          });
-        }
+        // Update ShiftSheet GUID in config (upsert handles create/update)
+        await storage.upsertVerdiStationConfig(config.stationId, {
+          shiftSheetGuid: config.shiftSheetGuid
+        });
 
         // Sla positie mappings op
         if (config.position1Guid) {
