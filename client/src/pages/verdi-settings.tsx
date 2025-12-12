@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Home, Save, Upload, Download, Search, FileUp, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Home, Save, Upload, Download, Search, FileUp, CheckCircle, XCircle, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -114,6 +114,31 @@ export default function VerdiSettings() {
   const [positionGuidInputs, setPositionGuidInputs] = useState<{ [positionIndex: number]: string }>({});
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("users");
+  
+  // Sort state for user mappings table
+  type SortColumn = 'username' | 'name' | 'personGuid';
+  type SortDirection = 'asc' | 'desc';
+  const [sortColumn, setSortColumn] = useState<SortColumn>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      // For personGuid, default to showing empty values first (asc = empty first)
+      setSortDirection(column === 'personGuid' ? 'asc' : 'asc');
+    }
+  };
+  
+  const getSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="ml-1 h-4 w-4 text-muted-foreground" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="ml-1 h-4 w-4" />
+      : <ArrowDown className="ml-1 h-4 w-4" />;
+  };
   
   // Excel import state
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -647,9 +672,33 @@ export default function VerdiSettings() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Gebruiker</TableHead>
-                    <TableHead>Naam</TableHead>
-                    <TableHead>Person GUID</TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      onClick={() => handleSort('username')}
+                    >
+                      <div className="flex items-center">
+                        Gebruiker
+                        {getSortIcon('username')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      onClick={() => handleSort('name')}
+                    >
+                      <div className="flex items-center">
+                        Naam
+                        {getSortIcon('name')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      onClick={() => handleSort('personGuid')}
+                    >
+                      <div className="flex items-center">
+                        Person GUID
+                        {getSortIcon('personGuid')}
+                      </div>
+                    </TableHead>
                     <TableHead>Actie</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -669,6 +718,33 @@ export default function VerdiSettings() {
                         lastName.includes(query) ||
                         fullName.includes(query)
                       );
+                    })
+                    .sort((a, b) => {
+                      const mappingA = userMappings.find((m: any) => m.userId === a.id);
+                      const mappingB = userMappings.find((m: any) => m.userId === b.id);
+                      
+                      let compareResult = 0;
+                      
+                      switch (sortColumn) {
+                        case 'username':
+                          compareResult = a.username.localeCompare(b.username);
+                          break;
+                        case 'name':
+                          const nameA = `${a.lastName ?? ''} ${a.firstName ?? ''}`.trim().toLowerCase();
+                          const nameB = `${b.lastName ?? ''} ${b.firstName ?? ''}`.trim().toLowerCase();
+                          compareResult = nameA.localeCompare(nameB);
+                          break;
+                        case 'personGuid':
+                          const guidA = mappingA?.personGuid || '';
+                          const guidB = mappingB?.personGuid || '';
+                          // Empty values should come first when ascending (to easily find missing GUIDs)
+                          if (!guidA && guidB) compareResult = -1;
+                          else if (guidA && !guidB) compareResult = 1;
+                          else compareResult = guidA.localeCompare(guidB);
+                          break;
+                      }
+                      
+                      return sortDirection === 'asc' ? compareResult : -compareResult;
                     })
                     .map((user) => {
                       const existingMapping = userMappings.find((m: any) => m.userId === user.id);
