@@ -5046,36 +5046,49 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         }
         
         // Probeer station te matchen op basis van naam
-        // ShiftSheetName formaat: "ZW Geel", "ZW Mol", etc.
+        // ShiftSheetName formaat: "ZW Geel", "ZW Mol", "PIT Mol", etc.
+        // BELANGRIJK: PIT-ShiftSheets moeten alleen matchen met PIT-stations, ZW met ZW
         const sheetNameNormalized = normalizeString(sheetData.name);
+        const isSheetPIT = sheetNameUpper.startsWith('PIT');
+        const isSheetZW = sheetNameUpper.startsWith('ZW');
         
         let matchedStation = null;
         for (const station of stations) {
+          const stationDisplayName = (station.displayName || station.name).toUpperCase();
+          const isStationPIT = stationDisplayName.startsWith('PIT');
+          const isStationZW = stationDisplayName.startsWith('ZW');
+          
+          // Strikte prefix matching: PIT-sheets alleen met PIT-stations, ZW met ZW
+          if (isSheetPIT && !isStationPIT) continue;
+          if (isSheetZW && !isStationZW) continue;
+          
           const stationNameNormalized = normalizeString(station.name);
           const displayNameNormalized = normalizeString(station.displayName || station.name);
           
-          // Check verschillende match patronen
-          if (sheetNameNormalized.includes(stationNameNormalized) || 
-              stationNameNormalized.includes(sheetNameNormalized) ||
-              sheetNameNormalized.includes(displayNameNormalized) ||
-              displayNameNormalized.includes(sheetNameNormalized) ||
-              // Check voor "ZW <stationname>" patroon
-              sheetNameNormalized === `zw${stationNameNormalized}` ||
-              sheetNameNormalized.endsWith(stationNameNormalized)) {
+          // Check of de stad/locatie naam matcht
+          // Extract stad uit ShiftSheet naam (bv. "ZW Geel" -> "geel", "PIT Mol" -> "mol")
+          const sheetCity = sheetNameNormalized.replace(/^(zw|pit)/, '');
+          const stationCity = displayNameNormalized.replace(/^(zw|pit)/, '');
+          
+          if (sheetCity === stationCity || 
+              sheetCity === stationNameNormalized ||
+              sheetNameNormalized === displayNameNormalized) {
             matchedStation = station;
             break;
           }
         }
 
         if (matchedStation) {
-          // Identificeer posities: "Ambulancier C" = positie 1 (chauffeur), "Ambulancier" = positie 2 (bijrijder)
+          // Identificeer posities: 
+          // Positie 1 (chauffeur) = "Ambulancier C" of "Chauffeur PIT"
+          // Positie 2 (bijrijder) = "Ambulancier"
           let position1: { guid: string; name: string } | null = null;
           let position2: { guid: string; name: string } | null = null;
 
           for (const pos of sheetData.positions) {
             const posName = pos.name.toLowerCase().trim();
-            // Positie 1 = exact "ambulancier c" (rijbewijs C vereist, chauffeur)
-            if (posName === 'ambulancier c') {
+            // Positie 1 = "ambulancier c" of "chauffeur pit" (rijbewijs C vereist, chauffeur)
+            if (posName === 'ambulancier c' || posName === 'chauffeur pit') {
               position1 = pos;
             }
             // Positie 2 = exact "ambulancier" (bijrijder, geen C)
