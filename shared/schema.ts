@@ -26,7 +26,8 @@ export const users = pgTable("users", {
   isProfessional: boolean("is_professional").notNull().default(false), // Beroepspersoneel - max 1 shift per week
   hasDrivingLicenseC: boolean("has_driving_license_c").notNull().default(true), // Rijbewijs C - minimaal 1 per shift vereist
   hours: integer("hours").notNull().default(24),
-  stationId: integer("station_id").notNull().references(() => stations.id)
+  stationId: integer("station_id").notNull().references(() => stations.id),
+  calendarOffset: integer("calendar_offset").notNull().default(0) // Tijdzone offset in minuten voor kalender sync (-120 tot +120)
 });
 
 export const shifts = pgTable("shifts", {
