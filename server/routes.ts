@@ -4190,45 +4190,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "Invalid type. Must be month, quarter, or year" });
       }
       
-      // Get users filtered by station
-      const allUsers = await storage.getAllUsers();
-      const users = allUsers.filter(user => user.stationId === authorizedStationId);
+      // Get all users with access to this station (primary + cross-team)
+      const allUsersWithCrossAccess = await storage.getUsersByStation(authorizedStationId);
+      const userIds = allUsersWithCrossAccess.map(u => u.id);
       
-      // Get shift preferences for the period (filtered by station)
-      const preferences = await db.select()
-        .from(shiftPreferences)
-        .where(
-          and(
-            gte(shiftPreferences.date, startDate),
-            lte(shiftPreferences.date, endDate),
-            eq(shiftPreferences.stationId, authorizedStationId)
-          )
-        );
+      // CROSS-TEAM FIX: Get preferences for ALL users with access to this station,
+      // regardless of which stationId the preferences were saved under.
+      // This ensures cross-team users who entered preferences at their primary station
+      // are still counted in statistics for this station.
+      const preferences = userIds.length > 0 
+        ? await db.select()
+            .from(shiftPreferences)
+            .where(
+              and(
+                gte(shiftPreferences.date, startDate),
+                lte(shiftPreferences.date, endDate),
+                inArray(shiftPreferences.userId, userIds)
+              )
+            )
+        : [];
       
-      // Get actual shifts for the period from ALL stations (for cross-station users)
+      // Get actual shifts for this station only (cross-team users working HERE)
       const actualShifts = await db.select()
         .from(shifts)
         .where(
           and(
             gte(shifts.date, startDate),
             lte(shifts.date, endDate),
+            eq(shifts.stationId, authorizedStationId),
             ne(shifts.userId, 0) // Exclude open shifts
-            // Removed stationId filter to get shifts from all stations
           )
         );
       
-      // Get cross-station hours for users - need to check all users that have access to current station
-      const allUsersWithCrossAccess = await storage.getUsersByStation(authorizedStationId);
-      
-      // Get ALL cross-station access data for calculating total max hours for all users
-      console.log("=== CROSS-STATION DEBUG v3 ===");
+      // Get cross-station access data for THIS station specifically
+      // This tells us the maxHours each cross-team user can work at THIS station
+      console.log("=== CROSS-STATION STATS FIX ===");
       console.log("Target stationId:", authorizedStationId);
       
-      // Get ALL cross-station access data (not filtered by station) to calculate total user capacity
-      const allCrossStationAccess = await db.select()
-        .from(userStations);
+      const crossStationAccessForThisStation = await db.select()
+        .from(userStations)
+        .where(eq(userStations.stationId, authorizedStationId));
       
-      console.log("All cross-station access data:", allCrossStationAccess);
+      console.log("Cross-station access for this station:", crossStationAccessForThisStation);
       
       // Get holidays for the statistics period to count them as weekend
       // Include: national holidays (stationId IS NULL) AND station-specific holidays for target station
@@ -4330,21 +4333,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
         }
         
-        // Calculate total available hours including cross-station access
-        let totalHours = user.hours || 0;
+        // Calculate max hours for statistics
+        // For primary station users: use user.hours
+        // For cross-team users: sum up primary hours + cross-team maxHours for this station
+        const isPrimaryStation = user.stationId === authorizedStationId;
+        const crossTeamAccess = crossStationAccessForThisStation.find(
+          access => access.userId === user.id
+        );
         
-        // Add ALL cross-station hours for this user (from all stations they have access to)
-        const userCrossStationHours = allCrossStationAccess
-          .filter(access => access.userId === user.id)
-          .reduce((sum, access) => sum + (access.maxHours || 0), 0);
+        // Determine effective max hours
+        let effectiveMaxHours: number;
+        if (isPrimaryStation) {
+          // User's primary station - use their base hours
+          effectiveMaxHours = user.hours || 0;
+        } else if (crossTeamAccess) {
+          // Cross-team user - sum primary hours + cross-team maxHours for total capacity
+          effectiveMaxHours = (user.hours || 0) + (crossTeamAccess.maxHours || 0);
+        } else {
+          // Fallback (shouldn't happen but just in case)
+          effectiveMaxHours = user.hours || 0;
+        }
         
         console.log(`User ${user.username} (${user.id}):`, {
+          isPrimaryStation,
           baseHours: user.hours || 0,
-          crossStationHours: userCrossStationHours,
-          totalCalculated: (user.hours || 0) + userCrossStationHours
+          crossTeamMaxHours: crossTeamAccess?.maxHours,
+          effectiveMaxHours
         });
-        
-        totalHours += userCrossStationHours;
         
         return {
           userId: user.id,
@@ -4363,8 +4378,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           actualDayShiftWeekendHours: actualStats.dayWeekend,
           actualNightShiftWeekendHours: actualStats.nightWeekend,
           totalActualHours: actualStats.dayWeek + actualStats.nightWeek + actualStats.dayWeekend + actualStats.nightWeekend,
-          // Maximum hours willing to work (adjusted for period) - now includes cross-station hours
-          maxHours: totalHours * periodMultiplier
+          // Maximum hours (adjusted for period) - for cross-team: includes primary + cross-team hours
+          maxHours: effectiveMaxHours * periodMultiplier,
+          // Flag if this is a cross-team user for this station
+          isCrossTeam: !isPrimaryStation
         };
       });
       
