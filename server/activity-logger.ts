@@ -365,6 +365,9 @@ export const ActivityActions = {
     HOLIDAY_DELETED: "Feestdag verwijderd",
     WEEKDAY_CONFIG_UPDATED: "Weekdag configuratie gewijzigd",
     STATION_SETTINGS_UPDATED: "Station instellingen gewijzigd",
+    STATION_CREATED: "Station aangemaakt",
+    STATION_UPDATED: "Station bijgewerkt",
+    STATION_DELETED: "Station verwijderd",
     PREFERENCES_CLEARED: "Voorkeuren gewist",
   },
   VERDI: {

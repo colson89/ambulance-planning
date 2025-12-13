@@ -302,6 +302,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         displayName
       });
       
+      await logActivity({
+        userId: (req.user as any).id,
+        stationId: station.id,
+        action: ActivityActions.SETTINGS.STATION_CREATED,
+        category: "SETTINGS",
+        details: `Station "${displayName}" (${code.toUpperCase()}) aangemaakt`,
+        ...getClientInfo(req)
+      });
+      
       res.status(201).json(station);
     } catch (error) {
       console.error("Error creating station:", error);
@@ -347,6 +356,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (displayName) updateData.displayName = displayName;
       
       const station = await storage.updateStation(stationId, updateData);
+      
+      await logActivity({
+        userId: (req.user as any).id,
+        stationId: stationId,
+        action: ActivityActions.SETTINGS.STATION_UPDATED,
+        category: "SETTINGS",
+        details: `Station "${station.displayName}" (${station.code}) bijgewerkt`,
+        ...getClientInfo(req)
+      });
+      
       res.json(station);
     } catch (error) {
       console.error("Error updating station:", error);
@@ -378,7 +397,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      const stationToDelete = await storage.getStation(stationId);
+      const stationName = stationToDelete?.displayName || `ID ${stationId}`;
+      const stationCode = stationToDelete?.code || '';
+      
       await storage.deleteStation(stationId, force);
+      
+      await logActivity({
+        userId: (req.user as any).id,
+        stationId: null,
+        action: ActivityActions.SETTINGS.STATION_DELETED,
+        category: "SETTINGS",
+        details: `Station "${stationName}" (${stationCode}) verwijderd${force ? ' (met force)' : ''}`,
+        ...getClientInfo(req)
+      });
+      
       res.json({ message: "Station verwijderd" });
     } catch (error) {
       console.error("Error deleting station:", error);

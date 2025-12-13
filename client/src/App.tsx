@@ -27,6 +27,7 @@ const Reportage = lazy(() => import("@/pages/reportage"));
 const Overtime = lazy(() => import("@/pages/overtime"));
 const ActivityLogs = lazy(() => import("@/pages/activity-logs"));
 const ShiftSwaps = lazy(() => import("@/pages/shift-swaps"));
+const Stations = lazy(() => import("@/pages/stations"));
 const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
 const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const PushNotifications = lazy(() => import("@/pages/push-notifications"));
@@ -61,6 +62,7 @@ function Router() {
         <ProtectedRoute path="/overtime" component={Overtime} />
         <ProtectedRoute path="/activity-logs" component={ActivityLogs} />
         <ProtectedRoute path="/shift-swaps" component={ShiftSwaps} />
+        <ProtectedRoute path="/stations" component={Stations} />
         <ProtectedRoute path="/push-notifications" component={PushNotifications} />
         <ProtectedRoute path="/manual" component={Manual} />
         <Route path="/station-select" component={StationSelect} />
