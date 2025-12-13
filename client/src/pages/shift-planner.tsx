@@ -56,9 +56,9 @@ export default function ShiftPlanner() {
   }, []);
 
   const { data: preferences = [] } = useQuery<ShiftPreference[]>({
-    queryKey: ["/api/preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
+    queryKey: ["/api/unified-preferences", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
     queryFn: async () => {
-      const res = await apiRequest("GET", `/api/preferences?month=${selectedMonth.getMonth() + 1}&year=${selectedMonth.getFullYear()}`);
+      const res = await apiRequest("GET", `/api/unified-preferences?month=${selectedMonth.getMonth() + 1}&year=${selectedMonth.getFullYear()}`);
       if (!res.ok) throw new Error("Kon voorkeuren niet ophalen");
       return res.json();
     },
@@ -218,7 +218,7 @@ export default function ShiftPlanner() {
     },
     onSuccess: () => {
       console.log("Voorkeur succesvol opgeslagen");
-      queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/unified-preferences"] });
       
       // Sync states na succesvolle save
       setTimeout(() => {
