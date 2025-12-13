@@ -373,6 +373,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Block removing supervisor station status - there must always be exactly 1 supervisor station
+      // Check for any falsy value (false, null, undefined) when editing the current supervisor station
+      if (existingStation.isSupervisorStation && isSupervisorStation !== true && isSupervisorStation !== undefined) {
+        return res.status(400).json({ 
+          message: "Het supervisor station kan niet worden uitgeschakeld. Er moet altijd 1 supervisor station bestaan." 
+        });
+      }
+      
       const updateData: any = {};
       if (name) updateData.name = name.toLowerCase().replace(/\s+/g, '');
       if (code) updateData.code = code.toUpperCase();
@@ -412,6 +420,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const stationId = parseInt(req.params.id);
       const force = req.query.force === 'true';
+      
+      // Check if this is the supervisor station - cannot be deleted
+      const stationToCheck = await storage.getStation(stationId);
+      if (stationToCheck?.isSupervisorStation) {
+        return res.status(400).json({ 
+          message: "Het supervisor station kan niet worden verwijderd. Er moet altijd 1 supervisor station bestaan." 
+        });
+      }
       
       const check = await storage.canDeleteStation(stationId);
       if (!check.canDelete && !force) {

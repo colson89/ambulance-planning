@@ -1,22 +1,24 @@
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Building2, Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Building2, Plus, Pencil, Trash2, AlertTriangle, Shield } from "lucide-react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Station {
   id: number;
   name: string;
   code: string;
   displayName: string;
+  isSupervisorStation: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,7 +31,7 @@ export default function Stations() {
 
   const [showStationDialog, setShowStationDialog] = useState(false);
   const [editingStation, setEditingStation] = useState<Station | null>(null);
-  const [stationForm, setStationForm] = useState({ name: '', code: '', displayName: '' });
+  const [stationForm, setStationForm] = useState({ name: '', code: '', displayName: '', isSupervisorStation: false });
   const [deleteStation, setDeleteStation] = useState<Station | null>(null);
   const [stationDependencies, setStationDependencies] = useState<any>(null);
 
@@ -38,8 +40,12 @@ export default function Stations() {
     enabled: user?.role === 'supervisor'
   });
 
+  const existingSupervisorStation = useMemo(() => {
+    return allStations.find(s => s.isSupervisorStation);
+  }, [allStations]);
+
   const createStationMutation = useMutation({
-    mutationFn: async (data: { name: string; code: string; displayName: string }) => {
+    mutationFn: async (data: { name: string; code: string; displayName: string; isSupervisorStation: boolean }) => {
       const res = await apiRequest('POST', '/api/stations', data);
       if (!res.ok) {
         const error = await res.json();
@@ -50,7 +56,7 @@ export default function Stations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/stations'] });
       setShowStationDialog(false);
-      setStationForm({ name: '', code: '', displayName: '' });
+      setStationForm({ name: '', code: '', displayName: '', isSupervisorStation: false });
       toast({ title: "Succes", description: "Station aangemaakt" });
     },
     onError: (error: Error) => {
@@ -71,7 +77,7 @@ export default function Stations() {
       queryClient.invalidateQueries({ queryKey: ['/api/stations'] });
       setShowStationDialog(false);
       setEditingStation(null);
-      setStationForm({ name: '', code: '', displayName: '' });
+      setStationForm({ name: '', code: '', displayName: '', isSupervisorStation: false });
       toast({ title: "Succes", description: "Station bijgewerkt" });
     },
     onError: (error: Error) => {
@@ -102,10 +108,10 @@ export default function Stations() {
   const handleOpenStationDialog = (station?: Station) => {
     if (station) {
       setEditingStation(station);
-      setStationForm({ name: station.name, code: station.code, displayName: station.displayName });
+      setStationForm({ name: station.name, code: station.code, displayName: station.displayName, isSupervisorStation: station.isSupervisorStation });
     } else {
       setEditingStation(null);
-      setStationForm({ name: '', code: '', displayName: '' });
+      setStationForm({ name: '', code: '', displayName: '', isSupervisorStation: false });
     }
     setShowStationDialog(true);
   };
@@ -197,13 +203,27 @@ export default function Stations() {
             ) : (
               <div className="divide-y">
                 {allStations.map((station) => (
-                  <div key={station.id} className="flex items-center justify-between py-4">
-                    <div>
-                      <p className="font-medium text-lg">{station.displayName}</p>
-                      <p className="text-sm text-gray-500">
-                        Code: <span className="font-mono bg-gray-100 px-1 rounded">{station.code}</span> | 
-                        Intern: <span className="font-mono bg-gray-100 px-1 rounded">{station.name}</span>
-                      </p>
+                  <div key={station.id} className={`flex items-center justify-between py-4 ${station.isSupervisorStation ? 'bg-purple-50 -mx-4 px-4 rounded-lg' : ''}`}>
+                    <div className="flex items-center gap-3">
+                      {station.isSupervisorStation && (
+                        <div className="p-2 bg-purple-100 rounded-full">
+                          <Shield className="h-5 w-5 text-purple-600" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-lg">{station.displayName}</p>
+                          {station.isSupervisorStation && (
+                            <span className="px-2 py-0.5 text-xs font-medium bg-purple-200 text-purple-800 rounded-full">
+                              Supervisor Station
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          Code: <span className="font-mono bg-gray-100 px-1 rounded">{station.code}</span> | 
+                          Intern: <span className="font-mono bg-gray-100 px-1 rounded">{station.name}</span>
+                        </p>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -214,15 +234,17 @@ export default function Stations() {
                         <Pencil className="h-4 w-4 mr-1" />
                         Bewerken
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                        onClick={() => handleDeleteStation(station)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Verwijderen
-                      </Button>
+                      {!station.isSupervisorStation && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          onClick={() => handleDeleteStation(station)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Verwijderen
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -243,7 +265,14 @@ export default function Stations() {
               <li><strong>Weergavenaam</strong> - De naam zoals gebruikers die zien (bijv. "ZW Westerlo")</li>
               <li><strong>Code</strong> - Een korte code voor weergave in de planning (bijv. "WL")</li>
               <li><strong>Interne naam</strong> - Een technische identifier zonder spaties (bijv. "westerlo")</li>
+              <li><strong>Supervisor Station</strong> - Het speciale station voor supervisor inlog (max 1)</li>
             </ul>
+            <div className="mt-4 p-3 bg-purple-100 rounded-lg border border-purple-200">
+              <p className="text-sm text-purple-800">
+                <strong>Supervisor Station:</strong> Dit station wordt apart weergegeven op de loginpagina 
+                en biedt toegang tot alle stations. Er kan maar 1 supervisor station bestaan.
+              </p>
+            </div>
             <p className="text-sm mt-4">
               <strong>Let op:</strong> Bij het verwijderen van een station worden ook alle gekoppelde gebruikers, 
               shifts en voorkeuren verwijderd. Zorg dat je dit zeker weet voordat je een station verwijdert.
@@ -289,6 +318,32 @@ export default function Stations() {
                 onChange={(e) => setStationForm({...stationForm, name: e.target.value})}
               />
               <p className="text-xs text-gray-500">Technische identifier (kleine letters, geen spaties)</p>
+            </div>
+            <div className="flex items-center space-x-3 pt-2 pb-1">
+              <Checkbox
+                id="isSupervisorStation"
+                checked={stationForm.isSupervisorStation}
+                onCheckedChange={(checked) => setStationForm({...stationForm, isSupervisorStation: checked === true})}
+                disabled={
+                  // Disabled als: 1) Er al een ander supervisor station is, OF 2) Dit IS het supervisor station (kan niet uitgeschakeld worden)
+                  (existingSupervisorStation && existingSupervisorStation.id !== editingStation?.id) ||
+                  (editingStation?.isSupervisorStation === true)
+                }
+              />
+              <div className="flex flex-col">
+                <Label htmlFor="isSupervisorStation" className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-purple-600" />
+                  Supervisor Station
+                </Label>
+                <p className="text-xs text-gray-500">
+                  {editingStation?.isSupervisorStation
+                    ? "Dit is het supervisor station - kan niet worden uitgeschakeld"
+                    : existingSupervisorStation && existingSupervisorStation.id !== editingStation?.id
+                    ? `Er bestaat al een supervisor station: "${existingSupervisorStation.displayName}"`
+                    : "Dit station wordt weergegeven op de loginpagina voor supervisor toegang (max 1)"
+                  }
+                </p>
+              </div>
             </div>
           </div>
           <DialogFooter>
