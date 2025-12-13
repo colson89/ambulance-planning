@@ -34,6 +34,7 @@ export default function Stations() {
   const [stationForm, setStationForm] = useState({ name: '', code: '', displayName: '', isSupervisorStation: false });
   const [deleteStation, setDeleteStation] = useState<Station | null>(null);
   const [stationDependencies, setStationDependencies] = useState<any>(null);
+  const [deleteConfirmName, setDeleteConfirmName] = useState('');
 
   const { data: allStations = [], isLoading: stationsLoading } = useQuery<Station[]>({
     queryKey: ['/api/stations'],
@@ -355,33 +356,59 @@ export default function Stations() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deleteStation} onOpenChange={(open) => !open && setDeleteStation(null)}>
+      <AlertDialog open={!!deleteStation} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteStation(null);
+          setDeleteConfirmName('');
+        }
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-red-600" />
               Station Verwijderen
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              Weet je zeker dat je "{deleteStation?.displayName}" wilt verwijderen?
-              {stationDependencies && !stationDependencies.canDelete && (
-                <div className="mt-3 p-3 bg-red-50 rounded-lg text-red-800">
-                  <p className="font-medium">Let op: Dit station heeft gekoppelde data:</p>
-                  <ul className="text-sm mt-1 list-disc list-inside">
-                    {stationDependencies.dependencies?.users > 0 && <li>{stationDependencies.dependencies.users} gebruikers</li>}
-                    {stationDependencies.dependencies?.shifts > 0 && <li>{stationDependencies.dependencies.shifts} shifts</li>}
-                    {stationDependencies.dependencies?.preferences > 0 && <li>{stationDependencies.dependencies.preferences} voorkeuren</li>}
-                  </ul>
-                  <p className="text-sm mt-2 font-medium">Alle gekoppelde data wordt verwijderd!</p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4">
+                <p>Weet je zeker dat je <strong>"{deleteStation?.displayName}"</strong> wilt verwijderen?</p>
+                {stationDependencies && !stationDependencies.canDelete && (
+                  <div className="p-3 bg-red-50 rounded-lg text-red-800">
+                    <p className="font-medium">Let op: Dit station heeft gekoppelde data:</p>
+                    <ul className="text-sm mt-1 list-disc list-inside">
+                      {stationDependencies.dependencies?.users > 0 && <li>{stationDependencies.dependencies.users} gebruikers</li>}
+                      {stationDependencies.dependencies?.shifts > 0 && <li>{stationDependencies.dependencies.shifts} shifts</li>}
+                      {stationDependencies.dependencies?.preferences > 0 && <li>{stationDependencies.dependencies.preferences} voorkeuren</li>}
+                    </ul>
+                    <p className="text-sm mt-2 font-medium">Alle gekoppelde data wordt verwijderd!</p>
+                  </div>
+                )}
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800 font-medium mb-2">
+                    Typ de naam van het station om te bevestigen:
+                  </p>
+                  <Input
+                    placeholder={deleteStation?.displayName || ''}
+                    value={deleteConfirmName}
+                    onChange={(e) => setDeleteConfirmName(e.target.value)}
+                    className="bg-white"
+                  />
+                  <p className="text-xs text-amber-700 mt-1">
+                    Typ exact: <strong>{deleteStation?.displayName}</strong>
+                  </p>
                 </div>
-              )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuleren</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              onClick={() => deleteStation && deleteStationMutation.mutate(deleteStation.id)}
+              className="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              disabled={deleteConfirmName !== deleteStation?.displayName}
+              onClick={() => {
+                if (deleteStation && deleteConfirmName === deleteStation.displayName) {
+                  deleteStationMutation.mutate(deleteStation.id);
+                }
+              }}
             >
               Verwijderen
             </AlertDialogAction>
