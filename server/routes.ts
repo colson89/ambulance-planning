@@ -278,7 +278,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Station CRUD endpoints - Supervisor only
   app.post("/api/stations", requireSupervisor, async (req, res) => {
     try {
-      const { name, code, displayName } = req.body;
+      const { name, code, displayName, isSupervisorStation } = req.body;
       
       if (!name || !code || !displayName) {
         return res.status(400).json({ message: "Naam, code en weergavenaam zijn verplicht" });
@@ -296,10 +296,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Er bestaat al een station met deze code" });
       }
       
+      // Check if trying to create a supervisor station when one already exists
+      if (isSupervisorStation) {
+        const allStations = await storage.getStations();
+        const existingSupervisorStation = allStations.find(s => s.isSupervisorStation);
+        if (existingSupervisorStation) {
+          return res.status(400).json({ 
+            message: `Er bestaat al een supervisor station: "${existingSupervisorStation.displayName}". Er mag maar 1 supervisor station bestaan.` 
+          });
+        }
+      }
+      
       const station = await storage.createStation({
         name: name.toLowerCase().replace(/\s+/g, ''),
         code: code.toUpperCase(),
-        displayName
+        displayName,
+        isSupervisorStation: isSupervisorStation || false
       });
       
       await logActivity({
@@ -321,7 +333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/stations/:id", requireSupervisor, async (req, res) => {
     try {
       const stationId = parseInt(req.params.id);
-      const { name, code, displayName } = req.body;
+      const { name, code, displayName, isSupervisorStation } = req.body;
       
       const existingStation = await storage.getStation(stationId);
       if (!existingStation) {
@@ -350,10 +362,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Check if trying to set as supervisor station when another one already exists
+      if (isSupervisorStation === true && !existingStation.isSupervisorStation) {
+        const allStations = await storage.getStations();
+        const existingSupervisorStation = allStations.find(s => s.isSupervisorStation && s.id !== stationId);
+        if (existingSupervisorStation) {
+          return res.status(400).json({ 
+            message: `Er bestaat al een supervisor station: "${existingSupervisorStation.displayName}". Er mag maar 1 supervisor station bestaan.` 
+          });
+        }
+      }
+      
       const updateData: any = {};
       if (name) updateData.name = name.toLowerCase().replace(/\s+/g, '');
       if (code) updateData.code = code.toUpperCase();
       if (displayName) updateData.displayName = displayName;
+      if (isSupervisorStation !== undefined) updateData.isSupervisorStation = isSupervisorStation;
       
       const station = await storage.updateStation(stationId, updateData);
       
