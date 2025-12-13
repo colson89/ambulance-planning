@@ -275,6 +275,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Station CRUD endpoints - Supervisor only
+  app.post("/api/stations", requireSupervisor, async (req, res) => {
+    try {
+      const { name, code, displayName } = req.body;
+      
+      if (!name || !code || !displayName) {
+        return res.status(400).json({ message: "Naam, code en weergavenaam zijn verplicht" });
+      }
+      
+      // Check for duplicate name (case-insensitive)
+      const existingByName = await storage.getStationByName(name);
+      if (existingByName) {
+        return res.status(400).json({ message: "Er bestaat al een station met deze naam" });
+      }
+      
+      // Check for duplicate code (case-insensitive)
+      const existingByCode = await storage.getStationByCode(code);
+      if (existingByCode) {
+        return res.status(400).json({ message: "Er bestaat al een station met deze code" });
+      }
+      
+      const station = await storage.createStation({
+        name: name.toLowerCase().replace(/\s+/g, ''),
+        code: code.toUpperCase(),
+        displayName
+      });
+      
+      res.status(201).json(station);
+    } catch (error) {
+      console.error("Error creating station:", error);
+      res.status(500).json({ message: "Kon station niet aanmaken" });
+    }
+  });
+
+  app.put("/api/stations/:id", requireSupervisor, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.id);
+      const { name, code, displayName } = req.body;
+      
+      const existingStation = await storage.getStation(stationId);
+      if (!existingStation) {
+        return res.status(404).json({ message: "Station niet gevonden" });
+      }
+      
+      // Check for duplicate name if name is being changed (case-insensitive)
+      if (name) {
+        const normalizedName = name.toLowerCase().replace(/\s+/g, '');
+        if (normalizedName !== existingStation.name) {
+          const existingByName = await storage.getStationByName(name);
+          if (existingByName) {
+            return res.status(400).json({ message: "Er bestaat al een station met deze naam" });
+          }
+        }
+      }
+      
+      // Check for duplicate code if code is being changed (case-insensitive)
+      if (code) {
+        const normalizedCode = code.toUpperCase();
+        if (normalizedCode !== existingStation.code) {
+          const existingByCode = await storage.getStationByCode(code);
+          if (existingByCode) {
+            return res.status(400).json({ message: "Er bestaat al een station met deze code" });
+          }
+        }
+      }
+      
+      const updateData: any = {};
+      if (name) updateData.name = name.toLowerCase().replace(/\s+/g, '');
+      if (code) updateData.code = code.toUpperCase();
+      if (displayName) updateData.displayName = displayName;
+      
+      const station = await storage.updateStation(stationId, updateData);
+      res.json(station);
+    } catch (error) {
+      console.error("Error updating station:", error);
+      res.status(500).json({ message: "Kon station niet bijwerken" });
+    }
+  });
+
+  app.get("/api/stations/:id/dependencies", requireSupervisor, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.id);
+      const result = await storage.canDeleteStation(stationId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error checking station dependencies:", error);
+      res.status(500).json({ message: "Kon dependencies niet controleren" });
+    }
+  });
+
+  app.delete("/api/stations/:id", requireSupervisor, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.id);
+      const force = req.query.force === 'true';
+      
+      const check = await storage.canDeleteStation(stationId);
+      if (!check.canDelete && !force) {
+        return res.status(400).json({ 
+          message: check.reason || "Station kan niet worden verwijderd vanwege bestaande data",
+          dependencies: check.dependencies
+        });
+      }
+      
+      await storage.deleteStation(stationId, force);
+      res.json({ message: "Station verwijderd" });
+    } catch (error) {
+      console.error("Error deleting station:", error);
+      res.status(500).json({ message: "Kon station niet verwijderen" });
+    }
+  });
+
   // Security: Dev login endpoint has been completely removed for security reasons
   // Use proper authentication via /api/login instead
 

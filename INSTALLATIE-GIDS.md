@@ -392,7 +392,28 @@ http {
 
 ### 5.1 Stations Aanmaken
 
-De eerste stations moeten via de database worden aangemaakt. Na de eerste login kunnen extra stations via de web interface worden beheerd.
+Stations kunnen op twee manieren worden aangemaakt:
+
+#### Optie A: Via de Web Interface (Aanbevolen)
+
+Supervisors kunnen stations volledig beheren via de web interface:
+
+1. Login als supervisor
+2. Ga naar **Integraties** (via het dashboard menu)
+3. Scroll naar de **Stationbeheer** sectie
+4. Klik op **Nieuw Station** om een station toe te voegen
+5. Vul de gegevens in:
+   - **Weergavenaam**: De volledige naam (bijv. "ZW Westerlo")
+   - **Code**: Korte code voor weergave (bijv. "WL") - wordt automatisch hoofdletters
+   - **Interne naam**: Technische identifier (bijv. "westerlo") - kleine letters, geen spaties
+
+Bestaande stations kunnen ook bewerkt of verwijderd worden via het Stations Overzicht.
+
+**Let op bij verwijderen:** Als een station gekoppelde data heeft (gebruikers, shifts, voorkeuren), wordt een waarschuwing getoond. Verwijdering is mogelijk maar alle gekoppelde data wordt ook verwijderd.
+
+#### Optie B: Via de Database (Alleen voor initiële setup)
+
+Als er nog geen supervisor account bestaat, kunnen de eerste stations via SQL worden aangemaakt:
 
 1. Open pgAdmin en verbind met de database
 2. Voer SQL uit om stations aan te maken:
@@ -403,7 +424,7 @@ INSERT INTO stations (name, code, display_name) VALUES
 ('station2', 'ST2', 'Station Naam 2');
 ```
 
-**Let op:** 
+**Veldnamen:** 
 - `name` = interne identifier (kleine letters, geen spaties)
 - `code` = korte code voor weergave
 - `display_name` = volledige naam voor gebruikers
@@ -411,7 +432,7 @@ INSERT INTO stations (name, code, display_name) VALUES
 ### 5.2 Station Uurlimieten Configureren (Optioneel)
 
 Na het aanmaken van stations kunt u per station de uurlimieten per maand configureren via de web interface:
-1. Login als admin
+1. Login als admin of supervisor
 2. Ga naar **Instellingen > Stations**
 3. Klik op een station om de uurlimieten in te stellen
 4. Configureer de standaard uren per maand per gebruiker

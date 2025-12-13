@@ -23,7 +23,9 @@ export interface IStorage {
   getAllStations(): Promise<Station[]>;
   getStation(id: number): Promise<Station | undefined>;
   getStationByCode(code: string): Promise<Station | undefined>;
+  getStationByName(name: string): Promise<Station | undefined>;
   createStation(station: InsertStation): Promise<Station>;
+  updateStation(stationId: number, updateData: Partial<InsertStation>): Promise<Station>;
   canDeleteStation(stationId: number): Promise<{canDelete: boolean, reason?: string, dependencies?: {users: number, shifts: number, preferences: number}}>;
   deleteStation(stationId: number, force?: boolean): Promise<void>;
   
@@ -212,7 +214,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getStationByCode(code: string): Promise<Station | undefined> {
-    const [station] = await db.select().from(stations).where(eq(stations.code, code));
+    // Case-insensitive lookup - always compare uppercase
+    const upperCode = code.toUpperCase();
+    const [station] = await db.select().from(stations).where(eq(stations.code, upperCode));
+    return station || undefined;
+  }
+
+  async getStationByName(name: string): Promise<Station | undefined> {
+    // Case-insensitive lookup - always compare lowercase
+    const lowerName = name.toLowerCase().replace(/\s+/g, '');
+    const [station] = await db.select().from(stations).where(eq(stations.name, lowerName));
     return station || undefined;
   }
 
@@ -221,6 +232,22 @@ export class DatabaseStorage implements IStorage {
       .insert(stations)
       .values(stationData)
       .returning();
+    return station;
+  }
+
+  async updateStation(stationId: number, updateData: Partial<InsertStation>): Promise<Station> {
+    const [station] = await db
+      .update(stations)
+      .set({
+        ...updateData,
+        updatedAt: new Date()
+      })
+      .where(eq(stations.id, stationId))
+      .returning();
+    
+    if (!station) {
+      throw new Error("Station niet gevonden");
+    }
     return station;
   }
 

@@ -2,19 +2,40 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText, KeyRound } from "lucide-react";
+import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText, KeyRound, Building2, Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+interface Station {
+  id: number;
+  name: string;
+  code: string;
+  displayName: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function Integrations() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Station management state
+  const [showStationDialog, setShowStationDialog] = useState(false);
+  const [editingStation, setEditingStation] = useState<Station | null>(null);
+  const [stationForm, setStationForm] = useState({ name: '', code: '', displayName: '' });
+  const [deleteStation, setDeleteStation] = useState<Station | null>(null);
+  const [stationDependencies, setStationDependencies] = useState<any>(null);
 
   // Alleen admins en supervisors kunnen integraties beheren
   const canManageIntegrations = user?.role === "admin" || user?.role === "supervisor";
@@ -52,6 +73,103 @@ export default function Integrations() {
       });
     }
   });
+
+  // Station management - supervisor only
+  const { data: allStations = [], isLoading: stationsLoading } = useQuery<Station[]>({
+    queryKey: ['/api/stations'],
+    enabled: user?.role === 'supervisor'
+  });
+
+  const createStationMutation = useMutation({
+    mutationFn: async (data: { name: string; code: string; displayName: string }) => {
+      const res = await apiRequest('POST', '/api/stations', data);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/stations'] });
+      setShowStationDialog(false);
+      setStationForm({ name: '', code: '', displayName: '' });
+      toast({ title: "Succes", description: "Station aangemaakt" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const updateStationMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<Station> }) => {
+      const res = await apiRequest('PUT', `/api/stations/${id}`, data);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/stations'] });
+      setShowStationDialog(false);
+      setEditingStation(null);
+      setStationForm({ name: '', code: '', displayName: '' });
+      toast({ title: "Succes", description: "Station bijgewerkt" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const deleteStationMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest('DELETE', `/api/stations/${id}?force=true`);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/stations'] });
+      setDeleteStation(null);
+      setStationDependencies(null);
+      toast({ title: "Succes", description: "Station verwijderd" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const handleOpenStationDialog = (station?: Station) => {
+    if (station) {
+      setEditingStation(station);
+      setStationForm({ name: station.name, code: station.code, displayName: station.displayName });
+    } else {
+      setEditingStation(null);
+      setStationForm({ name: '', code: '', displayName: '' });
+    }
+    setShowStationDialog(true);
+  };
+
+  const handleSaveStation = () => {
+    if (editingStation) {
+      updateStationMutation.mutate({ id: editingStation.id, data: stationForm });
+    } else {
+      createStationMutation.mutate(stationForm);
+    }
+  };
+
+  const handleDeleteStation = async (station: Station) => {
+    try {
+      const res = await apiRequest('GET', `/api/stations/${station.id}/dependencies`);
+      const deps = await res.json();
+      setStationDependencies(deps);
+      setDeleteStation(station);
+    } catch {
+      setDeleteStation(station);
+    }
+  };
 
   if (!canManageIntegrations) {
     return (
@@ -239,29 +357,80 @@ export default function Integrations() {
             </Card>
           )}
 
-          {/* Placeholder for future integrations */}
-          <Card className="border-dashed border-2 border-gray-300 opacity-60">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 p-3 bg-gray-100 rounded-full w-fit">
-                <LinkIcon className="h-8 w-8 text-gray-400" />
-              </div>
-              <CardTitle className="text-xl text-gray-500">Toekomstige Integratie</CardTitle>
-              <CardDescription className="mb-2">
-                Ruimte voor extra koppelingen
+          {/* Station Management Card - Only for supervisors */}
+          {user?.role === 'supervisor' && (
+            <Card className="hover:shadow-lg transition-all duration-200">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 p-3 bg-cyan-100 rounded-full w-fit">
+                  <Building2 className="h-8 w-8 text-cyan-600" />
+                </div>
+                <CardTitle className="text-xl">Stationbeheer</CardTitle>
+                <CardDescription className="mb-2">
+                  Beheer stations voor de applicatie
+                </CardDescription>
+                <Badge variant="default" className="mx-auto bg-cyan-600">
+                  {stationsLoading ? '...' : `${allStations.length} stations`}
+                </Badge>
+              </CardHeader>
+              <CardContent>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleOpenStationDialog()}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nieuw Station
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Station Management Section - Only for supervisors */}
+        {user?.role === 'supervisor' && allStations.length > 0 && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Stations Overzicht
+              </CardTitle>
+              <CardDescription>
+                Beheer alle stations in het systeem
               </CardDescription>
-              <Badge variant="secondary" className="mx-auto">Binnenkort</Badge>
             </CardHeader>
-            <CardContent className="text-center">
-              <Button 
-                variant="outline" 
-                className="w-full"
-                disabled
-              >
-                Nog niet beschikbaar
-              </Button>
+            <CardContent>
+              <div className="divide-y">
+                {allStations.map((station) => (
+                  <div key={station.id} className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="font-medium">{station.displayName}</p>
+                      <p className="text-sm text-gray-500">
+                        Code: {station.code} | Intern: {station.name}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleOpenStationDialog(station)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDeleteStation(station)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
-        </div>
+        )}
 
         {/* Info Section */}
         <div className="mt-8 space-y-6">
@@ -477,6 +646,90 @@ export default function Integrations() {
           </Card>
         </div>
       </div>
+
+      {/* Station Dialog */}
+      <Dialog open={showStationDialog} onOpenChange={setShowStationDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingStation ? 'Station Bewerken' : 'Nieuw Station'}</DialogTitle>
+            <DialogDescription>
+              {editingStation ? 'Pas de gegevens van het station aan.' : 'Voeg een nieuw station toe aan het systeem.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Weergavenaam</Label>
+              <Input
+                id="displayName"
+                placeholder="bijv. ZW Westerlo"
+                value={stationForm.displayName}
+                onChange={(e) => setStationForm({...stationForm, displayName: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="code">Code</Label>
+              <Input
+                id="code"
+                placeholder="bijv. WL"
+                value={stationForm.code}
+                onChange={(e) => setStationForm({...stationForm, code: e.target.value})}
+              />
+              <p className="text-xs text-gray-500">Korte code voor weergave (wordt automatisch hoofdletters)</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Interne naam</Label>
+              <Input
+                id="name"
+                placeholder="bijv. westerlo"
+                value={stationForm.name}
+                onChange={(e) => setStationForm({...stationForm, name: e.target.value})}
+              />
+              <p className="text-xs text-gray-500">Technische identifier (kleine letters, geen spaties)</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowStationDialog(false)}>Annuleren</Button>
+            <Button onClick={handleSaveStation} disabled={createStationMutation.isPending || updateStationMutation.isPending}>
+              {editingStation ? 'Opslaan' : 'Aanmaken'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Station Confirmation */}
+      <AlertDialog open={!!deleteStation} onOpenChange={(open) => !open && setDeleteStation(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Station Verwijderen
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Weet je zeker dat je "{deleteStation?.displayName}" wilt verwijderen?
+              {stationDependencies && !stationDependencies.canDelete && (
+                <div className="mt-3 p-3 bg-red-50 rounded-lg text-red-800">
+                  <p className="font-medium">Let op: Dit station heeft gekoppelde data:</p>
+                  <ul className="text-sm mt-1 list-disc list-inside">
+                    {stationDependencies.dependencies?.users > 0 && <li>{stationDependencies.dependencies.users} gebruikers</li>}
+                    {stationDependencies.dependencies?.shifts > 0 && <li>{stationDependencies.dependencies.shifts} shifts</li>}
+                    {stationDependencies.dependencies?.preferences > 0 && <li>{stationDependencies.dependencies.preferences} voorkeuren</li>}
+                  </ul>
+                  <p className="text-sm mt-2 font-medium">Alle gekoppelde data wordt verwijderd!</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuleren</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => deleteStation && deleteStationMutation.mutate(deleteStation.id)}
+            >
+              Verwijderen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
