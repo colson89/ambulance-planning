@@ -78,12 +78,18 @@ export default function Pricing() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  <span>Beveiligde cloud hosting</span>
+                  <span>Beveiligde cloud hosting of hosting op eigen server</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <span>Werkt als app op telefoon en tablet (PWA)</span>
                 </div>
               </div>
 
-              <Button size="lg" className="w-full text-lg py-6">
-                Contact Opnemen
+              <Button size="lg" className="w-full text-lg py-6" asChild>
+                <a href="mailto:info@ambulance-planning.be?subject=Interesse%20Ambulance%20Planning%20Tool">
+                  Contact Opnemen
+                </a>
               </Button>
             </CardContent>
           </Card>
@@ -104,8 +110,7 @@ export default function Pricing() {
                     <span className="font-bold text-lg">€1.000</span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Wij configureren het systeem volledig voor uw organisatie, 
-                    inclusief stations, gebruikers en initiële instellingen.
+                    Eerste configuratie en opleiding om zelf gebruikers en instellingen te beheren.
                   </p>
                 </div>
                 
@@ -115,8 +120,7 @@ export default function Pricing() {
                     <span className="font-bold text-lg">€500</span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Online training voor administrators en supervisors. 
-                    Inclusief handleiding en video-tutorials.
+                    Handleiding en instructies ter beschikking.
                   </p>
                 </div>
 
@@ -164,11 +168,15 @@ export default function Pricing() {
               Wij tonen u graag hoe de Ambulance Planning Tool uw organisatie kan helpen.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8">
-                Demo Aanvragen
+              <Button size="lg" className="text-lg px-8" asChild>
+                <a href="mailto:info@ambulance-planning.be?subject=Demo%20Aanvraag%20Ambulance%20Planning%20Tool">
+                  Demo Aanvragen
+                </a>
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8">
-                Offerte Ontvangen
+              <Button size="lg" variant="outline" className="text-lg px-8" asChild>
+                <a href="mailto:info@ambulance-planning.be?subject=Offerte%20Aanvraag%20Ambulance%20Planning%20Tool">
+                  Offerte Ontvangen
+                </a>
               </Button>
             </div>
           </CardContent>

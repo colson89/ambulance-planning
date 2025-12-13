@@ -48,12 +48,12 @@ Wij bieden u graag de Ambulance Planning Tool aan voor het efficiënt beheren va
 
 ### Eenmalige Kosten (optioneel)
 
-| Omschrijving | Prijs |
-|---|---:|
-| Implementatie & Setup | € 1.000,00 |
-| Training & Onboarding (optioneel) | € 500,00 |
-| | |
-| **Subtotaal eenmalig** | **€ 1.000,00 - € 1.500,00** |
+| Omschrijving | Beschrijving | Prijs |
+|---|---|---:|
+| Implementatie & Setup | Eerste configuratie en opleiding om zelf gebruikers en instellingen te beheren | € 1.000,00 |
+| Training & Onboarding (optioneel) | Handleiding en instructies ter beschikking | € 500,00 |
+| | | |
+| **Subtotaal eenmalig** | | **€ 1.000,00 - € 1.500,00** |
 
 ---
 
@@ -92,6 +92,8 @@ Wij bieden u graag de Ambulance Planning Tool aan voor het efficiënt beheren va
 - **Email Notificaties** - Automatische meldingen
 - **Undo-geschiedenis** - Wijzigingen terugdraaien
 - **Beveiligde Toegang** - Rolgebaseerde rechten
+- **Cloud of Eigen Server** - Beveiligde cloud hosting of hosting op eigen server
+- **Mobiele App (PWA)** - Werkt als app op telefoon en tablet
 
 ---
 
