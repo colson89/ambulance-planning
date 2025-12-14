@@ -167,10 +167,6 @@ export function MySwapRequests({ users, shifts, selectedMonth, selectedYear }: M
     );
   }
 
-  if (filteredRequests.length === 0) {
-    return null;
-  }
-
   const pendingRequests = filteredRequests.filter((r) => r.status === "pending");
   const otherRequests = filteredRequests.filter((r) => r.status !== "pending");
 
@@ -180,12 +176,23 @@ export function MySwapRequests({ users, shifts, selectedMonth, selectedYear }: M
         <CardTitle className="text-lg md:text-xl flex items-center gap-2">
           <RefreshCw className="h-5 w-5" />
           Mijn Ruilverzoeken
+          {filteredRequests.length > 0 && (
+            <Badge variant="secondary" className="ml-1">
+              {filteredRequests.length}
+            </Badge>
+          )}
         </CardTitle>
         <CardDescription>
           Overzicht van je ingediende ruilverzoeken
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
+        {filteredRequests.length === 0 && (
+          <div className="text-center py-4 text-muted-foreground">
+            <RefreshCw className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Je hebt nog geen ruilverzoeken ingediend voor deze maand.</p>
+          </div>
+        )}
         {pendingRequests.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-muted-foreground">In behandeling</h4>
