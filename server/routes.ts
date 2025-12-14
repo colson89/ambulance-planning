@@ -8973,6 +8973,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
 
           return {
             ...offer,
+            offererName: offerer ? `${offerer.firstName} ${offerer.lastName}` : null,
+            offererShiftDate: offererShift?.date || null,
+            offererShiftType: offererShift?.type || null,
             offerer: offerer ? {
               id: offerer.id,
               firstName: offerer.firstName,
@@ -8983,7 +8986,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
               date: offererShift.date,
               type: offererShift.type,
               startTime: offererShift.startTime,
-              endTime: offererShift.endTime
+              endTime: offererShift.endTime,
+              isSplitShift: offererShift.isSplitShift
             } : null
           };
         }));
@@ -8995,7 +8999,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             date: shift.date,
             type: shift.type,
             startTime: shift.startTime,
-            endTime: shift.endTime
+            endTime: shift.endTime,
+            isSplitShift: shift.isSplitShift
           } : null,
           station: station ? { id: station.id, displayName: station.displayName } : null,
           offers: enrichedOffers

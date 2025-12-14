@@ -201,7 +201,7 @@ export function MyOpenSwapOffers({ users, stations }: MyOpenSwapOffersProps) {
     setCancelDialogOpen(true);
   };
 
-  const pendingRequests = myRequests.filter(r => r.status === "pending" && r.isOpen);
+  const pendingRequests = myRequests.filter(r => (r.status === "pending" || r.status === "open") && r.isOpen);
 
   if (isLoading) {
     return (
