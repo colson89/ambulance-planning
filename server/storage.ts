@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftSwapOffers, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftSwapOffer, type InsertShiftSwapOffer, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -4764,10 +4764,215 @@ export class DatabaseStorage implements IStorage {
         eq(shiftSwapRequests.requesterShiftId, shiftId),
         or(
           eq(shiftSwapRequests.status, 'pending'),
-          eq(shiftSwapRequests.status, 'accepted_by_target')
+          eq(shiftSwapRequests.status, 'accepted_by_target'),
+          eq(shiftSwapRequests.status, 'open'),
+          eq(shiftSwapRequests.status, 'offer_selected')
         )
       ));
     return result.length > 0;
+  }
+
+  // ========================================
+  // OPEN SHIFT SWAP FUNCTIONS
+  // ========================================
+
+  async createOpenSwapRequest(data: {
+    requesterId: number;
+    requesterShiftId: number;
+    requesterShiftDate: Date;
+    requesterShiftType: string;
+    stationId: number;
+    requesterNote?: string;
+  }): Promise<ShiftSwapRequest> {
+    const result = await db
+      .insert(shiftSwapRequests)
+      .values({
+        ...data,
+        isOpen: true,
+        status: 'open',
+        targetUserId: null,
+        targetShiftId: null
+      })
+      .returning();
+    return result[0];
+  }
+
+  async getOpenSwapRequestsForStation(stationId: number): Promise<ShiftSwapRequest[]> {
+    return db.select()
+      .from(shiftSwapRequests)
+      .where(and(
+        eq(shiftSwapRequests.stationId, stationId),
+        eq(shiftSwapRequests.isOpen, true),
+        eq(shiftSwapRequests.status, 'open')
+      ))
+      .orderBy(desc(shiftSwapRequests.createdAt));
+  }
+
+  async getOpenSwapRequestsForMultipleStations(stationIds: number[]): Promise<ShiftSwapRequest[]> {
+    if (stationIds.length === 0) return [];
+    return db.select()
+      .from(shiftSwapRequests)
+      .where(and(
+        inArray(shiftSwapRequests.stationId, stationIds),
+        eq(shiftSwapRequests.isOpen, true),
+        eq(shiftSwapRequests.status, 'open')
+      ))
+      .orderBy(desc(shiftSwapRequests.createdAt));
+  }
+
+  async getOpenSwapRequestsByRequester(userId: number): Promise<ShiftSwapRequest[]> {
+    return db.select()
+      .from(shiftSwapRequests)
+      .where(and(
+        eq(shiftSwapRequests.requesterId, userId),
+        eq(shiftSwapRequests.isOpen, true)
+      ))
+      .orderBy(desc(shiftSwapRequests.createdAt));
+  }
+
+  // ========================================
+  // SHIFT SWAP OFFER FUNCTIONS
+  // ========================================
+
+  async createShiftSwapOffer(data: InsertShiftSwapOffer): Promise<ShiftSwapOffer> {
+    const result = await db
+      .insert(shiftSwapOffers)
+      .values(data)
+      .returning();
+    return result[0];
+  }
+
+  async getShiftSwapOffer(id: number): Promise<ShiftSwapOffer | undefined> {
+    const result = await db.select()
+      .from(shiftSwapOffers)
+      .where(eq(shiftSwapOffers.id, id));
+    return result[0];
+  }
+
+  async getShiftSwapOffersByRequest(swapRequestId: number): Promise<ShiftSwapOffer[]> {
+    return db.select()
+      .from(shiftSwapOffers)
+      .where(eq(shiftSwapOffers.swapRequestId, swapRequestId))
+      .orderBy(asc(shiftSwapOffers.createdAt));
+  }
+
+  async getPendingShiftSwapOffersByRequest(swapRequestId: number): Promise<ShiftSwapOffer[]> {
+    return db.select()
+      .from(shiftSwapOffers)
+      .where(and(
+        eq(shiftSwapOffers.swapRequestId, swapRequestId),
+        eq(shiftSwapOffers.status, 'pending')
+      ))
+      .orderBy(asc(shiftSwapOffers.createdAt));
+  }
+
+  async getShiftSwapOffersByOfferer(userId: number): Promise<ShiftSwapOffer[]> {
+    return db.select()
+      .from(shiftSwapOffers)
+      .where(eq(shiftSwapOffers.offererId, userId))
+      .orderBy(desc(shiftSwapOffers.createdAt));
+  }
+
+  async hasExistingOfferForRequest(swapRequestId: number, userId: number): Promise<boolean> {
+    const result = await db.select()
+      .from(shiftSwapOffers)
+      .where(and(
+        eq(shiftSwapOffers.swapRequestId, swapRequestId),
+        eq(shiftSwapOffers.offererId, userId),
+        eq(shiftSwapOffers.status, 'pending')
+      ));
+    return result.length > 0;
+  }
+
+  async updateShiftSwapOffer(id: number, data: Partial<ShiftSwapOffer>): Promise<ShiftSwapOffer> {
+    const result = await db
+      .update(shiftSwapOffers)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(shiftSwapOffers.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async withdrawShiftSwapOffer(id: number): Promise<ShiftSwapOffer> {
+    return this.updateShiftSwapOffer(id, { status: 'withdrawn' });
+  }
+
+  async acceptShiftSwapOffer(offerId: number): Promise<{ request: ShiftSwapRequest; offer: ShiftSwapOffer }> {
+    const offer = await this.getShiftSwapOffer(offerId);
+    if (!offer) {
+      throw new Error('Offer not found');
+    }
+
+    const request = await this.getShiftSwapRequest(offer.swapRequestId);
+    if (!request) {
+      throw new Error('Swap request not found');
+    }
+
+    if (request.status !== 'open') {
+      throw new Error('Swap request is no longer open');
+    }
+
+    // Update the offer status to accepted
+    const updatedOffer = await this.updateShiftSwapOffer(offerId, { status: 'accepted' });
+
+    // Reject all other pending offers for this request
+    await db.update(shiftSwapOffers)
+      .set({ status: 'rejected', updatedAt: new Date() })
+      .where(and(
+        eq(shiftSwapOffers.swapRequestId, offer.swapRequestId),
+        ne(shiftSwapOffers.id, offerId),
+        eq(shiftSwapOffers.status, 'pending')
+      ));
+
+    // Update the swap request with target info and status
+    const updatedRequest = await this.updateShiftSwapRequest(request.id, {
+      status: 'offer_selected',
+      targetUserId: offer.offererId,
+      targetShiftId: offer.offererShiftId,
+      targetShiftDate: offer.offererShiftDate,
+      targetShiftType: offer.offererShiftType,
+      acceptedOfferId: offerId
+    });
+
+    return { request: updatedRequest, offer: updatedOffer };
+  }
+
+  async approveOpenSwapRequest(id: number, reviewerId: number, adminNote?: string): Promise<ShiftSwapRequest> {
+    const swapRequest = await this.getShiftSwapRequest(id);
+    if (!swapRequest) {
+      throw new Error('Swap request not found');
+    }
+
+    if (swapRequest.status !== 'offer_selected') {
+      throw new Error('Swap request must have a selected offer before approval');
+    }
+
+    if (!swapRequest.targetUserId || !swapRequest.targetShiftId) {
+      throw new Error('Swap request is missing target information');
+    }
+
+    // Perform the actual shift swap
+    await db.update(shifts)
+      .set({ 
+        userId: swapRequest.targetUserId,
+        updatedAt: new Date()
+      })
+      .where(eq(shifts.id, swapRequest.requesterShiftId));
+
+    await db.update(shifts)
+      .set({ 
+        userId: swapRequest.requesterId,
+        updatedAt: new Date()
+      })
+      .where(eq(shifts.id, swapRequest.targetShiftId));
+
+    // Update the swap request status
+    return this.updateShiftSwapRequest(id, { 
+      status: 'approved',
+      reviewedById: reviewerId,
+      reviewedAt: new Date(),
+      adminNote: adminNote || null
+    });
   }
 
   // ========================================

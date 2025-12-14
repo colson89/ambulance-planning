@@ -347,6 +347,7 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   notifyAvailabilityDeadline: boolean("notify_availability_deadline").notNull().default(true),
   notifyShiftSwapUpdates: boolean("notify_shift_swap_updates").notNull().default(true), // Ruilverzoek updates
   notifyBidUpdates: boolean("notify_bid_updates").notNull().default(true), // Bieding updates
+  notifyOpenSwapRequests: boolean("notify_open_swap_requests").notNull().default(true), // Open wissel verzoeken van collega's
   deadlineWarningDays: integer("deadline_warning_days").notNull().default(3), // Hoeveel dagen van tevoren waarschuwen
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
@@ -500,17 +501,21 @@ export const shiftSwapRequests = pgTable("shift_swap_requests", {
   // Snapshot van aanvrager shift (voor historie, zelfs nadat shift gewijzigd/verwijderd is)
   requesterShiftDate: timestamp("requester_shift_date"),
   requesterShiftType: text("requester_shift_type"),
-  // Doelcollega info (wie de shift overneemt)
-  targetUserId: integer("target_user_id").notNull().references(() => users.id),
+  // Doelcollega info (wie de shift overneemt) - nullable voor open verzoeken
+  targetUserId: integer("target_user_id").references(() => users.id),
   targetShiftId: integer("target_shift_id").references(() => shifts.id), // Optioneel: als ze ook ruilen
   // Snapshot van target shift (voor ruilen)
   targetShiftDate: timestamp("target_shift_date"),
   targetShiftType: text("target_shift_type"),
   // Station (voor filtering)
   stationId: integer("station_id").notNull().references(() => stations.id),
+  // Open wissel verzoek velden
+  isOpen: boolean("is_open").notNull().default(false), // Is dit een open verzoek (iedereen kan reageren)
+  acceptedOfferId: integer("accepted_offer_id"), // Welke aanbieding is geaccepteerd (FK naar shiftSwapOffers)
   // Status workflow: pending -> accepted_by_target -> approved/rejected
+  // Voor open verzoeken: open -> offer_selected -> approved/rejected
   status: text("status", { 
-    enum: ["pending", "accepted_by_target", "approved", "rejected", "cancelled"] 
+    enum: ["pending", "accepted_by_target", "approved", "rejected", "cancelled", "open", "offer_selected"] 
   }).notNull().default("pending"),
   // Optionele notities
   requesterNote: text("requester_note"),
@@ -536,6 +541,40 @@ export const insertShiftSwapRequestSchema = createInsertSchema(shiftSwapRequests
 });
 export type ShiftSwapRequest = typeof shiftSwapRequests.$inferSelect;
 export type InsertShiftSwapRequest = z.infer<typeof insertShiftSwapRequestSchema>;
+
+// Open wissel aanbiedingen - collega's kunnen reageren op open swap requests
+export const shiftSwapOffers = pgTable("shift_swap_offers", {
+  id: serial("id").primaryKey(),
+  // Welk open verzoek
+  swapRequestId: integer("swap_request_id").notNull().references(() => shiftSwapRequests.id, { onDelete: 'cascade' }),
+  // Wie doet de aanbieding
+  offererId: integer("offerer_id").notNull().references(() => users.id),
+  // Welke shift bieden ze aan
+  offererShiftId: integer("offerer_shift_id").notNull().references(() => shifts.id),
+  // Snapshot van de aangeboden shift (voor historie)
+  offererShiftDate: timestamp("offerer_shift_date"),
+  offererShiftType: text("offerer_shift_type"),
+  // Status: pending -> accepted/rejected/withdrawn
+  status: text("status", { 
+    enum: ["pending", "accepted", "rejected", "withdrawn"] 
+  }).notNull().default("pending"),
+  // Optionele notitie
+  note: text("note"),
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertShiftSwapOfferSchema = createInsertSchema(shiftSwapOffers, {
+  note: z.string().max(500, "Notitie mag maximaal 500 karakters bevatten").optional()
+}).omit({
+  id: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type ShiftSwapOffer = typeof shiftSwapOffers.$inferSelect;
+export type InsertShiftSwapOffer = z.infer<typeof insertShiftSwapOfferSchema>;
 
 // Shift biedingen - medewerkers kunnen bieden op open shifts
 export const shiftBids = pgTable("shift_bids", {
