@@ -60,11 +60,23 @@ export function MySwapRequests({ users, shifts, selectedMonth, selectedYear }: M
 
   const filteredRequests = useMemo(() => {
     return myRequests.filter((request) => {
-      if (!request.requesterShiftDate) return false;
-      const shiftDate = new Date(request.requesterShiftDate);
+      // First try to use snapshot date, then fallback to actual shift date
+      let shiftDate: Date | null = null;
+      
+      if (request.requesterShiftDate) {
+        shiftDate = new Date(request.requesterShiftDate);
+      } else {
+        // Fallback: look up the actual shift from the shifts array
+        const actualShift = shifts.find(s => s.id === request.requesterShiftId);
+        if (actualShift) {
+          shiftDate = new Date(actualShift.date);
+        }
+      }
+      
+      if (!shiftDate) return false;
       return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
     });
-  }, [myRequests, selectedMonth, selectedYear]);
+  }, [myRequests, shifts, selectedMonth, selectedYear]);
 
   const cancelMutation = useMutation({
     mutationFn: async (requestId: number) => {
