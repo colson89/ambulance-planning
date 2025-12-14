@@ -4672,7 +4672,8 @@ export class DatabaseStorage implements IStorage {
         eq(shiftSwapRequests.stationId, stationId),
         or(
           eq(shiftSwapRequests.status, 'pending'),
-          eq(shiftSwapRequests.status, 'accepted_by_target')
+          eq(shiftSwapRequests.status, 'accepted_by_target'),
+          eq(shiftSwapRequests.status, 'offer_selected')
         )
       ))
       .orderBy(desc(shiftSwapRequests.createdAt));
@@ -4684,7 +4685,8 @@ export class DatabaseStorage implements IStorage {
       .where(
         or(
           eq(shiftSwapRequests.status, 'pending'),
-          eq(shiftSwapRequests.status, 'accepted_by_target')
+          eq(shiftSwapRequests.status, 'accepted_by_target'),
+          eq(shiftSwapRequests.status, 'offer_selected')
         )
       )
       .orderBy(desc(shiftSwapRequests.createdAt));
@@ -4713,6 +4715,11 @@ export class DatabaseStorage implements IStorage {
     const swapRequest = await this.getShiftSwapRequest(id);
     if (!swapRequest) {
       throw new Error('Shift swap request not found');
+    }
+
+    // Validate targetUserId is set (required for open swaps after offer acceptance)
+    if (!swapRequest.targetUserId) {
+      throw new Error('Swap request is missing target user - cannot approve');
     }
 
     // Voer de daadwerkelijke swap uit

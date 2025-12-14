@@ -25,6 +25,7 @@ interface PushSubscriptionSettings {
   notifyAvailabilityDeadline: boolean;
   notifyShiftSwapUpdates: boolean;
   notifyBidUpdates: boolean;
+  notifyOpenSwapRequests: boolean;
   deadlineWarningDays: number;
 }
 
@@ -129,6 +130,7 @@ export function PushNotificationSettings() {
         notifyAvailabilityDeadline: newSettings.notifyAvailabilityDeadline,
         notifyShiftSwapUpdates: newSettings.notifyShiftSwapUpdates,
         notifyBidUpdates: newSettings.notifyBidUpdates,
+        notifyOpenSwapRequests: newSettings.notifyOpenSwapRequests,
         deadlineWarningDays: newSettings.deadlineWarningDays
       });
 
@@ -299,6 +301,23 @@ export function PushNotificationSettings() {
                     checked={settings.notifyBidUpdates}
                     onCheckedChange={(checked) =>
                       handlePreferenceChange('notifyBidUpdates', checked)
+                    }
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="notify-open-swap" className="flex-1 cursor-pointer">
+                    <div className="text-sm font-medium">Open Wissel Verzoeken</div>
+                    <div className="text-xs text-muted-foreground">
+                      Wanneer een collega een shift beschikbaar stelt voor overname
+                    </div>
+                  </Label>
+                  <Switch
+                    id="notify-open-swap"
+                    checked={settings.notifyOpenSwapRequests}
+                    onCheckedChange={(checked) =>
+                      handlePreferenceChange('notifyOpenSwapRequests', checked)
                     }
                     disabled={isLoading}
                   />

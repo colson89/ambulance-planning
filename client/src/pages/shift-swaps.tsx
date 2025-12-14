@@ -20,6 +20,7 @@ import {
   AlertCircle,
   Check,
   X,
+  Users,
 } from "lucide-react";
 import {
   Dialog,
@@ -63,6 +64,7 @@ interface ShiftSwapRequest {
   updatedAt: Date;
   targetUserStationId?: number | null;
   requesterStationId?: number | null;
+  isOpen?: boolean;
 }
 
 export default function ShiftSwapsPage() {
@@ -352,6 +354,13 @@ export default function ShiftSwapsPage() {
             In behandeling
           </Badge>
         );
+      case "offer_selected":
+        return (
+          <Badge variant="outline" className="flex items-center gap-1 bg-purple-50 text-purple-700 border-purple-200">
+            <Users className="h-3 w-3" />
+            Wacht op goedkeuring
+          </Badge>
+        );
       case "approved":
         return (
           <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 border-green-200">
@@ -484,6 +493,8 @@ export default function ShiftSwapsPage() {
                       className={`border rounded-lg p-4 ${
                         request.status === "pending"
                           ? "bg-yellow-50/50 border-yellow-200"
+                          : request.status === "offer_selected"
+                          ? "bg-purple-50/50 border-purple-200"
                           : request.status === "approved"
                           ? "bg-green-50/50 border-green-200"
                           : request.status === "rejected"
@@ -498,8 +509,14 @@ export default function ShiftSwapsPage() {
                             {getStationName(request.stationId)}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {isSwap && (
+                        <div className="flex flex-wrap items-center gap-2 justify-end">
+                          {request.isOpen && (
+                            <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+                              <Users className="h-3 w-3 mr-1" />
+                              Open Wissel
+                            </Badge>
+                          )}
+                          {isSwap && !request.isOpen && (
                             <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
                               Ruilen
                             </Badge>
@@ -557,7 +574,7 @@ export default function ShiftSwapsPage() {
                         </div>
                       )}
 
-                      {request.status === "pending" && (
+                      {(request.status === "pending" || request.status === "offer_selected") && (
                         <div className="flex gap-2">
                           <Button
                             variant="outline"
@@ -615,6 +632,8 @@ export default function ShiftSwapsPage() {
                           className={
                             request.status === "pending"
                               ? "bg-yellow-50/30"
+                              : request.status === "offer_selected"
+                              ? "bg-purple-50/30"
                               : request.status === "approved"
                               ? "bg-green-50/30"
                               : request.status === "rejected"
@@ -637,15 +656,22 @@ export default function ShiftSwapsPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {isSwap ? (
-                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                                Ruilen
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                Overnemen
-                              </Badge>
-                            )}
+                            <div className="flex flex-wrap gap-1">
+                              {request.isOpen ? (
+                                <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+                                  <Users className="h-3 w-3 mr-1" />
+                                  Open Wissel
+                                </Badge>
+                              ) : isSwap ? (
+                                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                  Ruilen
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                  Overnemen
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">

@@ -6,6 +6,8 @@ import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { OvertimeDialog } from "@/components/overtime-dialog";
 import { ShiftSwapDialog } from "@/components/shift-swap-dialog";
 import { MySwapRequests } from "@/components/my-swap-requests";
+import { OpenSwapRequests } from "@/components/open-swap-requests";
+import { MyOpenSwapOffers } from "@/components/my-open-swap-offers";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -838,6 +840,18 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Mijn Open Wissels met aanbiedingen */}
+      <MyOpenSwapOffers users={colleagues} stations={stations} />
+
+      {/* Open Wissels van collega's */}
+      {user && (
+        <OpenSwapRequests 
+          users={colleagues} 
+          stations={stations} 
+          currentUserId={user.id} 
+        />
+      )}
 
       {/* Mijn Ruilverzoeken sectie */}
       <MySwapRequests users={colleagues} shifts={shifts} />

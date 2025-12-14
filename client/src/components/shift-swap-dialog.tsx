@@ -20,14 +20,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Loader2, RefreshCw, AlertCircle, ArrowRightLeft, ArrowRight } from "lucide-react";
+import { Loader2, RefreshCw, AlertCircle, ArrowRightLeft, ArrowRight, Users } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Shift, User } from "@shared/schema";
 
-type SwapMode = "transfer" | "swap";
+type SwapMode = "transfer" | "swap" | "open";
 
 interface ShiftSwapDialogProps {
   open: boolean;
@@ -125,7 +125,49 @@ export function ShiftSwapDialog({
     },
   });
 
+  const createOpenSwapMutation = useMutation({
+    mutationFn: async (data: {
+      shiftId: number;
+      requesterNote?: string;
+    }) => {
+      const res = await apiRequest("POST", "/api/open-swap-requests", data);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Kon open wissel niet aanmaken");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/open-swap-requests/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shift-swaps/my-requests"] });
+      toast({
+        title: "Open wissel geplaatst",
+        description: "Je shift is nu zichtbaar voor collega's. Je ontvangt een melding als iemand reageert.",
+      });
+      onOpenChange(false);
+      setTargetUserId("");
+      setTargetShiftId("");
+      setRequesterNote("");
+      setSwapMode("transfer");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout bij plaatsen",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = () => {
+    if (swapMode === "open") {
+      createOpenSwapMutation.mutate({
+        shiftId: shift.id,
+        requesterNote: requesterNote || undefined,
+      });
+      return;
+    }
+
     if (!targetUserId) {
       toast({
         title: "Selecteer een collega",
@@ -246,7 +288,9 @@ export function ShiftSwapDialog({
           <DialogDescription>
             {swapMode === "transfer" 
               ? "Vraag een collega om jouw shift over te nemen" 
-              : "Wissel je shift met een shift van een collega"}
+              : swapMode === "swap"
+              ? "Wissel je shift met een shift van een collega"
+              : "Zet je shift open zodat iedereen kan reageren"}
           </DialogDescription>
         </DialogHeader>
 
@@ -257,7 +301,7 @@ export function ShiftSwapDialog({
             <RadioGroup
               value={swapMode}
               onValueChange={(value) => setSwapMode(value as SwapMode)}
-              className="flex gap-4"
+              className="flex flex-wrap gap-4"
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="transfer" id="mode-transfer" />
@@ -273,11 +317,20 @@ export function ShiftSwapDialog({
                   Ruilen
                 </Label>
               </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="open" id="mode-open" />
+                <Label htmlFor="mode-open" className="flex items-center gap-1 cursor-pointer">
+                  <Users className="h-4 w-4" />
+                  Open Wissel
+                </Label>
+              </div>
             </RadioGroup>
             <p className="text-xs text-muted-foreground">
               {swapMode === "transfer" 
                 ? "Je collega neemt jouw shift over" 
-                : "Jullie wisselen elkaars shifts"}
+                : swapMode === "swap"
+                ? "Jullie wisselen elkaars shifts"
+                : "Collega's kunnen reageren op je open verzoek"}
             </p>
           </div>
 
@@ -292,29 +345,31 @@ export function ShiftSwapDialog({
             </p>
           </div>
 
-          {/* Target user selection */}
-          <div className="space-y-2">
-            <Label htmlFor="target-user">
-              {swapMode === "transfer" ? "Wie neemt de shift over?" : "Met wie wil je ruilen?"}
-            </Label>
-            <Select value={targetUserId} onValueChange={setTargetUserId}>
-              <SelectTrigger id="target-user">
-                <SelectValue placeholder="Selecteer een collega..." />
-              </SelectTrigger>
-              <SelectContent>
-                {availableColleagues.map((colleague) => (
-                  <SelectItem key={colleague.id} value={colleague.id.toString()}>
-                    {colleague.firstName} {colleague.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {availableColleagues.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Geen collega's beschikbaar
-              </p>
-            )}
-          </div>
+          {/* Target user selection (not for open mode) */}
+          {swapMode !== "open" && (
+            <div className="space-y-2">
+              <Label htmlFor="target-user">
+                {swapMode === "transfer" ? "Wie neemt de shift over?" : "Met wie wil je ruilen?"}
+              </Label>
+              <Select value={targetUserId} onValueChange={setTargetUserId}>
+                <SelectTrigger id="target-user">
+                  <SelectValue placeholder="Selecteer een collega..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableColleagues.map((colleague) => (
+                    <SelectItem key={colleague.id} value={colleague.id.toString()}>
+                      {colleague.firstName} {colleague.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {availableColleagues.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Geen collega's beschikbaar
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Target shift selection (only for swap mode) */}
           {swapMode === "swap" && targetUserId && (
@@ -361,7 +416,10 @@ export function ShiftSwapDialog({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Je verzoek moet goedgekeurd worden door een admin of supervisor voordat de {swapMode === "swap" ? "ruil" : "overname"} definitief is.
+              {swapMode === "open" 
+                ? "Je shift wordt zichtbaar voor collega's. Na acceptatie van een aanbieding moet de wissel nog worden goedgekeurd."
+                : `Je verzoek moet goedgekeurd worden door een admin of supervisor voordat de ${swapMode === "swap" ? "ruil" : "overname"} definitief is.`
+              }
             </AlertDescription>
           </Alert>
         </div>
@@ -373,15 +431,16 @@ export function ShiftSwapDialog({
           <Button
             onClick={handleSubmit}
             disabled={
-              !targetUserId || 
+              (swapMode !== "open" && !targetUserId) || 
               (swapMode === "swap" && !targetShiftId) || 
-              createSwapMutation.isPending
+              createSwapMutation.isPending ||
+              createOpenSwapMutation.isPending
             }
           >
-            {createSwapMutation.isPending && (
+            {(createSwapMutation.isPending || createOpenSwapMutation.isPending) && (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             )}
-            Verzoek Indienen
+            {swapMode === "open" ? "Open Wissel Plaatsen" : "Verzoek Indienen"}
           </Button>
         </DialogFooter>
       </DialogContent>

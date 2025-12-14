@@ -8356,14 +8356,15 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         requests = await storage.getPendingShiftSwapRequestsForStation(user.stationId);
       }
       
-      // Enrich requests with target user's station info for cross-team visibility
+      // Enrich requests with target user's station info and isOpen flag for cross-team visibility
       const enrichedRequests = await Promise.all(requests.map(async (request: any) => {
-        const targetUser = await storage.getUser(request.targetUserId);
+        const targetUser = request.targetUserId ? await storage.getUser(request.targetUserId) : null;
         const requesterUser = await storage.getUser(request.requesterId);
         return {
           ...request,
           targetUserStationId: targetUser?.stationId || null,
           requesterStationId: requesterUser?.stationId || null,
+          isOpen: request.isOpen || false,
         };
       }));
       
@@ -8406,14 +8407,15 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         requests = await storage.getShiftSwapRequestsByStation(user.stationId);
       }
       
-      // Enrich requests with target user's station info for cross-team visibility
+      // Enrich requests with target user's station info and isOpen flag for cross-team visibility
       const enrichedRequests = await Promise.all(requests.map(async (request: any) => {
-        const targetUser = await storage.getUser(request.targetUserId);
+        const targetUser = request.targetUserId ? await storage.getUser(request.targetUserId) : null;
         const requesterUser = await storage.getUser(request.requesterId);
         return {
           ...request,
           targetUserStationId: targetUser?.stationId || null,
           requesterStationId: requesterUser?.stationId || null,
+          isOpen: request.isOpen || false,
         };
       }));
       
@@ -8576,8 +8578,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
       }
 
-      // Status moet 'pending' zijn (we slaan accepted_by_target workflow over voor nu)
-      if (request.status !== 'pending' && request.status !== 'accepted_by_target') {
+      // Status moet 'pending', 'accepted_by_target' of 'offer_selected' (voor open wissels) zijn
+      if (request.status !== 'pending' && request.status !== 'accepted_by_target' && request.status !== 'offer_selected') {
         return res.status(400).json({ message: "Dit verzoek kan niet meer goedgekeurd worden" });
       }
 
@@ -8660,7 +8662,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
       }
 
-      if (request.status !== 'pending' && request.status !== 'accepted_by_target') {
+      if (request.status !== 'pending' && request.status !== 'accepted_by_target' && request.status !== 'offer_selected') {
         return res.status(400).json({ message: "Dit verzoek kan niet meer afgewezen worden" });
       }
 
