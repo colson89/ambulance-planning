@@ -549,8 +549,8 @@ export const shiftSwapOffers = pgTable("shift_swap_offers", {
   swapRequestId: integer("swap_request_id").notNull().references(() => shiftSwapRequests.id, { onDelete: 'cascade' }),
   // Wie doet de aanbieding
   offererId: integer("offerer_id").notNull().references(() => users.id),
-  // Welke shift bieden ze aan
-  offererShiftId: integer("offerer_shift_id").notNull().references(() => shifts.id),
+  // Welke shift bieden ze aan (null = alleen overnemen, geen ruil)
+  offererShiftId: integer("offerer_shift_id").references(() => shifts.id),
   // Snapshot van de aangeboden shift (voor historie)
   offererShiftDate: timestamp("offerer_shift_date"),
   offererShiftType: text("offerer_shift_type"),
@@ -566,7 +566,10 @@ export const shiftSwapOffers = pgTable("shift_swap_offers", {
 });
 
 export const insertShiftSwapOfferSchema = createInsertSchema(shiftSwapOffers, {
-  note: z.string().max(500, "Notitie mag maximaal 500 karakters bevatten").optional()
+  note: z.string().max(500, "Notitie mag maximaal 500 karakters bevatten").optional(),
+  offererShiftId: z.number().nullable().optional(),
+  offererShiftDate: z.coerce.date().nullable().optional(),
+  offererShiftType: z.string().nullable().optional()
 }).omit({
   id: true,
   status: true,

@@ -4954,11 +4954,11 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Swap request must have a selected offer before approval');
     }
 
-    if (!swapRequest.targetUserId || !swapRequest.targetShiftId) {
-      throw new Error('Swap request is missing target information');
+    if (!swapRequest.targetUserId) {
+      throw new Error('Swap request is missing target user information');
     }
 
-    // Perform the actual shift swap
+    // Assign requester's shift to the target user (the one who offered to take over/swap)
     await db.update(shifts)
       .set({ 
         userId: swapRequest.targetUserId,
@@ -4966,12 +4966,15 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(shifts.id, swapRequest.requesterShiftId));
 
-    await db.update(shifts)
-      .set({ 
-        userId: swapRequest.requesterId,
-        updatedAt: new Date()
-      })
-      .where(eq(shifts.id, swapRequest.targetShiftId));
+    // If there's a target shift (real swap), assign it to the requester
+    if (swapRequest.targetShiftId) {
+      await db.update(shifts)
+        .set({ 
+          userId: swapRequest.requesterId,
+          updatedAt: new Date()
+        })
+        .where(eq(shifts.id, swapRequest.targetShiftId));
+    }
 
     // Update the swap request status
     return this.updateShiftSwapRequest(id, { 
