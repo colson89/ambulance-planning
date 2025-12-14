@@ -65,6 +65,17 @@ interface ShiftSwapRequest {
   targetUserStationId?: number | null;
   requesterStationId?: number | null;
   isOpen?: boolean;
+  requesterShiftDate?: string | null;
+  requesterShiftType?: string | null;
+  targetShiftDate?: string | null;
+  targetShiftType?: string | null;
+  acceptedOffer?: {
+    offererId: number;
+    offererName: string;
+    offererShiftId: number;
+    offererShiftDate: string | null;
+    offererShiftType: string | null;
+  } | null;
 }
 
 export default function ShiftSwapsPage() {
@@ -297,9 +308,18 @@ export default function ShiftSwapsPage() {
     return u ? `${u.firstName} ${u.lastName}` : "Onbekend";
   };
 
-  const getShiftInfo = (shiftId: number) => {
+  const getShiftInfo = (shiftId: number, fallbackDate?: string | null, fallbackType?: string | null) => {
     const shift = shifts.find((s) => s.id === shiftId);
-    if (!shift) return { date: "Onbekend", type: "?", time: "-" };
+    if (!shift) {
+      if (fallbackDate) {
+        return {
+          date: format(new Date(fallbackDate), "EEE d MMM yyyy", { locale: nl }),
+          type: fallbackType === "day" ? "Dag" : fallbackType === "night" ? "Nacht" : "?",
+          time: fallbackType === "day" ? "07:00-19:00" : fallbackType === "night" ? "19:00-07:00" : "-",
+        };
+      }
+      return { date: "Onbekend", type: "?", time: "-" };
+    }
 
     const getShiftTime = () => {
       if (!shift.startTime || !shift.endTime) return "-";
@@ -484,9 +504,14 @@ export default function ShiftSwapsPage() {
               {/* Mobile view */}
               <div className="md:hidden space-y-4">
                 {requests.map((request) => {
-                  const shiftInfo = getShiftInfo(request.requesterShiftId);
-                  const targetShiftInfo = request.targetShiftId ? getShiftInfo(request.targetShiftId) : null;
-                  const isSwap = request.targetShiftId !== null;
+                  const shiftInfo = getShiftInfo(request.requesterShiftId, request.requesterShiftDate, request.requesterShiftType);
+                  const hasAcceptedOffer = request.isOpen && request.acceptedOffer;
+                  const targetShiftInfo = hasAcceptedOffer
+                    ? getShiftInfo(request.acceptedOffer!.offererShiftId, request.acceptedOffer!.offererShiftDate, request.acceptedOffer!.offererShiftType)
+                    : request.targetShiftId 
+                      ? getShiftInfo(request.targetShiftId, request.targetShiftDate, request.targetShiftType) 
+                      : null;
+                  const isSwap = request.targetShiftId !== null || hasAcceptedOffer;
                   return (
                     <div
                       key={request.id}
@@ -537,7 +562,7 @@ export default function ShiftSwapsPage() {
                       <div className="text-sm mb-3">
                         <span className="font-medium">{isSwap ? "Ruilen met" : "Overnemen door"}:</span>{" "}
                         <span className="inline-flex items-center gap-2">
-                          {getUserName(request.targetUserId)}
+                          {hasAcceptedOffer ? request.acceptedOffer!.offererName : getUserName(request.targetUserId)}
                           {isCrossTeamRequest(request) && (
                             <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
                               Cross-team
@@ -623,9 +648,14 @@ export default function ShiftSwapsPage() {
                   </TableHeader>
                   <TableBody>
                     {requests.map((request) => {
-                      const shiftInfo = getShiftInfo(request.requesterShiftId);
-                      const targetShiftInfo = request.targetShiftId ? getShiftInfo(request.targetShiftId) : null;
-                      const isSwap = request.targetShiftId !== null;
+                      const shiftInfo = getShiftInfo(request.requesterShiftId, request.requesterShiftDate, request.requesterShiftType);
+                      const hasAcceptedOffer = request.isOpen && request.acceptedOffer;
+                      const targetShiftInfo = hasAcceptedOffer
+                        ? getShiftInfo(request.acceptedOffer!.offererShiftId, request.acceptedOffer!.offererShiftDate, request.acceptedOffer!.offererShiftType)
+                        : request.targetShiftId 
+                          ? getShiftInfo(request.targetShiftId, request.targetShiftDate, request.targetShiftType) 
+                          : null;
+                      const isSwap = request.targetShiftId !== null || hasAcceptedOffer;
                       return (
                         <TableRow
                           key={request.id}
@@ -675,7 +705,7 @@ export default function ShiftSwapsPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium">{getUserName(request.targetUserId)}</span>
+                              <span className="font-medium">{hasAcceptedOffer ? request.acceptedOffer!.offererName : getUserName(request.targetUserId)}</span>
                               {isCrossTeamRequest(request) && (
                                 <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
                                   Cross-team
@@ -767,7 +797,9 @@ export default function ShiftSwapsPage() {
                   <div>
                     <span className="text-muted-foreground">Overnemer:</span>
                     <div className="font-medium flex items-center gap-2">
-                      {getUserName(selectedRequest.targetUserId)}
+                      {selectedRequest.isOpen && selectedRequest.acceptedOffer 
+                        ? selectedRequest.acceptedOffer.offererName 
+                        : getUserName(selectedRequest.targetUserId)}
                       {isCrossTeamRequest(selectedRequest) && (
                         <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
                           Cross-team
@@ -789,8 +821,8 @@ export default function ShiftSwapsPage() {
                   <div className="col-span-2">
                     <span className="text-muted-foreground">Shift:</span>
                     <div className="font-medium">
-                      {getShiftInfo(selectedRequest.requesterShiftId).date} -{" "}
-                      {getShiftInfo(selectedRequest.requesterShiftId).type}
+                      {getShiftInfo(selectedRequest.requesterShiftId, selectedRequest.requesterShiftDate, selectedRequest.requesterShiftType).date} -{" "}
+                      {getShiftInfo(selectedRequest.requesterShiftId, selectedRequest.requesterShiftDate, selectedRequest.requesterShiftType).type}
                     </div>
                   </div>
                 </div>
@@ -802,7 +834,9 @@ export default function ShiftSwapsPage() {
                   <div className="text-sm text-green-800">
                     Bij goedkeuring wordt de shift van{" "}
                     <strong>{getUserName(selectedRequest.requesterId)}</strong> overgedragen aan{" "}
-                    <strong>{getUserName(selectedRequest.targetUserId)}</strong>.
+                    <strong>{selectedRequest.isOpen && selectedRequest.acceptedOffer 
+                      ? selectedRequest.acceptedOffer.offererName 
+                      : getUserName(selectedRequest.targetUserId)}</strong>.
                   </div>
                 </div>
               )}
