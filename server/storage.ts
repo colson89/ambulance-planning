@@ -5320,6 +5320,49 @@ export class DatabaseStorage implements IStorage {
         }
         break;
         
+      case 'shift_swap':
+        // Undo approved shift swap by reversing the user assignments
+        if (oldValue) {
+          const { requesterShiftId, targetShiftId, originalRequesterShiftUserId, originalTargetShiftUserId } = oldValue;
+          
+          // Guard: require valid metadata to avoid data corruption
+          if (!requesterShiftId || originalRequesterShiftUserId === undefined) {
+            throw new Error("Undo metadata onvolledig - kan shift ruil niet ongedaan maken");
+          }
+          
+          // Restore requester's shift to original owner
+          await db.update(shifts)
+            .set({ 
+              userId: originalRequesterShiftUserId,
+              updatedAt: new Date()
+            })
+            .where(eq(shifts.id, requesterShiftId));
+          
+          // Restore target's shift to original owner (only if it was a true swap)
+          if (targetShiftId && originalTargetShiftUserId !== undefined && originalTargetShiftUserId !== null) {
+            await db.update(shifts)
+              .set({ 
+                userId: originalTargetShiftUserId,
+                updatedAt: new Date()
+              })
+              .where(eq(shifts.id, targetShiftId));
+          }
+          
+          // Update swap request status back to pending
+          if (oldValue.swapRequestId) {
+            await db.update(shiftSwapRequests)
+              .set({
+                status: 'pending',
+                reviewedById: null,
+                reviewedAt: null,
+                adminNote: null,
+                updatedAt: new Date()
+              })
+              .where(eq(shiftSwapRequests.id, oldValue.swapRequestId));
+          }
+        }
+        break;
+        
       default:
         throw new Error(`Onbekend entity type: ${record.entityType}`);
     }

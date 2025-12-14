@@ -8673,7 +8673,59 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       // Get shift info for notification
       const requesterShift = await storage.getShift(request.requesterShiftId);
 
+      // Get target shift info before approval (for undo history)
+      // IMPORTANT: Capture actual userId from shift records BEFORE approval changes them
+      const targetShift = request.targetShiftId ? await storage.getShift(request.targetShiftId) : null;
+      const originalRequesterShiftUserId = requesterShift?.userId;
+      const originalTargetShiftUserId = targetShift?.userId;
+      
       const approved = await storage.approveShiftSwapRequest(id, user.id, adminNote);
+
+      // Create undo history record for the shift swap
+      try {
+        const requester = await storage.getUser(request.requesterId);
+        const targetUser = await storage.getUser(request.targetUserId);
+        const shiftDate = requesterShift ? new Date(requesterShift.date) : new Date();
+        const shiftType = requesterShift?.type.startsWith('day') ? 'dagdienst' : 'nachtdienst';
+        const swapType = request.targetShiftId ? 'Ruil' : 'Overname';
+        
+        let description = `${swapType}: ${shiftType} ${shiftDate.toLocaleDateString('nl-BE')}`;
+        if (requester) {
+          description += ` van ${requester.firstName} ${requester.lastName}`;
+        }
+        if (targetUser) {
+          description += ` naar ${targetUser.firstName} ${targetUser.lastName}`;
+        }
+        
+        await storage.createUndoRecord({
+          userId: user.id,
+          stationId: request.stationId,
+          entityType: 'shift_swap',
+          entityId: id, // swap request id
+          action: 'approve',
+          description,
+          oldValue: JSON.stringify({
+            swapRequestId: id,
+            requesterShiftId: request.requesterShiftId,
+            targetShiftId: request.targetShiftId,
+            requesterId: request.requesterId,
+            targetUserId: request.targetUserId,
+            // Store actual user IDs from shift records before they were changed
+            originalRequesterShiftUserId: originalRequesterShiftUserId,
+            originalTargetShiftUserId: originalTargetShiftUserId
+          }),
+          newValue: JSON.stringify({
+            requesterShiftUserId: request.targetUserId,
+            targetShiftUserId: request.targetShiftId ? request.requesterId : null
+          }),
+          month: shiftDate.getMonth() + 1,
+          year: shiftDate.getFullYear(),
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: req.get('user-agent') || null
+        });
+      } catch (undoError) {
+        console.error("Failed to create undo history record for shift swap:", undoError);
+      }
 
       // Send push notifications to requester and target
       if (requesterShift) {

@@ -112,6 +112,8 @@ export function UndoHistoryPanel({ stationId, month, year }: UndoHistoryPanelPro
         return <Badge variant="outline">Shift</Badge>;
       case "shift_delete":
         return <Badge variant="destructive">Verwijderd</Badge>;
+      case "shift_swap":
+        return <Badge className="bg-blue-500 hover:bg-blue-600">Ruil</Badge>;
       default:
         return <Badge>{entityType}</Badge>;
     }

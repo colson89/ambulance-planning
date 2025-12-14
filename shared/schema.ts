@@ -617,6 +617,8 @@ export const undoHistory = pgTable("undo_history", {
     enum: [
       // Shift gerelateerde types
       "shift", "shift_assignment", "shift_delete", "planning_generate", "planning_delete",
+      // Shift swap types
+      "shift_swap",
       // Gebruikersbeheer types
       "user_create", "user_update", "user_delete", "user_station_add", "user_station_remove"
     ] 
