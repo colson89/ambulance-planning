@@ -9251,6 +9251,64 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // Reject an offer on the user's open swap request
+  app.post("/api/open-swap-offers/:id/reject", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const offerId = parseInt(req.params.id);
+
+      const offer = await storage.getShiftSwapOffer(offerId);
+      if (!offer) {
+        return res.status(404).json({ message: "Aanbieding niet gevonden" });
+      }
+
+      // Get the swap request
+      const swapRequest = await storage.getShiftSwapRequest(offer.swapRequestId);
+      if (!swapRequest) {
+        return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
+      }
+
+      // Check if user is the requester
+      if (swapRequest.requesterId !== user.id) {
+        return res.status(403).json({ message: "Alleen de aanvrager kan een aanbieding weigeren" });
+      }
+
+      // Check if request is still open
+      if (swapRequest.status !== 'open') {
+        return res.status(400).json({ message: "Dit ruil verzoek is niet meer open" });
+      }
+
+      // Check if offer is still pending
+      if (offer.status !== 'pending') {
+        return res.status(400).json({ message: "Deze aanbieding is niet meer beschikbaar" });
+      }
+
+      // Reject the offer
+      await storage.updateShiftSwapOfferStatus(offerId, 'rejected');
+
+      // Notify the offerer that their offer was rejected
+      try {
+        const station = await storage.getStation(swapRequest.stationId);
+        const stationPrefix = station ? `[${station.displayName}] ` : '';
+        
+        await sendPushNotificationToUser(
+          offer.offererId,
+          `${stationPrefix}Aanbieding Geweigerd`,
+          `${user.firstName} ${user.lastName} heeft je aanbieding geweigerd.`,
+          '/shift-swaps',
+          'notifyShiftSwapUpdates'
+        );
+      } catch (notifyError) {
+        console.error("Failed to send push notification for rejected offer:", notifyError);
+      }
+
+      res.json({ success: true, message: "Aanbieding geweigerd" });
+    } catch (error: any) {
+      console.error("Error rejecting offer:", error);
+      res.status(500).json({ message: "Fout bij weigeren aanbieding" });
+    }
+  });
+
   // Get offers made by current user
   app.get("/api/open-swap-offers/my", requireAuth, async (req, res) => {
     try {

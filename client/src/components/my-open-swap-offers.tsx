@@ -135,6 +135,32 @@ export function MyOpenSwapOffers({ users, stations }: MyOpenSwapOffersProps) {
     },
   });
 
+  const rejectOfferMutation = useMutation({
+    mutationFn: async (offerId: number) => {
+      const res = await apiRequest("POST", `/api/open-swap-offers/${offerId}/reject`);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Kon aanbieding niet weigeren");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/open-swap-requests/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/open-swap-requests"] });
+      toast({
+        title: "Aanbieding geweigerd",
+        description: "De aanbieding is geweigerd.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout bij weigeren",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const cancelRequestMutation = useMutation({
     mutationFn: async (requestId: number) => {
       const res = await apiRequest("POST", `/api/shift-swaps/${requestId}/cancel`);
@@ -318,15 +344,27 @@ export function MyOpenSwapOffers({ users, stations }: MyOpenSwapOffersProps) {
                               </p>
                             )}
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-green-100 hover:bg-green-200 border-green-300 text-green-700"
-                            onClick={() => openAcceptDialog(request, offer)}
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Accepteren
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-red-50 hover:bg-red-100 border-red-200 text-red-600"
+                              onClick={() => rejectOfferMutation.mutate(offer.id)}
+                              disabled={rejectOfferMutation.isPending}
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Weigeren
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-green-100 hover:bg-green-200 border-green-300 text-green-700"
+                              onClick={() => openAcceptDialog(request, offer)}
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Accepteren
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
