@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,9 +42,11 @@ interface ShiftSwapRequest {
 interface MySwapRequestsProps {
   users: User[];
   shifts: Shift[];
+  selectedMonth: number;
+  selectedYear: number;
 }
 
-export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
+export function MySwapRequests({ users, shifts, selectedMonth, selectedYear }: MySwapRequestsProps) {
   const { toast } = useToast();
 
   const { data: myRequests = [], isLoading } = useQuery<ShiftSwapRequest[]>({
@@ -54,6 +57,14 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
       return res.json();
     },
   });
+
+  const filteredRequests = useMemo(() => {
+    return myRequests.filter((request) => {
+      if (!request.requesterShiftDate) return false;
+      const shiftDate = new Date(request.requesterShiftDate);
+      return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
+    });
+  }, [myRequests, selectedMonth, selectedYear]);
 
   const cancelMutation = useMutation({
     mutationFn: async (requestId: number) => {
@@ -156,12 +167,12 @@ export function MySwapRequests({ users, shifts }: MySwapRequestsProps) {
     );
   }
 
-  if (myRequests.length === 0) {
+  if (filteredRequests.length === 0) {
     return null;
   }
 
-  const pendingRequests = myRequests.filter((r) => r.status === "pending");
-  const otherRequests = myRequests.filter((r) => r.status !== "pending");
+  const pendingRequests = filteredRequests.filter((r) => r.status === "pending");
+  const otherRequests = filteredRequests.filter((r) => r.status !== "pending");
 
   return (
     <Card className="mb-6">

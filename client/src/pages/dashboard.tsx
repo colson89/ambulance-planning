@@ -854,7 +854,7 @@ export default function Dashboard() {
       )}
 
       {/* Mijn Ruilverzoeken sectie */}
-      <MySwapRequests users={colleagues} shifts={shifts} />
+      <MySwapRequests users={colleagues} shifts={shifts} selectedMonth={selectedMonth} selectedYear={selectedYear} />
       
       {/* Planning section georganiseerd per maand/jaar */}
       <Card>
