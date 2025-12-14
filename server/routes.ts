@@ -3391,6 +3391,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get current user's upcoming shifts (for offering shifts in open swap requests)
+  app.get("/api/shifts/my-upcoming", requireAuth, async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
+    try {
+      const user = req.user as any;
+      
+      // Get future shifts for current user (next 3 months)
+      const now = new Date();
+      const threeMonthsLater = new Date();
+      threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+      
+      const userShifts = await storage.getShiftsForUserInDateRange(user.id, now, threeMonthsLater);
+      
+      // Add station info to each shift
+      const shiftsWithStation = await Promise.all(userShifts.map(async (shift) => {
+        const station = await storage.getStation(shift.stationId);
+        return {
+          ...shift,
+          stationName: station?.displayName || station?.name || 'Onbekend'
+        };
+      }));
+      
+      res.json(shiftsWithStation);
+    } catch (error) {
+      console.error("Error getting my upcoming shifts:", error);
+      res.status(500).json({ message: "Fout bij ophalen shifts" });
+    }
+  });
+
   // Get shifts for a specific user (for shift swap feature)
   app.get("/api/shifts/user/:userId", requireAuth, async (req, res) => {
     res.set('Cache-Control', 'no-store');

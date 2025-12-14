@@ -48,10 +48,21 @@ interface ShiftSwapOffer {
   id: number;
   requestId: number;
   offererId: number;
+  offererShiftId: number | null;
+  offererShiftDate: string | null;
+  offererShiftType: string | null;
   note: string | null;
   status: string;
   createdAt: string;
   offererName?: string;
+  offererShift?: {
+    id: number;
+    date: string;
+    type: string;
+    startTime: string | null;
+    endTime: string | null;
+    isSplitShift: boolean;
+  };
 }
 
 interface MyOpenSwapRequest {
@@ -289,10 +300,17 @@ export function MyOpenSwapOffers({ users, stations }: MyOpenSwapOffersProps) {
                           key={offer.id}
                           className="flex items-center justify-between bg-green-50 rounded p-2 border border-green-200"
                         >
-                          <div>
+                          <div className="flex-1">
                             <p className="text-sm font-medium">
                               {offer.offererName || getUserName(offer.offererId)}
                             </p>
+                            {offer.offererShiftId ? (
+                              <p className="text-xs text-blue-600 flex items-center gap-1">
+                                Wil ruilen met: {offer.offererShiftDate ? format(new Date(offer.offererShiftDate), "EEE d MMM", { locale: nl }) : ""} {offer.offererShiftType === "day" ? "Dag" : "Nacht"}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">Alleen overnemen</p>
+                            )}
                             {offer.note && (
                               <p className="text-xs text-muted-foreground flex items-center gap-1">
                                 <MessageCircle className="h-3 w-3" />

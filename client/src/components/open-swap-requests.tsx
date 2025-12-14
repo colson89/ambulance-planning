@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -17,7 +19,7 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
-  X,
+  ArrowLeftRight,
 } from "lucide-react";
 import {
   Dialog,
@@ -61,12 +63,25 @@ interface OpenSwapRequestsProps {
   currentUserId: number;
 }
 
+interface MyShift {
+  id: number;
+  date: string;
+  type: string;
+  startTime: string | null;
+  endTime: string | null;
+  isSplitShift: boolean;
+  stationId: number;
+  stationName?: string;
+}
+
 export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapRequestsProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(true);
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<OpenSwapRequest | null>(null);
   const [offerNote, setOfferNote] = useState("");
+  const [offerMode, setOfferMode] = useState<"takeover" | "exchange">("takeover");
+  const [selectedShiftId, setSelectedShiftId] = useState<number | null>(null);
 
   const { data: openRequests = [], isLoading } = useQuery<OpenSwapRequest[]>({
     queryKey: ["/api/open-swap-requests"],
@@ -77,9 +92,22 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
     },
   });
 
+  const { data: myShifts = [] } = useQuery<MyShift[]>({
+    queryKey: ["/api/shifts/my-upcoming"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/shifts/my-upcoming");
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: offerDialogOpen,
+  });
+
   const createOfferMutation = useMutation({
-    mutationFn: async ({ requestId, note }: { requestId: number; note?: string }) => {
-      const res = await apiRequest("POST", `/api/open-swap-requests/${requestId}/offers`, { note });
+    mutationFn: async ({ requestId, offererShiftId, note }: { requestId: number; offererShiftId?: number; note?: string }) => {
+      const res = await apiRequest("POST", `/api/open-swap-requests/${requestId}/offers`, { 
+        offererShiftId: offererShiftId || null,
+        note 
+      });
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.message || "Kon aanbieding niet plaatsen");
@@ -141,15 +169,33 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
   const openOfferDialog = (request: OpenSwapRequest) => {
     setSelectedRequest(request);
     setOfferNote("");
+    setOfferMode("takeover");
+    setSelectedShiftId(null);
     setOfferDialogOpen(true);
   };
 
   const handleSubmitOffer = () => {
     if (!selectedRequest) return;
+    if (offerMode === "exchange" && !selectedShiftId) {
+      toast({
+        title: "Selecteer een shift",
+        description: "Kies een van je eigen shifts om te ruilen",
+        variant: "destructive",
+      });
+      return;
+    }
     createOfferMutation.mutate({
       requestId: selectedRequest.id,
+      offererShiftId: offerMode === "exchange" ? selectedShiftId || undefined : undefined,
       note: offerNote || undefined,
     });
+  };
+
+  const formatMyShiftLabel = (shift: MyShift) => {
+    const date = format(new Date(shift.date), "EEE d MMM", { locale: nl });
+    const type = shift.type === "day" ? "Dag" : "Nacht";
+    const stationName = stations?.find(s => s.id === shift.stationId)?.displayName || "";
+    return `${date} - ${type}${stationName ? ` (${stationName})` : ""}`;
   };
 
   if (isLoading) {
@@ -281,6 +327,52 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
                   </p>
                 )}
               </div>
+
+              <div className="space-y-3">
+                <Label>Hoe wil je reageren?</Label>
+                <RadioGroup value={offerMode} onValueChange={(v) => setOfferMode(v as "takeover" | "exchange")}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="takeover" id="takeover" />
+                    <Label htmlFor="takeover" className="font-normal cursor-pointer">
+                      <span className="flex items-center gap-2">
+                        <HandHeart className="h-4 w-4" />
+                        Alleen overnemen (geen ruil)
+                      </span>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="exchange" id="exchange" />
+                    <Label htmlFor="exchange" className="font-normal cursor-pointer">
+                      <span className="flex items-center gap-2">
+                        <ArrowLeftRight className="h-4 w-4" />
+                        Ruilen met een eigen shift
+                      </span>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {offerMode === "exchange" && (
+                <div className="space-y-2">
+                  <Label>Kies je shift om te ruilen</Label>
+                  {myShifts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Je hebt geen toekomstige shifts om te ruilen.</p>
+                  ) : (
+                    <Select value={selectedShiftId?.toString() || ""} onValueChange={(v) => setSelectedShiftId(parseInt(v))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecteer een shift..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {myShifts.map((shift) => (
+                          <SelectItem key={shift.id} value={shift.id.toString()}>
+                            {formatMyShiftLabel(shift)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="offer-note">Bericht (optioneel)</Label>
