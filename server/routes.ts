@@ -8765,6 +8765,506 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // ========================================
+  // OPEN SHIFT SWAP ENDPOINTS
+  // ========================================
+
+  // Create an open swap request (no specific target user)
+  app.post("/api/open-swap-requests", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const { shiftId, note } = req.body;
+
+      if (!shiftId) {
+        return res.status(400).json({ message: "Shift ID is verplicht" });
+      }
+
+      // Get the shift
+      const shift = await storage.getShift(shiftId);
+      if (!shift) {
+        return res.status(404).json({ message: "Shift niet gevonden" });
+      }
+
+      // Check if user is assigned to this shift
+      if (shift.userId !== user.id) {
+        return res.status(403).json({ message: "Je kunt alleen je eigen shifts voor ruiling aanbieden" });
+      }
+
+      // Check if shift swaps are allowed for this station
+      const stationSettings = await storage.getStationSettings(shift.stationId);
+      if (!stationSettings?.allowShiftSwaps) {
+        return res.status(400).json({ message: "Shift ruilen is niet ingeschakeld voor dit station" });
+      }
+
+      // Check if there's already an open or pending swap request for this shift
+      const existingRequests = await storage.getShiftSwapRequestsByRequester(user.id);
+      const hasExisting = existingRequests.some(
+        r => r.requesterShiftId === shiftId && 
+             (r.status === 'pending' || r.status === 'open' || r.status === 'accepted_by_target' || r.status === 'offer_selected')
+      );
+      if (hasExisting) {
+        return res.status(400).json({ message: "Er is al een actief ruil verzoek voor deze shift" });
+      }
+
+      // Create the open swap request
+      const request = await storage.createOpenSwapRequest({
+        requesterId: user.id,
+        requesterShiftId: shiftId,
+        stationId: shift.stationId,
+        note: note || null
+      });
+
+      // Log activity
+      try {
+        const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
+        const shiftType = shift.type === 'day' ? 'dagdienst' : 'nachtdienst';
+        await logActivity({
+          userId: user.id,
+          stationId: shift.stationId,
+          action: ActivityActions.SHIFT_SWAP.CREATED,
+          category: 'SHIFT_SWAP',
+          details: `Open ruil verzoek aangemaakt voor ${shiftType} op ${shiftDate}`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log open swap request activity:", logError);
+      }
+
+      // Send push notifications to eligible users (station + cross-team)
+      try {
+        const station = await storage.getStation(shift.stationId);
+        const stationPrefix = station ? `[${station.displayName}] ` : '';
+        const shiftDate = new Date(shift.date).toLocaleDateString('nl-NL');
+        const shiftType = shift.type === 'day' ? 'dagdienst' : 'nachtdienst';
+
+        // Get all users who can see this open swap (station users + cross-team)
+        const stationUsers = await storage.getUsersByStation(shift.stationId);
+        const eligibleUserIds = stationUsers
+          .filter(u => u.id !== user.id) // Exclude requester
+          .map(u => u.id);
+
+        // Send notification to each eligible user who has notifyOpenSwapRequests enabled
+        for (const userId of eligibleUserIds) {
+          const subscriptions = await storage.getAllPushSubscriptions(userId);
+          const enabledSubs = subscriptions.filter(sub => sub.notifyOpenSwapRequests);
+          
+          if (enabledSubs.length > 0) {
+            await sendPushNotificationToUser(
+              userId,
+              `${stationPrefix}Open Ruil Verzoek`,
+              `${user.firstName} ${user.lastName} wil de ${shiftType} op ${shiftDate} ruilen`,
+              '/shift-swaps',
+              'notifyShiftSwapUpdates'
+            );
+          }
+        }
+      } catch (notifyError) {
+        console.error("Failed to send push notification for open swap request:", notifyError);
+      }
+
+      res.status(201).json(request);
+    } catch (error: any) {
+      console.error("Error creating open swap request:", error);
+      res.status(500).json({ message: "Fout bij aanmaken open ruil verzoek" });
+    }
+  });
+
+  // Get available open swap requests for current user (from their stations)
+  app.get("/api/open-swap-requests", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+
+      // Get all stations this user has access to
+      const accessibleStations = await storage.getUserAccessibleStations(user.id, true);
+      const stationIds = accessibleStations.map(s => s.id);
+
+      // Get open requests from all accessible stations
+      const openRequests = await storage.getOpenSwapRequestsForMultipleStations(stationIds);
+
+      // Filter out user's own requests
+      const availableRequests = openRequests.filter(r => r.requesterId !== user.id);
+
+      // Enrich with user and shift info
+      const enrichedRequests = await Promise.all(availableRequests.map(async (request) => {
+        const requester = await storage.getUser(request.requesterId);
+        const shift = await storage.getShift(request.requesterShiftId);
+        const station = await storage.getStation(request.stationId);
+        const offers = await storage.getShiftSwapOffersByRequest(request.id);
+        const userHasOffered = await storage.hasExistingOfferForRequest(request.id, user.id);
+
+        return {
+          ...request,
+          requester: requester ? { 
+            id: requester.id, 
+            firstName: requester.firstName, 
+            lastName: requester.lastName 
+          } : null,
+          shift: shift ? {
+            id: shift.id,
+            date: shift.date,
+            type: shift.type,
+            startTime: shift.startTime,
+            endTime: shift.endTime
+          } : null,
+          station: station ? { id: station.id, displayName: station.displayName } : null,
+          offerCount: offers.length,
+          userHasOffered
+        };
+      }));
+
+      res.json(enrichedRequests);
+    } catch (error: any) {
+      console.error("Error getting open swap requests:", error);
+      res.status(500).json({ message: "Fout bij ophalen open ruil verzoeken" });
+    }
+  });
+
+  // Get current user's own open swap requests with their offers
+  app.get("/api/open-swap-requests/my", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+
+      const myRequests = await storage.getOpenSwapRequestsByRequester(user.id);
+
+      // Enrich with shift info and offers
+      const enrichedRequests = await Promise.all(myRequests.map(async (request) => {
+        const shift = await storage.getShift(request.requesterShiftId);
+        const station = await storage.getStation(request.stationId);
+        const offers = await storage.getShiftSwapOffersByRequest(request.id);
+
+        // Enrich each offer with offerer info and shift info
+        const enrichedOffers = await Promise.all(offers.map(async (offer) => {
+          const offerer = await storage.getUser(offer.offererId);
+          const offererShift = offer.offererShiftId ? await storage.getShift(offer.offererShiftId) : null;
+
+          return {
+            ...offer,
+            offerer: offerer ? {
+              id: offerer.id,
+              firstName: offerer.firstName,
+              lastName: offerer.lastName
+            } : null,
+            offererShift: offererShift ? {
+              id: offererShift.id,
+              date: offererShift.date,
+              type: offererShift.type,
+              startTime: offererShift.startTime,
+              endTime: offererShift.endTime
+            } : null
+          };
+        }));
+
+        return {
+          ...request,
+          shift: shift ? {
+            id: shift.id,
+            date: shift.date,
+            type: shift.type,
+            startTime: shift.startTime,
+            endTime: shift.endTime
+          } : null,
+          station: station ? { id: station.id, displayName: station.displayName } : null,
+          offers: enrichedOffers
+        };
+      }));
+
+      res.json(enrichedRequests);
+    } catch (error: any) {
+      console.error("Error getting my open swap requests:", error);
+      res.status(500).json({ message: "Fout bij ophalen mijn open ruil verzoeken" });
+    }
+  });
+
+  // Submit an offer on an open swap request
+  app.post("/api/open-swap-requests/:id/offers", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const requestId = parseInt(req.params.id);
+      const { offererShiftId, note } = req.body;
+
+      // Get the swap request
+      const swapRequest = await storage.getShiftSwapRequest(requestId);
+      if (!swapRequest) {
+        return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
+      }
+
+      // Check if it's an open request
+      if (!swapRequest.isOpen || swapRequest.status !== 'open') {
+        return res.status(400).json({ message: "Dit is geen open ruil verzoek of is niet meer beschikbaar" });
+      }
+
+      // Check if user is not the requester
+      if (swapRequest.requesterId === user.id) {
+        return res.status(400).json({ message: "Je kunt geen aanbieding doen op je eigen ruil verzoek" });
+      }
+
+      // Check if user already has an offer on this request
+      const hasExisting = await storage.hasExistingOfferForRequest(requestId, user.id);
+      if (hasExisting) {
+        return res.status(400).json({ message: "Je hebt al een aanbieding gedaan op dit ruil verzoek" });
+      }
+
+      // If offererShiftId provided, validate it
+      let offererShift = null;
+      if (offererShiftId) {
+        offererShift = await storage.getShift(offererShiftId);
+        if (!offererShift) {
+          return res.status(404).json({ message: "Aangeboden shift niet gevonden" });
+        }
+        if (offererShift.userId !== user.id) {
+          return res.status(403).json({ message: "Je kunt alleen je eigen shifts aanbieden" });
+        }
+      }
+
+      // Create the offer
+      const offer = await storage.createShiftSwapOffer({
+        swapRequestId: requestId,
+        offererId: user.id,
+        offererShiftId: offererShiftId || null,
+        offererShiftDate: offererShift ? offererShift.date : null,
+        offererShiftType: offererShift ? offererShift.type : null,
+        note: note || null
+      });
+
+      // Log activity
+      try {
+        const requesterShift = await storage.getShift(swapRequest.requesterShiftId);
+        const shiftDate = requesterShift ? new Date(requesterShift.date).toLocaleDateString('nl-NL') : 'onbekend';
+        await logActivity({
+          userId: user.id,
+          stationId: swapRequest.stationId,
+          action: ActivityActions.SHIFT_SWAP.CREATED,
+          category: 'SHIFT_SWAP',
+          details: `Aanbieding gedaan op open ruil verzoek voor shift van ${shiftDate}`,
+          targetUserId: swapRequest.requesterId,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log offer activity:", logError);
+      }
+
+      // Notify the requester about the new offer
+      try {
+        const station = await storage.getStation(swapRequest.stationId);
+        const stationPrefix = station ? `[${station.displayName}] ` : '';
+        
+        await sendPushNotificationToUser(
+          swapRequest.requesterId,
+          `${stationPrefix}Nieuwe Aanbieding`,
+          `${user.firstName} ${user.lastName} heeft een aanbieding gedaan op je ruil verzoek`,
+          '/shift-swaps',
+          'notifyShiftSwapUpdates'
+        );
+      } catch (notifyError) {
+        console.error("Failed to send push notification for new offer:", notifyError);
+      }
+
+      res.status(201).json(offer);
+    } catch (error: any) {
+      console.error("Error creating offer:", error);
+      res.status(500).json({ message: "Fout bij aanmaken aanbieding" });
+    }
+  });
+
+  // Withdraw an offer
+  app.delete("/api/open-swap-offers/:id", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const offerId = parseInt(req.params.id);
+
+      const offer = await storage.getShiftSwapOffer(offerId);
+      if (!offer) {
+        return res.status(404).json({ message: "Aanbieding niet gevonden" });
+      }
+
+      // Check if user owns this offer
+      if (offer.offererId !== user.id) {
+        return res.status(403).json({ message: "Je kunt alleen je eigen aanbiedingen intrekken" });
+      }
+
+      // Check if offer is still pending
+      if (offer.status !== 'pending') {
+        return res.status(400).json({ message: "Alleen openstaande aanbiedingen kunnen worden ingetrokken" });
+      }
+
+      await storage.withdrawShiftSwapOffer(offerId);
+
+      // Log activity
+      try {
+        await logActivity({
+          userId: user.id,
+          stationId: null,
+          action: ActivityActions.SHIFT_SWAP.CANCELLED,
+          category: 'SHIFT_SWAP',
+          details: `Aanbieding ingetrokken voor ruil verzoek #${offer.swapRequestId}`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log offer withdrawal activity:", logError);
+      }
+
+      res.json({ message: "Aanbieding ingetrokken" });
+    } catch (error: any) {
+      console.error("Error withdrawing offer:", error);
+      res.status(500).json({ message: "Fout bij intrekken aanbieding" });
+    }
+  });
+
+  // Accept an offer (requester selects which offer to accept)
+  app.post("/api/open-swap-offers/:id/accept", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const offerId = parseInt(req.params.id);
+
+      const offer = await storage.getShiftSwapOffer(offerId);
+      if (!offer) {
+        return res.status(404).json({ message: "Aanbieding niet gevonden" });
+      }
+
+      // Get the swap request
+      const swapRequest = await storage.getShiftSwapRequest(offer.swapRequestId);
+      if (!swapRequest) {
+        return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
+      }
+
+      // Check if user is the requester
+      if (swapRequest.requesterId !== user.id) {
+        return res.status(403).json({ message: "Alleen de aanvrager kan een aanbieding accepteren" });
+      }
+
+      // Check if request is still open
+      if (swapRequest.status !== 'open') {
+        return res.status(400).json({ message: "Dit ruil verzoek is niet meer open voor aanbiedingen" });
+      }
+
+      // Check if offer is still pending
+      if (offer.status !== 'pending') {
+        return res.status(400).json({ message: "Deze aanbieding is niet meer beschikbaar" });
+      }
+
+      // Accept the offer (this updates both offer and request)
+      const result = await storage.acceptShiftSwapOffer(offerId);
+
+      // Log activity
+      try {
+        const offerer = await storage.getUser(offer.offererId);
+        const offererName = offerer ? `${offerer.firstName} ${offerer.lastName}` : 'onbekend';
+        await logActivity({
+          userId: user.id,
+          stationId: swapRequest.stationId,
+          action: ActivityActions.SHIFT_SWAP.ACCEPTED,
+          category: 'SHIFT_SWAP',
+          details: `Aanbieding van ${offererName} geaccepteerd voor ruil verzoek #${swapRequest.id}`,
+          targetUserId: offer.offererId,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log offer acceptance activity:", logError);
+      }
+
+      // Notify the offerer that their offer was accepted
+      try {
+        const station = await storage.getStation(swapRequest.stationId);
+        const stationPrefix = station ? `[${station.displayName}] ` : '';
+        
+        await sendPushNotificationToUser(
+          offer.offererId,
+          `${stationPrefix}Aanbieding Geaccepteerd`,
+          `${user.firstName} ${user.lastName} heeft je aanbieding geaccepteerd. Wachten op goedkeuring.`,
+          '/shift-swaps',
+          'notifyShiftSwapUpdates'
+        );
+      } catch (notifyError) {
+        console.error("Failed to send push notification for accepted offer:", notifyError);
+      }
+
+      // Notify admins about the pending approval
+      try {
+        const station = await storage.getStation(swapRequest.stationId);
+        const stationPrefix = station ? `[${station.displayName}] ` : '';
+        const requester = await storage.getUser(swapRequest.requesterId);
+        const offerer = await storage.getUser(offer.offererId);
+        
+        // Get admins and supervisors for this station
+        const stationUsers = await storage.getUsersByStation(swapRequest.stationId);
+        const adminUsers = stationUsers.filter(u => u.role === 'admin' || u.role === 'supervisor');
+        
+        for (const admin of adminUsers) {
+          await sendPushNotificationToUser(
+            admin.id,
+            `${stationPrefix}Ruil Verzoek Wacht op Goedkeuring`,
+            `${requester?.firstName || ''} ${requester?.lastName || ''} wil ruilen met ${offerer?.firstName || ''} ${offerer?.lastName || ''}`,
+            '/shift-swaps',
+            'notifyShiftSwapUpdates'
+          );
+        }
+      } catch (notifyError) {
+        console.error("Failed to send push notification to admins:", notifyError);
+      }
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Error accepting offer:", error);
+      res.status(500).json({ message: "Fout bij accepteren aanbieding" });
+    }
+  });
+
+  // Get offers made by current user
+  app.get("/api/open-swap-offers/my", requireAuth, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      const offers = await storage.getShiftSwapOffersByOfferer(user.id);
+      
+      // Enrich with request and shift info
+      const enrichedOffers = await Promise.all(offers.map(async (offer) => {
+        const swapRequest = await storage.getShiftSwapRequest(offer.swapRequestId);
+        const requester = swapRequest ? await storage.getUser(swapRequest.requesterId) : null;
+        const requesterShift = swapRequest ? await storage.getShift(swapRequest.requesterShiftId) : null;
+        const station = swapRequest ? await storage.getStation(swapRequest.stationId) : null;
+        const offererShift = offer.offererShiftId ? await storage.getShift(offer.offererShiftId) : null;
+        
+        return {
+          ...offer,
+          swapRequest: swapRequest ? {
+            id: swapRequest.id,
+            status: swapRequest.status,
+            isOpen: swapRequest.isOpen,
+            requester: requester ? {
+              id: requester.id,
+              firstName: requester.firstName,
+              lastName: requester.lastName
+            } : null,
+            requesterShift: requesterShift ? {
+              id: requesterShift.id,
+              date: requesterShift.date,
+              type: requesterShift.type,
+              startTime: requesterShift.startTime,
+              endTime: requesterShift.endTime
+            } : null,
+            station: station ? { id: station.id, displayName: station.displayName } : null
+          } : null,
+          offererShift: offererShift ? {
+            id: offererShift.id,
+            date: offererShift.date,
+            type: offererShift.type,
+            startTime: offererShift.startTime,
+            endTime: offererShift.endTime
+          } : null
+        };
+      }));
+      
+      res.json(enrichedOffers);
+    } catch (error: any) {
+      console.error("Error getting my offers:", error);
+      res.status(500).json({ message: "Fout bij ophalen mijn aanbiedingen" });
+    }
+  });
+
+  // ========================================
   // SHIFT BID ENDPOINTS
   // ========================================
 
