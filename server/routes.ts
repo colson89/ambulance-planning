@@ -8388,15 +8388,43 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         requests = await storage.getPendingShiftSwapRequestsForStation(user.stationId);
       }
       
-      // Enrich requests with target user's station info and isOpen flag for cross-team visibility
+      // Enrich requests with shift info, target user's station info, and for open swaps: accepted offer info
       const enrichedRequests = await Promise.all(requests.map(async (request: any) => {
         const targetUser = request.targetUserId ? await storage.getUser(request.targetUserId) : null;
         const requesterUser = await storage.getUser(request.requesterId);
+        const requesterShift = await storage.getShift(request.requesterShiftId);
+        const targetShift = request.targetShiftId ? await storage.getShift(request.targetShiftId) : null;
+        
+        // For open swaps, get the accepted offer info
+        let acceptedOffer = null;
+        let offererShift = null;
+        if (request.isOpen) {
+          const offers = await storage.getShiftSwapOffersByRequest(request.id);
+          const accepted = offers.find((o: any) => o.status === 'accepted');
+          if (accepted) {
+            const offerer = await storage.getUser(accepted.offererId);
+            offererShift = accepted.offererShiftId ? await storage.getShift(accepted.offererShiftId) : null;
+            acceptedOffer = {
+              id: accepted.id,
+              offererId: accepted.offererId,
+              offererName: offerer ? `${offerer.firstName} ${offerer.lastName}` : null,
+              offererShiftId: accepted.offererShiftId,
+              offererShiftDate: offererShift?.date || null,
+              offererShiftType: offererShift?.type || null,
+            };
+          }
+        }
+        
         return {
           ...request,
           targetUserStationId: targetUser?.stationId || null,
           requesterStationId: requesterUser?.stationId || null,
           isOpen: request.isOpen || false,
+          requesterShiftDate: requesterShift?.date || null,
+          requesterShiftType: requesterShift?.type || null,
+          targetShiftDate: targetShift?.date || null,
+          targetShiftType: targetShift?.type || null,
+          acceptedOffer,
         };
       }));
       
@@ -8439,15 +8467,42 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         requests = await storage.getShiftSwapRequestsByStation(user.stationId);
       }
       
-      // Enrich requests with target user's station info and isOpen flag for cross-team visibility
+      // Enrich requests with shift info, target user's station info, and for open swaps: accepted offer info
       const enrichedRequests = await Promise.all(requests.map(async (request: any) => {
         const targetUser = request.targetUserId ? await storage.getUser(request.targetUserId) : null;
         const requesterUser = await storage.getUser(request.requesterId);
+        const requesterShift = await storage.getShift(request.requesterShiftId);
+        const targetShift = request.targetShiftId ? await storage.getShift(request.targetShiftId) : null;
+        
+        // For open swaps, get the accepted offer info
+        let acceptedOffer = null;
+        if (request.isOpen) {
+          const offers = await storage.getShiftSwapOffersByRequest(request.id);
+          const accepted = offers.find((o: any) => o.status === 'accepted');
+          if (accepted) {
+            const offerer = await storage.getUser(accepted.offererId);
+            const offererShift = accepted.offererShiftId ? await storage.getShift(accepted.offererShiftId) : null;
+            acceptedOffer = {
+              id: accepted.id,
+              offererId: accepted.offererId,
+              offererName: offerer ? `${offerer.firstName} ${offerer.lastName}` : null,
+              offererShiftId: accepted.offererShiftId,
+              offererShiftDate: offererShift?.date || null,
+              offererShiftType: offererShift?.type || null,
+            };
+          }
+        }
+        
         return {
           ...request,
           targetUserStationId: targetUser?.stationId || null,
           requesterStationId: requesterUser?.stationId || null,
           isOpen: request.isOpen || false,
+          requesterShiftDate: requesterShift?.date || null,
+          requesterShiftType: requesterShift?.type || null,
+          targetShiftDate: targetShift?.date || null,
+          targetShiftType: targetShift?.type || null,
+          acceptedOffer,
         };
       }));
       
