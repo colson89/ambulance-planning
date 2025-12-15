@@ -8553,8 +8553,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(403).json({ message: "Je kunt alleen je eigen ruil verzoeken annuleren" });
       }
 
-      // Kan alleen annuleren als status pending is
-      if (request.status !== 'pending' && request.status !== 'accepted_by_target') {
+      // Kan alleen annuleren als status pending, open, of accepted_by_target is
+      if (request.status !== 'pending' && request.status !== 'open' && request.status !== 'accepted_by_target') {
         return res.status(400).json({ message: "Dit verzoek kan niet meer geannuleerd worden" });
       }
 
@@ -8611,8 +8611,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(403).json({ message: "Je kunt alleen je eigen ruil verzoeken annuleren" });
       }
 
-      // Kan alleen annuleren als status pending is
-      if (request.status !== 'pending' && request.status !== 'accepted_by_target') {
+      // Kan alleen annuleren als status pending, open, of accepted_by_target is
+      if (request.status !== 'pending' && request.status !== 'open' && request.status !== 'accepted_by_target') {
         return res.status(400).json({ message: "Dit verzoek kan niet meer geannuleerd worden" });
       }
 
