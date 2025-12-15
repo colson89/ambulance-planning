@@ -6,7 +6,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +44,18 @@ export default function Stations() {
   const existingSupervisorStation = useMemo(() => {
     return allStations.find(s => s.isSupervisorStation);
   }, [allStations]);
+
+  // Sync form state when editingStation changes
+  useEffect(() => {
+    if (editingStation) {
+      setStationForm({
+        name: editingStation.name,
+        code: editingStation.code,
+        displayName: editingStation.displayName,
+        isSupervisorStation: editingStation.isSupervisorStation
+      });
+    }
+  }, [editingStation]);
 
   const createStationMutation = useMutation({
     mutationFn: async (data: { name: string; code: string; displayName: string; isSupervisorStation: boolean }) => {
@@ -283,7 +295,7 @@ export default function Stations() {
       </div>
 
       <Dialog open={showStationDialog} onOpenChange={setShowStationDialog}>
-        <DialogContent>
+        <DialogContent key={editingStation?.id ?? 'new'}>
           <DialogHeader>
             <DialogTitle>{editingStation ? 'Station Bewerken' : 'Nieuw Station'}</DialogTitle>
             <DialogDescription>
