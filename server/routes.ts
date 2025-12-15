@@ -9031,7 +9031,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         const shift = await storage.getShift(request.requesterShiftId);
         const station = await storage.getStation(request.stationId);
         const offers = await storage.getShiftSwapOffersByRequest(request.id);
-        const userHasOffered = await storage.hasExistingOfferForRequest(request.id, user.id);
+        const userOfferedShiftIds = await storage.getOfferedShiftIdsByUser(request.id, user.id);
 
         return {
           ...request,
@@ -9049,7 +9049,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           } : null,
           station: station ? { id: station.id, displayName: station.displayName } : null,
           offerCount: offers.length,
-          userHasOffered
+          userOfferedShiftIds
         };
       }));
 
@@ -9144,12 +9144,6 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(400).json({ message: "Je kunt geen aanbieding doen op je eigen ruil verzoek" });
       }
 
-      // Check if user already has an offer on this request
-      const hasExisting = await storage.hasExistingOfferForRequest(requestId, user.id);
-      if (hasExisting) {
-        return res.status(400).json({ message: "Je hebt al een aanbieding gedaan op dit ruil verzoek" });
-      }
-
       // If offererShiftId provided, validate it
       let offererShift = null;
       if (offererShiftId) {
@@ -9159,6 +9153,12 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         }
         if (offererShift.userId !== user.id) {
           return res.status(403).json({ message: "Je kunt alleen je eigen shifts aanbieden" });
+        }
+        
+        // Check if this specific shift has already been offered on this request
+        const hasExistingForShift = await storage.hasExistingOfferForShift(requestId, offererShiftId);
+        if (hasExistingForShift) {
+          return res.status(400).json({ message: "Deze shift is al aangeboden op dit ruil verzoek" });
         }
       }
 

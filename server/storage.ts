@@ -4891,6 +4891,28 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  async hasExistingOfferForShift(swapRequestId: number, shiftId: number): Promise<boolean> {
+    const result = await db.select()
+      .from(shiftSwapOffers)
+      .where(and(
+        eq(shiftSwapOffers.swapRequestId, swapRequestId),
+        eq(shiftSwapOffers.offererShiftId, shiftId),
+        eq(shiftSwapOffers.status, 'pending')
+      ));
+    return result.length > 0;
+  }
+
+  async getOfferedShiftIdsByUser(swapRequestId: number, userId: number): Promise<number[]> {
+    const result = await db.select({ offererShiftId: shiftSwapOffers.offererShiftId })
+      .from(shiftSwapOffers)
+      .where(and(
+        eq(shiftSwapOffers.swapRequestId, swapRequestId),
+        eq(shiftSwapOffers.offererId, userId),
+        eq(shiftSwapOffers.status, 'pending')
+      ));
+    return result.map(r => r.offererShiftId).filter((id): id is number => id !== null);
+  }
+
   async updateShiftSwapOffer(id: number, data: Partial<ShiftSwapOffer>): Promise<ShiftSwapOffer> {
     const result = await db
       .update(shiftSwapOffers)

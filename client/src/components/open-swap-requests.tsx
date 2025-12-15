@@ -55,6 +55,7 @@ interface OpenSwapRequest {
     isSplitShift: boolean;
   };
   stationName?: string;
+  userOfferedShiftIds?: number[];
 }
 
 interface OpenSwapRequestsProps {
@@ -102,12 +103,16 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
     enabled: offerDialogOpen,
   });
 
-  // Pre-select all shifts when they load (for exchange mode)
+  // Pre-select all shifts when they load (for exchange mode), excluding already offered ones
   useEffect(() => {
     if (myShifts.length > 0 && offerMode === "exchange" && selectedShiftIds.length === 0) {
-      setSelectedShiftIds(myShifts.map(s => s.id));
+      const alreadyOfferedIds = selectedRequest?.userOfferedShiftIds || [];
+      const availableShiftIds = myShifts
+        .filter(s => !alreadyOfferedIds.includes(s.id))
+        .map(s => s.id);
+      setSelectedShiftIds(availableShiftIds);
     }
-  }, [myShifts, offerMode]);
+  }, [myShifts, offerMode, selectedRequest]);
 
   const createOfferMutation = useMutation({
     mutationFn: async ({ requestId, offererShiftId, note }: { requestId: number; offererShiftId?: number; note?: string }) => {
@@ -425,25 +430,30 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
                     <p className="text-sm text-muted-foreground">Je hebt geen toekomstige shifts om te ruilen.</p>
                   ) : (
                     <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2 bg-muted/30">
-                      {myShifts.map((shift) => (
-                        <div key={shift.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`shift-${shift.id}`}
-                            checked={selectedShiftIds.includes(shift.id)}
-                            onCheckedChange={() => toggleShiftSelection(shift.id)}
-                          />
-                          <label
-                            htmlFor={`shift-${shift.id}`}
-                            className="text-sm font-normal cursor-pointer flex-1"
-                          >
-                            {formatMyShiftLabel(shift)}
-                          </label>
-                        </div>
-                      ))}
+                      {myShifts.map((shift) => {
+                        const alreadyOffered = selectedRequest?.userOfferedShiftIds?.includes(shift.id) || false;
+                        return (
+                          <div key={shift.id} className={`flex items-center space-x-2 ${alreadyOffered ? 'opacity-50' : ''}`}>
+                            <Checkbox
+                              id={`shift-${shift.id}`}
+                              checked={selectedShiftIds.includes(shift.id)}
+                              onCheckedChange={() => !alreadyOffered && toggleShiftSelection(shift.id)}
+                              disabled={alreadyOffered}
+                            />
+                            <label
+                              htmlFor={`shift-${shift.id}`}
+                              className={`text-sm font-normal flex-1 ${alreadyOffered ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                            >
+                              {formatMyShiftLabel(shift)}
+                              {alreadyOffered && <span className="ml-2 text-xs text-muted-foreground">(al aangeboden)</span>}
+                            </label>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    Alle shifts zijn standaard aangevinkt. Vink uit wat je niet wilt aanbieden.
+                    Beschikbare shifts zijn standaard aangevinkt. Vink uit wat je niet wilt aanbieden.
                   </p>
                 </div>
               )}
