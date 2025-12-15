@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -81,7 +81,7 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
   const [selectedRequest, setSelectedRequest] = useState<OpenSwapRequest | null>(null);
   const [offerNote, setOfferNote] = useState("");
   const [offerMode, setOfferMode] = useState<"takeover" | "exchange">("takeover");
-  const [selectedShiftId, setSelectedShiftId] = useState<number | null>(null);
+  const [selectedShiftIds, setSelectedShiftIds] = useState<number[]>([]);
 
   const { data: openRequests = [], isLoading } = useQuery<OpenSwapRequest[]>({
     queryKey: ["/api/open-swap-requests"],
@@ -102,6 +102,13 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
     enabled: offerDialogOpen,
   });
 
+  // Pre-select all shifts when they load (for exchange mode)
+  useEffect(() => {
+    if (myShifts.length > 0 && offerMode === "exchange" && selectedShiftIds.length === 0) {
+      setSelectedShiftIds(myShifts.map(s => s.id));
+    }
+  }, [myShifts, offerMode]);
+
   const createOfferMutation = useMutation({
     mutationFn: async ({ requestId, offererShiftId, note }: { requestId: number; offererShiftId?: number; note?: string }) => {
       const res = await apiRequest("POST", `/api/open-swap-requests/${requestId}/offers`, { 
@@ -114,17 +121,7 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
       }
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/open-swap-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/open-swap-offers/my"] });
-      toast({
-        title: "Aanbieding geplaatst",
-        description: "Je aanbieding is verzonden. Je ontvangt een melding als deze wordt geaccepteerd.",
-      });
-      setOfferDialogOpen(false);
-      setSelectedRequest(null);
-      setOfferNote("");
-    },
+    // Note: onSuccess moved to handleSubmitOffer for multi-offer support
     onError: (error: Error) => {
       toast({
         title: "Fout bij plaatsen",
@@ -170,25 +167,87 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
     setSelectedRequest(request);
     setOfferNote("");
     setOfferMode("takeover");
-    setSelectedShiftId(null);
+    setSelectedShiftIds([]); // Reset, will be pre-filled by useEffect when shifts load
     setOfferDialogOpen(true);
   };
 
-  const handleSubmitOffer = () => {
+  const toggleShiftSelection = (shiftId: number) => {
+    setSelectedShiftIds(prev => 
+      prev.includes(shiftId) 
+        ? prev.filter(id => id !== shiftId)
+        : [...prev, shiftId]
+    );
+  };
+
+  const handleSubmitOffer = async () => {
     if (!selectedRequest) return;
-    if (offerMode === "exchange" && !selectedShiftId) {
+    if (offerMode === "exchange" && selectedShiftIds.length === 0) {
       toast({
-        title: "Selecteer een shift",
-        description: "Kies een van je eigen shifts om te ruilen",
+        title: "Selecteer minstens één shift",
+        description: "Vink aan welke van je eigen shifts je wilt aanbieden om te ruilen",
         variant: "destructive",
       });
       return;
     }
-    createOfferMutation.mutate({
-      requestId: selectedRequest.id,
-      offererShiftId: offerMode === "exchange" ? selectedShiftId || undefined : undefined,
-      note: offerNote || undefined,
-    });
+    
+    let successCount = 0;
+    let hadError = false;
+    const totalOffers = offerMode === "takeover" ? 1 : selectedShiftIds.length;
+    
+    try {
+      if (offerMode === "takeover") {
+        await createOfferMutation.mutateAsync({
+          requestId: selectedRequest.id,
+          offererShiftId: undefined,
+          note: offerNote || undefined,
+        });
+        successCount = 1;
+      } else {
+        for (const shiftId of selectedShiftIds) {
+          try {
+            await createOfferMutation.mutateAsync({
+              requestId: selectedRequest.id,
+              offererShiftId: shiftId,
+              note: offerNote || undefined,
+            });
+            successCount++;
+          } catch {
+            hadError = true;
+            // Continue with remaining shifts even if one fails
+          }
+        }
+      }
+    } catch {
+      hadError = true;
+    } finally {
+      // Always invalidate queries to reflect any successful offers
+      if (successCount > 0) {
+        queryClient.invalidateQueries({ queryKey: ["/api/open-swap-requests"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/open-swap-offers/my"] });
+      }
+      
+      // Show appropriate toast
+      if (successCount > 0) {
+        if (hadError && successCount < totalOffers) {
+          toast({
+            title: `${successCount} van ${totalOffers} aanbiedingen geplaatst`,
+            description: "Sommige aanbiedingen konden niet worden geplaatst.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: successCount === 1 ? "Aanbieding geplaatst" : `${successCount} aanbiedingen geplaatst`,
+            description: "Je ontvangt een melding als deze wordt geaccepteerd.",
+          });
+        }
+        
+        // Close dialog on any success
+        setOfferDialogOpen(false);
+        setSelectedRequest(null);
+        setOfferNote("");
+        setSelectedShiftIds([]);
+      }
+    }
   };
 
   const formatMyShiftLabel = (shift: MyShift) => {
@@ -354,23 +413,38 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
 
               {offerMode === "exchange" && (
                 <div className="space-y-2">
-                  <Label>Kies je shift om te ruilen</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Welke shifts wil je aanbieden om te ruilen?</Label>
+                    {myShifts.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {selectedShiftIds.length}/{myShifts.length} geselecteerd
+                      </span>
+                    )}
+                  </div>
                   {myShifts.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Je hebt geen toekomstige shifts om te ruilen.</p>
                   ) : (
-                    <Select value={selectedShiftId?.toString() || ""} onValueChange={(v) => setSelectedShiftId(parseInt(v))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecteer een shift..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {myShifts.map((shift) => (
-                          <SelectItem key={shift.id} value={shift.id.toString()}>
+                    <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-2 bg-muted/30">
+                      {myShifts.map((shift) => (
+                        <div key={shift.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`shift-${shift.id}`}
+                            checked={selectedShiftIds.includes(shift.id)}
+                            onCheckedChange={() => toggleShiftSelection(shift.id)}
+                          />
+                          <label
+                            htmlFor={`shift-${shift.id}`}
+                            className="text-sm font-normal cursor-pointer flex-1"
+                          >
                             {formatMyShiftLabel(shift)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    Alle shifts zijn standaard aangevinkt. Vink uit wat je niet wilt aanbieden.
+                  </p>
                 </div>
               )}
 
