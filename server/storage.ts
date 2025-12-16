@@ -1734,11 +1734,15 @@ export class DatabaseStorage implements IStorage {
     
     await db.delete(shifts).where(and(...deleteConditions));
 
-    // Haal alle gebruikers op van dit station die uren willen werken (inclusief cross-station gebruikers)
-    const stationUsers = await this.getUsersByStation(stationId);
-    const activeUsers = stationUsers.filter(user => user.hours > 0);
+    // Haal alle gebruikers op van dit station die uren willen werken (inclusief cross-team gebruikers)
+    // CROSS-TEAM FIX: Gebruik getUsersByStationWithCrossTeamInfo voor correcte effectiveHours
+    const stationUsersWithCrossTeamInfo = await this.getUsersByStationWithCrossTeamInfo(stationId);
     
-    console.log(`Found ${stationUsers.length} users for station ${stationId}, ${activeUsers.length} active users`);
+    // CROSS-TEAM FIX: Filter op effectiveHours > 0 in plaats van user.hours > 0
+    // Dit zorgt ervoor dat cross-team users zoals Joris (hours=0 op primair station, maar effectiveHours=24 voor ZW Geel) worden meegenomen
+    const activeUsers = stationUsersWithCrossTeamInfo.filter(user => user.effectiveHours > 0);
+    
+    console.log(`Found ${stationUsersWithCrossTeamInfo.length} users for station ${stationId}, ${activeUsers.length} active users (using effectiveHours)`);
     
     // Maak eerst een kalender voor de maand
     const daysInMonth = new Date(year, month, 0).getDate();
@@ -1801,34 +1805,27 @@ export class DatabaseStorage implements IStorage {
     // Cache voor station hour limits om database calls te vermijden
     const stationHourLimitsCache = new Map<number, number>();
     
-    // CROSS-TEAM FIX: Synchrone helper om gecachte station-specifieke uren op te halen
+    // CROSS-TEAM FIX: Synchrone helper om station-specifieke uren op te halen
     // KRITIEK: Gebruik ALTIJD deze functie in plaats van user.hours voor correcte cross-team uren
+    // Nu dat we getUsersByStationWithCrossTeamInfo gebruiken, bevat activeUsers al effectiveHours
     const getEffectiveHours = (userId: number): number => {
+      // Eerst check cache (voor backwards compatibility)
       const cached = stationHourLimitsCache.get(userId);
       if (cached !== undefined) return cached;
-      // Fallback naar user.hours als cache niet gevuld is (zou niet moeten gebeuren na initialisatie)
+      // CROSS-TEAM FIX: Gebruik effectiveHours in plaats van user.hours
       const user = activeUsers.find(u => u.id === userId);
-      return user ? user.hours : 0;
+      return user ? user.effectiveHours : 0;
     };
     
     // Helper functie om per-station hour limiet te berekenen
+    // CROSS-TEAM FIX: Nu redundant omdat effectiveHours al beschikbaar is via activeUsers
+    // Maar we houden het voor backward compatibility en edge cases
     const getStationHourLimit = async (userId: number): Promise<number> => {
       const user = activeUsers.find(u => u.id === userId);
       if (!user) return 0;
       
-      // Als dit de primaire station van de gebruiker is, gebruik user.hours
-      if (user.stationId === stationId) {
-        return user.hours;
-      }
-      
-      // Anders zoek in userStations tabel voor cross-station limiet
-      const stationAssignment = await db
-        .select()
-        .from(userStations)
-        .where(and(eq(userStations.userId, userId), eq(userStations.stationId, stationId)))
-        .limit(1);
-      
-      return stationAssignment.length > 0 ? stationAssignment[0].maxHours : 0;
+      // CROSS-TEAM FIX: Gebruik effectiveHours - dit is al correct berekend voor zowel primary als cross-team users
+      return user.effectiveHours;
     };
     
     // === CONSECUTIVE SHIFT VALIDATOR ===
@@ -2143,9 +2140,9 @@ export class DatabaseStorage implements IStorage {
       // Get cached station hour limit
       let stationLimit = stationHourLimitsCache.get(userId);
       if (stationLimit === undefined) {
-        // Als niet gecached, gebruik primaire uren als fallback
-        // (Dit wordt later in de cache gevuld door de async setup)
-        stationLimit = user.stationId === stationId ? user.hours : 0;
+        // CROSS-TEAM FIX: Gebruik effectiveHours als fallback in plaats van user.hours
+        // effectiveHours is al correct berekend voor zowel primary als cross-team users
+        stationLimit = user.effectiveHours;
       }
       
       // Nul doeluren betekent dat deze gebruiker niet ingedeeld moet worden

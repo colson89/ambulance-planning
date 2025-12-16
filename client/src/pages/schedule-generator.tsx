@@ -2068,8 +2068,10 @@ function ScheduleGenerator() {
               <TableBody>
                 {users.map((user) => {
                   const scheduledHours = countUserShiftsHours(user.id);
-                  const totalHours = user.hours || 0;
+                  // CROSS-TEAM FIX: Gebruik effectiveHours voor cross-team users, anders user.hours
+                  const totalHours = (user as any).effectiveHours ?? user.hours ?? 0;
                   const percentage = totalHours > 0 ? Math.round((scheduledHours / totalHours) * 100) : 0;
+                  const isCrossTeam = (user as any).isCrossTeam === true;
                   
                   return (
                     <TableRow key={user.id}>
@@ -2083,6 +2085,7 @@ function ScheduleGenerator() {
                           }}
                         >
                           {`${user.firstName} ${user.lastName}`}
+                          {isCrossTeam && <span className="ml-1 text-xs text-muted-foreground">(cross-team)</span>}
                         </Button>
                       </TableCell>
                       <TableCell className="text-center">{`${scheduledHours} / ${totalHours} (${percentage}%)`}</TableCell>
