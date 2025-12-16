@@ -3780,6 +3780,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete a single shift
+  app.delete("/api/shifts/:id", requireAdmin, async (req, res) => {
+    try {
+      const shiftId = parseInt(req.params.id);
+      const user = req.user as any;
+      
+      // Validate the shift exists
+      const existingShift = await storage.getShift(shiftId);
+      if (!existingShift) {
+        return res.status(404).json({ message: "Shift not found" });
+      }
+      
+      // Authorization check: supervisors can delete any shift, admins can only delete their own station's shifts
+      if (user.role !== 'supervisor') {
+        // Admin can only delete shifts from their own station
+        if (existingShift.stationId !== user.stationId) {
+          return res.status(403).json({ message: "Je kunt alleen shifts verwijderen van je eigen station" });
+        }
+      }
+      
+      // Get shift details for logging before deletion
+      const shiftDate = format(existingShift.date, "dd-MM-yyyy");
+      const shiftType = existingShift.type === "day" ? "Dagdienst" : "Nachtdienst";
+      const assignedUser = existingShift.userId && existingShift.userId > 0 
+        ? await storage.getUser(existingShift.userId) 
+        : null;
+      const userName = assignedUser 
+        ? `${assignedUser.firstName} ${assignedUser.lastName}` 
+        : "Niet toegewezen";
+      
+      // Delete the shift
+      await storage.deleteShift(shiftId);
+      
+      // Log the activity
+      try {
+        await logActivity({
+          userId: req.user?.id,
+          stationId: existingShift.stationId,
+          action: ActivityActions.SHIFT_MANUAL.DELETED,
+          category: 'SHIFT_MANUAL',
+          details: `${shiftType} op ${shiftDate} verwijderd (was toegewezen aan: ${userName})`,
+          targetUserId: existingShift.userId > 0 ? existingShift.userId : null,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log shift deletion:", logError);
+      }
+      
+      res.status(200).json({ message: "Shift successfully deleted", deletedShiftId: shiftId });
+    } catch (error) {
+      console.error("Error deleting shift:", error);
+      res.status(500).json({ message: "Failed to delete shift" });
+    }
+  });
+
   // Split a night shift into two half shifts
   app.post("/api/shifts/:id/split", requireAuth, async (req, res) => {
     try {

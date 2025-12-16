@@ -63,6 +63,7 @@ function ScheduleGenerator() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [generatedSchedule, setGeneratedSchedule] = useState<Shift[]>([]);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showAvailabilityDialog, setShowAvailabilityDialog] = useState<boolean>(false);
   const [isGeneratingTestPreferences, setIsGeneratingTestPreferences] = useState(false);
@@ -950,6 +951,35 @@ function ScheduleGenerator() {
           variant: "destructive",
         });
       }
+    },
+  });
+
+  // Mutation om een shift volledig te verwijderen
+  const deleteShiftMutation = useMutation({
+    mutationFn: async (shiftId: number) => {
+      const res = await apiRequest("DELETE", `/api/shifts/${shiftId}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Kon shift niet verwijderen");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setEditingShift(null);
+      setShowDeleteConfirm(false);
+      toast({
+        title: "Succes",
+        description: "Shift succesvol verwijderd uit de planning",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/shifts", selectedMonth + 1, selectedYear, effectiveStationId] });
+    },
+    onError: (error: Error) => {
+      setShowDeleteConfirm(false);
+      toast({
+        title: "Fout",
+        description: error.message || "Er is een fout opgetreden bij het verwijderen van de shift",
+        variant: "destructive",
+      });
     },
   });
 
@@ -2596,7 +2626,7 @@ function ScheduleGenerator() {
       </Dialog>
       
       {/* Edit Shift Dialog */}
-      <Dialog open={!!editingShift} onOpenChange={(open) => !open && setEditingShift(null)}>
+      <Dialog open={!!editingShift} onOpenChange={(open) => { if (!open) { setEditingShift(null); setShowDeleteConfirm(false); }}}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Shift Bewerken</DialogTitle>
@@ -2706,45 +2736,101 @@ function ScheduleGenerator() {
               </div>
             )}
             
-            <div className="flex gap-2 w-full justify-between">
-              <Button variant="outline" onClick={() => setEditingShift(null)}>
-                Annuleren
-              </Button>
-              
-              {editingShift && editingShift.userId > 0 && (
-                <Button 
-                  variant="destructive"
-                  onClick={handleRemoveFromShift}
-                  disabled={updateShiftMutation.isPending}
-                >
-                  {updateShiftMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <AlertCircle className="h-4 w-4 mr-2" />
-                      Verwijderen (Ziek)
-                    </>
+            {!showDeleteConfirm ? (
+              <div className="flex gap-2 w-full justify-between">
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setEditingShift(null)}>
+                    Annuleren
+                  </Button>
+                  
+                  {editingShift && (
+                    <Button 
+                      variant="ghost"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={updateShiftMutation.isPending || deleteShiftMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Shift Verwijderen
+                    </Button>
                   )}
-                </Button>
-              )}
-              
-              <Button 
-                onClick={handleSaveShift}
-                disabled={updateShiftMutation.isPending}
-              >
-                {updateShiftMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Bezig met opslaan...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Opslaan
-                  </>
-                )}
-              </Button>
-            </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  {editingShift && editingShift.userId > 0 && (
+                    <Button 
+                      variant="destructive"
+                      onClick={handleRemoveFromShift}
+                      disabled={updateShiftMutation.isPending}
+                    >
+                      {updateShiftMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <AlertCircle className="h-4 w-4 mr-2" />
+                          Verwijderen (Ziek)
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    onClick={handleSaveShift}
+                    disabled={updateShiftMutation.isPending}
+                  >
+                    {updateShiftMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Bezig met opslaan...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Opslaan
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="w-full">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md mb-4">
+                  <div className="flex items-center gap-2 text-red-800 font-medium mb-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    Weet je zeker dat je deze shift wilt verwijderen?
+                  </div>
+                  <p className="text-sm text-red-600">
+                    Deze actie kan niet ongedaan worden gemaakt. De shift wordt volledig verwijderd uit de planning.
+                  </p>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleteShiftMutation.isPending}
+                  >
+                    Annuleren
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={() => editingShift && deleteShiftMutation.mutate(editingShift.id)}
+                    disabled={deleteShiftMutation.isPending}
+                  >
+                    {deleteShiftMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Bezig met verwijderen...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Ja, verwijder shift
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
