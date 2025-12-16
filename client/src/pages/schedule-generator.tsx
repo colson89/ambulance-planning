@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO, addDays } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X, CheckCircle, XCircle } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, UserMinus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X, CheckCircle, XCircle } from "lucide-react";
 import { UndoHistoryPanel } from "@/components/undo-history-panel";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -2737,42 +2737,12 @@ function ScheduleGenerator() {
             )}
             
             {!showDeleteConfirm ? (
-              <div className="flex gap-2 w-full justify-between">
-                <div className="flex gap-2">
+              <div className="flex flex-col gap-3 w-full">
+                {/* Primaire actieknoppen */}
+                <div className="flex gap-2 justify-end">
                   <Button variant="outline" onClick={() => setEditingShift(null)}>
                     Annuleren
                   </Button>
-                  
-                  {editingShift && (
-                    <Button 
-                      variant="ghost"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      disabled={updateShiftMutation.isPending || deleteShiftMutation.isPending}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Shift Verwijderen
-                    </Button>
-                  )}
-                </div>
-                
-                <div className="flex gap-2">
-                  {editingShift && editingShift.userId > 0 && (
-                    <Button 
-                      variant="destructive"
-                      onClick={handleRemoveFromShift}
-                      disabled={updateShiftMutation.isPending}
-                    >
-                      {updateShiftMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <AlertCircle className="h-4 w-4 mr-2" />
-                          Verwijderen (Ziek)
-                        </>
-                      )}
-                    </Button>
-                  )}
                   
                   <Button 
                     onClick={handleSaveShift}
@@ -2781,7 +2751,7 @@ function ScheduleGenerator() {
                     {updateShiftMutation.isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Bezig met opslaan...
+                        Opslaan...
                       </>
                     ) : (
                       <>
@@ -2791,6 +2761,41 @@ function ScheduleGenerator() {
                     )}
                   </Button>
                 </div>
+                
+                {/* Destructieve acties - gescheiden weergave */}
+                {editingShift && (
+                  <div className="flex gap-2 pt-2 border-t border-gray-200">
+                    {editingShift.userId > 0 && (
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+                        onClick={handleRemoveFromShift}
+                        disabled={updateShiftMutation.isPending}
+                      >
+                        {updateShiftMutation.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <UserMinus className="h-4 w-4 mr-2" />
+                            Verwijderen Ambulancier
+                          </>
+                        )}
+                      </Button>
+                    )}
+                    
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={updateShiftMutation.isPending || deleteShiftMutation.isPending}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Shift Verwijderen
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="w-full">
