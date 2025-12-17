@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.17 - Laatst bijgewerkt: 12 december 2025**
+**Versie 2025.18 - Laatst bijgewerkt: 17 december 2025**
 
 ---
 
@@ -34,11 +34,13 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
   - [Planning Bekijken](#-uw-planning-bekijken)
   - [Profiel Beheren](#-profiel-beheren)
   - [Kalender Synchronisatie](#-kalender-synchronisatie)
-  - [Display Link (Kiosk Modus)](#-display-link-kiosk-modus---voor-viewers)
   - [Push Notificaties](#-push-notificaties)
   - [Overuren Registreren](#-overuren-registreren)
   - [Shift Ruilen of Overnemen](#-shift-ruilen)
   - [Bieden op Open Shifts](#-bieden-op-open-shifts)
+- [Handleiding voor Viewers](#-handleiding-voor-viewers)
+  - [Wat Kunnen Viewers?](#wat-kunnen-viewers)
+  - [Display Link (Kiosk Modus)](#-display-link-kiosk-modus)
 - [Handleiding voor Admins](#-handleiding-voor-admins)
   - [Gebruikersbeheer](#-gebruikersbeheer)
   - [Planning Genereren](#-planning-genereren)
@@ -576,94 +578,6 @@ A: Gebruik de **Tijdcorrectie voor kalender** instelling:
 
 ---
 
-### 📺 Display Link (Kiosk Modus) - Voor Viewers
-
-**Toon de planning op een display scherm in de dispatching met de speciale kiosk link!**
-
-Deze functie is exclusief beschikbaar voor gebruikers met de **Viewer** rol en is ideaal voor het tonen van de planning op een extern display scherm (zoals Lumaps in de dispatching).
-
-#### Wat is de Display Link?
-
-De display link is een speciale URL die automatisch inlogt en de planning weergeeft in fullscreen modus. Dit is ideaal voor:
-- 📺 **Display schermen**: Lumaps systemen in de dispatching
-- 🖥️ **Info schermen**: Beeldschermen in de ambulance post
-- 📊 **Dashboard displays**: Centrale informatiezuilen
-
-**Kenmerken van de Kiosk Modus:**
-- ✅ Automatische login via de unieke token in de link
-- ✅ Fullscreen weergave zonder navigatiebalk
-- ✅ Automatische verversing elke 60 seconden
-- ✅ Huidige dag wordt geel gemarkeerd
-- ✅ Open shifts worden rood weergegeven
-- ✅ Toont alle shifts (niet alleen eigen shifts)
-
-#### Display Link Ophalen
-
-**Stap 1: Log in als Viewer**
-- Log in met uw viewer account
-- Viewers zijn speciaal aangemaakt voor dispatching/display doeleinden
-
-**Stap 2: Ga naar uw Profiel**
-- Klik op "Profiel" in de navigatie
-- Scroll naar de sectie "Display Link (Lumaps)"
-
-**Stap 3: Kopieer de Display Link**
-- U ziet uw persoonlijke display link
-- Klik op het kopieer icoon om de link te kopiëren
-
-#### Display Link Gebruiken met Lumaps
-
-**Stap 1: Configureer Lumaps**
-1. Open de Lumaps configuratie interface
-2. Voeg een nieuwe pagina/widget toe van het type "Webpagina"
-3. Plak de display link in het URL veld
-4. Stel de verversingsinterval in (optioneel, de pagina ververst zichzelf al elke 60 seconden)
-
-**Stap 2: Testen**
-- Bekijk het display om te verifiëren dat de planning correct wordt weergegeven
-- De huidige dag zou geel gemarkeerd moeten zijn
-- De planning scrollt automatisch naar de huidige dag
-
-#### Tips voor Display Gebruik
-
-**Weergave:**
-- De huidige dag wordt automatisch geel gemarkeerd
-- Open shifts (zonder medewerker) worden rood weergegeven
-- De planning ververst automatisch elke 60 seconden
-
-**Veiligheid:**
-- Elke viewer heeft een unieke token in de link
-- Deel de link alleen met mensen die toegang nodig hebben tot het display
-- Bij twijfel: vraag uw admin om een nieuwe viewer account aan te maken
-
-**Probleem Oplossing:**
-- **Lege pagina**: Controleer of de link correct is gekopieerd
-- **Inlogscherm**: De token is mogelijk ongeldig, vraag een nieuwe link aan
-- **Geen shifts zichtbaar**: Controleer of er shifts zijn ingepland voor de huidige maand
-
-#### IT Configuratie: BASE_URL voor Windows Server
-
-Als de display links niet het juiste domein bevatten, kan de IT-beheerder de `BASE_URL` environment variabele instellen:
-
-**Windows Server (in het `.env` bestand):**
-```
-BASE_URL=https://dgh.brandweerzonekempen.be
-```
-
-**Wat dit doet:**
-- Alle gegenereerde display links gebruiken dan automatisch dit domein
-- Bijvoorbeeld: `https://dgh.brandweerzonekempen.be/kiosk/[token]`
-
-**Wanneer nodig:**
-- Als gebruikers intern inloggen via een IP-adres (bijv. `10.10.120.30`)
-- Maar het display het publieke domein moet gebruiken
-
-**Na wijziging:**
-- Herstart de applicatie (PM2 of IIS)
-- Viewers moeten opnieuw naar hun profiel gaan om de bijgewerkte link te kopiëren
-
----
-
 ### 🔔 Push Notificaties
 
 **Ontvang directe meldingen op uw apparaat wanneer er iets verandert in de planning!**
@@ -1154,6 +1068,98 @@ Zolang uw bieding nog niet is verwerkt (pending status), kunt u deze intrekken:
 
 ---
 
+## 👁️ Handleiding voor Viewers
+
+**Viewers hebben alleen-lezen toegang - ideaal voor dispatching personeel en display schermen**
+
+Viewers zijn speciale gebruikersaccounts met beperkte rechten, ontworpen voor:
+- 📺 **Display schermen**: Lumaps en andere digitale displays in de dispatching
+- 👀 **Alleen bekijken**: Geen mogelijkheid om planning te wijzigen
+- 🖥️ **Kiosk modus**: Speciale fullscreen weergave voor onbemande displays
+
+### Wat Kunnen Viewers?
+
+| Functie | Beschikbaar |
+|---------|-------------|
+| Planning bekijken | ✅ Ja |
+| Fullscreen/kiosk modus | ✅ Ja |
+| Profiel bekijken | ✅ Ja |
+| Voorkeuren opgeven | ❌ Nee |
+| Shifts ruilen | ❌ Nee |
+| Overuren registreren | ❌ Nee |
+| Bieden op shifts | ❌ Nee |
+
+### 📺 Display Link (Kiosk Modus)
+
+De Display Link is een speciale URL waarmee een viewer account automatisch wordt ingelogd en de planning in fullscreen modus wordt getoond. Dit is ideaal voor displays in de dispatching.
+
+#### Kenmerken Kiosk Modus
+
+- ✅ **Automatische login**: Geen wachtwoord nodig via de speciale link
+- ✅ **Fullscreen weergave**: Geen navigatiebalk, alleen de planning
+- ✅ **Station naam in titel**: Toont "Planning ZW Geel" of ander station
+- ✅ **Auto-verversing**: Elke 60 seconden wordt de pagina automatisch ververst
+- ✅ **Scroll naar vandaag**: De pagina scrollt automatisch naar de huidige dag
+- ✅ **Alle shifts zichtbaar**: Toont alle shifts van het station (niet alleen "eigen" shifts)
+- ✅ **Visuele markering**: Huidige dag geel gemarkeerd, open shifts rood weergegeven
+
+#### Display Link Ophalen
+
+**Belangrijk**: De display link is zichtbaar in het profiel van een viewer account. Admins moeten eerst een viewer account aanmaken.
+
+**Stap 1: Log in als Viewer**
+- Log in met het viewer account dat is aangemaakt voor de display
+- Dit is een speciaal account dat alleen voor het display wordt gebruikt
+
+**Stap 2: Ga naar Profiel**
+- Klik op "Profiel" in de navigatie
+- Scroll naar de sectie "Display Link (Lumaps)"
+
+**Stap 3: Kopieer de Link**
+- U ziet uw persoonlijke display link
+- Klik op het kopieer icoon (📋) om de link te kopiëren
+
+#### Display Link Gebruiken met Lumaps
+
+**Configuratie in Lumaps:**
+1. Open de Lumaps configuratie interface
+2. Voeg een nieuwe pagina/widget toe van type "Webpagina"
+3. Plak de display link in het URL veld
+4. De pagina ververst zichzelf al elke 60 seconden
+
+**Testen:**
+- Bekijk het display om te verifiëren dat de planning correct wordt weergegeven
+- De huidige dag moet geel gemarkeerd zijn
+- De planning moet automatisch naar vandaag scrollen
+
+#### Weergave Details
+
+| Element | Weergave |
+|---------|----------|
+| **Titel** | "Planning [Station Naam]" (bijv. "Planning ZW Geel") |
+| **Huidige dag** | Geel gemarkeerd |
+| **Open shifts** | Rood weergegeven (niet-ingevuld) |
+| **Ingevulde shifts** | Naam van de medewerker |
+| **Auto-refresh** | Elke 60 seconden |
+
+#### Veiligheid
+
+- 🔐 Elke viewer heeft een **unieke token** in de link
+- 🔒 Deel de link alleen met mensen die toegang nodig hebben
+- ⚠️ Bij vermoeden van misbruik: vraag admin om nieuw viewer account
+
+#### Probleemoplossing Display
+
+| Probleem | Oplossing |
+|----------|-----------|
+| **Lege pagina** | Controleer of de link correct is gekopieerd |
+| **Inlogscherm i.p.v. planning** | Token is ongeldig, vraag nieuwe link aan admin |
+| **Geen shifts zichtbaar** | Controleer of er shifts zijn voor de huidige maand |
+| **Verkeerd station** | Controleer of viewer account aan juiste station is gekoppeld |
+| **Link werkt niet extern** | Zie IT configuratie: BASE_URL instellen (Deel II) |
+
+---
+
 ## 🔧 Handleiding voor Admins
 
 **Admins hebben alle rechten van ambulanciers PLUS extra beheersrechten**
@@ -1180,16 +1186,48 @@ Als admin ziet u extra knoppen:
 - **Gebruikersnaam**: Unieke login naam (bijv. jeva400). Hiervoor word de Windows login gebruikt in kleine letters
 - **Wachtwoord**: Minimaal 6 karakters en is hoofdletter gevoelig
 - **Voor/Achternaam**: Volledige naam
-- **Email**: Voor notificaties (in de toekomst is momenteel nog niet werkende) → Geef hier het volledige e-mail adres in bv. Jeroen.vanhoof@brandweerzonekempen.be
-- **Rol**: Ambulancier of Admin
-- **Werkuren**: Max aantal uren per maand dat je automatisch word ingepland (bijv. 24). Steeds met meervouden van 12h instellen
-- **Beroepspersoneel**: Aanvinken voor beroeps personeel (max 1 shift/week). Dit zorgt ervoor dat mensen met opt-out max 1 keer per week worden ingepland
+- **Email**: Voor wachtwoord reset en notificaties. Geef het volledige e-mail adres in (bijv. jeroen.vanhoof@brandweerzonekempen.be)
+- **Rol**: Kies de juiste rol:
+  - **Ambulancier**: Standaard rol voor medewerkers die shifts werken
+  - **Admin**: Volledige beheersrechten voor het station
+  - **Viewer**: Alleen-lezen toegang (voor displays/dispatching)
+- **Werkuren**: Max aantal uren per maand dat automatisch wordt ingepland (bijv. 24). Gebruik veelvouden van 12 uur
+- **Beroepspersoneel**: Aanvinken voor beroepspersoneel met opt-out regeling. **Effect**: Maximum 1 shift per week wordt automatisch ingepland door het systeem. Dit voorkomt dat beroepspersoneel te vaak wordt ingeroosterd naast hun reguliere werk
 - **Heeft rijbewijs C**: Aanvinken als de ambulancier rijbewijs C heeft. Standaard staat dit **AAN**. Vink **UIT** voor ambulanciers zonder rijbewijs C.
 
 **Opslaan en Testen:**
 - Klik "Aanmaken"
 - Test login met nieuwe gebruiker
 - Deel inloggegevens veilig
+
+#### Viewer Account Aanmaken voor Displays
+
+Om een display scherm (Lumaps) te koppelen aan het planningsysteem, maakt u een **viewer account** aan:
+
+**Stap 1: Maak Viewer Account Aan**
+1. Ga naar **Gebruikersbeheer**
+2. Klik **"Nieuwe Gebruiker"**
+3. Vul in:
+   - **Gebruikersnaam**: Beschrijvende naam (bijv. `display-mol` of `lumaps-geel`)
+   - **Wachtwoord**: Willekeurig wachtwoord (wordt niet gebruikt bij kiosk link)
+   - **Voornaam/Achternaam**: Bijv. "Display" / "PIT Mol"
+   - **Rol**: **Viewer** (belangrijk!)
+   - **Station**: Het station waarvan de planning getoond moet worden
+4. Klik **"Aanmaken"**
+
+**Stap 2: Haal de Display Link Op**
+1. Log in als de nieuwe viewer (of reset het wachtwoord als u het bent vergeten)
+2. Ga naar **Profiel**
+3. Kopieer de **Display Link** uit de "Display Link (Lumaps)" sectie
+
+**Stap 3: Configureer het Display**
+1. Plak de link in Lumaps of ander display systeem
+2. Test of de planning correct wordt weergegeven
+
+**Tips:**
+- Maak per display/station een apart viewer account aan
+- Gebruik duidelijke namen (bijv. `display-zwgeel`, `lumaps-mol`)
+- De kiosk link werkt alleen voor accounts met de **Viewer** rol
 
 #### Bestaande Gebruiker Bewerken
 
@@ -3271,6 +3309,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 
 | Versie | Datum | Belangrijkste Verbeteringen |
 |--------|-------|----------------------------|
+| **2025.18** | Dec 2025 | Viewer rol met kiosk/display modus voor Lumaps, BASE_URL configuratie, verbeterde fullscreen titel met stationnaam |
 | **2025.17** | Dec 2025 | Integratie logging: alle wijzigingen aan Verdi en Reportage instellingen worden nu gelogd in activiteitenlogboek |
 | **2025.16** | Dec 2025 | Multi-station admin verbeteringen: station-selector op ruilverzoeken pagina, cross-team visibility met station badges, verbeterde cross-station dubbele inplanning preventie |
 | **2025.15** | Dec 2025 | Wachtwoord reset via e-mail (self-service), undo historie voor gebruikersbeheer |
@@ -3288,6 +3327,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 | **2025.1** | Okt 2025 | Planning algoritme, cross-team functionaliteit |
 
 **Huidige functies:**
+- Kiosk/display modus voor Lumaps digitale schermen (via Viewer accounts)
 - Multi-station admin ondersteuning met station-selector op alle beheerpagina's
 - Cross-team visibility met station badges bij ruilverzoeken
 - Wachtwoord reset via e-mail (self-service, supervisor-gecontroleerd)
@@ -3745,6 +3785,10 @@ PORT=5000
 # Public URL (gebruikt voor iCal feeds en externe links)
 PUBLIC_URL=https://jouw-domein.nl
 
+# Base URL voor kiosk/display links (optioneel)
+# Gebruik dit als interne IP en publiek domein verschillen
+BASE_URL=https://dgh.brandweerzonekempen.be
+
 # Session Secret (genereer een random string van 32+ karakters)
 SESSION_SECRET=genereer_hier_een_random_string_van_minimaal_32_karakters
 
@@ -3767,6 +3811,24 @@ require('crypto').randomBytes(32).toString('hex')
 ```
 
 Kopieer de output naar `SESSION_SECRET` in `.env` bestand.
+
+**BASE_URL configureren (voor kiosk/display links):**
+
+De `BASE_URL` variabele is optioneel en wordt gebruikt om het domein in display/kiosk links te bepalen. Dit is nodig wanneer:
+- Gebruikers intern inloggen via een IP-adres (bijv. `http://10.10.120.30:5000`)
+- Maar de display links een publiek domein moeten gebruiken (bijv. `https://dgh.brandweerzonekempen.be`)
+
+**Wanneer nodig:**
+- Als Lumaps displays via het publieke domein moeten verbinden
+- Als de server bereikbaar is via zowel intern IP als extern domein
+
+**Hoe het werkt:**
+- Als `BASE_URL` is ingesteld → alle kiosk links gebruiken dit domein
+- Als `BASE_URL` niet is ingesteld → de server bepaalt het domein automatisch op basis van de inkomende request headers
+
+**Na wijziging:**
+1. Herstart de applicatie (PM2 of IIS)
+2. Viewers moeten opnieuw naar hun profiel gaan om de bijgewerkte link te kopiëren
 
 ### 4. Applicatie Builden
 
