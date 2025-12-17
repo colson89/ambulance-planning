@@ -57,7 +57,11 @@ export default function Dashboard() {
     const saved = localStorage.getItem('dashboard_showOnlyMyShifts');
     return saved === 'true';
   });
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(() => {
+    // Check URL parameter for kiosk mode auto-start
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('fullscreen') === 'true';
+  });
 
   // Persist "only my shifts" preference
   useEffect(() => {

@@ -32,6 +32,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByUsernameAndStation(username: string, stationId: number): Promise<User | undefined>;
+  getUserByKioskToken(token: string): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   
   // Multi-station access
@@ -477,6 +478,11 @@ export class DatabaseStorage implements IStorage {
       );
 
     return multiStationUser;
+  }
+
+  async getUserByKioskToken(token: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.kioskToken, token));
+    return user;
   }
 
   async getAllUsers(): Promise<User[]> {

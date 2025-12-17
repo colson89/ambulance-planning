@@ -33,6 +33,7 @@ const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const PushNotifications = lazy(() => import("@/pages/push-notifications"));
 const Manual = lazy(() => import("@/pages/manual"));
 const Pricing = lazy(() => import("@/pages/pricing"));
+const Kiosk = lazy(() => import("@/pages/kiosk"));
 
 // Loading component for Suspense boundaries
 function PageLoader() {
@@ -82,6 +83,7 @@ function Router() {
         <Route path="/forgot-password" component={ForgotPassword} />
         <Route path="/reset-password" component={ResetPassword} />
         <Route path="/pricing" component={Pricing} />
+        <Route path="/kiosk/:token" component={Kiosk} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>

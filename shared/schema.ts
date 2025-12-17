@@ -28,7 +28,8 @@ export const users = pgTable("users", {
   hasDrivingLicenseC: boolean("has_driving_license_c").notNull().default(true), // Rijbewijs C - minimaal 1 per shift vereist
   hours: integer("hours").notNull().default(24),
   stationId: integer("station_id").notNull().references(() => stations.id),
-  calendarOffset: integer("calendar_offset").notNull().default(0) // Tijdzone offset in minuten voor kalender sync (-120 tot +120)
+  calendarOffset: integer("calendar_offset").notNull().default(0), // Tijdzone offset in minuten voor kalender sync (-120 tot +120)
+  kioskToken: text("kiosk_token").unique() // Unieke token voor kiosk/display modus (alleen voor viewers)
 });
 
 export const shifts = pgTable("shifts", {

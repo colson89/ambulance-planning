@@ -292,6 +292,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Kiosk mode login - Public endpoint for display screens (Lumaps)
+  app.get("/api/kiosk/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      if (!token || token.length < 32) {
+        return res.status(400).json({ message: "Invalid kiosk token" });
+      }
+      
+      // Find user by kiosk token
+      const user = await storage.getUserByKioskToken(token);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Kiosk token not found" });
+      }
+      
+      if (user.role !== 'viewer') {
+        return res.status(403).json({ message: "Kiosk mode only available for viewer accounts" });
+      }
+      
+      // Create session for this user (auto-login)
+      req.login(user, (err) => {
+        if (err) {
+          console.error("Kiosk login error:", err);
+          return res.status(500).json({ message: "Login failed" });
+        }
+        
+        console.log(`Kiosk login successful for user: ${user.username} (${user.firstName} ${user.lastName})`);
+        
+        // Return user info and redirect URL
+        const { password, kioskToken, ...safeUser } = user;
+        res.json({ 
+          success: true, 
+          user: safeUser,
+          redirect: '/dashboard?fullscreen=true'
+        });
+      });
+    } catch (error) {
+      console.error("Kiosk login error:", error);
+      res.status(500).json({ message: "Kiosk login failed" });
+    }
+  });
+
+  // Get kiosk token for current viewer user
+  app.get("/api/user/kiosk-token", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const userRole = (req.user as any).role;
+      
+      if (userRole !== 'viewer') {
+        return res.status(403).json({ message: "Kiosk mode only available for viewer accounts" });
+      }
+      
+      let user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Auto-generate kiosk token if viewer doesn't have one
+      if (!user.kioskToken) {
+        const crypto = await import('crypto');
+        const newToken = crypto.randomBytes(32).toString('hex');
+        await storage.updateUser(userId, { kioskToken: newToken });
+        user = await storage.getUser(userId);
+      }
+      
+      // Build the full kiosk URL
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers['host'] || 'localhost:5000';
+      const kioskUrl = `${protocol}://${host}/kiosk/${user!.kioskToken}`;
+      
+      res.json({ 
+        token: user!.kioskToken,
+        url: kioskUrl
+      });
+    } catch (error) {
+      console.error("Error getting kiosk token:", error);
+      res.status(500).json({ message: "Failed to get kiosk token" });
+    }
+  });
+
   // Station CRUD endpoints - Supervisor only
   app.post("/api/stations", requireSupervisor, async (req, res) => {
     try {
@@ -705,6 +787,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Password hashed successfully");
       }
       
+      // Generate kiosk token for viewers
+      if (userData.role === 'viewer') {
+        const { randomBytes } = await import('crypto');
+        userData.kioskToken = randomBytes(32).toString('hex');
+        console.log("Kiosk token generated for viewer");
+      }
+      
       console.log("Final userData (password masked):", { ...userData, password: "[HASHED]" });
       
       const user = await storage.createUser(userData);
@@ -812,6 +901,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (updateData.role === 'supervisor') {
         updateData.stationId = 8;
         console.log(`User promoted to supervisor, automatically assigned to supervisor station (ID 8)`);
+      }
+      
+      // Generate kiosk token when changing role to viewer (if not already set)
+      if (updateData.role === 'viewer' && !targetUser.kioskToken) {
+        const { randomBytes } = await import('crypto');
+        (updateData as any).kioskToken = randomBytes(32).toString('hex');
+        console.log("Kiosk token generated for viewer role change");
+      }
+      
+      // Remove kiosk token when changing from viewer to another role
+      if (updateData.role && updateData.role !== 'viewer' && targetUser.role === 'viewer') {
+        (updateData as any).kioskToken = null;
+        console.log("Kiosk token removed - user is no longer a viewer");
       }
       
       // Store old values before update for undo

@@ -9,7 +9,7 @@ import { z } from "zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Home, Calendar, Copy, RefreshCw, ChevronDown, Upload, User as UserIcon, Phone, Clock } from "lucide-react";
+import { Home, Calendar, Copy, RefreshCw, ChevronDown, Upload, User as UserIcon, Phone, Clock, Monitor } from "lucide-react";
 import { useLocation } from "wouter";
 import type { User } from "@shared/schema";
 import { useState, useRef, useEffect } from "react";
@@ -160,6 +160,23 @@ export default function Profile() {
     queryKey: ["/api/calendar/token"],
     retry: false
   });
+
+  // Kiosk token query (only for viewers)
+  const { data: kioskData, isLoading: isLoadingKiosk, error: kioskError, refetch: refetchKiosk } = useQuery<{token: string, url: string}>({
+    queryKey: ["/api/user/kiosk-token"],
+    enabled: user?.role === 'viewer',
+    retry: 2
+  });
+
+  const copyKioskLink = () => {
+    if (kioskData?.url) {
+      navigator.clipboard.writeText(kioskData.url);
+      toast({
+        title: "Gekopieerd!",
+        description: "Display link is gekopieerd naar je klembord",
+      });
+    }
+  };
 
   const regenerateTokenMutation = useMutation({
     mutationFn: async () => {
@@ -785,6 +802,95 @@ export default function Profile() {
             )}
           </CardContent>
         </Card>
+
+        {/* Kiosk/Display Link - alleen voor viewers */}
+        {user?.role === 'viewer' && (
+          <Card data-testid="card-kiosk-link">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Monitor className="h-5 w-5" />
+                Display Link (Lumaps)
+              </CardTitle>
+              <CardDescription>
+                Link om de planning op een display scherm te tonen (bijv. Lumaps in de dispatching)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isLoadingKiosk ? (
+                <p className="text-sm text-muted-foreground">Laden...</p>
+              ) : kioskData ? (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Jouw persoonlijke display link</label>
+                    <div className="flex gap-2">
+                      <Input 
+                        value={kioskData.url} 
+                        readOnly 
+                        className="font-mono text-sm"
+                        data-testid="input-kiosk-url"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={copyKioskLink}
+                        data-testid="button-copy-kiosk-link"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Deze link logt automatisch in en toont de planning in fullscreen modus.
+                    </p>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm font-medium text-blue-900 mb-2">
+                      📺 Hoe te gebruiken met Lumaps/Display
+                    </p>
+                    <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                      <li>Kopieer de link hierboven</li>
+                      <li>Open je Lumaps/display configuratie</li>
+                      <li>Voeg een nieuwe webpagina toe met deze URL</li>
+                      <li>De planning wordt automatisch getoond en ververst elke minuut</li>
+                    </ol>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-amber-900 mb-1">
+                      ⚠️ Let op
+                    </p>
+                    <ul className="text-sm text-amber-800 space-y-1">
+                      <li>• De huidige dag wordt geel gemarkeerd</li>
+                      <li>• Open shifts worden rood weergegeven</li>
+                      <li>• De planning ververst automatisch elke 60 seconden</li>
+                    </ul>
+                  </div>
+                </>
+              ) : kioskError ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-destructive">
+                    Er is een fout opgetreden bij het ophalen van de display link.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => refetchKiosk()}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Opnieuw proberen
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Als het probleem aanhoudt, neem contact op met de beheerder.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Display link niet beschikbaar. Neem contact op met de beheerder.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Push Notificaties */}
         <PushNotificationSettings />

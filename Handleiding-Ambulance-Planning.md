@@ -34,6 +34,7 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
   - [Planning Bekijken](#-uw-planning-bekijken)
   - [Profiel Beheren](#-profiel-beheren)
   - [Kalender Synchronisatie](#-kalender-synchronisatie)
+  - [Display Link (Kiosk Modus)](#-display-link-kiosk-modus---voor-viewers)
   - [Push Notificaties](#-push-notificaties)
   - [Overuren Registreren](#-overuren-registreren)
   - [Shift Ruilen of Overnemen](#-shift-ruilen)
@@ -572,6 +573,73 @@ A: Gebruik de **Tijdcorrectie voor kalender** instelling:
 5. De wijziging wordt actief bij de volgende synchronisatie van uw kalender app
 
 **💡 Tip**: Dit probleem komt voor bij sommige kalender apps die tijdzones anders interpreteren. De tijdcorrectie compenseert dit verschil.
+
+---
+
+### 📺 Display Link (Kiosk Modus) - Voor Viewers
+
+**Toon de planning op een display scherm in de dispatching met de speciale kiosk link!**
+
+Deze functie is exclusief beschikbaar voor gebruikers met de **Viewer** rol en is ideaal voor het tonen van de planning op een extern display scherm (zoals Lumaps in de dispatching).
+
+#### Wat is de Display Link?
+
+De display link is een speciale URL die automatisch inlogt en de planning weergeeft in fullscreen modus. Dit is ideaal voor:
+- 📺 **Display schermen**: Lumaps systemen in de dispatching
+- 🖥️ **Info schermen**: Beeldschermen in de ambulance post
+- 📊 **Dashboard displays**: Centrale informatiezuilen
+
+**Kenmerken van de Kiosk Modus:**
+- ✅ Automatische login via de unieke token in de link
+- ✅ Fullscreen weergave zonder navigatiebalk
+- ✅ Automatische verversing elke 60 seconden
+- ✅ Huidige dag wordt geel gemarkeerd
+- ✅ Open shifts worden rood weergegeven
+- ✅ Toont alle shifts (niet alleen eigen shifts)
+
+#### Display Link Ophalen
+
+**Stap 1: Log in als Viewer**
+- Log in met uw viewer account
+- Viewers zijn speciaal aangemaakt voor dispatching/display doeleinden
+
+**Stap 2: Ga naar uw Profiel**
+- Klik op "Profiel" in de navigatie
+- Scroll naar de sectie "Display Link (Lumaps)"
+
+**Stap 3: Kopieer de Display Link**
+- U ziet uw persoonlijke display link
+- Klik op het kopieer icoon om de link te kopiëren
+
+#### Display Link Gebruiken met Lumaps
+
+**Stap 1: Configureer Lumaps**
+1. Open de Lumaps configuratie interface
+2. Voeg een nieuwe pagina/widget toe van het type "Webpagina"
+3. Plak de display link in het URL veld
+4. Stel de verversingsinterval in (optioneel, de pagina ververst zichzelf al elke 60 seconden)
+
+**Stap 2: Testen**
+- Bekijk het display om te verifiëren dat de planning correct wordt weergegeven
+- De huidige dag zou geel gemarkeerd moeten zijn
+- De planning scrollt automatisch naar de huidige dag
+
+#### Tips voor Display Gebruik
+
+**Weergave:**
+- De huidige dag wordt automatisch geel gemarkeerd
+- Open shifts (zonder medewerker) worden rood weergegeven
+- De planning ververst automatisch elke 60 seconden
+
+**Veiligheid:**
+- Elke viewer heeft een unieke token in de link
+- Deel de link alleen met mensen die toegang nodig hebben tot het display
+- Bij twijfel: vraag uw admin om een nieuwe viewer account aan te maken
+
+**Probleem Oplossing:**
+- **Lege pagina**: Controleer of de link correct is gekopieerd
+- **Inlogscherm**: De token is mogelijk ongeldig, vraag een nieuwe link aan
+- **Geen shifts zichtbaar**: Controleer of er shifts zijn ingepland voor de huidige maand
 
 ---
 
