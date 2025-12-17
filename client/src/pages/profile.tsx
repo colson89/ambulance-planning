@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PushNotificationSettings } from "@/components/push-notification-settings";
+import { StationNotificationPreferences } from "@/components/station-notification-preferences";
 
 const preferencesSchema = z.object({
   maxHours: z.number().min(0).max(168),
@@ -894,6 +895,9 @@ export default function Profile() {
 
         {/* Push Notificaties */}
         <PushNotificationSettings />
+        
+        {/* Station-specifieke Notificatie Voorkeuren (voor cross-team users en supervisors) */}
+        <StationNotificationPreferences />
       </div>
     </div>
   );

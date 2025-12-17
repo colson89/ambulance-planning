@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftSwapOffers, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftSwapOffer, type InsertShiftSwapOffer, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, userStationNotificationPreferences, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftSwapOffers, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type UserStationNotificationPreference, type InsertUserStationNotificationPreference, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftSwapOffer, type InsertShiftSwapOffer, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -177,6 +177,13 @@ export interface IStorage {
   createOrUpdatePlanningPeriod(stationId: number, month: number, year: number, data: Partial<PlanningPeriod>): Promise<PlanningPeriod>;
   publishPlanningPeriod(stationId: number, month: number, year: number, publishedById: number): Promise<PlanningPeriod>;
   unpublishPlanningPeriod(stationId: number, month: number, year: number): Promise<PlanningPeriod>;
+  
+  // Station-specifieke notificatie voorkeuren
+  getUserStationNotificationPreferences(userId: number): Promise<UserStationNotificationPreference[]>;
+  getUserStationNotificationPreference(userId: number, stationId: number): Promise<UserStationNotificationPreference | undefined>;
+  setUserStationNotificationPreference(userId: number, stationId: number, prefs: Partial<InsertUserStationNotificationPreference>): Promise<UserStationNotificationPreference>;
+  deleteUserStationNotificationPreference(userId: number, stationId: number): Promise<void>;
+  getUsersWithNotificationPreferenceForStation(stationId: number, notificationType: 'notifyNewPlanningPublished' | 'notifyShiftSwapUpdates' | 'notifyBidUpdates' | 'notifyOpenSwapRequests'): Promise<number[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5596,6 +5603,74 @@ export class DatabaseStorage implements IStorage {
       publishedAt: null,
       publishedById: null
     });
+  }
+  
+  // Station-specifieke notificatie voorkeuren
+  async getUserStationNotificationPreferences(userId: number): Promise<UserStationNotificationPreference[]> {
+    return db
+      .select()
+      .from(userStationNotificationPreferences)
+      .where(eq(userStationNotificationPreferences.userId, userId));
+  }
+  
+  async getUserStationNotificationPreference(userId: number, stationId: number): Promise<UserStationNotificationPreference | undefined> {
+    const [pref] = await db
+      .select()
+      .from(userStationNotificationPreferences)
+      .where(and(
+        eq(userStationNotificationPreferences.userId, userId),
+        eq(userStationNotificationPreferences.stationId, stationId)
+      ));
+    return pref;
+  }
+  
+  async setUserStationNotificationPreference(userId: number, stationId: number, prefs: Partial<InsertUserStationNotificationPreference>): Promise<UserStationNotificationPreference> {
+    const existing = await this.getUserStationNotificationPreference(userId, stationId);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(userStationNotificationPreferences)
+        .set({ ...prefs, updatedAt: new Date() })
+        .where(eq(userStationNotificationPreferences.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(userStationNotificationPreferences)
+        .values({
+          userId,
+          stationId,
+          notifyNewPlanningPublished: prefs.notifyNewPlanningPublished ?? true,
+          notifyShiftSwapUpdates: prefs.notifyShiftSwapUpdates ?? true,
+          notifyBidUpdates: prefs.notifyBidUpdates ?? true,
+          notifyOpenSwapRequests: prefs.notifyOpenSwapRequests ?? true
+        })
+        .returning();
+      return created;
+    }
+  }
+  
+  async deleteUserStationNotificationPreference(userId: number, stationId: number): Promise<void> {
+    await db
+      .delete(userStationNotificationPreferences)
+      .where(and(
+        eq(userStationNotificationPreferences.userId, userId),
+        eq(userStationNotificationPreferences.stationId, stationId)
+      ));
+  }
+  
+  async getUsersWithNotificationPreferenceForStation(
+    stationId: number, 
+    notificationType: 'notifyNewPlanningPublished' | 'notifyShiftSwapUpdates' | 'notifyBidUpdates' | 'notifyOpenSwapRequests'
+  ): Promise<number[]> {
+    const prefs = await db
+      .select({ userId: userStationNotificationPreferences.userId })
+      .from(userStationNotificationPreferences)
+      .where(and(
+        eq(userStationNotificationPreferences.stationId, stationId),
+        eq(userStationNotificationPreferences[notificationType], true)
+      ));
+    return prefs.map(p => p.userId);
   }
 }
 

@@ -646,6 +646,43 @@ Push notificaties zijn berichten die u ontvangt op uw smartphone, tablet of comp
 - Selecteer uw voorkeur uit de keuzelijst
 - De instelling wordt automatisch opgeslagen
 
+#### Station-specifieke Notificatie Voorkeuren
+
+**Voor Cross-Team Medewerkers en Supervisors:**
+
+Als u toegang heeft tot meerdere stations, kunt u per station kiezen welke notificaties u wilt ontvangen. Dit voorkomt dat u overspoeld wordt met meldingen van stations die minder relevant voor u zijn.
+
+**Waar vindt u deze instelling?**
+1. Ga naar **Profiel**
+2. Scroll naar **"Station Notificatie Voorkeuren"**
+3. U ziet een tabel met alle stations waartoe u toegang heeft
+
+**Wat kunt u instellen?**
+
+Voor elk station kunt u de volgende notificatie types aan of uit zetten:
+
+| Notificatie Type | Beschrijving |
+|------------------|--------------|
+| **Nieuwe Planning** | Melding wanneer een nieuwe maandplanning wordt gepubliceerd |
+| **Ruilverzoeken** | Updates over ingediende en goedgekeurde ruilverzoeken |
+| **Biedingen** | Meldingen over biedingen op open shifts |
+| **Open Wissels** | Wanneer een collega vraagt om te wisselen |
+
+**Voorbeeld:**
+- U bent supervisor en wilt alleen meldingen van ZW Geel en PIT Mol
+- Zet alle notificatie types UIT voor de andere stations
+- U ontvangt nu alleen relevante meldingen
+
+**Standaard Instelling:**
+- Alle notificaties zijn standaard AAN voor alle stations
+- Pas aan naar wens door op de schakelaars te klikken
+- Klik **"Voorkeuren Opslaan"** om uw wijzigingen op te slaan
+
+**Wie ziet deze optie?**
+- **Supervisors**: Zien alle stations
+- **Cross-team medewerkers**: Zien hun primaire station + alle extra toegewezen stations
+- **Gewone ambulanciers**: Zien deze sectie niet (zij hebben maar één station)
+
 **Test Notificatie Versturen**
 - Klik op de knop "Test Notificatie Versturen"
 - U ontvangt direct een testbericht
@@ -708,6 +745,9 @@ A: Dit hangt af van uw instellingen:
 
 **Q: Kan ik specifieke notificaties uitschakelen?**
 A: Ja! Elke notificatie type heeft een eigen aan/uit schakelaar in uw profiel.
+
+**Q: Ik ben supervisor/cross-team - kan ik per station kiezen welke meldingen ik krijg?**
+A: Ja! Ga naar Profiel → "Station Notificatie Voorkeuren". Hier kunt u per station kiezen welke notificatie types u wilt ontvangen. Dit is alleen zichtbaar als u toegang heeft tot meerdere stations.
 
 **Q: Zijn mijn notificaties privé?**
 A: Ja, u ontvangt alleen meldingen over uw eigen shifts en planning van uw station(s).

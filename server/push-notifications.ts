@@ -24,6 +24,66 @@ export interface PushNotificationPayload {
   data?: Record<string, any>;
 }
 
+type StationNotificationType = 'notifyNewPlanningPublished' | 'notifyShiftSwapUpdates' | 'notifyBidUpdates' | 'notifyOpenSwapRequests';
+
+/**
+ * Check if a user wants notifications for a specific station and notification type.
+ * Returns true if:
+ * 1. User has no station-specific preference (defaults to enabled)
+ * 2. User has explicitly enabled this notification type for this station
+ */
+async function shouldNotifyUserForStation(
+  userId: number, 
+  stationId: number, 
+  notificationType: StationNotificationType
+): Promise<boolean> {
+  const pref = await storage.getUserStationNotificationPreference(userId, stationId);
+  
+  if (!pref) {
+    return true;
+  }
+  
+  return pref[notificationType] === true;
+}
+
+/**
+ * Get all users who should receive notifications for a station.
+ * This includes:
+ * 1. Users from the station itself
+ * 2. Cross-team users with access to the station
+ * 3. Supervisors (who have access to all stations)
+ */
+async function getUsersForStationNotification(
+  stationId: number,
+  notificationType: StationNotificationType
+): Promise<number[]> {
+  const allUsers = await storage.getAllUsers();
+  const eligibleUserIds: number[] = [];
+  
+  for (const user of allUsers) {
+    let hasAccess = false;
+    
+    if (user.stationId === stationId) {
+      hasAccess = true;
+    } else if (user.role === 'supervisor') {
+      hasAccess = true;
+    } else {
+      // getUserAllStations returns number[] (array of station IDs)
+      const userStationIds = await storage.getUserAllStations(user.id);
+      hasAccess = userStationIds.includes(stationId);
+    }
+    
+    if (hasAccess) {
+      const wantsNotification = await shouldNotifyUserForStation(user.id, stationId, notificationType);
+      if (wantsNotification) {
+        eligibleUserIds.push(user.id);
+      }
+    }
+  }
+  
+  return eligibleUserIds;
+}
+
 export async function sendPushNotification(
   subscription: DBPushSubscription,
   payload: PushNotificationPayload
@@ -159,13 +219,13 @@ export async function notifyNewPlanningPublished(
   const station = await storage.getStation(stationId);
   const stationPrefix = station ? `[${station.displayName}] ` : '';
   
-  // Get all users from this station
-  const users = await storage.getUsersByStation(stationId);
+  // Get all users who should receive this notification (includes cross-team and supervisors)
+  const eligibleUserIds = await getUsersForStationNotification(stationId, 'notifyNewPlanningPublished');
   
-  // Collect all enabled subscriptions across all users
+  // Collect all enabled subscriptions across all eligible users
   const enabledSubscriptions: DBPushSubscription[] = [];
-  for (const user of users) {
-    const subscriptions = await storage.getAllPushSubscriptions(user.id);
+  for (const userId of eligibleUserIds) {
+    const subscriptions = await storage.getAllPushSubscriptions(userId);
     const userEnabledSubs = subscriptions.filter(
       sub => sub.notifyNewPlanningPublished
     );
@@ -173,6 +233,7 @@ export async function notifyNewPlanningPublished(
   }
 
   if (enabledSubscriptions.length === 0) {
+    console.log(`No eligible users for new planning notification for station ${stationId}`);
     return;
   }
 
@@ -181,6 +242,8 @@ export async function notifyNewPlanningPublished(
     'juli', 'augustus', 'september', 'oktober', 'november', 'december'
   ];
 
+  console.log(`Sending new planning notification to ${enabledSubscriptions.length} subscriptions for station ${stationId}`);
+  
   await sendPushToSubscriptions(enabledSubscriptions, {
     title: `${stationPrefix}Nieuwe Planning Gepubliceerd`,
     body: `De planning voor ${monthNames[month - 1]} ${year} is beschikbaar.`,
@@ -338,6 +401,7 @@ export async function sendShiftChangedNotification(
 
 /**
  * Notify admins/supervisors about a new shift swap request
+ * Uses station-specific notification preferences for cross-team and supervisors
  */
 export async function notifyNewShiftSwapRequest(
   stationId: number,
@@ -349,11 +413,10 @@ export async function notifyNewShiftSwapRequest(
   const station = await storage.getStation(stationId);
   const stationPrefix = station ? `[${station.displayName}] ` : '';
   
-  // Get all admin/supervisor users for this station
+  // Get all admin/supervisor users who should receive notifications for this station
   const allUsers = await storage.getAllUsers();
   const adminUsers = allUsers.filter(
-    u => (u.role === 'admin' || u.role === 'supervisor') && 
-         (u.stationId === stationId || u.role === 'supervisor')
+    u => u.role === 'admin' || u.role === 'supervisor'
   );
 
   if (adminUsers.length === 0) {
@@ -367,8 +430,22 @@ export async function notifyNewShiftSwapRequest(
   });
   const shiftTypeText = shiftType === 'day' ? 'dagdienst' : 'nachtdienst';
 
-  // Send to all admins/supervisors who have shift swap notifications enabled
+  // Send to all admins/supervisors who have access to this station and have notifications enabled
   for (const admin of adminUsers) {
+    // Check if admin has access to this station
+    let hasAccess = admin.stationId === stationId || admin.role === 'supervisor';
+    if (!hasAccess) {
+      // getUserAllStations returns number[] (array of station IDs)
+      const adminStationIds = await storage.getUserAllStations(admin.id);
+      hasAccess = adminStationIds.includes(stationId);
+    }
+    
+    if (!hasAccess) continue;
+    
+    // Check station-specific preference
+    const wantsNotification = await shouldNotifyUserForStation(admin.id, stationId, 'notifyShiftSwapUpdates');
+    if (!wantsNotification) continue;
+    
     const subscriptions = await storage.getAllPushSubscriptions(admin.id);
     const enabledSubscriptions = subscriptions.filter(sub => sub.notifyShiftSwapUpdates);
 

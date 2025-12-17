@@ -362,6 +362,29 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 
+// Station-specifieke notificatie voorkeuren voor cross-team users en supervisors
+export const userStationNotificationPreferences = pgTable("user_station_notification_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  stationId: integer("station_id").notNull().references(() => stations.id, { onDelete: "cascade" }),
+  notifyNewPlanningPublished: boolean("notify_new_planning_published").notNull().default(true),
+  notifyShiftSwapUpdates: boolean("notify_shift_swap_updates").notNull().default(true),
+  notifyBidUpdates: boolean("notify_bid_updates").notNull().default(true),
+  notifyOpenSwapRequests: boolean("notify_open_swap_requests").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+}, (table) => ({
+  userStationUnique: unique().on(table.userId, table.stationId)
+}));
+
+export const insertUserStationNotificationPreferenceSchema = createInsertSchema(userStationNotificationPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type UserStationNotificationPreference = typeof userStationNotificationPreferences.$inferSelect;
+export type InsertUserStationNotificationPreference = z.infer<typeof insertUserStationNotificationPreferenceSchema>;
+
 // Reportage Personeelsdienst - Configuratie
 export const reportageConfig = pgTable("reportage_config", {
   id: serial("id").primaryKey(),

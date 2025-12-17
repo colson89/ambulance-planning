@@ -6798,6 +6798,159 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // =====================
+  // Station-specifieke Push Notification Preferences
+  // =====================
+  
+  // Get stations for which user can configure notifications
+  app.get("/api/push/station-preferences/stations", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+
+    try {
+      const user = req.user;
+      const stationsList: any[] = [];
+      
+      // Altijd eigen station toevoegen
+      const primaryStation = await storage.getStation(user.stationId);
+      if (primaryStation) {
+        stationsList.push({ ...primaryStation, isPrimary: true });
+      }
+      
+      // Voor supervisors: alle stations
+      if (user.role === 'supervisor') {
+        const allStations = await storage.getAllStations();
+        for (const station of allStations) {
+          if (station.id !== user.stationId) {
+            stationsList.push({ ...station, isPrimary: false });
+          }
+        }
+      } else {
+        // Voor cross-team users: hun extra stations
+        // getUserAllStations returns number[] (array of station IDs)
+        const additionalStationIds = await storage.getUserAllStations(user.id);
+        for (const stationId of additionalStationIds) {
+          if (stationId !== user.stationId) {
+            const station = await storage.getStation(stationId);
+            if (station) {
+              stationsList.push({ ...station, isPrimary: false });
+            }
+          }
+        }
+      }
+      
+      res.json(stationsList);
+    } catch (error: any) {
+      console.error("Error getting notification stations:", error);
+      res.status(500).json({ message: "Failed to get stations", error: error.message });
+    }
+  });
+  
+  // Get user's station-specific notification preferences
+  app.get("/api/push/station-preferences", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+
+    try {
+      const preferences = await storage.getUserStationNotificationPreferences(req.user.id);
+      res.json(preferences);
+    } catch (error: any) {
+      console.error("Error getting station notification preferences:", error);
+      res.status(500).json({ message: "Failed to get preferences", error: error.message });
+    }
+  });
+  
+  // Set station-specific notification preference
+  app.post("/api/push/station-preferences/:stationId", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+
+    try {
+      const stationId = parseInt(req.params.stationId);
+      const { notifyNewPlanningPublished, notifyShiftSwapUpdates, notifyBidUpdates, notifyOpenSwapRequests } = req.body;
+      
+      // Verify user has access to this station
+      const user = req.user;
+      let hasAccess = user.stationId === stationId || user.role === 'supervisor';
+      
+      if (!hasAccess) {
+        // getUserAllStations returns number[] (array of station IDs)
+        const userStationIds = await storage.getUserAllStations(user.id);
+        hasAccess = userStationIds.includes(stationId);
+      }
+      
+      if (!hasAccess) {
+        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      }
+      
+      // Apply defaults for undefined values
+      const preference = await storage.setUserStationNotificationPreference(user.id, stationId, {
+        notifyNewPlanningPublished: notifyNewPlanningPublished ?? true,
+        notifyShiftSwapUpdates: notifyShiftSwapUpdates ?? true,
+        notifyBidUpdates: notifyBidUpdates ?? true,
+        notifyOpenSwapRequests: notifyOpenSwapRequests ?? true
+      });
+      
+      res.json(preference);
+    } catch (error: any) {
+      console.error("Error setting station notification preference:", error);
+      res.status(500).json({ message: "Failed to set preference", error: error.message });
+    }
+  });
+  
+  // Bulk update station notification preferences
+  app.post("/api/push/station-preferences/bulk", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+
+    try {
+      const { preferences } = req.body;
+      
+      if (!Array.isArray(preferences)) {
+        return res.status(400).json({ message: "Preferences must be an array" });
+      }
+      
+      const user = req.user;
+      const results: any[] = [];
+      
+      for (const pref of preferences) {
+        const { stationId, notifyNewPlanningPublished, notifyShiftSwapUpdates, notifyBidUpdates, notifyOpenSwapRequests } = pref;
+        
+        // Skip invalid entries
+        if (typeof stationId !== 'number') continue;
+        
+        // Verify user has access to this station
+        let hasAccess = user.stationId === stationId || user.role === 'supervisor';
+        
+        if (!hasAccess) {
+          // getUserAllStations returns number[] (array of station IDs)
+          const userStationIds = await storage.getUserAllStations(user.id);
+          hasAccess = userStationIds.includes(stationId);
+        }
+        
+        if (hasAccess) {
+          // Apply defaults for undefined values
+          const result = await storage.setUserStationNotificationPreference(user.id, stationId, {
+            notifyNewPlanningPublished: notifyNewPlanningPublished ?? true,
+            notifyShiftSwapUpdates: notifyShiftSwapUpdates ?? true,
+            notifyBidUpdates: notifyBidUpdates ?? true,
+            notifyOpenSwapRequests: notifyOpenSwapRequests ?? true
+          });
+          results.push(result);
+        }
+      }
+      
+      res.json(results);
+    } catch (error: any) {
+      console.error("Error bulk updating station notification preferences:", error);
+      res.status(500).json({ message: "Failed to update preferences", error: error.message });
+    }
+  });
+
+  // =====================
   // Reportage Personeelsdienst API
   // =====================
 
