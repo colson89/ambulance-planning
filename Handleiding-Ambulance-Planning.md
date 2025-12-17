@@ -641,6 +641,27 @@ De display link is een speciale URL die automatisch inlogt en de planning weerge
 - **Inlogscherm**: De token is mogelijk ongeldig, vraag een nieuwe link aan
 - **Geen shifts zichtbaar**: Controleer of er shifts zijn ingepland voor de huidige maand
 
+#### IT Configuratie: BASE_URL voor Windows Server
+
+Als de display links niet het juiste domein bevatten, kan de IT-beheerder de `BASE_URL` environment variabele instellen:
+
+**Windows Server (in het `.env` bestand):**
+```
+BASE_URL=https://dgh.brandweerzonekempen.be
+```
+
+**Wat dit doet:**
+- Alle gegenereerde display links gebruiken dan automatisch dit domein
+- Bijvoorbeeld: `https://dgh.brandweerzonekempen.be/kiosk/[token]`
+
+**Wanneer nodig:**
+- Als gebruikers intern inloggen via een IP-adres (bijv. `10.10.120.30`)
+- Maar het display het publieke domein moet gebruiken
+
+**Na wijziging:**
+- Herstart de applicatie (PM2 of IIS)
+- Viewers moeten opnieuw naar hun profiel gaan om de bijgewerkte link te kopiëren
+
 ---
 
 ### 🔔 Push Notificaties

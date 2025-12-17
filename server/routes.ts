@@ -360,9 +360,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Build the full kiosk URL
-      const protocol = req.headers['x-forwarded-proto'] || 'https';
-      const host = req.headers['host'] || 'localhost:5000';
-      const kioskUrl = `${protocol}://${host}/kiosk/${user!.kioskToken}`;
+      // Use BASE_URL environment variable if set, otherwise use request headers
+      let kioskUrl: string;
+      if (process.env.BASE_URL && process.env.BASE_URL.trim()) {
+        const baseUrl = process.env.BASE_URL.trim().replace(/\/$/, ''); // Trim whitespace and remove trailing slash
+        kioskUrl = `${baseUrl}/kiosk/${user!.kioskToken}`;
+      } else {
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
+        const host = req.headers['host'] || 'localhost:5000';
+        kioskUrl = `${protocol}://${host}/kiosk/${user!.kioskToken}`;
+      }
       
       res.json({ 
         token: user!.kioskToken,
