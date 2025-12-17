@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer, FileText, RefreshCw, Bell, HelpCircle } from "lucide-react";
+import { Loader2, Users, Calendar, Clock, LogOut, UserCog, CalendarDays, ChevronLeft, ChevronRight, Check, AlertCircle, UserPlus, Settings, BarChart3, User as UserIcon, Building2, Link as LinkIcon, Menu, X, Timer, FileText, RefreshCw, Bell, HelpCircle, Maximize2, Minimize2 } from "lucide-react";
 import { OpenSlotWarning } from "@/components/open-slot-warning";
 import { OvertimeDialog } from "@/components/overtime-dialog";
 import { ShiftSwapDialog } from "@/components/shift-swap-dialog";
@@ -57,11 +57,52 @@ export default function Dashboard() {
     const saved = localStorage.getItem('dashboard_showOnlyMyShifts');
     return saved === 'true';
   });
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Persist "only my shifts" preference
   useEffect(() => {
     localStorage.setItem('dashboard_showOnlyMyShifts', showOnlyMyShifts.toString());
   }, [showOnlyMyShifts]);
+
+  // Fullscreen mode: auto-select current month and scroll to today
+  useEffect(() => {
+    if (isFullscreen) {
+      const now = new Date();
+      setSelectedMonth(now.getMonth());
+      setSelectedYear(now.getFullYear());
+      // Force show all shifts in fullscreen (not just user's own)
+      setShowOnlyMyShifts(false);
+      
+      // Scroll to today's date after a short delay to allow render
+      setTimeout(() => {
+        const todayElement = document.getElementById('today-shift-row');
+        if (todayElement) {
+          todayElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [isFullscreen]);
+
+  // Viewers should never filter to only their shifts (they have none)
+  useEffect(() => {
+    if (user?.role === 'viewer') {
+      setShowOnlyMyShifts(false);
+    }
+  }, [user?.role]);
+
+  // Auto-refresh in fullscreen mode (every 60 seconds)
+  useEffect(() => {
+    if (isFullscreen) {
+      const currentMonth = selectedMonth;
+      const currentYear = selectedYear;
+      const interval = setInterval(() => {
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/shifts", currentMonth + 1, currentYear] 
+        });
+      }, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [isFullscreen, queryClient, selectedMonth, selectedYear]);
 
   const { data: shifts = [], isLoading: shiftsLoading } = useQuery<Shift[]>({
     queryKey: ["/api/shifts", selectedMonth + 1, selectedYear],
@@ -545,6 +586,123 @@ export default function Dashboard() {
     setShowAvailabilityDialog(true);
   };
   
+  // Fullscreen mode for viewers (Lumaps display)
+  if (isFullscreen) {
+    return (
+      <div className="fixed inset-0 bg-background z-50 overflow-auto p-4">
+        {/* Fullscreen header with exit button */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold">Planning</h1>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={prevMonth}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium min-w-[100px] text-center">
+                {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+              </span>
+              <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={goToNextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setIsFullscreen(false)}>
+            <Minimize2 className="h-4 w-4 mr-2" />
+            Sluiten
+          </Button>
+        </div>
+        
+        {/* Full calendar view */}
+        <div className="bg-card rounded-lg border">
+          {filteredShifts.length === 0 ? (
+            <div className="text-center p-8 text-muted-foreground">
+              Geen shifts gevonden voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Datum</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Tijd</TableHead>
+                  <TableHead>Medewerker</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredShifts
+                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                  .map((shift) => {
+                    const shiftUser = colleagues.find(u => u.id === shift.userId);
+                    const isToday = format(new Date(shift.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+                    
+                    const getShiftTime = () => {
+                      if (!shift.startTime || !shift.endTime) return "-";
+                      const startHour = new Date(shift.startTime).getUTCHours();
+                      const endHour = new Date(shift.endTime).getUTCHours();
+                      
+                      if (shift.type === "night") {
+                        if (shift.isSplitShift) {
+                          if (startHour === 19 && endHour === 23) return "19:00-23:00";
+                          else if (startHour === 23 && endHour === 7) return "23:00-07:00";
+                          else return `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
+                        }
+                        return "19:00-07:00";
+                      } else {
+                        if (shift.isSplitShift) {
+                          if (startHour === 7 && endHour === 13) return "07:00-13:00";
+                          else if (startHour === 13 && endHour === 19) return "13:00-19:00";
+                          else return `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
+                        }
+                        return "07:00-19:00";
+                      }
+                    };
+
+                    return (
+                      <TableRow 
+                        key={shift.id}
+                        id={isToday ? 'today-shift-row' : undefined}
+                        className={`${shift.status === "open" ? "bg-red-50" : ""} ${isToday ? "bg-yellow-50 font-semibold" : ""}`}
+                      >
+                        <TableCell className="font-medium">
+                          {format(new Date(shift.date), "EEE d MMM", { locale: nl })}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={shift.type === "night" ? "secondary" : "default"}>
+                            {shift.type === "day" ? "Dag" : "Nacht"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{getShiftTime()}</TableCell>
+                        <TableCell>
+                          {shift.status === "open" ? (
+                            <span className="text-red-600 font-medium">Open</span>
+                          ) : (
+                            shiftUser ? `${shiftUser.firstName} ${shiftUser.lastName}` : '-'
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {shift.status === "planned" ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-700">Gepland</Badge>
+                          ) : (
+                            <Badge variant="destructive">Open</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+        
+        {/* Auto-refresh indicator */}
+        <div className="text-center text-xs text-muted-foreground mt-4">
+          Automatische verversing elke 60 seconden
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-4 md:p-6">
       {/* Header - Responsive layout */}
@@ -890,17 +1048,30 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-2 mt-2">
-            <Checkbox 
-              id="showOnlyMyShifts" 
-              checked={showOnlyMyShifts}
-              onCheckedChange={(checked) => setShowOnlyMyShifts(checked === true)}
-            />
-            <Label 
-              htmlFor="showOnlyMyShifts" 
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-            >
-              Alleen mijn shiften tonen
-            </Label>
+            {user?.role === 'viewer' ? (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsFullscreen(true)}
+              >
+                <Maximize2 className="h-4 w-4 mr-2" />
+                Fullscreen (Lumaps)
+              </Button>
+            ) : (
+              <>
+                <Checkbox 
+                  id="showOnlyMyShifts" 
+                  checked={showOnlyMyShifts}
+                  onCheckedChange={(checked) => setShowOnlyMyShifts(checked === true)}
+                />
+                <Label 
+                  htmlFor="showOnlyMyShifts" 
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Alleen mijn shiften tonen
+                </Label>
+              </>
+            )}
           </div>
         </CardHeader>
         <CardContent className="px-3 sm:px-6">
