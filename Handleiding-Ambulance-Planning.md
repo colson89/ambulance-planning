@@ -70,7 +70,7 @@ Het Ambulance Planning Systeem is een webapplicatie voor het beheren van shift p
 - **Ambulanciers**: Kunnen voorkeuren opgeven en hun planning bekijken
 - **Admins**: Hebben volledige controle over hun station + alle ambulancier mogelijkheden
 - **Supervisors**: Kunnen meerdere stations beheren/bekijken en cross-team functionaliteit instellen
-- **Viewers**: Alleen-lezen toegang - kunnen alleen de planning bekijken (ideaal voor dispatching personeel)
+- **Viewers**: Alleen-lezen toegang - kunnen alleen de planning bekijken (ideaal voor dispatching personeel). Viewers hebben een speciale **Fullscreen modus** voor weergave op display schermen (zoals Lumaps)
 
 ---
 
