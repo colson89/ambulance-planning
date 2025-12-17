@@ -126,6 +126,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Middleware om viewers te blokkeren van niet-lees acties
+  // Viewers mogen alleen GET requests doen op bepaalde endpoints
+  const requireNonViewer = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+    if (req.user.role === 'viewer') {
+      console.log("Viewer access denied - viewers have read-only access:", {
+        userId: req.user?.id,
+        method: req.method,
+        path: req.path
+      });
+      return res.status(403).json({ message: "Viewers hebben alleen leestoegang" });
+    }
+    next();
+  };
+
   // Helper: Veilige effectieve stationId resolutie met autorisatie validatie
   // Voor supervisors: valideert dat het gevraagde station toegankelijk is
   // Voor anderen: gebruikt hun eigen stationId
@@ -1857,7 +1874,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Validate cross-team schedule for conflicts
-  app.post("/api/validate-cross-team-schedule", requireAuth, async (req, res) => {
+  app.post("/api/validate-cross-team-schedule", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const { shifts } = req.body;
       const userId = req.user?.id;
@@ -1965,7 +1982,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Sync user preferences to all assigned stations
-  app.post("/api/sync-preferences", requireAuth, async (req, res) => {
+  app.post("/api/sync-preferences", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const userId = req.user?.id;
       const { month, year } = req.body;
@@ -2013,7 +2030,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete unified preferences for authenticated user (all stations)
-  app.delete("/api/unified-preferences/:month/:year", requireAuth, async (req, res) => {
+  app.delete("/api/unified-preferences/:month/:year", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const userId = req.user?.id;
       const month = parseInt(req.params.month);
@@ -2060,7 +2077,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auto-sync preferences when creating/updating preferences
-  app.post("/api/preferences-with-sync", requireAuth, async (req, res) => {
+  app.post("/api/preferences-with-sync", requireAuth, requireNonViewer, async (req, res) => {
     try {
       console.log('Received preference data with sync:', req.body);
 
@@ -2641,7 +2658,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Route handler for creating preferences
-  app.post("/api/preferences", requireAuth, async (req, res) => {
+  app.post("/api/preferences", requireAuth, requireNonViewer, async (req, res) => {
     try {
       console.log('Received preference data:', req.body);
 
@@ -2690,7 +2707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete shift preference
-  app.delete("/api/preferences/:id", requireAuth, async (req, res) => {
+  app.delete("/api/preferences/:id", requireAuth, requireNonViewer, async (req, res) => {
     try {
       // Check if preference exists and belongs to user
       const preference = await storage.getShiftPreference(parseInt(req.params.id));
@@ -4632,7 +4649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create or update user comment
-  app.post("/api/comments", requireAuth, async (req, res) => {
+  app.post("/api/comments", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const validatedData = insertUserCommentSchema.parse({
         ...req.body,
@@ -4668,7 +4685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete user comment
-  app.delete("/api/comments/:id", requireAuth, async (req, res) => {
+  app.delete("/api/comments/:id", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const commentId = parseInt(req.params.id);
       
@@ -8262,7 +8279,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Create a shift swap request
-  app.post("/api/shift-swaps", requireAuth, async (req, res) => {
+  app.post("/api/shift-swaps", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const user = req.user as any;
       const { requesterShiftId, targetUserId, targetShiftId, requesterNote } = req.body;
@@ -8594,7 +8611,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Cancel a shift swap request (requester only) - POST method
-  app.post("/api/shift-swaps/:id/cancel", requireAuth, async (req, res) => {
+  app.post("/api/shift-swaps/:id/cancel", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const user = req.user as any;
       const id = parseInt(req.params.id);
@@ -8652,7 +8669,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Cancel a shift swap request (requester only) - DELETE method  
-  app.delete("/api/shift-swaps/:id", requireAuth, async (req, res) => {
+  app.delete("/api/shift-swaps/:id", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const user = req.user as any;
       const id = parseInt(req.params.id);
@@ -8966,7 +8983,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   // ========================================
 
   // Create an open swap request (no specific target user)
-  app.post("/api/open-swap-requests", requireAuth, async (req, res) => {
+  app.post("/api/open-swap-requests", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const user = req.user as any;
       const { shiftId, note } = req.body;
@@ -9178,7 +9195,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Submit an offer on an open swap request
-  app.post("/api/open-swap-requests/:id/offers", requireAuth, async (req, res) => {
+  app.post("/api/open-swap-requests/:id/offers", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const user = req.user as any;
       const requestId = parseInt(req.params.id);
@@ -9270,7 +9287,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Withdraw an offer
-  app.delete("/api/open-swap-offers/:id", requireAuth, async (req, res) => {
+  app.delete("/api/open-swap-offers/:id", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const user = req.user as any;
       const offerId = parseInt(req.params.id);
@@ -9315,7 +9332,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Accept an offer (requester selects which offer to accept)
-  app.post("/api/open-swap-offers/:id/accept", requireAuth, async (req, res) => {
+  app.post("/api/open-swap-offers/:id/accept", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const user = req.user as any;
       const offerId = parseInt(req.params.id);
@@ -9415,7 +9432,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Reject an offer on the user's open swap request
-  app.post("/api/open-swap-offers/:id/reject", requireAuth, async (req, res) => {
+  app.post("/api/open-swap-offers/:id/reject", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const user = req.user as any;
       const offerId = parseInt(req.params.id);
@@ -9529,7 +9546,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   // ========================================
 
   // Create a bid on an open shift
-  app.post("/api/shifts/:shiftId/bids", requireAuth, async (req, res) => {
+  app.post("/api/shifts/:shiftId/bids", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const user = req.user as any;
       const shiftId = parseInt(req.params.shiftId);
@@ -9929,7 +9946,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   });
 
   // Withdraw my bid
-  app.post("/api/shift-bids/:bidId/withdraw", requireAuth, async (req, res) => {
+  app.post("/api/shift-bids/:bidId/withdraw", requireAuth, requireNonViewer, async (req, res) => {
     try {
       const user = req.user as any;
       const bidId = parseInt(req.params.bidId);

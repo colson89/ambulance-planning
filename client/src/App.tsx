@@ -43,29 +43,40 @@ function PageLoader() {
   );
 }
 
+// Role definitions for route access
+const ADMIN_ROLES = ["admin", "supervisor"] as const;
+const NON_VIEWER_ROLES = ["admin", "supervisor", "ambulancier"] as const;
+
 function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Switch>
+        {/* Dashboard and Profile - accessible by all authenticated users including viewers */}
         <ProtectedRoute path="/" component={Dashboard} />
         <ProtectedRoute path="/dashboard" component={Dashboard} />
-        <ProtectedRoute path="/shifts" component={ShiftPlanner} />
         <ProtectedRoute path="/profile" component={Profile} />
-        <ProtectedRoute path="/users" component={UserManagement} />
-        <ProtectedRoute path="/schedule" component={ScheduleGenerator} />
-        <ProtectedRoute path="/shift-planner" component={ScheduleGenerator} />
-        <ProtectedRoute path="/settings" component={WeekdaySettings} />
-        <ProtectedRoute path="/statistics" component={Statistics} />
-        <ProtectedRoute path="/holidays" component={HolidaysManagement} />
-        <ProtectedRoute path="/integrations" component={Integrations} />
-        <ProtectedRoute path="/verdi" component={VerdiSettings} />
-        <ProtectedRoute path="/reportage" component={Reportage} />
-        <ProtectedRoute path="/overtime" component={Overtime} />
-        <ProtectedRoute path="/activity-logs" component={ActivityLogs} />
-        <ProtectedRoute path="/shift-swaps" component={ShiftSwaps} />
-        <ProtectedRoute path="/stations" component={Stations} />
-        <ProtectedRoute path="/push-notifications" component={PushNotifications} />
         <ProtectedRoute path="/manual" component={Manual} />
+        
+        {/* Ambulancier features - NOT accessible by viewers */}
+        <ProtectedRoute path="/shifts" component={ShiftPlanner} allowedRoles={[...NON_VIEWER_ROLES]} />
+        <ProtectedRoute path="/overtime" component={Overtime} allowedRoles={[...NON_VIEWER_ROLES]} />
+        <ProtectedRoute path="/shift-swaps" component={ShiftSwaps} allowedRoles={[...NON_VIEWER_ROLES]} />
+        
+        {/* Admin/Supervisor only features */}
+        <ProtectedRoute path="/users" component={UserManagement} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/schedule" component={ScheduleGenerator} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/shift-planner" component={ScheduleGenerator} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/settings" component={WeekdaySettings} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/statistics" component={Statistics} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/holidays" component={HolidaysManagement} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/integrations" component={Integrations} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/verdi" component={VerdiSettings} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/reportage" component={Reportage} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/activity-logs" component={ActivityLogs} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/stations" component={Stations} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/push-notifications" component={PushNotifications} allowedRoles={[...ADMIN_ROLES]} />
+        
+        {/* Public routes */}
         <Route path="/station-select" component={StationSelect} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/forgot-password" component={ForgotPassword} />

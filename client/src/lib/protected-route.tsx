@@ -3,12 +3,16 @@ import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
 import { ComponentType, LazyExoticComponent } from "react";
 
+type UserRole = "admin" | "ambulancier" | "supervisor" | "viewer";
+
 export function ProtectedRoute({
   path,
   component: Component,
+  allowedRoles,
 }: {
   path: string;
   component: ComponentType<any> | LazyExoticComponent<ComponentType<any>>;
+  allowedRoles?: UserRole[];
 }) {
   const { user, isLoading } = useAuth();
 
@@ -25,6 +29,12 @@ export function ProtectedRoute({
 
         if (!user) {
           return <Redirect to="/station-select" />;
+        }
+
+        // Check role-based access if allowedRoles is specified
+        if (allowedRoles && !allowedRoles.includes(user.role as UserRole)) {
+          // Redirect to dashboard if user doesn't have access
+          return <Redirect to="/dashboard" />;
         }
 
         return <Component />;

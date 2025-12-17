@@ -22,7 +22,7 @@ export const users = pgTable("users", {
   email: text("email"), // Email optioneel voor bestaande gebruikers
   phoneNumber: text("phone_number"), // GSM nummer (optioneel)
   profilePhotoUrl: text("profile_photo_url"), // Profielfoto URL (optioneel)
-  role: text("role", { enum: ["admin", "ambulancier", "supervisor"] }).notNull().default("ambulancier"),
+  role: text("role", { enum: ["admin", "ambulancier", "supervisor", "viewer"] }).notNull().default("ambulancier"),
   isAdmin: boolean("is_admin").notNull().default(false),
   isProfessional: boolean("is_professional").notNull().default(false), // Beroepspersoneel - max 1 shift per week
   hasDrivingLicenseC: boolean("has_driving_license_c").notNull().default(true), // Rijbewijs C - minimaal 1 per shift vereist
@@ -70,7 +70,7 @@ export const insertUserSchema = createInsertSchema(users, {
   firstName: z.string().min(1, "Voornaam is verplicht"),
   lastName: z.string().min(1, "Achternaam is verplicht"),
   email: z.string().email("Ongeldig email adres").optional(),
-  role: z.enum(["admin", "ambulancier", "supervisor"]),
+  role: z.enum(["admin", "ambulancier", "supervisor", "viewer"]),
   phoneNumber: z.string().max(20, "Telefoonnummer mag maximaal 20 karakters bevatten").regex(/^[+\d\s()-]*$/, "Telefoonnummer mag alleen cijfers, spaties en +()- bevatten").optional().or(z.literal("")),
 }).pick({
   username: true,

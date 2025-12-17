@@ -35,7 +35,7 @@ const updateUserSchema = z.object({
   firstName: z.string().min(1, "Voornaam is verplicht"),
   lastName: z.string().min(1, "Achternaam is verplicht"),
   email: z.string().email("Ongeldig email adres").optional().or(z.literal("")),
-  role: z.enum(["admin", "ambulancier", "supervisor"]),
+  role: z.enum(["admin", "ambulancier", "supervisor", "viewer"]),
   hours: z.number().min(0).max(168),
   isProfessional: z.boolean().optional(),
   hasDrivingLicenseC: z.boolean().optional(),
@@ -361,7 +361,7 @@ export default function UserManagement() {
       lastName: "",
       email: "",
       phoneNumber: "",
-      role: "ambulancier" as "admin" | "ambulancier" | "supervisor",
+      role: "ambulancier" as "admin" | "ambulancier" | "supervisor" | "viewer",
       isAdmin: false,
       isProfessional: false,
       hasDrivingLicenseC: true,
@@ -831,6 +831,7 @@ export default function UserManagement() {
                       <SelectContent>
                         <SelectItem value="ambulancier">Ambulancier</SelectItem>
                         <SelectItem value="admin">Administrator</SelectItem>
+                        <SelectItem value="viewer">Viewer (alleen lezen)</SelectItem>
                         {user?.role === 'supervisor' && (
                           <SelectItem value="supervisor">Supervisor</SelectItem>
                         )}
@@ -1455,6 +1456,7 @@ export default function UserManagement() {
                               <SelectContent>
                                 <SelectItem value="ambulancier">Ambulancier</SelectItem>
                                 <SelectItem value="admin">Administrator</SelectItem>
+                                <SelectItem value="viewer">Viewer (alleen lezen)</SelectItem>
                                 {user?.role === 'supervisor' && (
                                   <SelectItem value="supervisor">Supervisor</SelectItem>
                                 )}

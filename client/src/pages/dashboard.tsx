@@ -753,22 +753,27 @@ export default function Dashboard() {
                 <UserIcon className="h-4 w-4 mr-2" />
                 Profiel
               </Button>
-              <Button 
-                variant="outline"
-                className="justify-start h-12"
-                onClick={() => { setLocation("/shifts"); setMobileMenuOpen(false); }}
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Voorkeuren
-              </Button>
-              <Button 
-                variant="outline"
-                className="justify-start h-12"
-                onClick={() => { setLocation("/overtime"); setMobileMenuOpen(false); }}
-              >
-                <Timer className="h-4 w-4 mr-2" />
-                Overuren
-              </Button>
+              {/* Ambulancier menu items - not visible for viewers */}
+              {user?.role !== 'viewer' && (
+                <>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/shifts"); setMobileMenuOpen(false); }}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Voorkeuren
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="justify-start h-12"
+                    onClick={() => { setLocation("/overtime"); setMobileMenuOpen(false); }}
+                  >
+                    <Timer className="h-4 w-4 mr-2" />
+                    Overuren
+                  </Button>
+                </>
+              )}
               <Button 
                 variant="outline"
                 className="justify-start h-12"
@@ -777,9 +782,11 @@ export default function Dashboard() {
                 <HelpCircle className="h-4 w-4 mr-2" />
                 Handleiding
               </Button>
-              <div className="col-span-2">
-                <StationSwitcher />
-              </div>
+              {user?.role !== 'viewer' && (
+                <div className="col-span-2">
+                  <StationSwitcher />
+                </div>
+              )}
               <Button 
                 variant="outline" 
                 className="justify-start h-12 col-span-2"
@@ -794,36 +801,39 @@ export default function Dashboard() {
         )}
       </div>
 
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="text-center">
-            <h2 className="text-lg font-medium mb-2">Shift Planning Status</h2>
-            <p className="text-muted-foreground">
-              {format(planningMonth, "MMMM yyyy", { locale: nl })} is nu open voor voorkeuren.
-              <br />
-              {isPastDeadline 
-                ? `U kunt tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
-                : `U kunt tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
-              }
-              <br />
-              <span className="text-xs">
-                Planning moet {deadlineDays} dag{deadlineDays !== 1 ? 'en' : ''} van tevoren worden ingediend
-              </span>
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 mt-4">
-              <Button 
-                onClick={() => setLocation("/shifts")}
-                variant="outline"
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Voorkeuren Opgeven
-              </Button>
-              
-              {/* Admin knoppen kunnen hier worden toegevoegd */}
+      {/* Voorkeuren sectie - niet zichtbaar voor viewers */}
+      {user?.role !== 'viewer' && (
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <h2 className="text-lg font-medium mb-2">Shift Planning Status</h2>
+              <p className="text-muted-foreground">
+                {format(planningMonth, "MMMM yyyy", { locale: nl })} is nu open voor voorkeuren.
+                <br />
+                {isPastDeadline 
+                  ? `U kunt tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
+                  : `U kunt tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
+                }
+                <br />
+                <span className="text-xs">
+                  Planning moet {deadlineDays} dag{deadlineDays !== 1 ? 'en' : ''} van tevoren worden ingediend
+                </span>
+              </p>
+              <div className="flex flex-wrap justify-center gap-2 mt-4">
+                <Button 
+                  onClick={() => setLocation("/shifts")}
+                  variant="outline"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Voorkeuren Opgeven
+                </Button>
+                
+                {/* Admin knoppen kunnen hier worden toegevoegd */}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="mb-6">
         <Card>
@@ -835,26 +845,32 @@ export default function Dashboard() {
             <div className="text-2xl font-bold">
               {user?.role === 'admin' ? "Administrator" : 
                user?.role === 'supervisor' ? "Supervisor" : 
+               user?.role === 'viewer' ? "Viewer" :
                "Ambulancier"}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Mijn Open Wissels met aanbiedingen */}
-      <MyOpenSwapOffers users={colleagues} stations={stations} />
+      {/* Swap request secties - niet zichtbaar voor viewers */}
+      {user?.role !== 'viewer' && (
+        <>
+          {/* Mijn Open Wissels met aanbiedingen */}
+          <MyOpenSwapOffers users={colleagues} stations={stations} />
 
-      {/* Open Wissels van collega's */}
-      {user && (
-        <OpenSwapRequests 
-          users={colleagues} 
-          stations={stations} 
-          currentUserId={user.id} 
-        />
+          {/* Open Wissels van collega's */}
+          {user && (
+            <OpenSwapRequests 
+              users={colleagues} 
+              stations={stations} 
+              currentUserId={user.id} 
+            />
+          )}
+
+          {/* Mijn Ruilverzoeken sectie */}
+          <MySwapRequests users={colleagues} shifts={shifts} selectedMonth={selectedMonth} selectedYear={selectedYear} />
+        </>
       )}
-
-      {/* Mijn Ruilverzoeken sectie */}
-      <MySwapRequests users={colleagues} shifts={shifts} selectedMonth={selectedMonth} selectedYear={selectedYear} />
       
       {/* Planning section georganiseerd per maand/jaar */}
       <Card>
