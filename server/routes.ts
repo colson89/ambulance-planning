@@ -3008,6 +3008,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate buffer
       const buffer = await workbook.xlsx.writeBuffer();
+      
+      // Log export activity
+      await logActivity({
+        userId: req.user!.id,
+        stationId: req.user!.stationId,
+        action: ActivityActions.EXPORT.PREFERENCES_EXPORTED,
+        category: 'EXPORT',
+        details: `Beschikbaarheden geëxporteerd voor ${capitalizedMonth} ${targetYear}`,
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      }).catch(err => console.error('Error logging preferences export:', err));
 
       // Set headers for download
       const filename = `Mijn_Beschikbaarheden_${capitalizedMonth}_${targetYear}.xlsx`;
@@ -4720,6 +4731,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate XLSX buffer
       const buffer = await workbook.xlsx.writeBuffer();
       
+      // Log export activity
+      await logActivity({
+        userId: req.user!.id,
+        stationId: targetStationId,
+        action: ActivityActions.EXPORT.PLANNING_EXPORTED,
+        category: 'EXPORT',
+        details: `Planning geëxporteerd voor ${targetMonth}/${targetYear}`,
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      }).catch(err => console.error('Error logging planning export:', err));
+      
       // Set headers for XLSX download
       const filename = `planning_${targetMonth}_${targetYear}.xlsx`;
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -5217,6 +5239,17 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       const userId = (req.user as any).id;
       
       const newToken = await storage.regenerateCalendarToken(userId);
+      
+      // Log calendar token regeneration
+      await logActivity({
+        userId: userId,
+        stationId: (req.user as any).stationId,
+        action: ActivityActions.CALENDAR.TOKEN_REGENERATED,
+        category: 'CALENDAR',
+        details: 'Kalender synchronisatie token vernieuwd',
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      }).catch(err => console.error('Error logging calendar token regeneration:', err));
       
       // Gebruik PUBLIC_URL environment variabele voor externe toegang, of fallback naar request URL
       const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
@@ -6708,6 +6741,16 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         deadlineWarningDays: 3
       });
 
+      await logActivity({
+        userId: req.user.id,
+        stationId: req.user.stationId,
+        action: ActivityActions.PUSH_NOTIFICATIONS.SUBSCRIBED,
+        category: 'PUSH_NOTIFICATIONS',
+        details: 'Push notificaties geactiveerd op dit apparaat',
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      }).catch(err => console.error('Error logging push subscribe:', err));
+
       res.json(subscription);
     } catch (error: any) {
       console.error("Error subscribing to push:", error);
@@ -6749,6 +6792,17 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         preferences
       );
 
+      const changedPrefs = Object.keys(preferences || {}).join(', ');
+      await logActivity({
+        userId: req.user.id,
+        stationId: req.user.stationId,
+        action: ActivityActions.PUSH_NOTIFICATIONS.PREFERENCES_UPDATED,
+        category: 'PUSH_NOTIFICATIONS',
+        details: `Push voorkeuren gewijzigd: ${changedPrefs || 'algemene instellingen'}`,
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      }).catch(err => console.error('Error logging push preferences update:', err));
+
       res.json(updated);
     } catch (error: any) {
       console.error("Error updating push preferences:", error);
@@ -6770,6 +6824,17 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       }
 
       await storage.deletePushSubscription(req.user.id, endpoint);
+
+      await logActivity({
+        userId: req.user.id,
+        stationId: req.user.stationId,
+        action: ActivityActions.PUSH_NOTIFICATIONS.UNSUBSCRIBED,
+        category: 'PUSH_NOTIFICATIONS',
+        details: 'Push notificaties uitgeschakeld op dit apparaat',
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      }).catch(err => console.error('Error logging push unsubscribe:', err));
+
       res.json({ success: true });
     } catch (error: any) {
       console.error("Error unsubscribing from push:", error);
@@ -6893,6 +6958,17 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         notifyOpenSwapRequests: notifyOpenSwapRequests ?? true
       });
       
+      const station = await storage.getStation(stationId);
+      await logActivity({
+        userId: user.id,
+        stationId: stationId,
+        action: ActivityActions.PUSH_NOTIFICATIONS.STATION_PREFERENCES_UPDATED,
+        category: 'PUSH_NOTIFICATIONS',
+        details: `Station notificatie voorkeuren gewijzigd voor ${station?.displayName || 'station ' + stationId}`,
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      }).catch(err => console.error('Error logging station preference update:', err));
+      
       res.json(preference);
     } catch (error: any) {
       console.error("Error setting station notification preference:", error);
@@ -6941,6 +7017,18 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           });
           results.push(result);
         }
+      }
+      
+      if (results.length > 0) {
+        await logActivity({
+          userId: user.id,
+          stationId: user.stationId,
+          action: ActivityActions.PUSH_NOTIFICATIONS.STATION_PREFERENCES_UPDATED,
+          category: 'PUSH_NOTIFICATIONS',
+          details: `Station notificatie voorkeuren bijgewerkt voor ${results.length} station(s)`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        }).catch(err => console.error('Error logging bulk station preference update:', err));
       }
       
       res.json(results);
@@ -7395,6 +7483,17 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       }
       
       const excelBuffer = await reportageScheduler.generateExcelReport(month, year);
+      
+      // Log export activity
+      await logActivity({
+        userId: req.user!.id,
+        stationId: req.user!.stationId,
+        action: ActivityActions.EXPORT.REPORTAGE_EXPORTED,
+        category: 'EXPORT',
+        details: `Reportage geëxporteerd voor ${month}/${year}`,
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      }).catch(err => console.error('Error logging reportage export:', err));
       
       const monthNames = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 
                           'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
@@ -7921,6 +8020,17 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       }
 
       const buffer = await workbook.xlsx.writeBuffer();
+      
+      // Log export activity
+      await logActivity({
+        userId: user.id,
+        stationId: user.stationId,
+        action: ActivityActions.EXPORT.ACTIVITY_LOGS_EXPORTED,
+        category: 'EXPORT',
+        details: `Activiteitenlog geëxporteerd (${logs.length} regels)`,
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      }).catch(err => console.error('Error logging activity logs export:', err));
 
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', `attachment; filename=Activiteitenlog_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);

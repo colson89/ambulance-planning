@@ -9,7 +9,7 @@ import { db } from "./db";
 import { activityLogs, type InsertActivityLog } from "@shared/schema";
 import { desc, eq, and, gte, lte, sql, inArray } from "drizzle-orm";
 
-export type ActivityCategory = "LOGIN" | "LOGOUT" | "PREFERENCE" | "SCHEDULE" | "SHIFT_SWAP" | "SHIFT_MANUAL" | "SHIFT_BID" | "USER_MANAGEMENT" | "SETTINGS" | "VERDI" | "OVERTIME" | "PROFILE" | "OTHER";
+export type ActivityCategory = "LOGIN" | "LOGOUT" | "PREFERENCE" | "SCHEDULE" | "SHIFT_SWAP" | "SHIFT_MANUAL" | "SHIFT_BID" | "USER_MANAGEMENT" | "SETTINGS" | "VERDI" | "OVERTIME" | "PROFILE" | "PUSH_NOTIFICATIONS" | "EXPORT" | "CALENDAR" | "REPORTAGE" | "OTHER";
 
 interface LogActivityParams {
   userId?: number | null;
@@ -409,5 +409,20 @@ export const ActivityActions = {
     RECIPIENT_UPDATED: "Reportage ontvanger gewijzigd",
     RECIPIENT_DELETED: "Reportage ontvanger verwijderd",
     REPORT_SENT: "Reportage verzonden",
+  },
+  PUSH_NOTIFICATIONS: {
+    SUBSCRIBED: "Push notificaties ingeschakeld",
+    UNSUBSCRIBED: "Push notificaties uitgeschakeld",
+    PREFERENCES_UPDATED: "Push notificatie voorkeuren gewijzigd",
+    STATION_PREFERENCES_UPDATED: "Station notificatie voorkeuren gewijzigd",
+  },
+  EXPORT: {
+    PLANNING_EXPORTED: "Planning geëxporteerd",
+    ACTIVITY_LOGS_EXPORTED: "Activiteitenlog geëxporteerd",
+    REPORTAGE_EXPORTED: "Reportage geëxporteerd",
+    PREFERENCES_EXPORTED: "Beschikbaarheden geëxporteerd",
+  },
+  CALENDAR: {
+    TOKEN_REGENERATED: "Kalender token vernieuwd",
   },
 } as const;
