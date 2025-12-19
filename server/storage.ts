@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, userStationNotificationPreferences, reportageConfig, reportageRecipients, reportageLogs, overtime, stationSettings, shiftSwapRequests, shiftSwapOffers, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type UserStationNotificationPreference, type InsertUserStationNotificationPreference, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftSwapOffer, type InsertShiftSwapOffer, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, userStationNotificationPreferences, reportageConfig, reportageRecipients, reportageLogs, welcomeEmailConfig, overtime, stationSettings, shiftSwapRequests, shiftSwapOffers, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type UserStationNotificationPreference, type InsertUserStationNotificationPreference, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type WelcomeEmailConfig, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftSwapOffer, type InsertShiftSwapOffer, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -4523,6 +4523,30 @@ export class DatabaseStorage implements IStorage {
         .set({ lastSentMonth: month, lastSentYear: year, updatedAt: new Date() })
         .where(eq(reportageConfig.id, config.id));
     }
+  }
+
+  // Welcome Email Config Methods
+  async getWelcomeEmailConfig(): Promise<WelcomeEmailConfig | null> {
+    const result = await db.select().from(welcomeEmailConfig).limit(1);
+    return result[0] || null;
+  }
+
+  async createOrUpdateWelcomeEmailConfig(config: Partial<WelcomeEmailConfig>): Promise<WelcomeEmailConfig> {
+    const existing = await this.getWelcomeEmailConfig();
+    if (existing) {
+      const result = await db
+        .update(welcomeEmailConfig)
+        .set({ ...config, updatedAt: new Date() })
+        .where(eq(welcomeEmailConfig.id, existing.id))
+        .returning();
+      return result[0];
+    }
+    const result = await db.insert(welcomeEmailConfig).values({
+      enabled: config.enabled ?? false,
+      emailSubject: config.emailSubject ?? "Welkom bij Planning BWZK - Uw account gegevens",
+      emailBody: config.emailBody ?? "Beste {voornaam},\n\nEr is een account voor u aangemaakt.\n\nGebruikersnaam: {gebruikersnaam}\nWachtwoord: {wachtwoord}\n\nLog in via: {loginUrl}\n\nMet vriendelijke groeten,\nPlanning BWZK"
+    }).returning();
+    return result[0];
   }
 
   // Overtime (Overuren) Methods

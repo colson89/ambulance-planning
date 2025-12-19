@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.18 - Laatst bijgewerkt: 17 december 2025**
+**Versie 2025.19 - Laatst bijgewerkt: 19 december 2025**
 
 ---
 
@@ -2365,6 +2365,14 @@ Elke integratie toont een status badge die aangeeft of de koppeling actief en co
 - Reset links zijn 1 uur geldig en eenmalig te gebruiken
 - Status: Beschikbaar wanneer ingeschakeld
 
+📧 **Welkomstmail Nieuwe Gebruikers** (Nieuw - v2025.19)
+- Automatische e-mail met inloggegevens bij aanmaken nieuwe gebruiker
+- Aanpasbare template met placeholders ({voornaam}, {gebruikersnaam}, {wachtwoord}, {loginUrl})
+- In-/uitschakelbaar door admins en supervisors
+- Testmail functie om template te controleren
+- Vereist werkende SMTP configuratie (zie Reportage)
+- Status: Beschikbaar wanneer ingeschakeld
+
 📋 **Activiteitenlog** (Alleen Supervisors)
 - Bekijk alle gebruikersactiviteiten en systeemgebeurtenissen
 - Filter op categorie (AUTH, PLANNING, SETTINGS, etc.)
@@ -2417,6 +2425,87 @@ Deze functie is standaard uitgeschakeld en kan alleen door supervisors worden in
 - Als SMTP niet geconfigureerd is, is de schakelaar uitgeschakeld
 - U ziet dan een waarschuwing: "SMTP moet eerst worden geconfigureerd in Reportage"
 - Configureer eerst SMTP voordat u deze functie kunt gebruiken
+
+---
+
+### 📧 Welkomstmail Nieuwe Gebruikers
+
+**Automatische Welkomstmail met Inloggegevens**
+
+Wanneer een admin of supervisor een nieuwe gebruiker aanmaakt, kan het systeem automatisch een welkomstmail versturen met de inloggegevens. Dit bespaart tijd en zorgt ervoor dat nieuwe gebruikers direct aan de slag kunnen.
+
+#### Hoe Werkt Het?
+
+**Automatisch Versturen:**
+
+Wanneer de welkomstmail functie is ingeschakeld:
+1. Admin/supervisor maakt een nieuwe gebruiker aan met e-mailadres
+2. Het systeem verstuurt automatisch een welkomstmail naar dit adres
+3. De mail bevat gebruikersnaam, wachtwoord en inlog-URL
+4. De nieuwe gebruiker kan direct inloggen
+
+**Belangrijk:**
+- 📧 Alleen gebruikers met e-mailadres ontvangen de welkomstmail
+- 🔒 Het initiële wachtwoord staat in de mail - adviseer direct wijzigen
+- ⚙️ De mail wordt alleen verzonden als de functie is ingeschakeld
+
+#### Configureren (Admins en Supervisors)
+
+**Toegang:**
+
+1. Ga naar **Integraties** in het hoofdmenu
+2. Zoek de kaart "Welkomstmail" (teal/groen gekleurd)
+
+**In-/Uitschakelen:**
+
+1. Gebruik de **schakelaar** om de functie in of uit te schakelen
+2. Bij inschakelen worden automatisch welkomstmails verzonden bij nieuwe gebruikers
+3. Bij uitschakelen worden geen mails verzonden (handmatig communiceren)
+
+**Template Aanpassen:**
+
+1. Klik op de **"Template"** knop
+2. Pas het onderwerp en de berichttekst aan
+3. Gebruik **placeholders** voor dynamische gegevens:
+   - `{voornaam}` - Voornaam van de nieuwe gebruiker
+   - `{gebruikersnaam}` - De gebruikersnaam voor inloggen
+   - `{wachtwoord}` - Het initiële wachtwoord
+   - `{loginUrl}` - De URL om in te loggen
+4. Klik op **"Preview"** om te zien hoe de mail eruitziet
+5. Klik op **"Opslaan"** om de wijzigingen op te slaan
+
+**Testmail Versturen:**
+
+1. Klik op de **"Test"** knop
+2. Voer een e-mailadres in (bijv. uw eigen adres)
+3. Klik op **"Verstuur Testmail"**
+4. U ontvangt een testmail met voorbeeldgegevens (Jan, jan.peeters, Welkom123!)
+5. Controleer of de mail correct is en pas indien nodig de template aan
+
+**Vereisten:**
+- ✅ SMTP e-mail moet geconfigureerd zijn (via Reportage > SMTP Instellingen)
+- ✅ Nieuwe gebruiker moet een e-mailadres hebben
+
+**Voorbeeld Template:**
+
+```
+Onderwerp: Welkom bij Planning BWZK - Uw account gegevens
+
+Beste {voornaam},
+
+Er is een account voor u aangemaakt in het Planning systeem van Brandweerzone Kempen.
+
+Uw inloggegevens:
+Gebruikersnaam: {gebruikersnaam}
+Wachtwoord: {wachtwoord}
+
+⚠️ BELANGRIJK: Wijzig uw wachtwoord direct na de eerste keer inloggen!
+
+U kunt inloggen via: {loginUrl}
+
+Met vriendelijke groeten,
+Planning BWZK
+```
 
 #### Beveiliging
 

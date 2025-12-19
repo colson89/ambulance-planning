@@ -445,6 +445,34 @@ export type InsertReportageRecipient = z.infer<typeof insertReportageRecipientSc
 
 export type ReportageLog = typeof reportageLogs.$inferSelect;
 
+// Welkomstmail configuratie voor nieuwe gebruikers
+export const welcomeEmailConfig = pgTable("welcome_email_config", {
+  id: serial("id").primaryKey(),
+  enabled: boolean("enabled").notNull().default(false),
+  emailSubject: text("email_subject").notNull().default("Welkom bij Planning BWZK - Uw account gegevens"),
+  emailBody: text("email_body").notNull().default(
+    "Beste {voornaam},\n\n" +
+    "Er is een account voor u aangemaakt in het Planning systeem van Brandweerzone Kempen.\n\n" +
+    "Uw inloggegevens:\n" +
+    "Gebruikersnaam: {gebruikersnaam}\n" +
+    "Wachtwoord: {wachtwoord}\n\n" +
+    "⚠️ BELANGRIJK: Wijzig uw wachtwoord direct na de eerste keer inloggen!\n\n" +
+    "U kunt inloggen via: {loginUrl}\n\n" +
+    "Met vriendelijke groeten,\n" +
+    "Planning BWZK"
+  ),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertWelcomeEmailConfigSchema = createInsertSchema(welcomeEmailConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type WelcomeEmailConfig = typeof welcomeEmailConfig.$inferSelect;
+export type InsertWelcomeEmailConfig = z.infer<typeof insertWelcomeEmailConfigSchema>;
+
 // Overuren registratie
 export const overtime = pgTable("overtime", {
   id: serial("id").primaryKey(),

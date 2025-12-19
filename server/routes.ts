@@ -754,6 +754,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userData = insertUserSchema.parse(req.body);
       console.log("Original userData:", JSON.stringify(userData, null, 2));
       
+      // Store original password for welcome email (before hashing)
+      const originalPassword = userData.password;
+      
       // SECURITY: Only supervisors can create other supervisors
       if (userData.role === 'supervisor' && (req.user as any).role !== 'supervisor') {
         return res.status(403).json({ message: "Only supervisors can create other supervisors" });
@@ -841,6 +844,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         targetUserId: user.id,
         ipAddress: getClientInfo(req).ipAddress
       });
+      
+      // Send welcome email if enabled and user has email
+      if (user.email && originalPassword) {
+        try {
+          const welcomeConfig = await storage.getWelcomeEmailConfig();
+          if (welcomeConfig?.enabled) {
+            const smtpConfig = await storage.getReportageConfig();
+            if (smtpConfig?.smtpHost && smtpConfig?.smtpUser && smtpConfig?.smtpPassword) {
+              const loginUrl = process.env.BASE_URL || `https://${req.get('host')}`;
+              const placeholderData = {
+                voornaam: user.firstName,
+                gebruikersnaam: user.username,
+                wachtwoord: originalPassword,
+                loginUrl: loginUrl
+              };
+              
+              let subject = welcomeConfig.emailSubject;
+              let body = welcomeConfig.emailBody;
+              
+              for (const [key, value] of Object.entries(placeholderData)) {
+                subject = subject.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+                body = body.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+              }
+              
+              const nodemailer = require('nodemailer');
+              const transporter = nodemailer.createTransport({
+                host: smtpConfig.smtpHost,
+                port: smtpConfig.smtpPort || 587,
+                secure: smtpConfig.smtpSecure || false,
+                auth: {
+                  user: smtpConfig.smtpUser,
+                  pass: smtpConfig.smtpPassword
+                }
+              });
+              
+              await transporter.sendMail({
+                from: `"${smtpConfig.smtpFromName || 'Planning BWZK'}" <${smtpConfig.smtpFromAddress || smtpConfig.smtpUser}>`,
+                to: user.email,
+                subject: subject,
+                text: body
+              });
+              
+              console.log(`Welcome email sent to ${user.email}`);
+              
+              // Log welcome email activity
+              await logActivity({
+                userId: req.user!.id,
+                stationId: user.stationId,
+                action: 'WELCOME_EMAIL_SENT',
+                category: 'EMAIL',
+                details: `Welkomstmail verzonden naar ${user.email} voor nieuwe gebruiker ${user.firstName} ${user.lastName}`,
+                targetUserId: user.id,
+                ipAddress: getClientInfo(req).ipAddress
+              }).catch(err => console.error('Error logging welcome email:', err));
+            }
+          }
+        } catch (emailError: any) {
+          console.error('Failed to send welcome email:', emailError.message);
+          // Don't fail user creation if email fails
+        }
+      }
       
       // SECURITY FIX: Remove password from response
       const { password, ...userWithoutPassword } = user;
@@ -7512,6 +7576,145 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     } catch (error: any) {
       console.error('Excel export error:', error);
       res.status(500).json({ message: "Fout bij genereren Excel", error: error.message });
+    }
+  });
+
+  // Welcome Email Configuration API
+  
+  // Get welcome email configuration
+  app.get("/api/welcome-email/config", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const config = await storage.getWelcomeEmailConfig();
+      res.json(config || { 
+        enabled: false, 
+        emailSubject: "Welkom bij Planning BWZK - Uw account gegevens",
+        emailBody: "Beste {voornaam},\n\nEr is een account voor u aangemaakt in het Planning systeem van Brandweerzone Kempen.\n\nUw inloggegevens:\nGebruikersnaam: {gebruikersnaam}\nWachtwoord: {wachtwoord}\n\n⚠️ BELANGRIJK: Wijzig uw wachtwoord direct na de eerste keer inloggen!\n\nU kunt inloggen via: {loginUrl}\n\nMet vriendelijke groeten,\nPlanning BWZK"
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to get welcome email config", error: error.message });
+    }
+  });
+
+  // Update welcome email configuration
+  app.put("/api/welcome-email/config", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const user = req.user;
+      const { enabled, emailSubject, emailBody } = req.body;
+      
+      const config = await storage.createOrUpdateWelcomeEmailConfig({ enabled, emailSubject, emailBody });
+      
+      // Log activity
+      const changes: string[] = [];
+      if (enabled !== undefined) changes.push(enabled ? 'Welkomstmail ingeschakeld' : 'Welkomstmail uitgeschakeld');
+      if (emailSubject) changes.push('Onderwerp gewijzigd');
+      if (emailBody) changes.push('Berichttekst gewijzigd');
+      
+      await logActivity({
+        userId: user.id,
+        stationId: user.stationId || null,
+        action: 'WELCOME_EMAIL_CONFIG_UPDATED',
+        category: 'SETTINGS',
+        details: `Welkomstmail configuratie gewijzigd: ${changes.length > 0 ? changes.join(', ') : 'geen wijzigingen'}`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
+      res.json(config);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to update welcome email config", error: error.message });
+    }
+  });
+
+  // Send test welcome email
+  app.post("/api/welcome-email/test", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'admin' && req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Geen toegang" });
+    }
+    
+    try {
+      const { testEmail } = req.body;
+      if (!testEmail) {
+        return res.status(400).json({ message: "Test e-mailadres is verplicht" });
+      }
+      
+      // Get welcome email config
+      const welcomeConfig = await storage.getWelcomeEmailConfig();
+      if (!welcomeConfig) {
+        return res.status(400).json({ message: "Welkomstmail configuratie niet gevonden. Sla eerst de configuratie op." });
+      }
+      
+      // Get SMTP config from reportage
+      const smtpConfig = await storage.getReportageConfig();
+      if (!smtpConfig?.smtpHost || !smtpConfig?.smtpUser || !smtpConfig?.smtpPassword) {
+        return res.status(400).json({ message: "SMTP is niet geconfigureerd. Configureer eerst de SMTP-instellingen in Reportage." });
+      }
+      
+      // Create test placeholders
+      const testData = {
+        voornaam: "Test Gebruiker",
+        gebruikersnaam: "testgebruiker",
+        wachtwoord: "WachtwoordVoorbeeld123",
+        loginUrl: process.env.BASE_URL || `https://${req.get('host')}`
+      };
+      
+      // Replace placeholders in subject and body
+      let subject = welcomeConfig.emailSubject;
+      let body = welcomeConfig.emailBody;
+      
+      for (const [key, value] of Object.entries(testData)) {
+        subject = subject.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+        body = body.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+      }
+      
+      // Send test email using nodemailer
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        host: smtpConfig.smtpHost,
+        port: smtpConfig.smtpPort || 587,
+        secure: smtpConfig.smtpSecure || false,
+        auth: {
+          user: smtpConfig.smtpUser,
+          pass: smtpConfig.smtpPassword
+        }
+      });
+      
+      await transporter.sendMail({
+        from: `"${smtpConfig.smtpFromName || 'Planning BWZK'}" <${smtpConfig.smtpFromAddress || smtpConfig.smtpUser}>`,
+        to: testEmail,
+        subject: `[TEST] ${subject}`,
+        text: body
+      });
+      
+      // Log activity
+      await logActivity({
+        userId: req.user.id,
+        stationId: req.user.stationId || null,
+        action: 'WELCOME_EMAIL_TEST_SENT',
+        category: 'EMAIL',
+        details: `Test welkomstmail verzonden naar ${testEmail}`,
+        ipAddress: getClientInfo(req).ipAddress
+      });
+      
+      res.json({ success: true, message: `Testmail verzonden naar ${testEmail}` });
+    } catch (error: any) {
+      console.error('Welcome email test error:', error);
+      res.status(500).json({ success: false, error: error.message });
     }
   });
 

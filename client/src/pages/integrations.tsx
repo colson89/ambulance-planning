@@ -2,12 +2,17 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText, KeyRound, Building2 } from "lucide-react";
+import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText, KeyRound, Building2, UserPlus, Send, Eye } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useState } from "react";
 
 interface Station {
   id: number;
@@ -37,6 +42,23 @@ export default function Integrations() {
     enabled: user?.role === 'supervisor'
   });
 
+  // Welcome email config
+  const { data: welcomeEmailConfig } = useQuery<{ 
+    enabled: boolean; 
+    emailSubject: string; 
+    emailBody: string; 
+  }>({
+    queryKey: ['/api/welcome-email/config'],
+    enabled: canManageIntegrations
+  });
+
+  // State for welcome email editing
+  const [welcomeEmailDialogOpen, setWelcomeEmailDialogOpen] = useState(false);
+  const [welcomeEmailSubject, setWelcomeEmailSubject] = useState("");
+  const [welcomeEmailBody, setWelcomeEmailBody] = useState("");
+  const [testEmailAddress, setTestEmailAddress] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   // Toggle password reset
   const togglePasswordReset = useMutation({
     mutationFn: async (enabled: boolean) => {
@@ -54,6 +76,73 @@ export default function Integrations() {
       toast({
         title: "Fout",
         description: "Kon instelling niet wijzigen",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Toggle welcome email
+  const toggleWelcomeEmail = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const res = await apiRequest('PUT', '/api/welcome-email/config', { enabled });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/welcome-email/config'] });
+      toast({
+        title: data.enabled ? "Ingeschakeld" : "Uitgeschakeld",
+        description: `Welkomstmail is nu ${data.enabled ? 'ingeschakeld' : 'uitgeschakeld'}`
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fout",
+        description: "Kon instelling niet wijzigen",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Update welcome email config
+  const updateWelcomeEmailConfig = useMutation({
+    mutationFn: async (data: { emailSubject: string; emailBody: string }) => {
+      const res = await apiRequest('PUT', '/api/welcome-email/config', data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/welcome-email/config'] });
+      setWelcomeEmailDialogOpen(false);
+      toast({
+        title: "Opgeslagen",
+        description: "Welkomstmail template is bijgewerkt"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fout",
+        description: "Kon template niet opslaan",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Send test welcome email
+  const sendTestWelcomeEmail = useMutation({
+    mutationFn: async (testEmail: string) => {
+      const res = await apiRequest('POST', '/api/welcome-email/test', { testEmail });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Verzonden",
+        description: data.message || "Testmail is verzonden"
+      });
+      setTestEmailAddress("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Fout",
+        description: error.message || "Kon testmail niet verzenden",
         variant: "destructive"
       });
     }
@@ -219,6 +308,184 @@ export default function Integrations() {
             </Card>
           )}
 
+          {/* Welcome Email Card */}
+          <Card className="hover:shadow-lg transition-all duration-200">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 p-3 bg-teal-100 rounded-full w-fit">
+                <UserPlus className="h-8 w-8 text-teal-600" />
+              </div>
+              <CardTitle className="text-xl">Welkomstmail</CardTitle>
+              <CardDescription className="mb-2">
+                Automatische e-mail naar nieuwe gebruikers met inloggegevens
+              </CardDescription>
+              <Badge 
+                variant="default" 
+                className={welcomeEmailConfig?.enabled ? "mx-auto bg-green-600" : "mx-auto bg-gray-400"}
+              >
+                {welcomeEmailConfig?.enabled ? "Ingeschakeld" : "Uitgeschakeld"}
+              </Badge>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="text-sm">
+                  <p className="font-medium text-gray-700">Welkomstmail</p>
+                  <p className="text-gray-500 text-xs">Bij nieuwe gebruiker automatisch versturen</p>
+                </div>
+                <Switch
+                  checked={welcomeEmailConfig?.enabled || false}
+                  onCheckedChange={(checked) => toggleWelcomeEmail.mutate(checked)}
+                  disabled={toggleWelcomeEmail.isPending || !emailStatus?.configured}
+                />
+              </div>
+              {!emailStatus?.configured && (
+                <p className="text-xs text-orange-600 text-center">
+                  SMTP moet eerst worden geconfigureerd in Reportage
+                </p>
+              )}
+              
+              <div className="flex gap-2">
+                <Dialog open={welcomeEmailDialogOpen} onOpenChange={(open) => {
+                  setWelcomeEmailDialogOpen(open);
+                  if (open && welcomeEmailConfig) {
+                    setWelcomeEmailSubject(welcomeEmailConfig.emailSubject);
+                    setWelcomeEmailBody(welcomeEmailConfig.emailBody);
+                  }
+                }}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex-1">
+                      <Settings className="mr-2 h-3 w-3" />
+                      Template
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Welkomstmail Template</DialogTitle>
+                      <DialogDescription>
+                        Pas het onderwerp en de inhoud van de welkomstmail aan. Gebruik placeholders voor dynamische gegevens.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="p-3 bg-blue-50 rounded-lg">
+                        <p className="text-sm font-medium text-blue-900 mb-2">Beschikbare placeholders:</p>
+                        <div className="grid grid-cols-2 gap-2 text-xs text-blue-800">
+                          <div><code className="bg-blue-100 px-1 rounded">{"{voornaam}"}</code> - Voornaam gebruiker</div>
+                          <div><code className="bg-blue-100 px-1 rounded">{"{gebruikersnaam}"}</code> - Gebruikersnaam</div>
+                          <div><code className="bg-blue-100 px-1 rounded">{"{wachtwoord}"}</code> - Initieel wachtwoord</div>
+                          <div><code className="bg-blue-100 px-1 rounded">{"{loginUrl}"}</code> - Inlog URL</div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="emailSubject">Onderwerp</Label>
+                        <Input
+                          id="emailSubject"
+                          value={welcomeEmailSubject}
+                          onChange={(e) => setWelcomeEmailSubject(e.target.value)}
+                          placeholder="Welkom bij Planning BWZK"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="emailBody">Berichttekst</Label>
+                        <Textarea
+                          id="emailBody"
+                          value={welcomeEmailBody}
+                          onChange={(e) => setWelcomeEmailBody(e.target.value)}
+                          rows={12}
+                          className="font-mono text-sm"
+                        />
+                      </div>
+                      
+                      <div className="flex gap-2 justify-end">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setPreviewOpen(true)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Preview
+                        </Button>
+                        <Button
+                          onClick={() => updateWelcomeEmailConfig.mutate({
+                            emailSubject: welcomeEmailSubject,
+                            emailBody: welcomeEmailBody
+                          })}
+                          disabled={updateWelcomeEmailConfig.isPending}
+                        >
+                          Opslaan
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex-1" disabled={!emailStatus?.configured}>
+                      <Send className="mr-2 h-3 w-3" />
+                      Test
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Test Welkomstmail</DialogTitle>
+                      <DialogDescription>
+                        Verstuur een testmail met voorbeeld-gegevens naar het opgegeven e-mailadres.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="testEmail">E-mailadres</Label>
+                        <Input
+                          id="testEmail"
+                          type="email"
+                          value={testEmailAddress}
+                          onChange={(e) => setTestEmailAddress(e.target.value)}
+                          placeholder="test@voorbeeld.be"
+                        />
+                      </div>
+                      <Button
+                        onClick={() => sendTestWelcomeEmail.mutate(testEmailAddress)}
+                        disabled={sendTestWelcomeEmail.isPending || !testEmailAddress}
+                        className="w-full"
+                      >
+                        {sendTestWelcomeEmail.isPending ? "Verzenden..." : "Verstuur Testmail"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Preview Dialog */}
+          <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+            <DialogContent className="max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Preview Welkomstmail</DialogTitle>
+                <DialogDescription>Zo ziet de e-mail eruit met voorbeeldgegevens</DialogDescription>
+              </DialogHeader>
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <div className="mb-2 pb-2 border-b">
+                  <p className="text-sm text-gray-500">Onderwerp:</p>
+                  <p className="font-medium">
+                    {welcomeEmailSubject
+                      .replace(/{voornaam}/g, "Jan")
+                      .replace(/{gebruikersnaam}/g, "jan.peeters")
+                      .replace(/{wachtwoord}/g, "Welkom123!")
+                      .replace(/{loginUrl}/g, window.location.origin)}
+                  </p>
+                </div>
+                <div className="whitespace-pre-wrap text-sm">
+                  {welcomeEmailBody
+                    .replace(/{voornaam}/g, "Jan")
+                    .replace(/{gebruikersnaam}/g, "jan.peeters")
+                    .replace(/{wachtwoord}/g, "Welkom123!")
+                    .replace(/{loginUrl}/g, window.location.origin)}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {/* Activiteitenlog Card - Only for supervisors */}
           {user?.role === 'supervisor' && (
             <Card 
@@ -331,6 +598,18 @@ export default function Integrations() {
                         <p className="font-medium text-gray-900">Reportage Personeelsdienst</p>
                         <p className="text-sm text-gray-600">Verstuurt automatisch maandelijkse shift rapportages via e-mail met Excel overzichten voor de personeelsdienst.</p>
                         <p className="text-xs text-gray-500 mt-1">Vereist: SMTP server instellingen (host, poort, gebruiker, wachtwoord)</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-teal-100 rounded-lg shrink-0">
+                        <UserPlus className="h-5 w-5 text-teal-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Welkomstmail Nieuwe Gebruikers</p>
+                        <p className="text-sm text-gray-600">Verstuurt automatisch een welkomstmail met inloggegevens wanneer een nieuwe gebruiker wordt aangemaakt.</p>
+                        <p className="text-xs text-gray-500 mt-1">Vereist: Werkende SMTP configuratie (eerst Reportage instellen)</p>
                       </div>
                     </div>
                   </div>
