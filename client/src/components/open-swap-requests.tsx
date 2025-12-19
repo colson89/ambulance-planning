@@ -46,6 +46,11 @@ interface OpenSwapRequest {
   createdAt: string;
   isOpen: boolean;
   requesterName?: string;
+  requester?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  } | null;
   shift?: {
     id: number;
     date: string;
@@ -136,8 +141,14 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
     },
   });
 
-  const getUserName = (userId: number) => {
-    const u = users.find((usr) => usr.id === userId);
+  const getRequesterName = (request: OpenSwapRequest) => {
+    if (request.requester) {
+      return `${request.requester.firstName} ${request.requester.lastName}`;
+    }
+    if (request.requesterName) {
+      return request.requesterName;
+    }
+    const u = users.find((usr) => usr.id === request.requesterId);
     return u ? `${u.firstName} ${u.lastName}` : "Onbekend";
   };
 
@@ -311,7 +322,7 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-medium text-sm">
-                        {request.requesterName || getUserName(request.requesterId)}
+                        {getRequesterName(request)}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {request.stationName || getStationName(request.stationId)}
@@ -373,7 +384,7 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
             <div className="space-y-4 py-4">
               <div className="bg-muted/50 rounded-lg p-3">
                 <p className="text-sm font-medium">
-                  Shift van {selectedRequest.requesterName || getUserName(selectedRequest.requesterId)}
+                  Shift van {getRequesterName(selectedRequest)}
                 </p>
                 {selectedRequest.shift && (
                   <>
