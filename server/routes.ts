@@ -7285,6 +7285,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     
     try {
       const result = await emailService.verifyConnection();
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
       res.json(result);
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
@@ -7306,6 +7309,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(400).json({ message: "Email adres is verplicht" });
       }
       const result = await emailService.sendTestEmail(email);
+      if (!result.success) {
+        return res.status(400).json(result);
+      }
       res.json(result);
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
