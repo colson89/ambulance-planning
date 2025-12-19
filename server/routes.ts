@@ -9780,6 +9780,58 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // Get offers for an open swap request (admin/supervisor only)
+  app.get("/api/open-swap-requests/:id/offers", requireAuth, requireNonViewer, async (req, res) => {
+    try {
+      const user = req.user as any;
+      const requestId = parseInt(req.params.id);
+
+      // Only admins and supervisors can view offers
+      if (user.role !== 'admin' && user.role !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen admins en supervisors kunnen biedingen bekijken" });
+      }
+
+      // Get the swap request
+      const swapRequest = await storage.getShiftSwapRequest(requestId);
+      if (!swapRequest) {
+        return res.status(404).json({ message: "Ruil verzoek niet gevonden" });
+      }
+
+      // Get offers for this request
+      const offers = await storage.getShiftSwapOffersByRequest(requestId);
+
+      // Enrich offers with user and shift info
+      const enrichedOffers = await Promise.all(offers.map(async (offer) => {
+        const offerer = await storage.getUser(offer.offererId);
+        const offererShift = offer.offererShiftId ? await storage.getShift(offer.offererShiftId) : null;
+        const offererStation = offererShift ? await storage.getStation(offererShift.stationId) : null;
+
+        return {
+          id: offer.id,
+          offererId: offer.offererId,
+          offererName: offerer ? `${offerer.firstName} ${offerer.lastName}` : 'Onbekend',
+          offererShift: offererShift ? {
+            id: offererShift.id,
+            date: offererShift.date,
+            type: offererShift.type,
+            startTime: offererShift.startTime,
+            endTime: offererShift.endTime,
+            isSplitShift: offererShift.isSplitShift,
+            stationName: offererStation?.displayName || null
+          } : null,
+          note: offer.note,
+          status: offer.status,
+          createdAt: offer.createdAt
+        };
+      }));
+
+      res.json(enrichedOffers);
+    } catch (error: any) {
+      console.error("Error getting offers for swap request:", error);
+      res.status(500).json({ message: "Fout bij ophalen biedingen" });
+    }
+  });
+
   // Submit an offer on an open swap request
   app.post("/api/open-swap-requests/:id/offers", requireAuth, requireNonViewer, async (req, res) => {
     try {

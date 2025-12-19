@@ -82,6 +82,24 @@ interface MyShift {
   stationName?: string;
 }
 
+interface OfferInfo {
+  id: number;
+  offererId: number;
+  offererName: string;
+  offererShift: {
+    id: number;
+    date: string;
+    type: string;
+    startTime: string | null;
+    endTime: string | null;
+    isSplitShift: boolean;
+    stationName: string | null;
+  } | null;
+  note: string | null;
+  status: string;
+  createdAt: string;
+}
+
 export function OpenSwapRequests({ users, stations, currentUserId, userRole }: OpenSwapRequestsProps) {
   const isAdminOrSupervisor = userRole === 'admin' || userRole === 'supervisor';
   const { toast } = useToast();
@@ -91,6 +109,8 @@ export function OpenSwapRequests({ users, stations, currentUserId, userRole }: O
   const [offerNote, setOfferNote] = useState("");
   const [offerMode, setOfferMode] = useState<"takeover" | "exchange">("takeover");
   const [selectedShiftIds, setSelectedShiftIds] = useState<number[]>([]);
+  const [bidsDialogOpen, setBidsDialogOpen] = useState(false);
+  const [selectedBidsRequest, setSelectedBidsRequest] = useState<OpenSwapRequest | null>(null);
 
   const { data: openRequests = [], isLoading } = useQuery<OpenSwapRequest[]>({
     queryKey: ["/api/open-swap-requests"],
@@ -109,6 +129,18 @@ export function OpenSwapRequests({ users, stations, currentUserId, userRole }: O
       return res.json();
     },
     enabled: offerDialogOpen,
+  });
+
+  // Fetch bids for a selected open swap request (admin/supervisor only)
+  const { data: requestBids = [], isLoading: isLoadingBids } = useQuery<OfferInfo[]>({
+    queryKey: ["/api/open-swap-requests", selectedBidsRequest?.id, "offers"],
+    queryFn: async () => {
+      if (!selectedBidsRequest) return [];
+      const res = await apiRequest("GET", `/api/open-swap-requests/${selectedBidsRequest.id}/offers`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: bidsDialogOpen && !!selectedBidsRequest && isAdminOrSupervisor,
   });
 
   // Pre-select all shifts when they load (for exchange mode), excluding already offered ones
@@ -333,7 +365,15 @@ export function OpenSwapRequests({ users, stations, currentUserId, userRole }: O
                     </div>
                     <div className="flex gap-2">
                       {isAdminOrSupervisor && (
-                        <Badge variant="secondary" className={`${(request.offerCount || 0) > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                        <Badge 
+                          variant="secondary" 
+                          className={`cursor-pointer hover:opacity-80 ${(request.offerCount || 0) > 0 ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedBidsRequest(request);
+                            setBidsDialogOpen(true);
+                          }}
+                        >
                           {request.offerCount || 0} {(request.offerCount || 0) === 1 ? 'bieding' : 'biedingen'}
                         </Badge>
                       )}
@@ -505,6 +545,91 @@ export function OpenSwapRequests({ users, stations, currentUserId, userRole }: O
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               Aanbieding Plaatsen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bids Dialog - voor admins/supervisors */}
+      <Dialog open={bidsDialogOpen} onOpenChange={setBidsDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Biedingen voor Open Wissel
+            </DialogTitle>
+            <DialogDescription>
+              {selectedBidsRequest && (
+                <>
+                  Wissel van {getRequesterName(selectedBidsRequest)} op{" "}
+                  {selectedBidsRequest.shift && format(new Date(selectedBidsRequest.shift.date), "d MMM yyyy", { locale: nl })}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {isLoadingBids ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : requestBids.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Nog geen biedingen ontvangen</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {requestBids.map((bid) => (
+                  <div key={bid.id} className="bg-muted/50 rounded-lg p-3 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <p className="font-medium text-sm">{bid.offererName}</p>
+                      <Badge 
+                        variant="secondary" 
+                        className={
+                          bid.status === 'pending' 
+                            ? 'bg-yellow-100 text-yellow-700' 
+                            : bid.status === 'accepted' 
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-600'
+                        }
+                      >
+                        {bid.status === 'pending' ? 'In afwachting' : bid.status === 'accepted' ? 'Geaccepteerd' : 'Afgewezen'}
+                      </Badge>
+                    </div>
+                    
+                    {bid.offererShift ? (
+                      <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <ArrowLeftRight className="h-3 w-3" />
+                        Biedt shift aan: {format(new Date(bid.offererShift.date), "d MMM yyyy", { locale: nl })} - 
+                        {bid.offererShift.type === "day" ? " Dag" : " Nacht"}
+                        {bid.offererShift.stationName && ` (${bid.offererShift.stationName})`}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <HandHeart className="h-3 w-3" />
+                        Overname (geen ruil)
+                      </div>
+                    )}
+                    
+                    {bid.note && (
+                      <p className="text-xs text-muted-foreground italic">
+                        "{bid.note}"
+                      </p>
+                    )}
+                    
+                    <p className="text-xs text-muted-foreground">
+                      Ingediend: {format(new Date(bid.createdAt), "d MMM yyyy HH:mm", { locale: nl })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBidsDialogOpen(false)}>
+              Sluiten
             </Button>
           </DialogFooter>
         </DialogContent>
