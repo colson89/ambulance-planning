@@ -4473,7 +4473,9 @@ export class DatabaseStorage implements IStorage {
       smtpPassword: config.smtpPassword,
       smtpFromAddress: config.smtpFromAddress,
       smtpFromName: config.smtpFromName,
-      smtpSecure: config.smtpSecure
+      smtpSecure: config.smtpSecure,
+      smtpVerified: false,
+      smtpVerifiedAt: null
     }).returning();
     return result[0];
   }
