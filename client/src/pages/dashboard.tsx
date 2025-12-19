@@ -642,8 +642,8 @@ export default function Dashboard() {
                     
                     const getShiftTime = () => {
                       if (!shift.startTime || !shift.endTime) return "-";
-                      const startHour = new Date(shift.startTime).getHours();
-                      const endHour = new Date(shift.endTime).getHours();
+                      const startHour = new Date(shift.startTime).getUTCHours();
+                      const endHour = new Date(shift.endTime).getUTCHours();
                       
                       if (shift.type === "night") {
                         if (shift.isSplitShift) {
@@ -1099,8 +1099,8 @@ export default function Dashboard() {
                     
                     const getShiftTime = () => {
                       if (!shift.startTime || !shift.endTime) return "-";
-                      const startHour = new Date(shift.startTime).getHours();
-                      const endHour = new Date(shift.endTime).getHours();
+                      const startHour = new Date(shift.startTime).getUTCHours();
+                      const endHour = new Date(shift.endTime).getUTCHours();
                       
                       if (shift.type === "night") {
                         if (shift.isSplitShift) {
@@ -1287,8 +1287,8 @@ export default function Dashboard() {
                             <TableCell>
                               {shift.startTime && shift.endTime ? (
                                 (() => {
-                                  const startHour = new Date(shift.startTime).getHours();
-                                  const endHour = new Date(shift.endTime).getHours();
+                                  const startHour = new Date(shift.startTime).getUTCHours();
+                                  const endHour = new Date(shift.endTime).getUTCHours();
                                   
                                   if (shift.type === "night") {
                                     if (shift.isSplitShift) {
@@ -1504,8 +1504,8 @@ export default function Dashboard() {
                               <TableCell>
                                 {u.startTime && u.endTime ? (
                                   (() => {
-                                    const startHour = new Date(u.startTime).getHours();
-                                    const endHour = new Date(u.endTime).getHours();
+                                    const startHour = new Date(u.startTime).getUTCHours();
+                                    const endHour = new Date(u.endTime).getUTCHours();
                                     return `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
                                   })()
                                 ) : u.isAvailable || u.isAssigned ? (
@@ -1595,8 +1595,8 @@ export default function Dashboard() {
                             <TableCell>
                               {u.startTime && u.endTime ? (
                                 (() => {
-                                  const startHour = new Date(u.startTime).getHours();
-                                  const endHour = new Date(u.endTime).getHours();
+                                  const startHour = new Date(u.startTime).getUTCHours();
+                                  const endHour = new Date(u.endTime).getUTCHours();
                                   return `${startHour.toString().padStart(2, '0')}:00 - ${endHour.toString().padStart(2, '0')}:00`;
                                 })()
                               ) : u.isAvailable || u.isAssigned ? (
