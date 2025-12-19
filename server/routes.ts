@@ -7186,7 +7186,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         smtpFromName: config.smtpFromName || 'Planning BWZK',
         smtpSecure: config.smtpSecure || false,
         hasPassword: hasValidPassword,
-        passwordNeedsReentry: !!config.smtpPassword && !hasValidPassword
+        passwordNeedsReentry: !!config.smtpPassword && !hasValidPassword,
+        smtpVerified: config.smtpVerified || false,
+        smtpVerifiedAt: config.smtpVerifiedAt || null
       });
     } catch (error: any) {
       res.status(500).json({ message: "Failed to get SMTP config", error: error.message });
@@ -7212,7 +7214,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         smtpUser: smtpUser || null,
         smtpFromAddress: smtpFromAddress || null,
         smtpFromName: smtpFromName || 'Planning BWZK',
-        smtpSecure: smtpSecure || false
+        smtpSecure: smtpSecure || false,
+        smtpVerified: false, // Reset verification status when settings change
+        smtpVerifiedAt: null
       };
       
       if (smtpPassword !== undefined && smtpPassword !== '') {
@@ -7288,6 +7292,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       if (!result.success) {
         return res.status(400).json(result);
       }
+      // Mark SMTP as verified on successful connection test
+      await storage.updateSmtpVerificationStatus(true);
       res.json(result);
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
@@ -7312,6 +7318,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       if (!result.success) {
         return res.status(400).json(result);
       }
+      // Mark SMTP as verified on successful test email
+      await storage.updateSmtpVerificationStatus(true);
       res.json(result);
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

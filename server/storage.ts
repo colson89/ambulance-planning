@@ -4478,6 +4478,20 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async updateSmtpVerificationStatus(verified: boolean): Promise<void> {
+    const existing = await this.getReportageConfig();
+    if (existing) {
+      await db
+        .update(reportageConfig)
+        .set({ 
+          smtpVerified: verified, 
+          smtpVerifiedAt: verified ? new Date() : null,
+          updatedAt: new Date() 
+        })
+        .where(eq(reportageConfig.id, existing.id));
+    }
+  }
+
   async getReportageRecipients(): Promise<ReportageRecipient[]> {
     return db.select().from(reportageRecipients).orderBy(asc(reportageRecipients.name));
   }
