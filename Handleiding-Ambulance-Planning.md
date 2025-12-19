@@ -2944,6 +2944,10 @@ De Activiteitenlog biedt een uitgebreid overzicht van alle belangrijke acties in
 | **SHIFT_MANUAL** | Handmatige shift wijzigingen (aanmaken, wijzigen, verwijderen, splitsen, samenvoegen) | Blauw |
 | **SHIFT_BID** | Shift biedingen (ingediend, geaccepteerd, afgewezen, ingetrokken) | Oranje |
 | **SETTINGS** | Systeeminstellingen wijzigingen (station instellingen, voorkeuren wissen, integratie configuratie) | Grijs |
+| **PUSH_NOTIFICATIONS** | Push notificatie voorkeuren en abonnementen | Turquoise |
+| **EXPORT** | Excel exports (planning, reportage, logs, beschikbaarheden) | Blauw |
+| **CALENDAR** | Kalender synchronisatie (token vernieuwing) | Teal |
+| **REPORTAGE** | Rapportage gerelateerde acties | Oranje |
 
 **Integratie Logging (Nieuw in 2025.17):**
 
@@ -3349,6 +3353,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 
 | Versie | Datum | Belangrijkste Verbeteringen |
 |--------|-------|----------------------------|
+| **2025.19** | Dec 2025 | Uitgebreide logging: push notificaties, Excel exports, kalender tokens en beschikbaarheden export worden nu gelogd voor volledige audit trail |
 | **2025.18** | Dec 2025 | Viewer rol met kiosk/display modus voor Lumaps, BASE_URL configuratie, verbeterde fullscreen titel met stationnaam |
 | **2025.17** | Dec 2025 | Integratie logging: alle wijzigingen aan Verdi en Reportage instellingen worden nu gelogd in activiteitenlogboek |
 | **2025.16** | Dec 2025 | Multi-station admin verbeteringen: station-selector op ruilverzoeken pagina, cross-team visibility met station badges, verbeterde cross-station dubbele inplanning preventie |
