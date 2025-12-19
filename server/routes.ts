@@ -7147,7 +7147,13 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
     
     const status = emailService.getConfigStatus();
-    res.json(status);
+    // Get verification status from database
+    const config = await storage.getReportageConfig();
+    res.json({
+      ...status,
+      smtpVerified: config?.smtpVerified || false,
+      smtpVerifiedAt: config?.smtpVerifiedAt || null
+    });
   });
   
   // Get SMTP configuration (without password)

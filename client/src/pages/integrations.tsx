@@ -31,7 +31,13 @@ export default function Integrations() {
   const canManageIntegrations = user?.role === "admin" || user?.role === "supervisor";
 
   // Check email configuration status
-  const { data: emailStatus } = useQuery<{ configured: boolean; host?: string; user?: string }>({
+  const { data: emailStatus } = useQuery<{ 
+    configured: boolean; 
+    host?: string; 
+    user?: string; 
+    smtpVerified?: boolean;
+    smtpVerifiedAt?: string | null;
+  }>({
     queryKey: ['/api/reportage/email-status'],
     enabled: canManageIntegrations
   });
@@ -219,9 +225,20 @@ export default function Integrations() {
               </CardDescription>
               <Badge 
                 variant="default" 
-                className={emailStatus?.configured ? "mx-auto bg-green-600" : "mx-auto bg-orange-500"}
+                className={
+                  !emailStatus?.configured 
+                    ? "mx-auto bg-gray-400" 
+                    : emailStatus?.smtpVerified 
+                      ? "mx-auto bg-green-600" 
+                      : "mx-auto bg-orange-500"
+                }
               >
-                {emailStatus?.configured ? "Geconfigureerd" : "Configuratie Nodig"}
+                {!emailStatus?.configured 
+                  ? "Niet Geconfigureerd" 
+                  : emailStatus?.smtpVerified 
+                    ? "Geverifieerd" 
+                    : "Niet Geverifieerd"
+                }
               </Badge>
             </CardHeader>
             <CardContent className="text-center">
@@ -284,9 +301,20 @@ export default function Integrations() {
               </CardDescription>
               <Badge 
                 variant="default" 
-                className={emailStatus?.configured ? "mx-auto bg-green-600" : "mx-auto bg-orange-500"}
+                className={
+                  !emailStatus?.configured 
+                    ? "mx-auto bg-gray-400" 
+                    : emailStatus?.smtpVerified 
+                      ? "mx-auto bg-green-600" 
+                      : "mx-auto bg-orange-500"
+                }
               >
-                {emailStatus?.configured ? "Geconfigureerd" : "Configuratie Nodig"}
+                {!emailStatus?.configured 
+                  ? "E-mail Niet Geconfigureerd" 
+                  : emailStatus?.smtpVerified 
+                    ? "E-mail Geverifieerd" 
+                    : "E-mail Niet Geverifieerd"
+                }
               </Badge>
             </CardHeader>
             <CardContent className="text-center">
