@@ -7015,17 +7015,22 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             notifyBidUpdates: notifyBidUpdates ?? true,
             notifyOpenSwapRequests: notifyOpenSwapRequests ?? true
           });
-          results.push(result);
+          results.push({ ...result, stationId });
         }
       }
       
       if (results.length > 0) {
+        // Get station names for detailed logging
+        const stationIds = results.map(r => r.stationId);
+        const stations = await Promise.all(stationIds.map(id => storage.getStation(id)));
+        const stationNames = stations.filter(s => s).map(s => s!.displayName).join(', ');
+        
         await logActivity({
           userId: user.id,
           stationId: user.stationId,
           action: ActivityActions.PUSH_NOTIFICATIONS.STATION_PREFERENCES_UPDATED,
           category: 'PUSH_NOTIFICATIONS',
-          details: `Station notificatie voorkeuren bijgewerkt voor ${results.length} station(s)`,
+          details: `Station notificatie voorkeuren bijgewerkt voor: ${stationNames}`,
           ipAddress: getClientInfo(req).ipAddress,
           userAgent: getClientInfo(req).userAgent
         }).catch(err => console.error('Error logging bulk station preference update:', err));
