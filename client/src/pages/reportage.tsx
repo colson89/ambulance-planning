@@ -420,15 +420,33 @@ export default function Reportage() {
                   />
                 </div>
 
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                  <h4 className="font-medium text-blue-800 mb-2">Beschikbare placeholders</h4>
+                  <p className="text-sm text-blue-700 mb-2">
+                    Gebruik deze placeholders in het onderwerp en de tekst. Ze worden automatisch vervangen bij verzending.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                    <div className="bg-white/50 px-2 py-1 rounded">
+                      <code className="text-blue-800 font-mono">{'{maand}'}</code>
+                      <span className="text-blue-600 ml-2">→ Januari, Februari, etc.</span>
+                    </div>
+                    <div className="bg-white/50 px-2 py-1 rounded">
+                      <code className="text-blue-800 font-mono">{'{jaar}'}</code>
+                      <span className="text-blue-600 ml-2">→ 2025, 2026, etc.</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-2">
+                    Voorbeeld: "Rapportage {'{maand}'} {'{jaar}'}" wordt "Rapportage Januari 2025"
+                  </p>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="emailSubject">Email onderwerp</Label>
-                  <p className="text-sm text-gray-500">
-                    Gebruik {'{maand}'} en {'{jaar}'} als placeholders
-                  </p>
                   <Input
                     id="emailSubject"
                     value={config?.emailSubject ?? "Maandelijkse Shift Rapportage - {maand} {jaar}"}
                     onChange={(e) => updateConfigMutation.mutate({ emailSubject: e.target.value })}
+                    placeholder="Maandelijkse Shift Rapportage - {maand} {jaar}"
                   />
                 </div>
 
@@ -439,6 +457,7 @@ export default function Reportage() {
                     rows={5}
                     value={config?.emailBody ?? "Beste,\n\nIn bijlage vindt u de maandelijkse shift rapportage voor alle stations.\n\nMet vriendelijke groeten,\nPlanning BWZK"}
                     onChange={(e) => updateConfigMutation.mutate({ emailBody: e.target.value })}
+                    placeholder="Beste,&#10;&#10;In bijlage vindt u de maandelijkse shift rapportage..."
                   />
                 </div>
 
