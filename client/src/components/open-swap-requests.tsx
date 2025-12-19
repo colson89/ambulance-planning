@@ -61,12 +61,14 @@ interface OpenSwapRequest {
   };
   stationName?: string;
   userOfferedShiftIds?: number[];
+  offerCount?: number;
 }
 
 interface OpenSwapRequestsProps {
   users: User[];
   stations?: Station[];
   currentUserId: number;
+  userRole?: string;
 }
 
 interface MyShift {
@@ -80,7 +82,8 @@ interface MyShift {
   stationName?: string;
 }
 
-export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapRequestsProps) {
+export function OpenSwapRequests({ users, stations, currentUserId, userRole }: OpenSwapRequestsProps) {
+  const isAdminOrSupervisor = userRole === 'admin' || userRole === 'supervisor';
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(true);
   const [offerDialogOpen, setOfferDialogOpen] = useState(false);
@@ -328,9 +331,16 @@ export function OpenSwapRequests({ users, stations, currentUserId }: OpenSwapReq
                         {request.stationName || getStationName(request.stationId)}
                       </p>
                     </div>
-                    <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                      Open
-                    </Badge>
+                    <div className="flex gap-2">
+                      {isAdminOrSupervisor && (
+                        <Badge variant="secondary" className={`${(request.offerCount || 0) > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {request.offerCount || 0} {(request.offerCount || 0) === 1 ? 'bieding' : 'biedingen'}
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                        Open
+                      </Badge>
+                    </div>
                   </div>
 
                   {request.shift && (

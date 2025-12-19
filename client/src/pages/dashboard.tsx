@@ -1025,7 +1025,8 @@ export default function Dashboard() {
             <OpenSwapRequests 
               users={colleagues} 
               stations={stations} 
-              currentUserId={user.id} 
+              currentUserId={user.id}
+              userRole={user.role}
             />
           )}
 
