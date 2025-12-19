@@ -2348,8 +2348,8 @@ function ScheduleGenerator() {
                               // Hard-coded tijden op basis van shift type en split info
                               if (shift.type === "day") {
                                 if (shift.isSplitShift && shift.startTime && shift.endTime) {
-                                  // Bepaal of het eerste of tweede helft is op basis van start tijd (lokale tijd)
-                                  const startHour = new Date(shift.startTime).getHours();
+                                  // Bepaal of het eerste of tweede helft is op basis van start tijd (UTC - want tijden worden als UTC opgeslagen)
+                                  const startHour = new Date(shift.startTime).getUTCHours();
                                   if (startHour === 7) return "07:00 - 13:00";
                                   if (startHour === 13) return "13:00 - 19:00";
                                 }
