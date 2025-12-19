@@ -24,6 +24,7 @@ const StationSelect = lazy(() => import("@/pages/station-select"));
 const VerdiSettings = lazy(() => import("@/pages/verdi-settings"));
 const Integrations = lazy(() => import("@/pages/integrations"));
 const Reportage = lazy(() => import("@/pages/reportage"));
+const SmtpSettings = lazy(() => import("@/pages/smtp-settings"));
 const Overtime = lazy(() => import("@/pages/overtime"));
 const ActivityLogs = lazy(() => import("@/pages/activity-logs"));
 const ShiftSwaps = lazy(() => import("@/pages/shift-swaps"));
@@ -73,6 +74,7 @@ function Router() {
         <ProtectedRoute path="/integrations" component={Integrations} allowedRoles={[...ADMIN_ROLES]} />
         <ProtectedRoute path="/verdi" component={VerdiSettings} allowedRoles={[...ADMIN_ROLES]} />
         <ProtectedRoute path="/reportage" component={Reportage} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/smtp-settings" component={SmtpSettings} allowedRoles={[...ADMIN_ROLES]} />
         <ProtectedRoute path="/activity-logs" component={ActivityLogs} allowedRoles={[...ADMIN_ROLES]} />
         <ProtectedRoute path="/stations" component={Stations} allowedRoles={[...ADMIN_ROLES]} />
         <ProtectedRoute path="/push-notifications" component={PushNotifications} allowedRoles={[...ADMIN_ROLES]} />

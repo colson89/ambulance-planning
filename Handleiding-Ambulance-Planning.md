@@ -2365,12 +2365,19 @@ Elke integratie toont een status badge die aangeeft of de koppeling actief en co
 - Reset links zijn 1 uur geldig en eenmalig te gebruiken
 - Status: Beschikbaar wanneer ingeschakeld
 
-📧 **Welkomstmail Nieuwe Gebruikers** (Nieuw - v2025.19)
+📧 **E-mail (SMTP) Instellingen** (Nieuw - v2025.20)
+- Centrale email server configuratie voor alle email functies
+- Aparte pagina onder Integraties voor overzichtelijk beheer
+- Test email en verbinding testen functionaliteit
+- Ondersteunt Microsoft 365, Gmail, Outlook en andere SMTP servers
+- Status: Vereist voor alle email functies (Welkomstmail, Wachtwoord Reset, Reportage)
+
+📧 **Welkomstmail Nieuwe Gebruikers** (v2025.19)
 - Automatische e-mail met inloggegevens bij aanmaken nieuwe gebruiker
 - Aanpasbare template met placeholders ({voornaam}, {gebruikersnaam}, {wachtwoord}, {loginUrl})
 - In-/uitschakelbaar door admins en supervisors
 - Testmail functie om template te controleren
-- Vereist werkende SMTP configuratie (zie Reportage)
+- Vereist werkende SMTP configuratie (zie E-mail Instellingen)
 - Status: Beschikbaar wanneer ingeschakeld
 
 📋 **Activiteitenlog** (Alleen Supervisors)

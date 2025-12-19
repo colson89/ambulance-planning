@@ -204,6 +204,41 @@ export default function Integrations() {
 
         {/* Integraties Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {/* SMTP Email Settings Card */}
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-orange-200"
+            onClick={() => setLocation("/smtp-settings")}
+          >
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 p-3 bg-orange-100 rounded-full w-fit">
+                <Mail className="h-8 w-8 text-orange-600" />
+              </div>
+              <CardTitle className="text-xl">E-mail (SMTP) Instellingen</CardTitle>
+              <CardDescription className="mb-2">
+                Centrale email server configuratie voor alle functies
+              </CardDescription>
+              <Badge 
+                variant="default" 
+                className={emailStatus?.configured ? "mx-auto bg-green-600" : "mx-auto bg-orange-500"}
+              >
+                {emailStatus?.configured ? "Geconfigureerd" : "Configuratie Nodig"}
+              </Badge>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button 
+                variant="outline" 
+                className="w-full group"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLocation("/smtp-settings");
+                }}
+              >
+                Configureren
+                <Settings className="ml-2 h-4 w-4 group-hover:rotate-90 transition-transform" />
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Verdi Integration Card */}
           <Card 
             className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
@@ -301,7 +336,7 @@ export default function Integrations() {
                 </div>
                 {!emailStatus?.configured && (
                   <p className="text-xs text-orange-600 mt-2 text-center">
-                    SMTP moet eerst worden geconfigureerd in Reportage
+                    Configureer eerst E-mail (SMTP) Instellingen
                   </p>
                 )}
               </CardContent>
@@ -339,7 +374,7 @@ export default function Integrations() {
               </div>
               {!emailStatus?.configured && (
                 <p className="text-xs text-orange-600 text-center">
-                  SMTP moet eerst worden geconfigureerd in Reportage
+                  Configureer eerst E-mail (SMTP) Instellingen
                 </p>
               )}
               
@@ -609,7 +644,7 @@ export default function Integrations() {
                       <div>
                         <p className="font-medium text-gray-900">Welkomstmail Nieuwe Gebruikers</p>
                         <p className="text-sm text-gray-600">Verstuurt automatisch een welkomstmail met inloggegevens wanneer een nieuwe gebruiker wordt aangemaakt.</p>
-                        <p className="text-xs text-gray-500 mt-1">Vereist: Werkende SMTP configuratie (eerst Reportage instellen)</p>
+                        <p className="text-xs text-gray-500 mt-1">Vereist: Werkende SMTP configuratie (E-mail Instellingen)</p>
                       </div>
                     </div>
                   </div>
@@ -622,7 +657,7 @@ export default function Integrations() {
                         <div>
                           <p className="font-medium text-gray-900">Wachtwoord Reset via E-mail</p>
                           <p className="text-sm text-gray-600">Gebruikers kunnen zelf hun wachtwoord resetten via een e-mail link. Vermindert werkdruk op admins.</p>
-                          <p className="text-xs text-gray-500 mt-1">Vereist: Werkende SMTP configuratie (eerst Reportage instellen)</p>
+                          <p className="text-xs text-gray-500 mt-1">Vereist: Werkende SMTP configuratie (E-mail Instellingen)</p>
                         </div>
                       </div>
                     </div>
