@@ -196,8 +196,8 @@ export function ShiftSwapDialog({
 
   const getShiftTime = () => {
     if (!shift.startTime || !shift.endTime) return "-";
-    const startHour = new Date(shift.startTime).getUTCHours();
-    const endHour = new Date(shift.endTime).getUTCHours();
+    const startHour = new Date(shift.startTime).getHours();
+    const endHour = new Date(shift.endTime).getHours();
 
     if (shift.type === "night") {
       if (shift.isSplitShift) {
@@ -257,8 +257,8 @@ export function ShiftSwapDialog({
   // Helper to format shift time for colleague shifts
   const formatColleagueShiftTime = (s: Shift) => {
     if (!s.startTime || !s.endTime) return "-";
-    const startHour = new Date(s.startTime).getUTCHours();
-    const endHour = new Date(s.endTime).getUTCHours();
+    const startHour = new Date(s.startTime).getHours();
+    const endHour = new Date(s.endTime).getHours();
     
     if (s.type === "night") {
       if (s.isSplitShift) {

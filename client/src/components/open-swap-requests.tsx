@@ -194,8 +194,8 @@ export function OpenSwapRequests({ users, stations, currentUserId, userRole }: O
 
   const formatShiftTime = (request: OpenSwapRequest) => {
     if (!request.shift?.startTime || !request.shift?.endTime) return "-";
-    const startHour = new Date(request.shift.startTime).getUTCHours();
-    const endHour = new Date(request.shift.endTime).getUTCHours();
+    const startHour = new Date(request.shift.startTime).getHours();
+    const endHour = new Date(request.shift.endTime).getHours();
 
     if (request.shift.type === "night") {
       if (request.shift.isSplitShift) {
