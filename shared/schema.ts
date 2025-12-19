@@ -401,6 +401,8 @@ export const reportageConfig = pgTable("reportage_config", {
   smtpFromAddress: text("smtp_from_address"),
   smtpFromName: text("smtp_from_name").default("Planning BWZK"),
   smtpSecure: boolean("smtp_secure").default(false),
+  smtpVerified: boolean("smtp_verified").default(false),
+  smtpVerifiedAt: timestamp("smtp_verified_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
