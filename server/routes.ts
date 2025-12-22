@@ -4099,20 +4099,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Determine split times based on shift type
+      // Use Brussels timezone to get the correct calendar day, then create UTC timestamps
+      // with explicit UTC hours that the frontend expects (getUTCHours() checks for 7, 13, 19, 23)
+      const BRUSSELS_TZ = 'Europe/Brussels';
+      
+      // Helper function: Get Brussels calendar day from shift date, create UTC Date with specified hour
+      // The frontend uses getUTCHours() to check for 7/13/19/23, so we must store these as literal UTC hours
+      const buildShiftTime = (shiftDate: Date, hour: number, dayOffset: number = 0): Date => {
+        // Convert to Brussels timezone to get the correct calendar day
+        const brusselsDate = toZonedTime(shiftDate, BRUSSELS_TZ);
+        // Create UTC Date with Brussels calendar day but specified UTC hour
+        // This ensures getUTCHours() returns exactly the hour we specify
+        return new Date(Date.UTC(
+          brusselsDate.getFullYear(),
+          brusselsDate.getMonth(),
+          brusselsDate.getDate() + dayOffset,
+          hour, 0, 0
+        ));
+      };
+      
       let firstHalfStart, firstHalfEnd, secondHalfStart, secondHalfEnd;
       
       if (existingShift.type === "night") {
         // Night shift: 19:00-23:00 and 23:00-07:00
-        firstHalfStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0);
-        firstHalfEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 23, 0, 0);
-        secondHalfStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 23, 0, 0);
-        secondHalfEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate() + 1, 7, 0, 0);
+        firstHalfStart = buildShiftTime(existingShift.date, 19);
+        firstHalfEnd = buildShiftTime(existingShift.date, 23);
+        secondHalfStart = buildShiftTime(existingShift.date, 23);
+        secondHalfEnd = buildShiftTime(existingShift.date, 7, 1); // Next day
       } else {
         // Day shift: 07:00-13:00 and 13:00-19:00
-        firstHalfStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 7, 0, 0);
-        firstHalfEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 13, 0, 0);
-        secondHalfStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 13, 0, 0);
-        secondHalfEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0);
+        firstHalfStart = buildShiftTime(existingShift.date, 7);
+        firstHalfEnd = buildShiftTime(existingShift.date, 13);
+        secondHalfStart = buildShiftTime(existingShift.date, 13);
+        secondHalfEnd = buildShiftTime(existingShift.date, 19);
       }
 
       // Update the existing shift to mark it as split and set hours to first half
@@ -4203,17 +4222,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Determine full shift times based on shift type
+      // Use Brussels timezone to get the correct calendar day, then create UTC timestamps
+      // with explicit UTC hours that the frontend expects
+      const BRUSSELS_TZ = 'Europe/Brussels';
+      
+      // Helper function: Get Brussels calendar day from shift date, create UTC Date with specified hour
+      const buildShiftTime = (shiftDate: Date, hour: number, dayOffset: number = 0): Date => {
+        const brusselsDate = toZonedTime(shiftDate, BRUSSELS_TZ);
+        return new Date(Date.UTC(
+          brusselsDate.getFullYear(),
+          brusselsDate.getMonth(),
+          brusselsDate.getDate() + dayOffset,
+          hour, 0, 0
+        ));
+      };
+      
       let fullShiftStart, fullShiftEnd, shiftDescription;
       
       if (existingShift.type === "night") {
         // Night shift: 19:00-07:00
-        fullShiftStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0);
-        fullShiftEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate() + 1, 7, 0, 0);
+        fullShiftStart = buildShiftTime(existingShift.date, 19);
+        fullShiftEnd = buildShiftTime(existingShift.date, 7, 1); // Next day
         shiftDescription = "full night shift";
       } else {
         // Day shift: 07:00-19:00
-        fullShiftStart = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 7, 0, 0);
-        fullShiftEnd = new Date(existingShift.date.getFullYear(), existingShift.date.getMonth(), existingShift.date.getDate(), 19, 0, 0);
+        fullShiftStart = buildShiftTime(existingShift.date, 7);
+        fullShiftEnd = buildShiftTime(existingShift.date, 19);
         shiftDescription = "full day shift";
       }
 
