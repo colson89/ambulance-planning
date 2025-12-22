@@ -1,5 +1,5 @@
 # Handleiding Ambulance Planning Systeem
-**Versie 2025.19 - Laatst bijgewerkt: 19 december 2025**
+**Versie 2025.20 - Laatst bijgewerkt: 22 december 2025**
 
 ---
 
@@ -33,6 +33,7 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
   - [Exporteer Beschikbaarheden naar Excel](#-exporteer-beschikbaarheden-naar-excel)
   - [Planning Bekijken](#-uw-planning-bekijken)
   - [Profiel Beheren](#-profiel-beheren)
+  - [Weergave Instellingen](#weergave-instellingen)
   - [Kalender Synchronisatie](#-kalender-synchronisatie)
   - [Push Notificaties](#-push-notificaties)
   - [Overuren Registreren](#-overuren-registreren)
@@ -425,6 +426,24 @@ Bijvoorbeeld: `Mijn_Beschikbaarheden_Januari_2026.xlsx`
 **Wijzigingen:**
 - Voor wijzigingen max werkuren per maand neem je contact op met uw admin
 - Wachtwoord wijzigen kan je zelf doen. Indien je wachtwoord bent vergeten kan je ook de Admin een nieuw wachtwoord laten instellen
+
+#### Weergave Instellingen
+
+In de Profiel pagina vindt u ook **Weergave Instellingen** waarmee u de app kunt personaliseren:
+
+**Donkere Modus (Dark Mode)**
+- Schakel de donkere modus in voor een oogvriendelijke weergave in omgevingen met weinig licht
+- Ideaal voor nachtshifts of gebruik in donkere ruimtes
+- Uw voorkeur wordt automatisch opgeslagen en onthouden bij volgende bezoeken
+
+**Shift Herinneringen**
+- Stel in hoeveel uren voor uw shift u een herinnering wilt ontvangen
+- Verstelbaar van 0 tot 48 uur voor uw shift begint
+- Zet op 0 om herinneringen uit te schakelen
+- Herinneringen worden verstuurd via push notificaties naar uw telefoon of computer
+- **Belangrijk**: Push notificaties moeten ingeschakeld zijn om herinneringen te ontvangen (zie sectie [Push Notificaties](#-push-notificaties))
+
+> 💡 **Tip**: Stel uw shift herinnering in op 12 uur (standaard) zodat u 's avonds een herinnering krijgt voor een dagshift de volgende ochtend.
 
 ### 📅 Kalender Synchronisatie
 

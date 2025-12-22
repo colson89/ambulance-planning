@@ -529,3 +529,130 @@ export async function notifyShiftSwapStatusChanged(
     }
   }
 }
+
+// ========================================
+// SHIFT REMINDER NOTIFICATIONS
+// ========================================
+
+// Track sent reminders to avoid duplicates (in memory, resets on restart)
+const sentReminders = new Map<string, number>();
+
+/**
+ * Check for upcoming shifts and send reminders based on user preferences
+ * This should be called periodically (e.g., every 15 minutes)
+ * 
+ * Note: Shift times are stored in UTC in the database. The comparison uses
+ * getTime() which works with UTC timestamps, ensuring consistent behavior
+ * regardless of server timezone.
+ */
+export async function checkAndSendShiftReminders(): Promise<void> {
+  try {
+    const now = new Date();
+    console.log(`🔔 [${now.toISOString()}] Checking for upcoming shift reminders...`);
+    
+    // Get all users with their reminder preferences
+    const allUsers = await storage.getAllUsers();
+    let remindersSent = 0;
+    
+    for (const user of allUsers) {
+      // Skip users who don't want reminders (0 hours = disabled)
+      const reminderHours = user.shiftReminderHours ?? 12;
+      if (reminderHours === 0) continue;
+      
+      // Get user's push subscriptions
+      const subscriptions = await storage.getAllPushSubscriptions(user.id);
+      if (subscriptions.length === 0) continue;
+      
+      // Calculate the target time window (now + reminderHours + buffer)
+      // Add 1 hour buffer to catch shifts that might start soon
+      const reminderTime = new Date(now.getTime() + ((reminderHours + 1) * 60 * 60 * 1000));
+      
+      // Get all upcoming shifts for this user
+      // Note: getShiftsForUserInDateRange uses startTime for comparison
+      const userShifts = await storage.getShiftsForUserInDateRange(
+        user.id,
+        now,
+        reminderTime
+      );
+      
+      for (const shift of userShifts) {
+        if (shift.status !== 'planned') continue;
+        
+        // Create a unique key for this reminder
+        const reminderKey = `${user.id}-${shift.id}`;
+        const lastSent = sentReminders.get(reminderKey);
+        
+        // Don't send if we already sent a reminder for this shift in the last 12 hours
+        if (lastSent && (now.getTime() - lastSent) < 12 * 60 * 60 * 1000) {
+          continue;
+        }
+        
+        // Check if shift starts within the reminder window
+        // Both now and shiftStart are Date objects, getTime() returns UTC milliseconds
+        const shiftStart = new Date(shift.startTime);
+        const hoursUntilShift = (shiftStart.getTime() - now.getTime()) / (1000 * 60 * 60);
+        
+        // Only send if within the user's configured window (with 15 min tolerance)
+        // and shift hasn't started yet
+        if (hoursUntilShift > 0 && hoursUntilShift <= reminderHours + 0.25) {
+          // Get station for display name
+          const station = await storage.getStation(shift.stationId);
+          const stationPrefix = station ? `[${station.displayName}] ` : '';
+          
+          // Format date in Belgian locale (this handles timezone for display)
+          const shiftDate = new Date(shift.date);
+          const dateStr = shiftDate.toLocaleDateString('nl-BE', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            timeZone: 'Europe/Brussels'
+          });
+          
+          const shiftType = shift.type === 'day' ? 'dagdienst' : 'nachtdienst';
+          const startHour = shiftStart.getUTCHours();
+          const startTimeStr = `${startHour.toString().padStart(2, '0')}:00`;
+          
+          const hoursText = Math.round(hoursUntilShift);
+          const timeDescription = hoursText === 1 
+            ? 'over 1 uur' 
+            : hoursText < 1 
+              ? 'binnenkort' 
+              : `over ${hoursText} uur`;
+          
+          // Send to all user's subscriptions (shift reminders are personal, not station-specific)
+          await sendPushToSubscriptions(subscriptions, {
+            title: `${stationPrefix}Shift Herinnering`,
+            body: `Je ${shiftType} op ${dateStr} begint ${timeDescription} (${startTimeStr}).`,
+            icon: '/icon-192x192.png',
+            url: '/dashboard',
+            data: { 
+              type: 'shift_reminder', 
+              shiftId: shift.id,
+              shiftDate: shift.date,
+              shiftType: shift.type,
+              stationId: shift.stationId
+            }
+          });
+          
+          // Mark as sent
+          sentReminders.set(reminderKey, now.getTime());
+          remindersSent++;
+          
+          console.log(`  📧 Sent reminder to ${user.firstName} ${user.lastName} for ${shiftType} on ${dateStr}`);
+        }
+      }
+    }
+    
+    // Clean up old entries from sentReminders (older than 24 hours)
+    const cleanupThreshold = now.getTime() - (24 * 60 * 60 * 1000);
+    Array.from(sentReminders.entries()).forEach(([key, timestamp]) => {
+      if (timestamp < cleanupThreshold) {
+        sentReminders.delete(key);
+      }
+    });
+    
+    console.log(`✓ Shift reminder check complete. ${remindersSent} reminders sent.`);
+  } catch (error) {
+    console.error('Error checking shift reminders:', error);
+  }
+}

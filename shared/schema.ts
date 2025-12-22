@@ -29,7 +29,9 @@ export const users = pgTable("users", {
   hours: integer("hours").notNull().default(24),
   stationId: integer("station_id").notNull().references(() => stations.id),
   calendarOffset: integer("calendar_offset").notNull().default(0), // Tijdzone offset in minuten voor kalender sync (-120 tot +120)
-  kioskToken: text("kiosk_token").unique() // Unieke token voor kiosk/display modus (alleen voor viewers)
+  kioskToken: text("kiosk_token").unique(), // Unieke token voor kiosk/display modus (alleen voor viewers)
+  shiftReminderHours: integer("shift_reminder_hours").notNull().default(12), // Hoeveel uur voor shift een herinnering sturen
+  darkMode: boolean("dark_mode").notNull().default(false) // Donkere modus voorkeur
 });
 
 export const shifts = pgTable("shifts", {

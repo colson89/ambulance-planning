@@ -9,7 +9,7 @@ import { z } from "zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Home, Calendar, Copy, RefreshCw, ChevronDown, Upload, User as UserIcon, Phone, Clock, Monitor } from "lucide-react";
+import { Home, Calendar, Copy, RefreshCw, ChevronDown, Upload, User as UserIcon, Phone, Clock, Monitor, Moon, Sun, Bell } from "lucide-react";
 import { useLocation } from "wouter";
 import type { User } from "@shared/schema";
 import { useState, useRef, useEffect } from "react";
@@ -18,6 +18,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PushNotificationSettings } from "@/components/push-notification-settings";
 import { StationNotificationPreferences } from "@/components/station-notification-preferences";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { useTheme } from "@/hooks/use-theme";
 
 const preferencesSchema = z.object({
   maxHours: z.number().min(0).max(168),
@@ -893,6 +897,9 @@ export default function Profile() {
           </Card>
         )}
 
+        {/* Weergave & Herinnering Instellingen */}
+        <DisplaySettings />
+
         {/* Push Notificaties */}
         <PushNotificationSettings />
         
@@ -900,5 +907,138 @@ export default function Profile() {
         <StationNotificationPreferences />
       </div>
     </div>
+  );
+}
+
+function DisplaySettings() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { theme, setTheme, isDark } = useTheme();
+  const [reminderHours, setReminderHours] = useState(user?.shiftReminderHours ?? 12);
+
+  useEffect(() => {
+    if (user?.shiftReminderHours !== undefined) {
+      setReminderHours(user.shiftReminderHours);
+    }
+  }, [user?.shiftReminderHours]);
+
+  const updateDisplaySettingsMutation = useMutation({
+    mutationFn: async (data: { darkMode?: boolean; shiftReminderHours?: number }) => {
+      if (!user) return;
+      const res = await apiRequest("PATCH", `/api/users/${user.id}/display-settings`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      toast({
+        title: "Gelukt!",
+        description: "Instellingen opgeslagen",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fout",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleDarkModeToggle = (checked: boolean) => {
+    setTheme(checked ? "dark" : "light");
+  };
+
+  const handleReminderHoursChange = (value: number[]) => {
+    setReminderHours(value[0]);
+  };
+
+  const handleReminderHoursSave = () => {
+    updateDisplaySettingsMutation.mutate({ shiftReminderHours: reminderHours });
+  };
+
+  if (!user) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          Weergave & Herinneringen
+        </CardTitle>
+        <CardDescription>
+          Pas de weergave aan en stel shift herinneringen in
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Dark Mode Toggle */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="dark-mode" className="text-base font-medium">Donkere modus</Label>
+            <p className="text-sm text-muted-foreground">
+              Schakel over naar een donker kleurenschema
+            </p>
+          </div>
+          <Switch
+            id="dark-mode"
+            checked={isDark}
+            onCheckedChange={handleDarkModeToggle}
+          />
+        </div>
+
+        {/* Shift Reminder Hours */}
+        <div className="space-y-4">
+          <div className="space-y-0.5">
+            <Label className="text-base font-medium flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Shift herinnering
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Ontvang een herinnering {reminderHours} uur voor je shift begint
+            </p>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex items-center gap-4">
+              <Slider
+                value={[reminderHours]}
+                onValueChange={handleReminderHoursChange}
+                min={0}
+                max={48}
+                step={1}
+                className="flex-1"
+              />
+              <span className="min-w-[60px] text-sm font-medium text-right">
+                {reminderHours === 0 ? "Uit" : `${reminderHours} uur`}
+              </span>
+            </div>
+            
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Uit</span>
+              <span>12 uur</span>
+              <span>24 uur</span>
+              <span>48 uur</span>
+            </div>
+            
+            <Button
+              onClick={handleReminderHoursSave}
+              disabled={updateDisplaySettingsMutation.isPending || reminderHours === (user?.shiftReminderHours ?? 12)}
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              {updateDisplaySettingsMutation.isPending ? "Opslaan..." : "Herinnering opslaan"}
+            </Button>
+          </div>
+          
+          {reminderHours === 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 dark:bg-amber-950 dark:border-amber-800">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                ⚠️ Je ontvangt geen shift herinneringen als deze instelling op "Uit" staat.
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

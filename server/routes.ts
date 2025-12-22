@@ -1454,6 +1454,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update display settings (dark mode, shift reminder hours)
+  app.patch("/api/users/:id/display-settings", requireAuth, async (req, res) => {
+    try {
+      const targetUserId = parseInt(req.params.id);
+      const currentUserId = (req.user as any).id;
+
+      // Users can only update their own display settings
+      if (currentUserId !== targetUserId) {
+        return res.status(403).json({ message: "Je kunt alleen je eigen weergave-instellingen aanpassen" });
+      }
+
+      const schema = z.object({
+        darkMode: z.boolean().optional(),
+        shiftReminderHours: z.number().min(0).max(48).optional()
+      });
+
+      const validatedData = schema.parse(req.body);
+      
+      const updateData: { darkMode?: boolean; shiftReminderHours?: number } = {};
+      if (validatedData.darkMode !== undefined) {
+        updateData.darkMode = validatedData.darkMode;
+      }
+      if (validatedData.shiftReminderHours !== undefined) {
+        updateData.shiftReminderHours = validatedData.shiftReminderHours;
+      }
+      
+      const updatedUser = await storage.updateUser(targetUserId, updateData);
+
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json(error.errors);
+      } else {
+        console.error("Display settings update error:", error);
+        res.status(500).json({ message: "Fout bij opslaan weergave-instellingen" });
+      }
+    }
+  });
+
   // Multi-station management routes
   
   // Get accessible stations for current user

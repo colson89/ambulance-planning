@@ -6,7 +6,7 @@ if (!process.env.NODE_ENV) {
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { checkAndNotifyDeadlines } from "./push-notifications";
+import { checkAndNotifyDeadlines, checkAndSendShiftReminders } from "./push-notifications";
 
 const app = express();
 app.use(express.json());
@@ -175,4 +175,23 @@ app.use((req, res, next) => {
   };
   
   scheduleDeadlineCheck();
+
+  // Shift reminder check (runs every 15 minutes)
+  const scheduleShiftReminderCheck = () => {
+    // Run immediately on startup
+    checkAndSendShiftReminders().catch(err => {
+      log(`Failed to check shift reminders: ${String(err)}`);
+    });
+    
+    // Run every 15 minutes
+    setInterval(() => {
+      checkAndSendShiftReminders().catch(err => {
+        log(`Failed to check shift reminders: ${String(err)}`);
+      });
+    }, 15 * 60 * 1000); // 15 minutes
+    
+    log('🔔 Shift reminder scheduler started (runs every 15 minutes)');
+  };
+  
+  scheduleShiftReminderCheck();
 })();
