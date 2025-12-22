@@ -912,49 +912,10 @@ export default function Profile() {
 
 function DisplaySettings() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { theme, setTheme, isDark } = useTheme();
-  const [reminderHours, setReminderHours] = useState(user?.shiftReminderHours ?? 12);
-
-  useEffect(() => {
-    if (user?.shiftReminderHours !== undefined) {
-      setReminderHours(user.shiftReminderHours);
-    }
-  }, [user?.shiftReminderHours]);
-
-  const updateDisplaySettingsMutation = useMutation({
-    mutationFn: async (data: { darkMode?: boolean; shiftReminderHours?: number }) => {
-      if (!user) return;
-      const res = await apiRequest("PATCH", `/api/users/${user.id}/display-settings`, data);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-      toast({
-        title: "Gelukt!",
-        description: "Instellingen opgeslagen",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Fout",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
+  const { isDark, setTheme } = useTheme();
 
   const handleDarkModeToggle = (checked: boolean) => {
     setTheme(checked ? "dark" : "light");
-  };
-
-  const handleReminderHoursChange = (value: number[]) => {
-    setReminderHours(value[0]);
-  };
-
-  const handleReminderHoursSave = () => {
-    updateDisplaySettingsMutation.mutate({ shiftReminderHours: reminderHours });
   };
 
   if (!user) return null;
@@ -964,14 +925,13 @@ function DisplaySettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-          Weergave & Herinneringen
+          Weergave
         </CardTitle>
         <CardDescription>
-          Pas de weergave aan en stel shift herinneringen in
+          Pas de weergave van de app aan
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Dark Mode Toggle */}
+      <CardContent>
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label htmlFor="dark-mode" className="text-base font-medium">Donkere modus</Label>
@@ -984,59 +944,6 @@ function DisplaySettings() {
             checked={isDark}
             onCheckedChange={handleDarkModeToggle}
           />
-        </div>
-
-        {/* Shift Reminder Hours */}
-        <div className="space-y-4">
-          <div className="space-y-0.5">
-            <Label className="text-base font-medium flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              Shift herinnering
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              Ontvang een herinnering {reminderHours} uur voor je shift begint
-            </p>
-          </div>
-          
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <Slider
-                value={[reminderHours]}
-                onValueChange={handleReminderHoursChange}
-                min={0}
-                max={48}
-                step={1}
-                className="flex-1"
-              />
-              <span className="min-w-[60px] text-sm font-medium text-right">
-                {reminderHours === 0 ? "Uit" : `${reminderHours} uur`}
-              </span>
-            </div>
-            
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Uit</span>
-              <span>12 uur</span>
-              <span>24 uur</span>
-              <span>48 uur</span>
-            </div>
-            
-            <Button
-              onClick={handleReminderHoursSave}
-              disabled={updateDisplaySettingsMutation.isPending || reminderHours === (user?.shiftReminderHours ?? 12)}
-              size="sm"
-              className="w-full sm:w-auto"
-            >
-              {updateDisplaySettingsMutation.isPending ? "Opslaan..." : "Herinnering opslaan"}
-            </Button>
-          </div>
-          
-          {reminderHours === 0 && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 dark:bg-amber-950 dark:border-amber-800">
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                ⚠️ Je ontvangt geen shift herinneringen als deze instelling op "Uit" staat.
-              </p>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

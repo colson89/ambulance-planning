@@ -563,6 +563,10 @@ export async function checkAndSendShiftReminders(): Promise<void> {
       const subscriptions = await storage.getAllPushSubscriptions(user.id);
       if (subscriptions.length === 0) continue;
       
+      // Get user's per-station notification preferences
+      const stationPreferences = await storage.getUserStationNotificationPreferences(user.id);
+      const stationPrefsMap = new Map(stationPreferences.map(p => [p.stationId, p]));
+      
       // Calculate the target time window (now + reminderHours + buffer)
       // Add 1 hour buffer to catch shifts that might start soon
       const reminderTime = new Date(now.getTime() + ((reminderHours + 1) * 60 * 60 * 1000));
@@ -577,6 +581,11 @@ export async function checkAndSendShiftReminders(): Promise<void> {
       
       for (const shift of userShifts) {
         if (shift.status !== 'planned') continue;
+        
+        // Check per-station preference for reminders (default to true if not set)
+        const stationPref = stationPrefsMap.get(shift.stationId);
+        const wantsRemindersForStation = stationPref?.notifyShiftReminders ?? true;
+        if (!wantsRemindersForStation) continue;
         
         // Create a unique key for this reminder
         const reminderKey = `${user.id}-${shift.id}`;

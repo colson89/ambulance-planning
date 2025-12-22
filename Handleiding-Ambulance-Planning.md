@@ -33,7 +33,6 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
   - [Exporteer Beschikbaarheden naar Excel](#-exporteer-beschikbaarheden-naar-excel)
   - [Planning Bekijken](#-uw-planning-bekijken)
   - [Profiel Beheren](#-profiel-beheren)
-  - [Weergave Instellingen](#weergave-instellingen)
   - [Kalender Synchronisatie](#-kalender-synchronisatie)
   - [Push Notificaties](#-push-notificaties)
   - [Overuren Registreren](#-overuren-registreren)
@@ -429,21 +428,12 @@ Bijvoorbeeld: `Mijn_Beschikbaarheden_Januari_2026.xlsx`
 
 #### Weergave Instellingen
 
-In de Profiel pagina vindt u ook **Weergave Instellingen** waarmee u de app kunt personaliseren:
+In de Profiel pagina vindt u **Weergave Instellingen** waarmee u de app kunt personaliseren:
 
 **Donkere Modus (Dark Mode)**
 - Schakel de donkere modus in voor een oogvriendelijke weergave in omgevingen met weinig licht
 - Ideaal voor nachtshifts of gebruik in donkere ruimtes
 - Uw voorkeur wordt automatisch opgeslagen en onthouden bij volgende bezoeken
-
-**Shift Herinneringen**
-- Stel in hoeveel uren voor uw shift u een herinnering wilt ontvangen
-- Verstelbaar van 0 tot 48 uur voor uw shift begint
-- Zet op 0 om herinneringen uit te schakelen
-- Herinneringen worden verstuurd via push notificaties naar uw telefoon of computer
-- **Belangrijk**: Push notificaties moeten ingeschakeld zijn om herinneringen te ontvangen (zie sectie [Push Notificaties](#-push-notificaties))
-
-> 💡 **Tip**: Stel uw shift herinnering in op 12 uur (standaard) zodat u 's avonds een herinnering krijgt voor een dagshift de volgende ochtend.
 
 ### 📅 Kalender Synchronisatie
 
@@ -608,6 +598,7 @@ Push notificaties zijn berichten die u ontvangt op uw smartphone, tablet of comp
 - 📅 **Nieuwe planning gepubliceerd**: Zodra de planning voor een nieuwe maand klaar is
 - 🔄 **Shift wijzigingen**: Wanneer uw ingeplande shifts worden gewijzigd
 - ⏰ **Deadline herinneringen**: Waarschuwingen voordat de deadline voor beschikbaarheid verloopt
+- 🔔 **Shift herinneringen**: Herinnering X uur voor uw shift begint (instelbaar per station)
 
 #### Push Notificaties Inschakelen
 
@@ -648,6 +639,16 @@ Push notificaties zijn berichten die u ontvangt op uw smartphone, tablet of comp
 - **Voorbeeld**: "[PIT Geel] Deadline Beschikbaarheid Nadert - Je hebt nog 3 dagen om je beschikbaarheid voor februari 2026 in te vullen."
 - **Instelbaar**: Pas aan hoeveel dagen van tevoren u gewaarschuwd wilt worden (1 t/m 7 dagen)
 - **Cross-Team**: Als u toegang heeft tot meerdere stations, ontvangt u een **aparte melding per station** zodat u duidelijk weet voor welke stations u nog beschikbaarheid moet invullen
+
+**4. Shift Herinneringen**
+- **Wat**: Persoonlijke herinnering voordat uw shift begint
+- **Wanneer**: X uur voor uw shift begint (instelbaar: 0-48 uur)
+- **Standaard**: AAN met 12 uur waarschuwing
+- **Voorbeeld**: "[ZW Westerlo] Shift Herinnering - Je dagdienst op maandag 15 januari begint over 12 uur (07:00)."
+- **Instelbaar**: 
+  - Globale herinneringstijd (0-48 uur, 0 = uitgeschakeld)
+  - Per station aan/uit zetten via Station Notificatie Voorkeuren
+- **Cross-Team**: U kunt per station kiezen of u shift herinneringen wilt ontvangen
 
 #### Instellingen Aanpassen
 
