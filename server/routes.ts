@@ -249,6 +249,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all station kiosk tokens - Admin/Supervisor only
+  // IMPORTANT: This route must be BEFORE /api/stations/:id to avoid matching issues
+  app.get("/api/stations/kiosk-tokens", requireAuth, async (req, res) => {
+    try {
+      const userRole = (req.user as any).role;
+      
+      if (userRole !== 'admin' && userRole !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen admins en supervisors kunnen station kiosk links beheren" });
+      }
+      
+      let stationsToShow: any[] = [];
+      
+      if (userRole === 'supervisor') {
+        // Supervisors see all stations
+        stationsToShow = await storage.getAllStations();
+      } else {
+        // Admins see their own station + cross-team stations
+        const accessibleStations = await storage.getUserAccessibleStations((req.user as any).id, false);
+        stationsToShow = accessibleStations;
+      }
+      
+      // Build kiosk URLs for each station
+      const baseUrl = process.env.BASE_URL?.trim().replace(/\/$/, '');
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers['host'] || 'localhost:5000';
+      
+      const stationKioskData = stationsToShow.map(station => {
+        let kioskUrl: string | null = null;
+        if (station.kioskToken) {
+          if (baseUrl) {
+            kioskUrl = `${baseUrl}/kiosk/${station.kioskToken}`;
+          } else {
+            kioskUrl = `${protocol}://${host}/kiosk/${station.kioskToken}`;
+          }
+        }
+        return {
+          stationId: station.id,
+          stationName: station.displayName,
+          stationCode: station.code,
+          hasKioskToken: !!station.kioskToken,
+          kioskUrl
+        };
+      });
+      
+      res.json(stationKioskData);
+    } catch (error) {
+      console.error("Error getting station kiosk tokens:", error);
+      res.status(500).json({ message: "Failed to get station kiosk tokens" });
+    }
+  });
+
   app.get("/api/stations/:id", async (req, res) => {
     try {
       const stationId = parseInt(req.params.id);
@@ -420,57 +471,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting kiosk token:", error);
       res.status(500).json({ message: "Failed to get kiosk token" });
-    }
-  });
-
-  // Get all station kiosk tokens - Admin/Supervisor only
-  app.get("/api/stations/kiosk-tokens", requireAuth, async (req, res) => {
-    try {
-      const userRole = (req.user as any).role;
-      const userStationId = (req.user as any).stationId;
-      
-      if (userRole !== 'admin' && userRole !== 'supervisor') {
-        return res.status(403).json({ message: "Alleen admins en supervisors kunnen station kiosk links beheren" });
-      }
-      
-      let stationsToShow: any[] = [];
-      
-      if (userRole === 'supervisor') {
-        // Supervisors see all stations
-        stationsToShow = await storage.getAllStations();
-      } else {
-        // Admins see their own station + cross-team stations
-        const accessibleStations = await storage.getUserAccessibleStations((req.user as any).id, false);
-        stationsToShow = accessibleStations;
-      }
-      
-      // Build kiosk URLs for each station
-      const baseUrl = process.env.BASE_URL?.trim().replace(/\/$/, '');
-      const protocol = req.headers['x-forwarded-proto'] || 'https';
-      const host = req.headers['host'] || 'localhost:5000';
-      
-      const stationKioskData = stationsToShow.map(station => {
-        let kioskUrl: string | null = null;
-        if (station.kioskToken) {
-          if (baseUrl) {
-            kioskUrl = `${baseUrl}/kiosk/${station.kioskToken}`;
-          } else {
-            kioskUrl = `${protocol}://${host}/kiosk/${station.kioskToken}`;
-          }
-        }
-        return {
-          stationId: station.id,
-          stationName: station.displayName,
-          stationCode: station.code,
-          hasKioskToken: !!station.kioskToken,
-          kioskUrl
-        };
-      });
-      
-      res.json(stationKioskData);
-    } catch (error) {
-      console.error("Error getting station kiosk tokens:", error);
-      res.status(500).json({ message: "Failed to get station kiosk tokens" });
     }
   });
 
