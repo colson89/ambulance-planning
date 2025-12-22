@@ -373,6 +373,7 @@ export const userStationNotificationPreferences = pgTable("user_station_notifica
   notifyShiftSwapUpdates: boolean("notify_shift_swap_updates").notNull().default(true),
   notifyBidUpdates: boolean("notify_bid_updates").notNull().default(true),
   notifyOpenSwapRequests: boolean("notify_open_swap_requests").notNull().default(true),
+  notifyShiftReminders: boolean("notify_shift_reminders").notNull().default(true), // Shift herinnering per station
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 }, (table) => ({
