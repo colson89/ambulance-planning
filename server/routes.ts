@@ -293,6 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Kiosk mode login - Public endpoint for display screens (Lumaps)
+  // Supports both user kiosk tokens (for viewers) and station kiosk tokens
   app.get("/api/kiosk/:token", async (req, res) => {
     try {
       const { token } = req.params;
@@ -301,7 +302,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid kiosk token" });
       }
       
-      // Find user by kiosk token
+      // First try to find a station by kiosk token
+      const station = await storage.getStationByKioskToken(token);
+      
+      if (station) {
+        // Station kiosk token found - create a special kiosk session
+        // Find or create a viewer user for this station to use for the session
+        const stationUsers = await storage.getUsersByStation(station.id);
+        const viewerUser = stationUsers.find(u => u.role === 'viewer');
+        
+        if (!viewerUser) {
+          // No viewer exists, redirect without login (read-only dashboard)
+          console.log(`Station kiosk login for: ${station.displayName} (no viewer account)`);
+          return res.json({ 
+            success: true, 
+            stationId: station.id,
+            stationName: station.displayName,
+            redirect: `/dashboard?fullscreen=true&station=${station.id}`
+          });
+        }
+        
+        // Login as the viewer user
+        req.login(viewerUser, (err) => {
+          if (err) {
+            console.error("Station kiosk login error:", err);
+            return res.status(500).json({ message: "Login failed" });
+          }
+          
+          console.log(`Station kiosk login successful for: ${station.displayName}`);
+          
+          const { password, kioskToken, ...safeUser } = viewerUser;
+          res.json({ 
+            success: true, 
+            user: safeUser,
+            stationId: station.id,
+            stationName: station.displayName,
+            redirect: `/dashboard?fullscreen=true&station=${station.id}`
+          });
+        });
+        return;
+      }
+      
+      // Try to find user by kiosk token
       const user = await storage.getUserByKioskToken(token);
       
       if (!user) {
@@ -378,6 +420,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting kiosk token:", error);
       res.status(500).json({ message: "Failed to get kiosk token" });
+    }
+  });
+
+  // Get all station kiosk tokens - Admin/Supervisor only
+  app.get("/api/stations/kiosk-tokens", requireAuth, async (req, res) => {
+    try {
+      const userRole = (req.user as any).role;
+      const userStationId = (req.user as any).stationId;
+      
+      if (userRole !== 'admin' && userRole !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen admins en supervisors kunnen station kiosk links beheren" });
+      }
+      
+      let stationsToShow: any[] = [];
+      
+      if (userRole === 'supervisor') {
+        // Supervisors see all stations
+        stationsToShow = await storage.getAllStations();
+      } else {
+        // Admins see their own station + cross-team stations
+        const accessibleStations = await storage.getUserAccessibleStations((req.user as any).id, false);
+        stationsToShow = accessibleStations;
+      }
+      
+      // Build kiosk URLs for each station
+      const baseUrl = process.env.BASE_URL?.trim().replace(/\/$/, '');
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers['host'] || 'localhost:5000';
+      
+      const stationKioskData = stationsToShow.map(station => {
+        let kioskUrl: string | null = null;
+        if (station.kioskToken) {
+          if (baseUrl) {
+            kioskUrl = `${baseUrl}/kiosk/${station.kioskToken}`;
+          } else {
+            kioskUrl = `${protocol}://${host}/kiosk/${station.kioskToken}`;
+          }
+        }
+        return {
+          stationId: station.id,
+          stationName: station.displayName,
+          stationCode: station.code,
+          hasKioskToken: !!station.kioskToken,
+          kioskUrl
+        };
+      });
+      
+      res.json(stationKioskData);
+    } catch (error) {
+      console.error("Error getting station kiosk tokens:", error);
+      res.status(500).json({ message: "Failed to get station kiosk tokens" });
+    }
+  });
+
+  // Generate/regenerate kiosk token for a station - Admin/Supervisor only
+  app.post("/api/stations/:id/kiosk-token", requireAuth, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.id);
+      const userRole = (req.user as any).role;
+      const userId = (req.user as any).id;
+      
+      if (userRole !== 'admin' && userRole !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen admins en supervisors kunnen station kiosk links beheren" });
+      }
+      
+      // Check if station exists
+      const station = await storage.getStation(stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station niet gevonden" });
+      }
+      
+      // Check access for admins (supervisors have access to all)
+      if (userRole === 'admin') {
+        const hasAccess = await storage.userHasAccessToStation(userId, stationId);
+        if (!hasAccess) {
+          return res.status(403).json({ message: "Je hebt geen toegang tot dit station" });
+        }
+      }
+      
+      // Generate new token
+      const crypto = await import('crypto');
+      const newToken = crypto.randomBytes(32).toString('hex');
+      
+      await storage.updateStationKioskToken(stationId, newToken);
+      
+      // Build the kiosk URL
+      const baseUrl = process.env.BASE_URL?.trim().replace(/\/$/, '');
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers['host'] || 'localhost:5000';
+      
+      let kioskUrl: string;
+      if (baseUrl) {
+        kioskUrl = `${baseUrl}/kiosk/${newToken}`;
+      } else {
+        kioskUrl = `${protocol}://${host}/kiosk/${newToken}`;
+      }
+      
+      await logActivity({
+        userId,
+        stationId,
+        action: ActivityActions.SETTINGS.KIOSK_TOKEN_GENERATED || "KIOSK_TOKEN_GENERATED",
+        category: "SETTINGS",
+        details: `Kiosk link gegenereerd voor station "${station.displayName}"`,
+        ...getClientInfo(req)
+      });
+      
+      res.json({ 
+        token: newToken,
+        url: kioskUrl,
+        stationId,
+        stationName: station.displayName
+      });
+    } catch (error) {
+      console.error("Error generating station kiosk token:", error);
+      res.status(500).json({ message: "Failed to generate station kiosk token" });
+    }
+  });
+
+  // Delete/revoke kiosk token for a station - Admin/Supervisor only
+  app.delete("/api/stations/:id/kiosk-token", requireAuth, async (req, res) => {
+    try {
+      const stationId = parseInt(req.params.id);
+      const userRole = (req.user as any).role;
+      const userId = (req.user as any).id;
+      
+      if (userRole !== 'admin' && userRole !== 'supervisor') {
+        return res.status(403).json({ message: "Alleen admins en supervisors kunnen station kiosk links beheren" });
+      }
+      
+      // Check if station exists
+      const station = await storage.getStation(stationId);
+      if (!station) {
+        return res.status(404).json({ message: "Station niet gevonden" });
+      }
+      
+      // Check access for admins (supervisors have access to all)
+      if (userRole === 'admin') {
+        const hasAccess = await storage.userHasAccessToStation(userId, stationId);
+        if (!hasAccess) {
+          return res.status(403).json({ message: "Je hebt geen toegang tot dit station" });
+        }
+      }
+      
+      await storage.updateStationKioskToken(stationId, null);
+      
+      await logActivity({
+        userId,
+        stationId,
+        action: ActivityActions.SETTINGS.KIOSK_TOKEN_REVOKED || "KIOSK_TOKEN_REVOKED",
+        category: "SETTINGS",
+        details: `Kiosk link ingetrokken voor station "${station.displayName}"`,
+        ...getClientInfo(req)
+      });
+      
+      res.json({ success: true, message: "Kiosk link ingetrokken" });
+    } catch (error) {
+      console.error("Error revoking station kiosk token:", error);
+      res.status(500).json({ message: "Failed to revoke station kiosk token" });
     }
   });
 

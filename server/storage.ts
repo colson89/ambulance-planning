@@ -29,6 +29,9 @@ export interface IStorage {
   canDeleteStation(stationId: number): Promise<{canDelete: boolean, reason?: string, dependencies?: {users: number, shifts: number, preferences: number}}>;
   deleteStation(stationId: number, force?: boolean): Promise<void>;
   
+  getStationByKioskToken(token: string): Promise<Station | undefined>;
+  updateStationKioskToken(stationId: number, token: string | null): Promise<Station>;
+  
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByUsernameAndStation(username: string, stationId: number): Promise<User | undefined>;
@@ -248,6 +251,27 @@ export class DatabaseStorage implements IStorage {
       .update(stations)
       .set({
         ...updateData,
+        updatedAt: new Date()
+      })
+      .where(eq(stations.id, stationId))
+      .returning();
+    
+    if (!station) {
+      throw new Error("Station niet gevonden");
+    }
+    return station;
+  }
+
+  async getStationByKioskToken(token: string): Promise<Station | undefined> {
+    const [station] = await db.select().from(stations).where(eq(stations.kioskToken, token));
+    return station;
+  }
+
+  async updateStationKioskToken(stationId: number, token: string | null): Promise<Station> {
+    const [station] = await db
+      .update(stations)
+      .set({
+        kioskToken: token,
         updatedAt: new Date()
       })
       .where(eq(stations.id, stationId))
