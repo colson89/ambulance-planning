@@ -4187,10 +4187,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Merge split shifts back into one full night shift
+  // Merge split shifts back into one full shift
+  // Supports two modes:
+  // 1. Check mode (no selectedUserId): Returns assigned users if any exist, so frontend can ask who gets the full shift
+  // 2. Execute mode (with selectedUserId or selectedUserId=0): Actually performs the merge with the chosen user
   app.post("/api/shifts/:id/merge", requireAuth, async (req, res) => {
     try {
       const shiftId = parseInt(req.params.id);
+      const { selectedUserId, confirm } = req.body;
       
       // Get the existing shift
       const existingShift = await storage.getShift(shiftId);
@@ -4216,17 +4220,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shift.isSplitShift
       );
       
-      if (otherHalf) {
-        // Delete the other half
-        await storage.deleteShift(otherHalf.id);
+      // Collect assigned users from both halves
+      const assignedUsers: { id: number; name: string; shiftPart: string }[] = [];
+      
+      if (existingShift.userId && existingShift.userId > 0) {
+        const user = await storage.getUser(existingShift.userId);
+        if (user) {
+          const startHour = existingShift.startTime ? new Date(existingShift.startTime).getUTCHours() : 0;
+          const partLabel = existingShift.type === 'day' 
+            ? (startHour === 7 ? '07:00-13:00' : '13:00-19:00')
+            : (startHour === 19 ? '19:00-01:00' : '01:00-07:00');
+          assignedUsers.push({
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`,
+            shiftPart: partLabel
+          });
+        }
       }
       
+      if (otherHalf && otherHalf.userId && otherHalf.userId > 0) {
+        const user = await storage.getUser(otherHalf.userId);
+        if (user) {
+          // Avoid duplicates if same user on both halves
+          if (!assignedUsers.find(u => u.id === user.id)) {
+            const startHour = otherHalf.startTime ? new Date(otherHalf.startTime).getUTCHours() : 0;
+            const partLabel = otherHalf.type === 'day' 
+              ? (startHour === 7 ? '07:00-13:00' : '13:00-19:00')
+              : (startHour === 19 ? '19:00-01:00' : '01:00-07:00');
+            assignedUsers.push({
+              id: user.id,
+              name: `${user.firstName} ${user.lastName}`,
+              shiftPart: partLabel
+            });
+          }
+        }
+      }
+      
+      // If there are assigned users and no confirmation yet, return them for frontend selection
+      if (assignedUsers.length > 0 && !confirm) {
+        return res.status(200).json({
+          requiresSelection: true,
+          assignedUsers,
+          message: "Er zijn personen toegewezen aan de halve shifts. Kies wie de volledige shift krijgt."
+        });
+      }
+      
+      // Now perform the actual merge
       // Determine full shift times based on shift type
-      // Use Brussels timezone to get the correct calendar day, then create UTC timestamps
-      // with explicit UTC hours that the frontend expects
       const BRUSSELS_TZ = 'Europe/Brussels';
       
-      // Helper function: Get Brussels calendar day from shift date, create UTC Date with specified hour
       const buildShiftTime = (shiftDate: Date, hour: number, dayOffset: number = 0): Date => {
         const brusselsDate = toZonedTime(shiftDate, BRUSSELS_TZ);
         return new Date(Date.UTC(
@@ -4240,37 +4282,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let fullShiftStart, fullShiftEnd, shiftDescription;
       
       if (existingShift.type === "night") {
-        // Night shift: 19:00-07:00
         fullShiftStart = buildShiftTime(existingShift.date, 19);
-        fullShiftEnd = buildShiftTime(existingShift.date, 7, 1); // Next day
+        fullShiftEnd = buildShiftTime(existingShift.date, 7, 1);
         shiftDescription = "full night shift";
       } else {
-        // Day shift: 07:00-19:00
         fullShiftStart = buildShiftTime(existingShift.date, 7);
         fullShiftEnd = buildShiftTime(existingShift.date, 19);
         shiftDescription = "full day shift";
       }
+      
+      // Determine which user gets the merged shift
+      // selectedUserId = 0 means "leave open/empty"
+      // selectedUserId > 0 means assign to that user
+      // If no assignedUsers existed, default to open
+      const finalUserId = (selectedUserId !== undefined) ? selectedUserId : 0;
+      const finalStatus = finalUserId > 0 ? "planned" : "open";
+      
+      // Delete the other half first
+      if (otherHalf) {
+        await storage.deleteShift(otherHalf.id);
+      }
 
-      // Update the original shift to be a full shift again
+      // Update the original shift to be a full shift
       await storage.updateShift(shiftId, {
         isSplitShift: false,
         splitGroup: null,
         startTime: fullShiftStart,
         endTime: fullShiftEnd,
-        userId: 0,
-        status: "open"
+        userId: finalUserId,
+        status: finalStatus
       });
       
       // Log activity for shift merge
       try {
         const shiftDate = new Date(existingShift.date).toLocaleDateString('nl-BE');
         const shiftType = existingShift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+        let assignmentInfo = "";
+        if (finalUserId > 0) {
+          const assignedUser = await storage.getUser(finalUserId);
+          assignmentInfo = assignedUser ? ` (toegewezen aan ${assignedUser.firstName} ${assignedUser.lastName})` : "";
+        } else {
+          assignmentInfo = " (open gelaten)";
+        }
         await logActivity({
           userId: req.user?.id,
           stationId: existingShift.stationId,
           action: ActivityActions.SHIFT_MANUAL.MERGED,
           category: 'SHIFT_MANUAL',
-          details: `Gesplitste ${shiftType.toLowerCase()} op ${shiftDate} samengevoegd naar volledige shift`,
+          details: `Gesplitste ${shiftType.toLowerCase()} op ${shiftDate} samengevoegd naar volledige shift${assignmentInfo}`,
           ipAddress: getClientInfo(req).ipAddress,
           userAgent: getClientInfo(req).userAgent
         });
@@ -4280,7 +4339,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(200).json({ 
         message: `Split shifts successfully merged into one ${shiftDescription}`,
-        mergedShift: shiftId
+        mergedShift: shiftId,
+        assignedUserId: finalUserId
       });
     } catch (error) {
       console.error("Error merging shifts:", error);
