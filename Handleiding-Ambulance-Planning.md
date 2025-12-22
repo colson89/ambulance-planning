@@ -1163,9 +1163,29 @@ De Display Link is een speciale URL waarmee een viewer account automatisch wordt
 - ✅ **Alle shifts zichtbaar**: Toont alle shifts van het station (niet alleen "eigen" shifts)
 - ✅ **Visuele markering**: Huidige dag geel gemarkeerd, open shifts rood weergegeven
 
-#### Display Link Ophalen
+#### Display Links Beheren (Admin/Supervisor)
 
-**Belangrijk**: De display link is zichtbaar in het profiel van een viewer account. Admins moeten eerst een viewer account aanmaken.
+**Nieuw vanaf versie 2025.20**: Admins en supervisors kunnen nu station kiosk links beheren via de **Integraties** pagina. Dit maakt het onnodig om eerst in te loggen als viewer.
+
+**Station Kiosk Links via Integraties:**
+1. Ga naar **Integraties** in het menu
+2. Klik op **Kiosk/Display Modus** → **Beheren**
+3. U ziet alle stations waartoe u toegang heeft
+4. Per station kunt u:
+   - **Link genereren**: Klik "Kiosk link genereren" om een nieuwe link aan te maken
+   - **Link kopiëren**: Klik op het kopieer icoon om de link te kopiëren
+   - **Nieuwe link genereren**: Oude link wordt ongeldig, nieuwe wordt aangemaakt
+   - **Link intrekken**: Verwijdert de link zodat deze niet meer werkt
+
+**Voordelen:**
+- ✅ Geen viewer account nodig om link te beheren
+- ✅ Supervisors zien alle stations in één overzicht
+- ✅ Admins zien hun eigen station(s)
+- ✅ Eenvoudig links vernieuwen of intrekken
+
+#### Display Link Ophalen (Viewer Profiel)
+
+Viewers kunnen hun eigen link bekijken (alleen-lezen) in hun profiel:
 
 **Stap 1: Log in als Viewer**
 - Log in met het viewer account dat is aangemaakt voor de display
@@ -1178,6 +1198,7 @@ De Display Link is een speciale URL waarmee een viewer account automatisch wordt
 **Stap 3: Kopieer de Link**
 - U ziet uw persoonlijke display link
 - Klik op het kopieer icoon (📋) om de link te kopiëren
+- **Let op**: Viewers kunnen de link niet zelf regenereren - vraag een admin/supervisor
 
 #### Display Link Gebruiken met Lumaps
 
@@ -3469,6 +3490,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 
 | Versie | Datum | Belangrijkste Verbeteringen |
 |--------|-------|----------------------------|
+| **2025.20** | Dec 2025 | Station kiosk links beheer: admins/supervisors kunnen nu per station display links genereren, kopiëren en intrekken via Integraties pagina |
 | **2025.19** | Dec 2025 | Uitgebreide logging: push notificaties, Excel exports, kalender tokens en beschikbaarheden export worden nu gelogd voor volledige audit trail |
 | **2025.18** | Dec 2025 | Viewer rol met kiosk/display modus voor Lumaps, BASE_URL configuratie, verbeterde fullscreen titel met stationnaam |
 | **2025.17** | Dec 2025 | Integratie logging: alle wijzigingen aan Verdi en Reportage instellingen worden nu gelogd in activiteitenlogboek |

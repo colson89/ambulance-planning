@@ -651,120 +651,122 @@ export default function Integrations() {
           )}
 
           {/* Kiosk/Display Mode Card - Admin/Supervisor only */}
-          <Card className="hover:shadow-lg transition-all duration-200">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 p-3 bg-slate-100 rounded-full w-fit">
-                <Monitor className="h-8 w-8 text-slate-600" />
-              </div>
-              <CardTitle className="text-xl">Kiosk/Display Modus</CardTitle>
-              <CardDescription className="mb-2">
-                Genereer links voor display schermen (Lumaps) per station
-              </CardDescription>
-              <Badge 
-                variant="default" 
-                className={stationKioskTokens.some(s => s.hasKioskToken) ? "mx-auto bg-green-600" : "mx-auto bg-gray-400"}
-              >
-                {stationKioskTokens.filter(s => s.hasKioskToken).length} van {stationKioskTokens.length} stations
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <Dialog open={kioskDialogOpen} onOpenChange={setKioskDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="w-full group">
-                    Beheren
-                    <Monitor className="ml-2 h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Kiosk Links per Station</DialogTitle>
-                    <DialogDescription>
-                      Genereer en beheer kiosk links voor display schermen. Elke link opent automatisch het dashboard voor dat station.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-3 mt-4">
-                    {isLoadingKiosk ? (
-                      <p className="text-center text-muted-foreground py-4">Laden...</p>
-                    ) : stationKioskTokens.length === 0 ? (
-                      <p className="text-center text-muted-foreground py-4">Geen stations beschikbaar</p>
-                    ) : (
-                      stationKioskTokens.map((station) => (
-                        <div key={station.stationId} className="p-4 border rounded-lg bg-gray-50">
-                          <div className="flex items-center justify-between mb-2">
-                            <div>
-                              <p className="font-medium">{station.stationName}</p>
-                              <p className="text-xs text-muted-foreground">{station.stationCode}</p>
+          {canManageIntegrations && (
+            <Card className="hover:shadow-lg transition-all duration-200">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 p-3 bg-slate-100 rounded-full w-fit">
+                  <Monitor className="h-8 w-8 text-slate-600" />
+                </div>
+                <CardTitle className="text-xl">Kiosk/Display Modus</CardTitle>
+                <CardDescription className="mb-2">
+                  Genereer links voor display schermen (Lumaps) per station
+                </CardDescription>
+                <Badge 
+                  variant="default" 
+                  className={stationKioskTokens.some(s => s.hasKioskToken) ? "mx-auto bg-green-600" : "mx-auto bg-gray-400"}
+                >
+                  {stationKioskTokens.filter(s => s.hasKioskToken).length} van {stationKioskTokens.length} stations
+                </Badge>
+              </CardHeader>
+              <CardContent>
+                <Dialog open={kioskDialogOpen} onOpenChange={setKioskDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full group">
+                      Beheren
+                      <Monitor className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Kiosk Links per Station</DialogTitle>
+                      <DialogDescription>
+                        Genereer en beheer kiosk links voor display schermen. Elke link opent automatisch het dashboard voor dat station.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-3 mt-4">
+                      {isLoadingKiosk ? (
+                        <p className="text-center text-muted-foreground py-4">Laden...</p>
+                      ) : stationKioskTokens.length === 0 ? (
+                        <p className="text-center text-muted-foreground py-4">Geen stations beschikbaar</p>
+                      ) : (
+                        stationKioskTokens.map((station) => (
+                          <div key={station.stationId} className="p-4 border rounded-lg bg-gray-50">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="font-medium">{station.stationName}</p>
+                                <p className="text-xs text-muted-foreground">{station.stationCode}</p>
+                              </div>
+                              <Badge variant={station.hasKioskToken ? "default" : "secondary"}>
+                                {station.hasKioskToken ? "Actief" : "Geen link"}
+                              </Badge>
                             </div>
-                            <Badge variant={station.hasKioskToken ? "default" : "secondary"}>
-                              {station.hasKioskToken ? "Actief" : "Geen link"}
-                            </Badge>
+                            
+                            {station.hasKioskToken && station.kioskUrl ? (
+                              <div className="space-y-2">
+                                <div className="flex gap-2">
+                                  <Input 
+                                    value={station.kioskUrl} 
+                                    readOnly 
+                                    className="text-xs bg-white"
+                                  />
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => copyKioskUrl(station.kioskUrl!, station.stationName)}
+                                    title="Kopieer link"
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1"
+                                    onClick={() => generateStationKioskToken.mutate(station.stationId)}
+                                    disabled={generateStationKioskToken.isPending}
+                                  >
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    Nieuwe link genereren
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => revokeStationKioskToken.mutate(station.stationId)}
+                                    disabled={revokeStationKioskToken.isPending}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Intrekken
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="w-full"
+                                onClick={() => generateStationKioskToken.mutate(station.stationId)}
+                                disabled={generateStationKioskToken.isPending}
+                              >
+                                <Monitor className="h-4 w-4 mr-2" />
+                                Kiosk link genereren
+                              </Button>
+                            )}
                           </div>
-                          
-                          {station.hasKioskToken && station.kioskUrl ? (
-                            <div className="space-y-2">
-                              <div className="flex gap-2">
-                                <Input 
-                                  value={station.kioskUrl} 
-                                  readOnly 
-                                  className="text-xs bg-white"
-                                />
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => copyKioskUrl(station.kioskUrl!, station.stationName)}
-                                  title="Kopieer link"
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => generateStationKioskToken.mutate(station.stationId)}
-                                  disabled={generateStationKioskToken.isPending}
-                                >
-                                  <RefreshCw className="h-4 w-4 mr-2" />
-                                  Nieuwe link genereren
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => revokeStationKioskToken.mutate(station.stationId)}
-                                  disabled={revokeStationKioskToken.isPending}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Intrekken
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="w-full"
-                              onClick={() => generateStationKioskToken.mutate(station.stationId)}
-                              disabled={generateStationKioskToken.isPending}
-                            >
-                              <Monitor className="h-4 w-4 mr-2" />
-                              Kiosk link genereren
-                            </Button>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm text-blue-800">
-                      <strong>Tip:</strong> Gebruik deze links op display schermen (Lumaps) om automatisch het rooster te tonen.
-                      De link logt automatisch in en toont het dashboard in volledig scherm.
-                    </p>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
+                        ))
+                      )}
+                    </div>
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-800">
+                        <strong>Tip:</strong> Gebruik deze links op display schermen (Lumaps) om automatisch het rooster te tonen.
+                        De link logt automatisch in en toont het dashboard in volledig scherm.
+                      </p>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Station Management Card - Only for supervisors */}
           {user?.role === 'supervisor' && (
