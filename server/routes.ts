@@ -4407,10 +4407,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Only split shifts can be merged" });
       }
       
-      // Find the other half of the split shift
+      // Find the other half of the split shift (filter by same station!)
       const allShifts = await storage.getShiftsByMonth(
         existingShift.date.getMonth() + 1,
-        existingShift.date.getFullYear()
+        existingShift.date.getFullYear(),
+        existingShift.stationId
       );
       
       const splitGroup = existingShift.splitGroup;
