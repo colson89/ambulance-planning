@@ -6553,6 +6553,22 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(400).json({ message: "month, year, and stationId are required" });
       }
       
+      // Haal station naam op voor logging
+      const station = await storage.getStation(stationId);
+      const stationName = station?.displayName || `Station ${stationId}`;
+      const monthNames = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+      const periodLabel = `${monthNames[month - 1]} ${year}`;
+      
+      // Log sync gestart
+      await logActivity({
+        userId: req.user?.id,
+        stationId,
+        action: ActivityActions.VERDI.SYNC_STARTED,
+        category: 'VERDI',
+        details: `[${stationName}] Verdi sync gestart voor ${periodLabel}`,
+        ...getClientInfo(req)
+      });
+      
       // Haal shifts op voor deze maand
       const shifts = await storage.getShiftsByMonth(month, year, stationId);
       const plannedShifts = shifts.filter(s => s.status === 'planned');
@@ -7029,6 +7045,17 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         }
       }
       
+      // Log sync voltooid
+      const syncResultDetails = `[${stationName}] Verdi sync voltooid voor ${periodLabel}: ${synced} gelukt, ${errors} fouten${skipped > 0 ? `, ${skipped} overgeslagen` : ''}${updated > 0 ? `, ${updated} geüpdatet` : ''}${deleted > 0 ? `, ${deleted} verwijderd` : ''}`;
+      await logActivity({
+        userId: req.user?.id,
+        stationId,
+        action: errors > 0 ? ActivityActions.VERDI.SYNC_FAILED : ActivityActions.VERDI.SYNC_COMPLETED,
+        category: 'VERDI',
+        details: syncResultDetails,
+        ...getClientInfo(req)
+      });
+      
       res.json({
         success: true,
         message: `Synchronisatie voltooid: ${synced} gelukt, ${errors} fouten${skipped > 0 ? `, ${skipped} overgeslagen` : ''}${updated > 0 ? `, ${updated} geüpdatet` : ''}${deleted > 0 ? `, ${deleted} verwijderd uit Verdi` : ''}${deleteErrors > 0 ? ` (${deleteErrors} delete/update fouten)` : ''}`,
@@ -7042,8 +7069,23 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         results
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error syncing to Verdi:", error);
+      
+      // Log sync mislukt
+      try {
+        await logActivity({
+          userId: req.user?.id,
+          stationId: req.body.stationId,
+          action: ActivityActions.VERDI.SYNC_FAILED,
+          category: 'VERDI',
+          details: `Verdi sync mislukt: ${error.message || 'Onbekende fout'}`,
+          ...getClientInfo(req)
+        });
+      } catch (logError) {
+        console.error("Failed to log sync failure:", logError);
+      }
+      
       res.status(500).json({ message: "Failed to sync shifts to Verdi" });
     }
   });
