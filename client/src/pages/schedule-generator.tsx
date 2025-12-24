@@ -2474,23 +2474,33 @@ function ScheduleGenerator() {
                                   const syncStatus = getVerdiSyncStatus(shift.id);
                                   if (!syncStatus) return null;
                                   
+                                  // Check of shift is gewijzigd na de laatste sync (needs resync)
+                                  const shiftUpdatedAt = shift.updatedAt ? new Date(shift.updatedAt) : null;
+                                  const syncUpdatedAt = syncStatus.updatedAt ? new Date(syncStatus.updatedAt) : null;
+                                  const needsResync = syncStatus.syncStatus === 'success' && 
+                                    shiftUpdatedAt && syncUpdatedAt && shiftUpdatedAt > syncUpdatedAt;
+                                  
                                   const statusColors = {
                                     success: "bg-green-500",
                                     error: "bg-red-500",
-                                    pending: "bg-gray-400"
+                                    pending: "bg-gray-400",
+                                    needs_resync: "bg-orange-500"
                                   };
                                   
                                   const statusLabels = {
                                     success: "Verdi sync OK",
                                     error: "Verdi sync fout",
-                                    pending: "Verdi sync pending"
+                                    pending: "Verdi sync pending",
+                                    needs_resync: "Shift gewijzigd - opnieuw synchroniseren nodig"
                                   };
+                                  
+                                  const effectiveStatus = needsResync ? 'needs_resync' : syncStatus.syncStatus;
                                   
                                   return (
                                     <Badge 
                                       variant="outline" 
-                                      className={`${statusColors[syncStatus.syncStatus as keyof typeof statusColors]} text-white border-none text-xs`}
-                                      title={syncStatus.errorMessage || statusLabels[syncStatus.syncStatus as keyof typeof statusLabels]}
+                                      className={`${statusColors[effectiveStatus as keyof typeof statusColors]} text-white border-none text-xs`}
+                                      title={syncStatus.errorMessage || statusLabels[effectiveStatus as keyof typeof statusLabels]}
                                     >
                                       <LinkIcon className="h-3 w-3" />
                                     </Badge>
