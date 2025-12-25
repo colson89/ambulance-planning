@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText, KeyRound, Building2, UserPlus, Send, Eye, Monitor, Copy, RefreshCw, Trash2 } from "lucide-react";
+import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText, KeyRound, Building2, UserPlus, Send, Eye, Monitor, Copy, RefreshCw, Trash2, ShieldCheck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +48,18 @@ export default function Integrations() {
     enabled: user?.role === 'supervisor'
   });
 
+  // Check Azure AD status (supervisor only)
+  const { data: azureAdConfig } = useQuery<{
+    enabled: boolean;
+    tenantId: string;
+    clientId: string;
+    hasClientSecret: boolean;
+    configured: boolean;
+  }>({
+    queryKey: ['/api/azure-ad/config'],
+    enabled: user?.role === 'supervisor'
+  });
+
   // Welcome email config
   const { data: welcomeEmailConfig } = useQuery<{ 
     enabled: boolean; 
@@ -82,6 +94,29 @@ export default function Integrations() {
       toast({
         title: "Fout",
         description: "Kon instelling niet wijzigen",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Toggle Azure AD
+  const toggleAzureAd = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const res = await apiRequest('PUT', '/api/azure-ad/config', { enabled });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/azure-ad/config'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/azure-ad/status'] });
+      toast({
+        title: "Azure AD bijgewerkt",
+        description: "Instelling is opgeslagen"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fout",
+        description: "Kon Azure AD instelling niet wijzigen",
         variant: "destructive"
       });
     }
@@ -436,6 +471,64 @@ export default function Integrations() {
                     Configureer eerst E-mail (SMTP) Instellingen
                   </p>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Azure AD / Microsoft Entra ID Card - Only for supervisors */}
+          {user?.role === 'supervisor' && (
+            <Card className="hover:shadow-lg transition-all duration-200">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
+                  <ShieldCheck className="h-8 w-8 text-blue-600" />
+                </div>
+                <CardTitle className="text-xl">Microsoft Entra ID</CardTitle>
+                <CardDescription className="mb-2">
+                  Single Sign-On via Azure AD / Microsoft 365
+                </CardDescription>
+                <Badge 
+                  variant="default" 
+                  className={
+                    !azureAdConfig?.configured 
+                      ? "mx-auto bg-gray-400" 
+                      : azureAdConfig?.enabled 
+                        ? "mx-auto bg-green-600" 
+                        : "mx-auto bg-orange-500"
+                  }
+                >
+                  {!azureAdConfig?.configured 
+                    ? "Niet Geconfigureerd" 
+                    : azureAdConfig?.enabled 
+                      ? "Ingeschakeld" 
+                      : "Uitgeschakeld"
+                  }
+                </Badge>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="text-sm">
+                    <p className="font-medium text-gray-700">Microsoft Login</p>
+                    <p className="text-gray-500 text-xs">Toont 'Inloggen met Microsoft' op login</p>
+                  </div>
+                  <Switch
+                    checked={azureAdConfig?.enabled || false}
+                    onCheckedChange={(checked) => toggleAzureAd.mutate(checked)}
+                    disabled={toggleAzureAd.isPending || !azureAdConfig?.configured}
+                  />
+                </div>
+                {!azureAdConfig?.configured && (
+                  <p className="text-xs text-orange-600 text-center">
+                    Configureer eerst Azure AD via onderstaande knop
+                  </p>
+                )}
+                <Button 
+                  variant="outline" 
+                  className="w-full group"
+                  onClick={() => setLocation("/azure-ad-settings")}
+                >
+                  Configureren
+                  <Settings className="ml-2 h-4 w-4 group-hover:rotate-90 transition-transform" />
+                </Button>
               </CardContent>
             </Card>
           )}

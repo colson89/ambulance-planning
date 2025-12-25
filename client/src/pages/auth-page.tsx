@@ -4,20 +4,49 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useEffect, useState } from "react";
-import { Home, Building2, ArrowLeft, Eye, EyeOff, KeyRound, Phone, User } from "lucide-react";
+import { Home, Building2, ArrowLeft, Eye, EyeOff, KeyRound, Phone, User, AlertCircle } from "lucide-react";
 import type { Station } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
+// Microsoft logo as inline SVG component
+const MicrosoftIcon = () => (
+  <svg viewBox="0 0 21 21" className="h-5 w-5">
+    <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+    <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+    <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+    <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+  </svg>
+);
 
 const logoUrl = "/logo.png";
 
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const [showPassword, setShowPassword] = useState(false);
   const [passwordTimer, setPasswordTimer] = useState<number | null>(null);
   const [hasCheckedStation, setHasCheckedStation] = useState(false);
+  const [azureError, setAzureError] = useState<string | null>(null);
+
+  // Parse URL parameters for Azure AD errors
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const error = params.get('error');
+    const message = params.get('message');
+    if (error && message) {
+      setAzureError(decodeURIComponent(message));
+      // Clear URL params without reload
+      window.history.replaceState({}, '', '/login');
+    }
+  }, [searchString]);
+
+  // Check if Azure AD is enabled
+  const { data: azureAdStatus } = useQuery<{ enabled: boolean; configured: boolean }>({
+    queryKey: ['/api/azure-ad/status'],
+    staleTime: 5 * 60 * 1000 // 5 minutes
+  });
 
   // Get station from sessionStorage on every render to ensure it's always current
   const getSelectedStation = (): Station | null => {
@@ -146,6 +175,18 @@ export default function AuthPage() {
             <Form {...loginForm}>
               <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}>
                 <div className="space-y-4">
+                  {/* Azure AD error message */}
+                  {azureError && (
+                    <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded-md mb-2">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">Microsoft login mislukt</p>
+                          <p className="text-xs">{azureError}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {loginMutation.isError && (
                     <div className="bg-destructive/15 border border-destructive text-destructive px-4 py-3 rounded-md mb-2">
                       <p className="text-sm font-medium">⚠️ Login mislukt</p>
@@ -215,6 +256,29 @@ export default function AuthPage() {
                       </span>
                     ) : "Inloggen"}
                   </Button>
+
+                  {/* Microsoft / Azure AD login button */}
+                  {azureAdStatus?.enabled && azureAdStatus?.configured && (
+                    <>
+                      <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">of</span>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-12 text-base"
+                        onClick={() => window.location.href = '/api/azure-ad/login'}
+                      >
+                        <span className="mr-2"><MicrosoftIcon /></span>
+                        Inloggen met Microsoft
+                      </Button>
+                    </>
+                  )}
                   
                   {/* Forgot password link - only shown when feature is enabled */}
                   {passwordResetStatus?.enabled && (

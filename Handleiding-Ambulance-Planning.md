@@ -2344,6 +2344,7 @@ Het Ambulance Planning Systeem biedt nu een centraal overzicht van alle externe 
 | 📱 **Verdi Alarm Software** | Synchroniseert shifts naar Verdi alarmeringscentrale | Verdi URL, API credentials, ShiftSheet GUID | Admins & Supervisors |
 | 📧 **Reportage Personeelsdienst** | Maandelijkse shift rapportages via e-mail | SMTP server instellingen (host, poort, gebruiker, wachtwoord) | Admins & Supervisors |
 | 🔐 **Wachtwoord Reset** | Self-service wachtwoord reset via e-mail | Werkende SMTP configuratie (eerst Reportage instellen) | Alleen Supervisors |
+| 🛡️ **Microsoft Entra ID** | Single Sign-On via Azure AD / Microsoft 365 | Azure AD Tenant ID, Client ID, Client Secret | Alleen Supervisors |
 | 📋 **Activiteitenlog** | Audit trail van alle systeemgebeurtenissen | Geen | Alleen Supervisors |
 
 #### Status Indicatoren
@@ -2440,6 +2441,14 @@ Elke integratie toont een status badge die aangeeft of de koppeling actief en co
 - Filter op categorie (AUTH, PLANNING, SETTINGS, etc.)
 - Handig voor audit en troubleshooting
 - Toont IP-adres en browser informatie
+
+🛡️ **Microsoft Entra ID (Azure AD)** (Nieuw - v2025.26)
+- Single Sign-On via Microsoft 365 / Azure Active Directory
+- Gebruikers kunnen inloggen met hun bedrijfs-Microsoft-account
+- Koppelt bestaande gebruikers op basis van e-mailadres (geen automatische accountaanmaak)
+- Viewers en gebruikers zonder Microsoft account kunnen nog steeds met gebruikersnaam/wachtwoord inloggen
+- Alleen configureerbaar door supervisors
+- Status: Beschikbaar wanneer geconfigureerd en ingeschakeld
 
 🔜 **Toekomstige Integraties**
 - Ruimte voor HR-systemen
@@ -2575,6 +2584,80 @@ Planning BWZK
 - 🔐 **Eenmalig Gebruik**: Elke token kan maar één keer gebruikt worden
 - 📋 **Activity Logging**: Alle reset aanvragen en succesvolle resets worden gelogd
 - 🔍 **Privacy**: Het systeem geeft geen informatie vrij over welke e-mailadressen bestaan
+
+---
+
+### 🛡️ Microsoft Entra ID (Azure AD)
+
+**Single Sign-On via Microsoft 365**
+
+Gebruikers kunnen nu inloggen met hun bedrijfs-Microsoft-account. Dit maakt inloggen eenvoudiger en veiliger - gebruikers hoeven geen apart wachtwoord te onthouden voor het planningsysteem.
+
+#### Hoe Werkt Het?
+
+**Voor Gebruikers:**
+
+1. Op de inlogpagina verschijnt een "Inloggen met Microsoft" knop (alleen zichtbaar als feature ingeschakeld)
+2. Klik op de knop en log in met uw Microsoft account (bijv. naam@bwzk.be)
+3. Na succesvolle Microsoft login wordt u automatisch ingelogd in het planningssysteem
+4. U kunt direct aan de slag!
+
+**Belangrijk:**
+- 📧 Uw Microsoft e-mailadres moet overeenkomen met uw e-mailadres in het planningsysteem
+- 👤 U moet **eerst** een account hebben in het planningsysteem - er worden geen nieuwe accounts aangemaakt
+- 🔐 Viewers en gebruikers zonder Microsoft account kunnen nog steeds met gebruikersnaam/wachtwoord inloggen
+
+#### Configureren (Alleen Supervisors)
+
+**Vereisten voor IT-beheerders:**
+
+Om Azure AD te configureren heeft u het volgende nodig van uw Azure Portal:
+- ✅ Directory (tenant) ID
+- ✅ Application (client) ID
+- ✅ Client Secret
+
+**Stappen in Azure Portal:**
+
+1. Ga naar **Azure Portal** > **Microsoft Entra ID** > **App registrations**
+2. Klik **New registration**
+3. Geef de app een naam (bijv. "Ambulance Planning BWZK")
+4. Kies "Single tenant" of "Multitenant" (afhankelijk van uw organisatie)
+5. Voeg een **Redirect URI** toe: `https://[uw-domein]/api/azure-ad/callback`
+6. Na aanmaken: kopieer de **Application (client) ID** en **Directory (tenant) ID**
+7. Ga naar **Certificates & secrets** > **New client secret**
+8. Kopieer de secret value (deze wordt maar één keer getoond!)
+
+**Configureren in Planningsysteem:**
+
+1. Ga naar **Integraties** in het hoofdmenu
+2. Klik op de "Microsoft Entra ID" kaart
+3. Klik op **"Configureren"**
+4. Vul de Directory (tenant) ID, Application (client) ID en Client Secret in
+5. Schakel **"Microsoft Login Inschakelen"** aan
+6. Klik op **"Configuratie Opslaan"**
+
+#### Beveiliging
+
+- 🔐 **OAuth 2.0**: Industriestandaard beveiligingsprotocol
+- 🔒 **Encrypted Storage**: Client secrets worden versleuteld opgeslagen
+- 📋 **Activity Logging**: Alle Azure AD logins worden gelogd
+- 👤 **Geen Auto-Create**: Alleen bestaande gebruikers kunnen inloggen
+
+#### Veelgestelde Vragen
+
+**V: Kan ik nog steeds met gebruikersnaam/wachtwoord inloggen?**
+A: Ja, de normale login blijft altijd beschikbaar. Microsoft login is een extra optie.
+
+**V: Wat als mijn Microsoft e-mail niet overeenkomt met mijn account?**
+A: U ziet een foutmelding. Vraag uw beheerder om uw e-mailadres aan te passen in het systeem.
+
+**V: Werkt dit ook voor viewer accounts?**
+A: Viewer accounts zijn bedoeld voor kiosk/display schermen en loggen meestal in met gebruikersnaam/wachtwoord.
+
+**V: Kan ik gebruikers automatisch laten aanmaken?**
+A: Nee, voor veiligheidsredenen moeten gebruikers eerst handmatig worden aangemaakt. Dit voorkomt onbedoelde toegang.
+
+---
 
 #### Over Integraties
 

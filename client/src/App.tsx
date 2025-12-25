@@ -36,6 +36,7 @@ const PushNotifications = lazy(() => import("@/pages/push-notifications"));
 const Manual = lazy(() => import("@/pages/manual"));
 const Pricing = lazy(() => import("@/pages/pricing"));
 const Kiosk = lazy(() => import("@/pages/kiosk"));
+const AzureAdSettings = lazy(() => import("@/pages/azure-ad-settings"));
 
 // Loading component for Suspense boundaries
 function PageLoader() {
@@ -79,10 +80,12 @@ function Router() {
         <ProtectedRoute path="/activity-logs" component={ActivityLogs} allowedRoles={[...ADMIN_ROLES]} />
         <ProtectedRoute path="/stations" component={Stations} allowedRoles={[...ADMIN_ROLES]} />
         <ProtectedRoute path="/push-notifications" component={PushNotifications} allowedRoles={[...ADMIN_ROLES]} />
+        <ProtectedRoute path="/azure-ad-settings" component={AzureAdSettings} allowedRoles={["supervisor"]} />
         
         {/* Public routes */}
         <Route path="/station-select" component={StationSelect} />
         <Route path="/auth" component={AuthPage} />
+        <Route path="/login" component={AuthPage} />
         <Route path="/forgot-password" component={ForgotPassword} />
         <Route path="/reset-password" component={ResetPassword} />
         <Route path="/pricing" component={Pricing} />
