@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, BookOpen, Search } from "lucide-react";
+import { Loader2, ArrowLeft, BookOpen, Search, ChevronUp, ChevronDown, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 
 function slugify(text: string): string {
   return text
@@ -18,11 +18,48 @@ function slugify(text: string): string {
 export default function Manual() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [totalMatches, setTotalMatches] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading, error } = useQuery<{ content: string }>({
     queryKey: ["/api/manual"],
   });
+
+  const scrollToMatch = useCallback((index: number) => {
+    if (!contentRef.current) return;
+    const marks = contentRef.current.querySelectorAll('mark[data-search-match]');
+    if (marks.length === 0) return;
+    
+    marks.forEach((mark, i) => {
+      if (i === index) {
+        mark.classList.add('ring-2', 'ring-orange-500', 'ring-offset-1');
+        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        mark.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-1');
+      }
+    });
+  }, []);
+
+  const goToNextMatch = useCallback(() => {
+    if (totalMatches === 0) return;
+    const nextIndex = (currentMatchIndex + 1) % totalMatches;
+    setCurrentMatchIndex(nextIndex);
+    scrollToMatch(nextIndex);
+  }, [currentMatchIndex, totalMatches, scrollToMatch]);
+
+  const goToPreviousMatch = useCallback(() => {
+    if (totalMatches === 0) return;
+    const prevIndex = (currentMatchIndex - 1 + totalMatches) % totalMatches;
+    setCurrentMatchIndex(prevIndex);
+    scrollToMatch(prevIndex);
+  }, [currentMatchIndex, totalMatches, scrollToMatch]);
+
+  const clearSearch = useCallback(() => {
+    setSearchQuery("");
+    setCurrentMatchIndex(0);
+    setTotalMatches(0);
+  }, []);
 
   const processedContent = useMemo(() => {
     if (!data?.content) return "";
@@ -60,11 +97,31 @@ export default function Manual() {
     if (searchQuery.trim()) {
       const query = searchQuery.trim().toLowerCase();
       const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-      content = content.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">$1</mark>');
+      content = content.replace(regex, '<mark data-search-match class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded transition-all">$1</mark>');
     }
 
     return content;
   }, [data?.content, searchQuery]);
+
+  useEffect(() => {
+    if (!contentRef.current || !searchQuery.trim()) {
+      setTotalMatches(0);
+      setCurrentMatchIndex(0);
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      const marks = contentRef.current?.querySelectorAll('mark[data-search-match]');
+      const count = marks?.length || 0;
+      setTotalMatches(count);
+      setCurrentMatchIndex(0);
+      if (count > 0) {
+        scrollToMatch(0);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [processedContent, searchQuery, scrollToMatch]);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -125,14 +182,56 @@ export default function Manual() {
           <BookOpen className="h-5 w-5 text-primary" />
           <h1 className="text-xl font-semibold">Handleiding</h1>
         </div>
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Zoeken in handleiding..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Zoeken in handleiding..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-8"
+            />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {searchQuery.trim() && (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground whitespace-nowrap">
+              <span className="hidden sm:inline">
+                {totalMatches > 0 ? `${currentMatchIndex + 1} van ${totalMatches}` : 'Geen resultaten'}
+              </span>
+              <span className="sm:hidden">
+                {totalMatches > 0 ? `${currentMatchIndex + 1}/${totalMatches}` : '0'}
+              </span>
+              <div className="flex gap-0.5">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={goToPreviousMatch}
+                  disabled={totalMatches === 0}
+                  title="Vorige resultaat"
+                >
+                  <ChevronUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={goToNextMatch}
+                  disabled={totalMatches === 0}
+                  title="Volgende resultaat"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
