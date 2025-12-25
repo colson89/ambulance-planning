@@ -106,9 +106,15 @@ export default function Dashboard() {
     if (isFullscreen) {
       const currentMonth = selectedMonth;
       const currentYear = selectedYear;
+      const nextM = currentMonth === 11 ? 0 : currentMonth + 1;
+      const nextY = currentMonth === 11 ? currentYear + 1 : currentYear;
       const interval = setInterval(() => {
+        // Refresh both current and next month in kiosk mode
         queryClient.invalidateQueries({ 
           queryKey: ["/api/shifts", currentMonth + 1, currentYear] 
+        });
+        queryClient.invalidateQueries({ 
+          queryKey: ["/api/shifts", nextM + 1, nextY] 
         });
       }, 60000);
       return () => clearInterval(interval);
@@ -123,6 +129,41 @@ export default function Dashboard() {
       return res.json();
     },
   });
+  
+  // For kiosk mode: compute month/year based on current time, not selected month
+  // This ensures the rolling 14-day view always works even if kiosk runs for weeks
+  const kioskNow = new Date();
+  const kioskCurrentMonth = kioskNow.getMonth();
+  const kioskCurrentYear = kioskNow.getFullYear();
+  const kioskNextMonth = kioskCurrentMonth === 11 ? 0 : kioskCurrentMonth + 1;
+  const kioskNextYear = kioskCurrentMonth === 11 ? kioskCurrentYear + 1 : kioskCurrentYear;
+  
+  // Kiosk: fetch current month based on real time (may differ from selectedMonth if kiosk ran overnight)
+  const { data: kioskCurrentMonthShifts = [] } = useQuery<Shift[]>({
+    queryKey: ["/api/shifts", kioskCurrentMonth + 1, kioskCurrentYear, "kiosk"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/shifts?month=${kioskCurrentMonth + 1}&year=${kioskCurrentYear}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: isFullscreen,
+    refetchInterval: 60000, // Auto-refresh every 60 seconds
+  });
+  
+  // Kiosk: fetch next month based on real time
+  const { data: kioskNextMonthShifts = [] } = useQuery<Shift[]>({
+    queryKey: ["/api/shifts", kioskNextMonth + 1, kioskNextYear, "kiosk"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/shifts?month=${kioskNextMonth + 1}&year=${kioskNextYear}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: isFullscreen,
+    refetchInterval: 60000, // Auto-refresh every 60 seconds
+  });
+  
+  // Combined shifts for kiosk mode (current + next month based on real time)
+  const allShiftsForKiosk = isFullscreen ? [...kioskCurrentMonthShifts, ...kioskNextMonthShifts] : shifts;
   
   // Use /api/users/colleagues which works for ALL users (including ambulanciers)
   // This returns limited but sufficient data for displaying colleague names
@@ -599,115 +640,186 @@ export default function Dashboard() {
   
   // Fullscreen mode for viewers (Lumaps display)
   if (isFullscreen) {
+    // Get current time for active shift detection
+    const now = new Date();
+    const currentHourMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    // Helper function to check if a shift is currently active
+    const isShiftActive = (shift: typeof filteredShifts[0]) => {
+      if (!shift.startTime || !shift.endTime) return false;
+      
+      const shiftDate = format(new Date(shift.date), "yyyy-MM-dd");
+      const todayDate = format(now, "yyyy-MM-dd");
+      const yesterdayDate = format(new Date(now.getTime() - 24 * 60 * 60 * 1000), "yyyy-MM-dd");
+      
+      const startHour = new Date(shift.startTime).getUTCHours();
+      const endHour = new Date(shift.endTime).getUTCHours();
+      
+      // Night shifts span two days (19:00-07:00)
+      if (shift.type === "night") {
+        // Night shift starts evening of shift.date and ends morning of next day
+        if (shiftDate === todayDate) {
+          // Shift starts today evening - active if current time >= start hour
+          const startMinutes = startHour * 60;
+          return currentHourMinutes >= startMinutes;
+        } else if (shiftDate === yesterdayDate) {
+          // Shift started yesterday evening - active if current time < end hour
+          const endMinutes = endHour * 60;
+          return currentHourMinutes < endMinutes;
+        }
+        return false;
+      } else {
+        // Day shift is on the same day
+        if (shiftDate !== todayDate) return false;
+        const startMinutes = startHour * 60;
+        const endMinutes = endHour * 60;
+        return currentHourMinutes >= startMinutes && currentHourMinutes < endMinutes;
+      }
+    };
+    
+    // Kiosk mode: show shifts from today for the next 14 days (rolling view across month/year boundaries)
+    const kioskStartDate = new Date();
+    kioskStartDate.setHours(0, 0, 0, 0);
+    const kioskEndDate = new Date(kioskStartDate);
+    kioskEndDate.setDate(kioskEndDate.getDate() + 14);
+    
+    // Also include night shifts from yesterday that might still be active
+    const kioskStartWithYesterday = new Date(kioskStartDate);
+    kioskStartWithYesterday.setDate(kioskStartWithYesterday.getDate() - 1);
+    
+    const kioskShifts = (allShiftsForKiosk || []).filter(shift => {
+      const shiftDate = new Date(shift.date);
+      shiftDate.setHours(0, 0, 0, 0);
+      return shiftDate >= kioskStartWithYesterday && shiftDate < kioskEndDate;
+    });
+    
+    // Track the first shift of today for auto-scroll
+    let firstTodayShiftFound = false;
+    
     return (
-      <div className="fixed inset-0 bg-background z-50 overflow-auto p-4">
-        {/* Fullscreen header with exit button */}
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold">Planning {stations.find(s => s.id === (kioskStationId || user?.stationId))?.displayName || ''}</h1>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={prevMonth}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium min-w-[100px] text-center">
-                {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
+      <div className="fixed inset-0 bg-background z-50 overflow-auto">
+        {/* Sticky header with station name - always visible */}
+        <div className="sticky top-0 z-10 bg-background border-b px-4 py-3 shadow-sm">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-bold">Planning {stations.find(s => s.id === (kioskStationId || user?.stationId))?.displayName || ''}</h1>
+              <span className="text-sm text-muted-foreground">
+                Komende 14 dagen
               </span>
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={goToNextMonth}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
             </div>
+            <Button variant="outline" size="sm" onClick={() => setIsFullscreen(false)}>
+              <Minimize2 className="h-4 w-4 mr-2" />
+              Sluiten
+            </Button>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setIsFullscreen(false)}>
-            <Minimize2 className="h-4 w-4 mr-2" />
-            Sluiten
-          </Button>
         </div>
         
         {/* Full calendar view */}
-        <div className="bg-card rounded-lg border">
-          {filteredShifts.length === 0 ? (
-            <div className="text-center p-8 text-muted-foreground">
-              Geen shifts gevonden voor {format(new Date(selectedYear, selectedMonth), "MMMM yyyy", { locale: nl })}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Datum</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Tijd</TableHead>
-                  <TableHead>Medewerker</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredShifts
-                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                  .map((shift) => {
-                    const shiftUser = colleagues.find(u => u.id === shift.userId);
-                    const isToday = format(new Date(shift.date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
-                    
-                    const getShiftTime = () => {
-                      if (!shift.startTime || !shift.endTime) return "-";
-                      const startHour = new Date(shift.startTime).getUTCHours();
-                      const endHour = new Date(shift.endTime).getUTCHours();
-                      
-                      if (shift.type === "night") {
-                        if (shift.isSplitShift) {
-                          if (startHour === 19 && endHour === 23) return "19:00-23:00";
-                          else if (startHour === 23 && endHour === 7) return "23:00-07:00";
-                          else return `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
-                        }
-                        return "19:00-07:00";
-                      } else {
-                        if (shift.isSplitShift) {
-                          if (startHour === 7 && endHour === 13) return "07:00-13:00";
-                          else if (startHour === 13 && endHour === 19) return "13:00-19:00";
-                          else return `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
-                        }
-                        return "07:00-19:00";
+        <div className="p-4">
+          <div className="bg-card rounded-lg border">
+            {kioskShifts.length === 0 ? (
+              <div className="text-center p-8 text-muted-foreground">
+                Geen shifts gevonden voor de komende 14 dagen
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Datum</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Tijd</TableHead>
+                    <TableHead>Medewerker</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {kioskShifts
+                    .sort((a, b) => {
+                      // Sort by date, then by type (day before night)
+                      const dateCompare = new Date(a.date).getTime() - new Date(b.date).getTime();
+                      if (dateCompare !== 0) return dateCompare;
+                      return a.type === 'day' ? -1 : 1;
+                    })
+                    .filter(shift => {
+                      // Filter out yesterday's shifts that are no longer active
+                      const shiftDate = format(new Date(shift.date), "yyyy-MM-dd");
+                      const yesterdayDate = format(new Date(now.getTime() - 24 * 60 * 60 * 1000), "yyyy-MM-dd");
+                      if (shiftDate === yesterdayDate) {
+                        return isShiftActive(shift);
                       }
-                    };
+                      return true;
+                    })
+                    .map((shift) => {
+                      const shiftUser = colleagues.find(u => u.id === shift.userId);
+                      const isToday = format(new Date(shift.date), "yyyy-MM-dd") === format(now, "yyyy-MM-dd");
+                      const isActive = isShiftActive(shift);
+                      
+                      // For auto-scroll: mark the first shift of today
+                      const isTodayScrollTarget = isToday && !firstTodayShiftFound;
+                      if (isTodayScrollTarget) firstTodayShiftFound = true;
+                      
+                      const getShiftTime = () => {
+                        if (!shift.startTime || !shift.endTime) return "-";
+                        const startHour = new Date(shift.startTime).getUTCHours();
+                        const endHour = new Date(shift.endTime).getUTCHours();
+                        
+                        if (shift.type === "night") {
+                          if (shift.isSplitShift) {
+                            if (startHour === 19 && endHour === 23) return "19:00-23:00";
+                            else if (startHour === 23 && endHour === 7) return "23:00-07:00";
+                            else return `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
+                          }
+                          return "19:00-07:00";
+                        } else {
+                          if (shift.isSplitShift) {
+                            if (startHour === 7 && endHour === 13) return "07:00-13:00";
+                            else if (startHour === 13 && endHour === 19) return "13:00-19:00";
+                            else return `${startHour.toString().padStart(2, '0')}:00-${endHour.toString().padStart(2, '0')}:00`;
+                          }
+                          return "07:00-19:00";
+                        }
+                      };
 
-                    return (
-                      <TableRow 
-                        key={shift.id}
-                        id={isToday ? 'today-shift-row' : undefined}
-                        className={`${shift.status === "open" ? "bg-red-50" : ""} ${isToday ? "bg-yellow-50 font-semibold" : ""}`}
-                      >
-                        <TableCell className="font-medium">
-                          {format(new Date(shift.date), "EEE d MMM", { locale: nl })}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={shift.type === "night" ? "secondary" : "default"}>
-                            {shift.type === "day" ? "Dag" : "Nacht"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{getShiftTime()}</TableCell>
-                        <TableCell>
-                          {shift.status === "open" ? (
-                            <span className="text-red-600 font-medium">Open</span>
-                          ) : (
-                            shiftUser ? `${shiftUser.firstName} ${shiftUser.lastName}` : '-'
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {shift.status === "planned" ? (
-                            <Badge variant="outline" className="bg-green-50 text-green-700">Gepland</Badge>
-                          ) : (
-                            <Badge variant="destructive">Open</Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-              </TableBody>
-            </Table>
-          )}
+                      return (
+                        <TableRow 
+                          key={shift.id}
+                          id={isTodayScrollTarget ? 'today-shift-row' : undefined}
+                          className={`${shift.status === "open" ? "bg-red-50 dark:bg-red-950" : ""} ${isActive ? "bg-yellow-100 dark:bg-yellow-900 font-semibold" : ""}`}
+                        >
+                          <TableCell className="font-medium">
+                            {format(new Date(shift.date), "EEE d MMM", { locale: nl })}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={shift.type === "night" ? "secondary" : "default"}>
+                              {shift.type === "day" ? "Dag" : "Nacht"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{getShiftTime()}</TableCell>
+                          <TableCell>
+                            {shift.status === "open" ? (
+                              <span className="text-red-600 dark:text-red-400 font-medium">Open</span>
+                            ) : (
+                              shiftUser ? `${shiftUser.firstName} ${shiftUser.lastName}` : '-'
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {shift.status === "planned" ? (
+                              <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300">Gepland</Badge>
+                            ) : (
+                              <Badge variant="destructive">Open</Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            )}
+          </div>
         </div>
         
         {/* Auto-refresh indicator */}
-        <div className="text-center text-xs text-muted-foreground mt-4">
+        <div className="text-center text-xs text-muted-foreground py-4">
           Automatische verversing elke 60 seconden
         </div>
       </div>
