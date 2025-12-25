@@ -756,10 +756,19 @@ export default function Integrations() {
                         ))
                       )}
                     </div>
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <p className="text-sm text-amber-800">
+                        <strong>Belangrijk:</strong> Om de kiosk link te laten werken, moet er voor elk station een <strong>viewer account</strong> bestaan. 
+                        De kiosk link logt automatisch in met dit viewer account.
+                      </p>
+                      <p className="text-xs text-amber-700 mt-2">
+                        Stappen: 1) Maak eerst een viewer account aan voor het station (via Gebruikersbeheer) → 2) Genereer de kiosk link
+                      </p>
+                    </div>
+                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-sm text-blue-800">
                         <strong>Tip:</strong> Gebruik deze links op display schermen (Lumaps) om automatisch het rooster te tonen.
-                        De link logt automatisch in en toont het dashboard in volledig scherm.
+                        De link toont het dashboard in volledig scherm met de correcte stationnaam.
                       </p>
                     </div>
                   </DialogContent>
@@ -891,6 +900,18 @@ export default function Integrations() {
                       </div>
                     </div>
                   )}
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-slate-100 rounded-lg shrink-0">
+                        <Monitor className="h-5 w-5 text-slate-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Kiosk/Display Modus</p>
+                        <p className="text-sm text-gray-600">Genereer speciale links voor display schermen (Lumaps) die automatisch het rooster tonen in fullscreen modus.</p>
+                        <p className="text-xs text-gray-500 mt-1">Vereist: Viewer account per station (rol: Viewer). Maak eerst het viewer account aan, genereer dan de kiosk link.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -1023,6 +1044,15 @@ export default function Integrations() {
                 <ul className="text-sm text-gray-600 mt-1 list-disc list-inside">
                   <li>SMTP moet eerst geconfigureerd zijn via Reportage</li>
                   <li>Alleen supervisors kunnen deze functie beheren</li>
+                </ul>
+              </div>
+              <div className="p-3 bg-white rounded-lg border border-red-200">
+                <p className="font-medium text-gray-900">Kiosk link toont verkeerd station of lege pagina</p>
+                <ul className="text-sm text-gray-600 mt-1 list-disc list-inside">
+                  <li>Er moet een <strong>viewer account</strong> bestaan voor dat station</li>
+                  <li>Maak eerst een gebruiker aan met rol "Viewer" voor het juiste station</li>
+                  <li>Genereer daarna pas de kiosk link via Integraties</li>
+                  <li>Zonder viewer account wordt de planning niet correct getoond</li>
                 </ul>
               </div>
             </CardContent>
