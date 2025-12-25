@@ -326,6 +326,7 @@ export async function getActivityLogsCount(params: Omit<GetActivityLogsParams, '
 export const ActivityActions = {
   LOGIN: {
     SUCCESSFUL: "Succesvol ingelogd",
+    SUCCESS: "Succesvol ingelogd",
     FAILED: "Inlogpoging mislukt",
     BLOCKED: "Inlogpoging geblokkeerd (rate limit)",
   },
@@ -424,5 +425,10 @@ export const ActivityActions = {
   },
   CALENDAR: {
     TOKEN_REGENERATED: "Kalender token vernieuwd",
+  },
+  INTEGRATION: {
+    AZURE_AD_CONFIGURED: "Azure AD configuratie gewijzigd",
+    AZURE_AD_ENABLED: "Azure AD ingeschakeld",
+    AZURE_AD_DISABLED: "Azure AD uitgeschakeld",
   },
 } as const;

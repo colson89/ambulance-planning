@@ -11023,6 +11023,178 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // =====================
+  // Azure AD Integration API
+  // =====================
+
+  const azureAd = await import('./azure-ad');
+
+  // Get Azure AD status (public endpoint for login page)
+  app.get("/api/azure-ad/status", async (req, res) => {
+    try {
+      const status = await azureAd.getAzureAdConfigForClient();
+      res.json(status);
+    } catch (error: any) {
+      console.error("Error getting Azure AD status:", error);
+      res.status(500).json({ message: "Failed to get Azure AD status" });
+    }
+  });
+
+  // Get Azure AD configuration (supervisors only)
+  app.get("/api/azure-ad/config", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Alleen supervisors kunnen Azure AD configureren" });
+    }
+
+    try {
+      const config = await storage.getAzureAdConfig();
+      res.json({
+        enabled: config?.enabled ?? false,
+        tenantId: config?.tenantId || '',
+        clientId: config?.clientId || '',
+        hasClientSecret: !!config?.clientSecretEncrypted,
+        redirectUri: config?.redirectUri || '',
+        configured: !!(config?.tenantId && config?.clientId && config?.clientSecretEncrypted)
+      });
+    } catch (error: any) {
+      console.error("Error getting Azure AD config:", error);
+      res.status(500).json({ message: "Failed to get Azure AD config" });
+    }
+  });
+
+  // Save Azure AD configuration (supervisors only)
+  app.put("/api/azure-ad/config", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).send("Niet geautoriseerd");
+    }
+    if (req.user.role !== 'supervisor') {
+      return res.status(403).json({ message: "Alleen supervisors kunnen Azure AD configureren" });
+    }
+
+    try {
+      const user = req.user;
+      const { enabled, tenantId, clientId, clientSecret, redirectUri } = req.body;
+
+      const updateData: any = {
+        enabled: enabled ?? false,
+        tenantId: tenantId || null,
+        clientId: clientId || null,
+        redirectUri: redirectUri || null
+      };
+
+      // Only update client secret if provided
+      if (clientSecret !== undefined && clientSecret !== '') {
+        if (!isEncryptionAvailable()) {
+          return res.status(500).json({
+            message: "Client secret kan niet worden opgeslagen - SESSION_SECRET is niet geconfigureerd op de server."
+          });
+        }
+        updateData.clientSecretEncrypted = encryptPassword(clientSecret);
+      }
+
+      await storage.createOrUpdateAzureAdConfig(updateData);
+
+      // Log activity
+      await logActivity({
+        userId: user.id,
+        stationId: user.stationId,
+        action: ActivityActions.INTEGRATION.AZURE_AD_CONFIGURED,
+        category: 'INTEGRATION',
+        details: `Azure AD configuratie ${enabled ? 'ingeschakeld' : 'uitgeschakeld'}`,
+        ipAddress: getClientInfo(req).ipAddress,
+        userAgent: getClientInfo(req).userAgent
+      }).catch(err => console.error('Error logging Azure AD config update:', err));
+
+      res.json({ message: "Azure AD configuratie opgeslagen" });
+    } catch (error: any) {
+      console.error("Error saving Azure AD config:", error);
+      res.status(500).json({ message: "Failed to save Azure AD config" });
+    }
+  });
+
+  // Azure AD OAuth login redirect
+  app.get("/api/azure-ad/login", async (req, res) => {
+    try {
+      const config = await storage.getAzureAdConfig();
+      if (!config || !config.enabled) {
+        return res.status(400).json({ message: "Azure AD login is niet ingeschakeld" });
+      }
+
+      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+      const redirectUri = `${baseUrl}/api/azure-ad/callback`;
+
+      const authUrl = await azureAd.getAuthorizationUrl(redirectUri);
+      if (!authUrl) {
+        return res.status(500).json({ message: "Kon Azure AD login niet starten" });
+      }
+
+      res.redirect(authUrl);
+    } catch (error: any) {
+      console.error("Error starting Azure AD login:", error);
+      res.status(500).json({ message: "Failed to start Azure AD login" });
+    }
+  });
+
+  // Azure AD OAuth callback
+  app.get("/api/azure-ad/callback", async (req, res) => {
+    try {
+      const { code, error: oauthError, error_description } = req.query;
+
+      if (oauthError) {
+        console.error("Azure AD OAuth error:", oauthError, error_description);
+        return res.redirect(`/login?error=azure_auth_failed&message=${encodeURIComponent(String(error_description || 'Authenticatie mislukt'))}`);
+      }
+
+      if (!code || typeof code !== 'string') {
+        return res.redirect('/login?error=azure_no_code&message=Geen%20authenticatiecode%20ontvangen');
+      }
+
+      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+      const redirectUri = `${baseUrl}/api/azure-ad/callback`;
+
+      const userInfo = await azureAd.handleCallback(code, redirectUri);
+      if (!userInfo) {
+        return res.redirect('/login?error=azure_callback_failed&message=Kon%20gebruikersgegevens%20niet%20ophalen');
+      }
+
+      // Try to find user by email
+      const email = userInfo.mail || userInfo.userPrincipalName;
+      const existingUser = await storage.getUserByEmail(email);
+
+      if (!existingUser) {
+        console.log(`Azure AD login attempt for unknown email: ${email}`);
+        return res.redirect(`/login?error=azure_user_not_found&message=${encodeURIComponent(`Geen account gevonden voor ${email}. Neem contact op met uw beheerder.`)}`);
+      }
+
+      // Log the user in using Passport
+      req.login(existingUser, async (loginErr) => {
+        if (loginErr) {
+          console.error("Failed to log in user after Azure AD auth:", loginErr);
+          return res.redirect('/login?error=azure_login_failed&message=Inloggen%20mislukt');
+        }
+
+        // Log activity
+        await logActivity({
+          userId: existingUser.id,
+          stationId: existingUser.stationId,
+          action: ActivityActions.LOGIN.SUCCESS,
+          category: 'LOGIN',
+          details: `Ingelogd via Azure AD (${email})`,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        }).catch(err => console.error('Error logging Azure AD login:', err));
+
+        res.redirect('/dashboard');
+      });
+    } catch (error: any) {
+      console.error("Error handling Azure AD callback:", error);
+      res.redirect('/login?error=azure_error&message=Er%20is%20een%20fout%20opgetreden');
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

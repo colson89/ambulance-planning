@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, userStationNotificationPreferences, reportageConfig, reportageRecipients, reportageLogs, welcomeEmailConfig, overtime, stationSettings, shiftSwapRequests, shiftSwapOffers, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type UserStationNotificationPreference, type InsertUserStationNotificationPreference, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type WelcomeEmailConfig, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftSwapOffer, type InsertShiftSwapOffer, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, userStationNotificationPreferences, reportageConfig, reportageRecipients, reportageLogs, welcomeEmailConfig, overtime, stationSettings, shiftSwapRequests, shiftSwapOffers, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, azureAdConfig, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type UserStationNotificationPreference, type InsertUserStationNotificationPreference, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type WelcomeEmailConfig, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftSwapOffer, type InsertShiftSwapOffer, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod, type AzureAdConfig } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -467,6 +467,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   }
 
@@ -5735,6 +5740,42 @@ export class DatabaseStorage implements IStorage {
         eq(userStationNotificationPreferences[notificationType], true)
       ));
     return prefs.map(p => p.userId);
+  }
+
+  // Azure AD Configuration Methods
+  async getAzureAdConfig(): Promise<AzureAdConfig | null> {
+    const result = await db.select().from(azureAdConfig).limit(1);
+    return result[0] || null;
+  }
+
+  async createOrUpdateAzureAdConfig(config: Partial<AzureAdConfig>): Promise<AzureAdConfig> {
+    const existing = await this.getAzureAdConfig();
+    if (existing) {
+      const result = await db
+        .update(azureAdConfig)
+        .set({ ...config, updatedAt: new Date() })
+        .where(eq(azureAdConfig.id, existing.id))
+        .returning();
+      return result[0];
+    }
+    const result = await db.insert(azureAdConfig).values({
+      enabled: config.enabled ?? false,
+      tenantId: config.tenantId,
+      clientId: config.clientId,
+      clientSecretEncrypted: config.clientSecretEncrypted,
+      redirectUri: config.redirectUri
+    }).returning();
+    return result[0];
+  }
+
+  async setAzureAdEnabled(enabled: boolean): Promise<void> {
+    const existing = await this.getAzureAdConfig();
+    if (existing) {
+      await db
+        .update(azureAdConfig)
+        .set({ enabled, updatedAt: new Date() })
+        .where(eq(azureAdConfig.id, existing.id));
+    }
   }
 }
 
