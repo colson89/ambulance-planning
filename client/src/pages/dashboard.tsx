@@ -62,6 +62,13 @@ export default function Dashboard() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('fullscreen') === 'true';
   });
+  
+  // Get station ID from URL parameter for fullscreen/kiosk mode
+  const [kioskStationId, setKioskStationId] = useState<number | null>(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const stationParam = urlParams.get('station');
+    return stationParam ? parseInt(stationParam, 10) : null;
+  });
 
   // Persist "only my shifts" preference
   useEffect(() => {
@@ -597,7 +604,7 @@ export default function Dashboard() {
         {/* Fullscreen header with exit button */}
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold">Planning {stations.find(s => s.id === user?.stationId)?.displayName || ''}</h1>
+            <h1 className="text-xl font-bold">Planning {stations.find(s => s.id === (kioskStationId || user?.stationId))?.displayName || ''}</h1>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={prevMonth}>
                 <ChevronLeft className="h-4 w-4" />
