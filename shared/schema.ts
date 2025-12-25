@@ -780,3 +780,23 @@ export const insertPlanningPeriodSchema = createInsertSchema(planningPeriods).om
 });
 export type PlanningPeriod = typeof planningPeriods.$inferSelect;
 export type InsertPlanningPeriod = z.infer<typeof insertPlanningPeriodSchema>;
+
+// Azure AD Configuration - globale configuratie voor Microsoft/Azure AD login
+export const azureAdConfig = pgTable("azure_ad_config", {
+  id: serial("id").primaryKey(),
+  enabled: boolean("enabled").notNull().default(false),
+  tenantId: text("tenant_id"), // Azure AD Tenant ID (Directory ID)
+  clientId: text("client_id"), // Application (Client) ID
+  clientSecretEncrypted: text("client_secret_encrypted"), // Encrypted Client Secret
+  redirectUri: text("redirect_uri"), // OAuth Redirect URI
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertAzureAdConfigSchema = createInsertSchema(azureAdConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type AzureAdConfig = typeof azureAdConfig.$inferSelect;
+export type InsertAzureAdConfig = z.infer<typeof insertAzureAdConfigSchema>;
