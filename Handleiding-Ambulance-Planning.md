@@ -1157,11 +1157,13 @@ De Display Link is een speciale URL waarmee een viewer account automatisch wordt
 
 - ✅ **Automatische login**: Geen wachtwoord nodig via de speciale link
 - ✅ **Fullscreen weergave**: Geen navigatiebalk, alleen de planning
-- ✅ **Station naam in titel**: Toont "Planning ZW Geel" of ander station
-- ✅ **Auto-verversing**: Elke 60 seconden wordt de pagina automatisch ververst
+- ✅ **Sticky header met stationnaam**: De titel "Planning ZW Geel" (of ander station) blijft altijd zichtbaar bovenaan het scherm, ook bij scrollen
+- ✅ **Rolling 14-dagen weergave**: Toont altijd de komende 14 dagen, ongeacht maand- of jaarwisselingen (bijv. 31 december toont ook 1-14 januari)
+- ✅ **Auto-verversing**: Elke 60 seconden wordt de data automatisch ververst
 - ✅ **Scroll naar vandaag**: De pagina scrollt automatisch naar de huidige dag
 - ✅ **Alle shifts zichtbaar**: Toont alle shifts van het station (niet alleen "eigen" shifts)
-- ✅ **Visuele markering**: Huidige dag geel gemarkeerd, open shifts rood weergegeven
+- ✅ **Actieve shift markering**: Alleen de shift die op dit moment actief is wordt geel gemarkeerd (niet de hele dag). Dagshift 07:00-19:00 is geel tijdens die uren, nachtshift 19:00-07:00 is geel 's avonds en 's nachts
+- ✅ **Open shifts rood**: Shifts zonder toegewezen medewerker worden rood weergegeven
 
 #### Display Links Beheren (Admin/Supervisor)
 
@@ -1220,8 +1222,10 @@ Viewers kunnen hun eigen link bekijken (alleen-lezen) in hun profiel:
 
 **Testen:**
 - Bekijk het display om te verifiëren dat de planning correct wordt weergegeven
-- De huidige dag moet geel gemarkeerd zijn
+- Alleen de actieve shift (die nu bezig is) moet geel gemarkeerd zijn
 - De planning moet automatisch naar vandaag scrollen
+- De stationnaam moet zichtbaar blijven in de sticky header bij scrollen
+- Controleer rond maandwisselingen dat de 14-dagen weergave correct doorloopt
 
 #### Weergave Details
 
