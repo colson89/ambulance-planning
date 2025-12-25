@@ -1167,6 +1167,15 @@ De Display Link is een speciale URL waarmee een viewer account automatisch wordt
 
 **Nieuw vanaf versie 2025.20**: Admins en supervisors kunnen nu station kiosk links beheren via de **Integraties** pagina. Dit maakt het onnodig om eerst in te loggen als viewer.
 
+**Belangrijk: Viewer Account Vereist**
+
+Om de kiosk link te laten werken, moet er voor het betreffende station een **viewer account** bestaan. De kiosk link logt automatisch in met dit viewer account.
+
+**Stappen om kiosk te activeren voor een station:**
+
+1. **Eerst**: Maak een viewer account aan voor het station (zie [Viewer Account Aanmaken voor Displays](#viewer-account-aanmaken-voor-displays))
+2. **Daarna**: Genereer de kiosk link via de Integraties pagina
+
 **Station Kiosk Links via Integraties:**
 1. Ga naar **Integraties** in het menu
 2. Klik op **Kiosk/Display Modus** → **Beheren**
@@ -1177,8 +1186,9 @@ De Display Link is een speciale URL waarmee een viewer account automatisch wordt
    - **Nieuwe link genereren**: Oude link wordt ongeldig, nieuwe wordt aangemaakt
    - **Link intrekken**: Verwijdert de link zodat deze niet meer werkt
 
+**Let op:** Als er geen viewer account voor een station is, zal de kiosk link niet correct werken. De planning wordt dan niet getoond.
+
 **Voordelen:**
-- ✅ Geen viewer account nodig om link te beheren
 - ✅ Supervisors zien alle stations in één overzicht
 - ✅ Admins zien hun eigen station(s)
 - ✅ Eenvoudig links vernieuwen of intrekken
