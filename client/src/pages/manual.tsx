@@ -173,65 +173,69 @@ export default function Manual() {
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-5xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <Button variant="outline" onClick={() => setLocation("/")}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Terug
-        </Button>
-        <div className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-semibold">Handleiding</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Zoeken in handleiding..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-8"
-            />
-            {searchQuery && (
-              <button
-                onClick={clearSearch}
-                className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b pb-4 mb-4 -mx-4 px-4 md:-mx-6 md:px-6 pt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={() => setLocation("/")}>
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Terug
+            </Button>
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" />
+              <h1 className="text-lg font-semibold hidden sm:block">Handleiding</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-1 sm:flex-none sm:justify-end">
+            <div className="relative flex-1 sm:flex-none sm:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Zoeken..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-8 h-9"
+              />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {searchQuery.trim() && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground whitespace-nowrap">
+                <span className="hidden md:inline">
+                  {totalMatches > 0 ? `${currentMatchIndex + 1} van ${totalMatches}` : 'Geen'}
+                </span>
+                <span className="md:hidden text-xs">
+                  {totalMatches > 0 ? `${currentMatchIndex + 1}/${totalMatches}` : '0'}
+                </span>
+                <div className="flex">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={goToPreviousMatch}
+                    disabled={totalMatches === 0}
+                    title="Vorige resultaat"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={goToNextMatch}
+                    disabled={totalMatches === 0}
+                    title="Volgende resultaat"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
-          {searchQuery.trim() && (
-            <div className="flex items-center gap-1 text-sm text-muted-foreground whitespace-nowrap">
-              <span className="hidden sm:inline">
-                {totalMatches > 0 ? `${currentMatchIndex + 1} van ${totalMatches}` : 'Geen resultaten'}
-              </span>
-              <span className="sm:hidden">
-                {totalMatches > 0 ? `${currentMatchIndex + 1}/${totalMatches}` : '0'}
-              </span>
-              <div className="flex gap-0.5">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={goToPreviousMatch}
-                  disabled={totalMatches === 0}
-                  title="Vorige resultaat"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={goToNextMatch}
-                  disabled={totalMatches === 0}
-                  title="Volgende resultaat"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
