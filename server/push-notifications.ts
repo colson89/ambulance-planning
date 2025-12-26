@@ -7,12 +7,22 @@ const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || '';
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || '';
 const vapidContact = process.env.VAPID_CONTACT_EMAIL || 'mailto:planning@brandweerzonekempen.be';
 
-if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(
-    vapidContact,
-    vapidPublicKey,
-    vapidPrivateKey
-  );
+let vapidConfigured = false;
+
+if (vapidPublicKey && vapidPrivateKey && vapidPublicKey.length > 50 && vapidPrivateKey.length > 30) {
+  try {
+    webpush.setVapidDetails(
+      vapidContact,
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+    vapidConfigured = true;
+    console.log('[Push] VAPID keys configured successfully');
+  } catch (error) {
+    console.warn('[Push] Invalid VAPID keys, push notifications disabled:', error instanceof Error ? error.message : 'Unknown error');
+  }
+} else {
+  console.warn('[Push] VAPID keys not configured or invalid length, push notifications disabled');
 }
 
 export interface PushNotificationPayload {
