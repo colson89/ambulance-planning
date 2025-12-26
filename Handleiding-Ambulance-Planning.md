@@ -4174,8 +4174,8 @@ node -e "const webpush = require('web-push'); const vapidKeys = webpush.generate
 
 **Output voorbeeld:**
 ```
-Public Key: BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U
-Private Key: UUxI4O8-FYa-qaBLPRCVp-oPj-8DJgWE3uqZ3D6F3nQ
+Public Key: [JOUW_GEGENEREERDE_PUBLIC_KEY]
+Private Key: [JOUW_GEGENEREERDE_PRIVATE_KEY]
 ```
 
 ### 2. Environment Variabelen Updaten
@@ -4183,8 +4183,8 @@ Private Key: UUxI4O8-FYa-qaBLPRCVp-oPj-8DJgWE3uqZ3D6F3nQ
 Open `.env` bestand en voeg de gegenereerde keys toe:
 
 ```env
-VAPID_PUBLIC_KEY=BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U
-VAPID_PRIVATE_KEY=UUxI4O8-FYa-qaBLPRCVp-oPj-8DJgWE3uqZ3D6F3nQ
+VAPID_PUBLIC_KEY=[JOUW_GEGENEREERDE_PUBLIC_KEY]
+VAPID_PRIVATE_KEY=[JOUW_GEGENEREERDE_PRIVATE_KEY]
 VAPID_CONTACT_EMAIL=admin@jouw-domein.nl
 ```
 
