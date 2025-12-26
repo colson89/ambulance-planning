@@ -4,11 +4,20 @@ if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = "development";
 }
 import express, { type Request, Response, NextFunction } from "express";
+import helmet from "helmet";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { checkAndNotifyDeadlines, checkAndSendShiftReminders } from "./push-notifications";
 
 const app = express();
+
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: false,
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
