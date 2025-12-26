@@ -124,6 +124,7 @@
     "bufferutil": "^4.0.8"
   },
   "overrides": {
-    "rollup": "^4.50.1"
+    "rollup": "^4.50.1",
+    "serialize-javascript": "^7.0.1"
   }
 }
