@@ -229,7 +229,9 @@ class ReportageScheduler {
         { header: 'Start', key: 'start', width: 10 },
         { header: 'Einde', key: 'end', width: 10 },
         { header: 'Split', key: 'split', width: 8 },
-        { header: 'Status', key: 'status', width: 12 }
+        { header: 'Status', key: 'status', width: 12 },
+        { header: 'Noodinplanning', key: 'emergency', width: 15 },
+        { header: 'Nood Reden', key: 'emergencyReason', width: 40 }
       ];
       
       sheet.getRow(1).font = { bold: true };
@@ -246,15 +248,31 @@ class ReportageScheduler {
       for (const shift of stationShifts) {
         const user = allUsers.find(u => u.id === shift.userId);
         
-        sheet.addRow({
+        const row = sheet.addRow({
           date: format(new Date(shift.date), 'dd-MM-yyyy'),
           user: user ? `${user.firstName} ${user.lastName}` : 'Onbekend',
           type: shift.type === 'day' ? 'Dag' : 'Nacht',
           start: format(new Date(shift.startTime), 'HH:mm'),
           end: format(new Date(shift.endTime), 'HH:mm'),
           split: shift.isSplitShift ? 'Ja' : 'Nee',
-          status: shift.status === 'planned' ? 'Gepland' : 'Open'
+          status: shift.status === 'planned' ? 'Gepland' : 'Open',
+          emergency: shift.isEmergencyScheduling ? 'Ja' : 'Nee',
+          emergencyReason: shift.emergencyReason || ''
         });
+        
+        // Highlight emergency scheduling rows with red background
+        if (shift.isEmergencyScheduling) {
+          row.eachCell((cell) => {
+            cell.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFC7CE' } // Light red background
+            };
+            cell.font = {
+              color: { argb: 'FF9C0006' } // Dark red text
+            };
+          });
+        }
       }
     }
     
