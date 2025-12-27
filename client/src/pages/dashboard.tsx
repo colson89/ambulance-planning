@@ -749,8 +749,15 @@ export default function Dashboard() {
                       }
                       return true;
                     })
-                    .map((shift) => {
-                      const shiftUser = colleagues.find(u => u.id === shift.userId);
+                    .map((shift: any) => {
+                      // For emergency assignments from other stations, use enriched data from API
+                      const localUser = colleagues.find(u => u.id === shift.userId);
+                      const shiftUser = localUser || (shift.emergencyAssignedUser ? {
+                        id: shift.emergencyAssignedUser.id,
+                        firstName: shift.emergencyAssignedUser.firstName,
+                        lastName: shift.emergencyAssignedUser.lastName,
+                        stationId: shift.emergencyAssignedUser.stationId
+                      } : null);
                       const isToday = format(new Date(shift.date), "yyyy-MM-dd") === format(now, "yyyy-MM-dd");
                       const isActive = isShiftActive(shift);
                       
@@ -796,15 +803,28 @@ export default function Dashboard() {
                           </TableCell>
                           <TableCell>{getShiftTime()}</TableCell>
                           <TableCell>
-                            {shift.status === "open" ? (
-                              <span className="text-red-600 dark:text-red-400 font-medium">Open</span>
-                            ) : (
-                              shiftUser ? `${shiftUser.firstName} ${shiftUser.lastName}` : '-'
-                            )}
+                            <div className="flex items-center gap-2">
+                              {shiftUser ? (
+                                <>
+                                  <span>{shiftUser.firstName} {shiftUser.lastName}</span>
+                                  {shift.isEmergencyScheduling && shift.emergencyAssignedUser && (
+                                    <Badge variant="outline" className="bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border-orange-300 text-xs">
+                                      Nood ({shift.emergencyAssignedUser.stationName})
+                                    </Badge>
+                                  )}
+                                </>
+                              ) : shift.status === "open" ? (
+                                <span className="text-red-600 dark:text-red-400 font-medium">Open</span>
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             {shift.status === "planned" ? (
                               <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300">Gepland</Badge>
+                            ) : shift.isEmergencyScheduling && shiftUser ? (
+                              <Badge variant="outline" className="bg-orange-50 dark:bg-orange-900 text-orange-700 dark:text-orange-300">Noodinplanning</Badge>
                             ) : (
                               <Badge variant="destructive">Open</Badge>
                             )}
@@ -1212,8 +1232,15 @@ export default function Dashboard() {
               <div className="md:hidden space-y-3 max-h-[500px] overflow-y-auto">
                 {filteredShifts
                   .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                  .map((shift) => {
-                    const shiftUser = colleagues.find(u => u.id === shift.userId);
+                  .map((shift: any) => {
+                    // For emergency assignments from other stations, use enriched data from API
+                    const localUser = colleagues.find(u => u.id === shift.userId);
+                    const shiftUser = localUser || (shift.emergencyAssignedUser ? {
+                      id: shift.emergencyAssignedUser.id,
+                      firstName: shift.emergencyAssignedUser.firstName,
+                      lastName: shift.emergencyAssignedUser.lastName,
+                      stationId: shift.emergencyAssignedUser.stationId
+                    } : null);
                     const isCurrentUserShift = shift.userId === user?.id;
                     
                     const getShiftTime = () => {
@@ -1271,19 +1298,30 @@ export default function Dashboard() {
                           </Badge>
                         </div>
                         <div className="mt-2 text-sm flex items-center justify-between">
-                          <div>
+                          <div className="flex items-center gap-2">
                             {shift.status === "open" ? (
                               <span className="text-red-500 font-medium">Niet ingevuld</span>
                             ) : shiftUser ? (
-                              <button
-                                className={`text-left hover:underline ${isCurrentUserShift ? "font-bold text-green-600" : ""}`}
-                                onClick={() => {
-                                  setSelectedContactUser(shiftUser);
-                                  setShowContactDialog(true);
-                                }}
-                              >
-                                {`${shiftUser.firstName} ${shiftUser.lastName}`}
-                              </button>
+                              <>
+                                <button
+                                  className={`text-left hover:underline ${isCurrentUserShift ? "font-bold text-green-600" : ""}`}
+                                  onClick={() => {
+                                    if (localUser) {
+                                      setSelectedContactUser(shiftUser);
+                                      setShowContactDialog(true);
+                                    }
+                                  }}
+                                  disabled={!localUser}
+                                  title={!localUser ? `${shiftUser.firstName} ${shiftUser.lastName} - ${shift.emergencyAssignedUser?.stationName || 'Ander station'}` : undefined}
+                                >
+                                  {`${shiftUser.firstName} ${shiftUser.lastName}`}
+                                </button>
+                                {shift.isEmergencyScheduling && shift.emergencyAssignedUser && (
+                                  <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
+                                    Nood ({shift.emergencyAssignedUser.stationName})
+                                  </Badge>
+                                )}
+                              </>
                             ) : (
                               <span className="text-muted-foreground">Onbekend</span>
                             )}
@@ -1382,8 +1420,15 @@ export default function Dashboard() {
                   <TableBody>
                     {filteredShifts
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                      .map((shift) => {
-                        const shiftUser = colleagues.find(u => u.id === shift.userId);
+                      .map((shift: any) => {
+                        // For emergency assignments from other stations, use enriched data from API
+                        const localUser = colleagues.find(u => u.id === shift.userId);
+                        const shiftUser = localUser || (shift.emergencyAssignedUser ? {
+                          id: shift.emergencyAssignedUser.id,
+                          firstName: shift.emergencyAssignedUser.firstName,
+                          lastName: shift.emergencyAssignedUser.lastName,
+                          stationId: shift.emergencyAssignedUser.stationId
+                        } : null);
                         const isCurrentUserShift = shift.userId === user?.id;
                         
                         const results = [];
@@ -1440,22 +1485,35 @@ export default function Dashboard() {
                               )}
                             </TableCell>
                             <TableCell>
-                              {shift.status === "open" ? (
-                                <span className="text-red-500 font-medium">Niet ingevuld</span>
-                              ) : shiftUser ? (
-                                <Button
-                                  variant="link"
-                                  className={`p-0 h-auto font-normal text-left hover:underline ${isCurrentUserShift ? "font-bold text-green-600" : ""}`}
-                                  onClick={() => {
-                                    setSelectedContactUser(shiftUser);
-                                    setShowContactDialog(true);
-                                  }}
-                                >
-                                  {`${shiftUser.firstName} ${shiftUser.lastName}`}
-                                </Button>
-                              ) : (
-                                <span>Onbekend</span>
-                              )}
+                              <div className="flex items-center gap-2">
+                                {shift.status === "open" ? (
+                                  <span className="text-red-500 font-medium">Niet ingevuld</span>
+                                ) : shiftUser ? (
+                                  <>
+                                    <Button
+                                      variant="link"
+                                      className={`p-0 h-auto font-normal text-left hover:underline ${isCurrentUserShift ? "font-bold text-green-600" : ""}`}
+                                      onClick={() => {
+                                        if (localUser) {
+                                          setSelectedContactUser(shiftUser);
+                                          setShowContactDialog(true);
+                                        }
+                                      }}
+                                      disabled={!localUser}
+                                      title={!localUser ? `${shiftUser.firstName} ${shiftUser.lastName} - ${shift.emergencyAssignedUser?.stationName || 'Ander station'}` : undefined}
+                                    >
+                                      {`${shiftUser.firstName} ${shiftUser.lastName}`}
+                                    </Button>
+                                    {shift.isEmergencyScheduling && shift.emergencyAssignedUser && (
+                                      <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
+                                        Nood ({shift.emergencyAssignedUser.stationName})
+                                      </Badge>
+                                    )}
+                                  </>
+                                ) : (
+                                  <span>Onbekend</span>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center">
