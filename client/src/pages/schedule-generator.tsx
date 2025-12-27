@@ -2370,9 +2370,17 @@ function ScheduleGenerator() {
                       return 0;
                     })
                     .map((shift) => {
-                      const shiftUser = users.find(u => u.id === shift.userId);
+                      // Check for cross-station emergency assignment first, then local users
+                      const emergencyUser = (shift as any).emergencyAssignedUser;
+                      const shiftUser = emergencyUser ? {
+                        id: emergencyUser.id,
+                        firstName: emergencyUser.firstName,
+                        lastName: emergencyUser.lastName,
+                        stationId: emergencyUser.stationId,
+                        stationName: emergencyUser.stationName
+                      } : users.find(u => u.id === shift.userId);
                       const isCurrentUserShift = shift.userId === user?.id;
-                      const isUserDeleted = shift.userId > 0 && !shiftUser;
+                      const isUserDeleted = shift.userId > 0 && !shiftUser && !emergencyUser;
                       
                       // Detecteer open slots voor deze datum
                       const shiftsForDate = shifts.filter(s => 
@@ -2443,28 +2451,36 @@ function ScheduleGenerator() {
                                 )}
                               </div>
                             ) : shiftUser ? (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <Button
                                   variant="link"
                                   className={`p-0 h-auto font-normal text-left hover:underline 
                                     ${isCurrentUserShift ? "font-bold text-green-600" : ""} 
                                     ${searchTerm && 
-                                      (shiftUser.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                       shiftUser.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                       shiftUser.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                      (shiftUser.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                       shiftUser.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                       (shiftUser as any).username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                        `${shiftUser.firstName} ${shiftUser.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()))
                                        ? "bg-green-200 px-1 py-0.5 rounded font-medium" : ""}`}
                                   onClick={() => {
-                                    setSelectedContactUser(shiftUser);
-                                    setShowContactDialog(true);
+                                    if (!emergencyUser) {
+                                      setSelectedContactUser(shiftUser as any);
+                                      setShowContactDialog(true);
+                                    }
                                   }}
                                 >
                                   {`${shiftUser.firstName} ${shiftUser.lastName}`}
                                 </Button>
                                 {shift.isEmergencyScheduling && (
-                                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded flex items-center gap-1" title={shift.emergencyReason || "Noodinplanning"}>
+                                  <span 
+                                    className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded flex items-center gap-1" 
+                                    title={`Noodinplanning${emergencyUser?.stationName ? ` (van ${emergencyUser.stationName})` : ''}${shift.emergencyReason ? `: ${shift.emergencyReason}` : ''}`}
+                                  >
                                     <AlertTriangle className="h-3 w-3" />
                                     Nood
+                                    {emergencyUser?.stationName && (
+                                      <span className="text-orange-600">({emergencyUser.stationName})</span>
+                                    )}
                                   </span>
                                 )}
                               </div>

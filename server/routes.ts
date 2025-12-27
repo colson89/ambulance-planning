@@ -3410,7 +3410,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      res.status(200).json(shifts);
+      // Enrich shifts with cross-station user data for emergency assignments
+      // This ensures noodinplanning users from other stations are displayed correctly
+      // Optimized: single batch fetch for all users and stations instead of per-shift queries
+      
+      const emergencyShifts = shifts.filter(s => s.isEmergencyScheduling && s.userId && s.userId > 0);
+      
+      if (emergencyShifts.length > 0) {
+        // Single query to get all users and all stations
+        const [allUsers, allStations] = await Promise.all([
+          storage.getAllUsers(),
+          storage.getAllStations()
+        ]);
+        
+        // Build maps for O(1) lookup
+        const userMap = new Map(allUsers.map(u => [u.id, u]));
+        const stationMap = new Map(allStations.map(s => [s.id, s]));
+        
+        // Enrich shifts with user data (using cached maps, no additional queries)
+        const enrichedShifts = shifts.map(shift => {
+          if (shift.isEmergencyScheduling && shift.userId && shift.userId > 0) {
+            const assignedUser = userMap.get(shift.userId);
+            if (assignedUser && assignedUser.stationId !== shift.stationId) {
+              const assignedStation = stationMap.get(assignedUser.stationId);
+              return {
+                ...shift,
+                emergencyAssignedUser: {
+                  id: assignedUser.id,
+                  firstName: assignedUser.firstName,
+                  lastName: assignedUser.lastName,
+                  stationId: assignedUser.stationId,
+                  stationName: assignedStation?.displayName || 'Onbekend station'
+                }
+              };
+            }
+          }
+          return shift;
+        });
+        
+        res.status(200).json(enrichedShifts);
+      } else {
+        res.status(200).json(shifts);
+      }
     } catch (error) {
       console.error("Error getting shifts:", error);
       res.status(500).json({ message: "Failed to get shifts" });
