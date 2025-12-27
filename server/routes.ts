@@ -4347,7 +4347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allUsers = await storage.getAllUsers();
       
       // Get all stations for display
-      const stations = await storage.getStations();
+      const stations = await storage.getAllStations();
       const stationMap = new Map(stations.map(s => [s.id, s]));
       
       // Filter to only ambulanciers (exclude admins/supervisors) and format response
