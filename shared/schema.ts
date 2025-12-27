@@ -8,6 +8,7 @@ export const stations = pgTable("stations", {
   name: text("name").notNull().unique(),
   code: text("code").notNull().unique(), // bijv. "westerlo", "mol"
   displayName: text("display_name").notNull(), // bijv. "ZW Westerlo", "ZW Mol"
+  address: text("address"), // Station adres voor kalender integratie
   isSupervisorStation: boolean("is_supervisor_station").notNull().default(false), // Max 1 supervisor station toegestaan
   kioskToken: text("kiosk_token").unique(),
   createdAt: timestamp("created_at").defaultNow(),
