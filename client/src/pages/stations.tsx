@@ -18,6 +18,7 @@ interface Station {
   name: string;
   code: string;
   displayName: string;
+  address: string | null;
   isSupervisorStation: boolean;
   createdAt: string;
   updatedAt: string;
@@ -31,7 +32,7 @@ export default function Stations() {
 
   const [showStationDialog, setShowStationDialog] = useState(false);
   const [editingStation, setEditingStation] = useState<Station | null>(null);
-  const [stationForm, setStationForm] = useState({ name: '', code: '', displayName: '', isSupervisorStation: false });
+  const [stationForm, setStationForm] = useState({ name: '', code: '', displayName: '', address: '', isSupervisorStation: false });
   const [deleteStation, setDeleteStation] = useState<Station | null>(null);
   const [stationDependencies, setStationDependencies] = useState<any>(null);
   const [deleteConfirmName, setDeleteConfirmName] = useState('');
@@ -52,13 +53,14 @@ export default function Stations() {
         name: editingStation.name,
         code: editingStation.code,
         displayName: editingStation.displayName,
+        address: editingStation.address || '',
         isSupervisorStation: editingStation.isSupervisorStation
       });
     }
   }, [editingStation]);
 
   const createStationMutation = useMutation({
-    mutationFn: async (data: { name: string; code: string; displayName: string; isSupervisorStation: boolean }) => {
+    mutationFn: async (data: { name: string; code: string; displayName: string; address: string; isSupervisorStation: boolean }) => {
       const res = await apiRequest('POST', '/api/stations', data);
       if (!res.ok) {
         const error = await res.json();
@@ -69,7 +71,7 @@ export default function Stations() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/stations'] });
       setShowStationDialog(false);
-      setStationForm({ name: '', code: '', displayName: '', isSupervisorStation: false });
+      setStationForm({ name: '', code: '', displayName: '', address: '', isSupervisorStation: false });
       toast({ title: "Succes", description: "Station aangemaakt" });
     },
     onError: (error: Error) => {
@@ -90,7 +92,7 @@ export default function Stations() {
       queryClient.invalidateQueries({ queryKey: ['/api/stations'] });
       setShowStationDialog(false);
       setEditingStation(null);
-      setStationForm({ name: '', code: '', displayName: '', isSupervisorStation: false });
+      setStationForm({ name: '', code: '', displayName: '', address: '', isSupervisorStation: false });
       toast({ title: "Succes", description: "Station bijgewerkt" });
     },
     onError: (error: Error) => {
@@ -121,10 +123,10 @@ export default function Stations() {
   const handleOpenStationDialog = (station?: Station) => {
     if (station) {
       setEditingStation(station);
-      setStationForm({ name: station.name, code: station.code, displayName: station.displayName, isSupervisorStation: station.isSupervisorStation });
+      setStationForm({ name: station.name, code: station.code, displayName: station.displayName, address: station.address || '', isSupervisorStation: station.isSupervisorStation });
     } else {
       setEditingStation(null);
-      setStationForm({ name: '', code: '', displayName: '', isSupervisorStation: false });
+      setStationForm({ name: '', code: '', displayName: '', address: '', isSupervisorStation: false });
     }
     setShowStationDialog(true);
   };
@@ -278,6 +280,7 @@ export default function Stations() {
               <li><strong>Weergavenaam</strong> - De naam zoals gebruikers die zien (bijv. "ZW Westerlo")</li>
               <li><strong>Code</strong> - Een korte code voor weergave in de planning (bijv. "WL")</li>
               <li><strong>Interne naam</strong> - Een technische identifier zonder spaties (bijv. "westerlo")</li>
+              <li><strong>Adres</strong> - Het fysieke adres van het station (optioneel, voor kalender integratie)</li>
               <li><strong>Supervisor Station</strong> - Het speciale station voor supervisor inlog (max 1)</li>
             </ul>
             <div className="mt-4 p-3 bg-purple-100 rounded-lg border border-purple-200">
@@ -331,6 +334,16 @@ export default function Stations() {
                 onChange={(e) => setStationForm({...stationForm, name: e.target.value})}
               />
               <p className="text-xs text-gray-500">Technische identifier (kleine letters, geen spaties)</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">Adres</Label>
+              <Input
+                id="address"
+                placeholder="bijv. Stationsstraat 1, 2260 Westerlo"
+                value={stationForm.address}
+                onChange={(e) => setStationForm({...stationForm, address: e.target.value})}
+              />
+              <p className="text-xs text-gray-500">Adres van het station (wordt gebruikt in kalender afspraken)</p>
             </div>
             <div className="flex items-center space-x-3 pt-2 pb-1">
               <Checkbox

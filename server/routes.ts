@@ -584,7 +584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Station CRUD endpoints - Supervisor only
   app.post("/api/stations", requireSupervisor, async (req, res) => {
     try {
-      const { name, code, displayName, isSupervisorStation } = req.body;
+      const { name, code, displayName, address, isSupervisorStation } = req.body;
       
       if (!name || !code || !displayName) {
         return res.status(400).json({ message: "Naam, code en weergavenaam zijn verplicht" });
@@ -617,6 +617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name: name.toLowerCase().replace(/\s+/g, ''),
         code: code.toUpperCase(),
         displayName,
+        address: address?.trim() || null, // Normalize empty string to null
         isSupervisorStation: isSupervisorStation || false
       });
       
@@ -639,7 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/stations/:id", requireSupervisor, async (req, res) => {
     try {
       const stationId = parseInt(req.params.id);
-      const { name, code, displayName, isSupervisorStation } = req.body;
+      const { name, code, displayName, address, isSupervisorStation } = req.body;
       
       const existingStation = await storage.getStation(stationId);
       if (!existingStation) {
@@ -691,6 +692,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (name) updateData.name = name.toLowerCase().replace(/\s+/g, '');
       if (code) updateData.code = code.toUpperCase();
       if (displayName) updateData.displayName = displayName;
+      // Handle address: normalize empty string to null, but allow explicit null to clear the field
+      if (address !== undefined) updateData.address = address?.trim() || null;
       if (isSupervisorStation !== undefined) updateData.isSupervisorStation = isSupervisorStation;
       
       const station = await storage.updateStation(stationId, updateData);
@@ -5699,9 +5702,9 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       // Filter alleen shifts van deze gebruiker
       const userShifts = allShifts.filter(shift => shift.userId === user.id);
       
-      // Haal alle stations op voor station namen in events
+      // Haal alle stations op voor station namen en adressen in events
       const allStations = await storage.getAllStations();
-      const stationMap = new Map(allStations.map(s => [s.id, s.displayName]));
+      const stationMap = new Map(allStations.map(s => [s.id, { name: s.displayName, address: s.address }]));
       
       // VTIMEZONE component voor Europe/Brussels (CET/CEST)
       // Dit zorgt ervoor dat iCal clients de tijdzone correct interpreteren
@@ -5766,8 +5769,10 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         const startTime = new Date(shift.startTime);
         const endTime = new Date(shift.endTime);
         
-        // Haal station naam op voor deze shift (voor cross-station support)
-        const stationName = stationMap.get(shift.stationId) || 'Onbekend';
+        // Haal station info op voor deze shift (voor cross-station support)
+        const stationInfo = stationMap.get(shift.stationId);
+        const stationName = stationInfo?.name || 'Onbekend';
+        const stationAddress = stationInfo?.address;
         
         // Hard-coded tijden op basis van shift type + station naam
         let summary = '';
@@ -5799,18 +5804,30 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         const dtstart = formatLocalICSDate(startTime); // Lokale tijd
         const dtend = formatLocalICSDate(endTime); // Lokale tijd
         
-        icsLines.push(
+        const eventLines = [
           'BEGIN:VEVENT',
           `UID:${uid}`,
           `DTSTAMP:${dtstamp}`,
           `DTSTART;TZID=Europe/Brussels:${dtstart}`,
           `DTEND;TZID=Europe/Brussels:${dtend}`,
           `SUMMARY:${summary}`,
-          `DESCRIPTION:${description}`,
+          `DESCRIPTION:${description}`
+        ];
+        
+        // Voeg LOCATION toe als het station een adres heeft
+        if (stationAddress) {
+          // Escape speciale karakters in iCal LOCATION
+          const escapedAddress = stationAddress.replace(/[,;\\]/g, '\\$&').replace(/\n/g, '\\n');
+          eventLines.push(`LOCATION:${escapedAddress}`);
+        }
+        
+        eventLines.push(
           'STATUS:CONFIRMED',
           'TRANSP:OPAQUE',
           'END:VEVENT'
         );
+        
+        icsLines.push(...eventLines);
       }
       
       icsLines.push('END:VCALENDAR');

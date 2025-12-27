@@ -449,6 +449,13 @@ Met de kalender synchronisatie functie kunt u uw ingeplande shifts automatisch l
 - Dagshift namiddag: `Dagshift NM - Mol` (13:00-19:00)
 - Nachtshift: `Nachtshift - Westerlo` (19:00-07:00)
 
+**📍 Locatie in Kalender Events:**
+Als een station een adres heeft geconfigureerd, wordt dit automatisch toegevoegd aan de kalender events als **LOCATION**. Dit is handig voor:
+- Snelle navigatie naar het station via Google Maps of Apple Maps
+- Duidelijk zien waar u die dag moet zijn, direct vanuit uw agenda
+
+*Het adres wordt beheerd door de supervisor via Integraties → Stationbeheer.*
+
 **💡 Belangrijk voor Cross-Station Medewerkers:**
 Als u werkt voor meerdere stations, worden **alle uw shifts van alle stations** automatisch gesynchroniseerd naar uw kalender. De stationnaam in de event titel laat zien bij welk station u bent ingepland - handig om snel te zien waar u die dag moet zijn!
 
