@@ -63,6 +63,12 @@ export default function Dashboard() {
     return urlParams.get('fullscreen') === 'true';
   });
   
+  // Track if fullscreen was initiated via URL parameter (kiosk mode - no close button)
+  const [isKioskMode] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('fullscreen') === 'true';
+  });
+  
   // Get station ID from URL parameter for fullscreen/kiosk mode
   const [kioskStationId, setKioskStationId] = useState<number | null>(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -707,10 +713,13 @@ export default function Dashboard() {
                 Komende 14 dagen
               </span>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setIsFullscreen(false)}>
-              <Minimize2 className="h-4 w-4 mr-2" />
-              Sluiten
-            </Button>
+            {/* Only show close button when fullscreen was manually activated (not kiosk mode) */}
+            {!isKioskMode && (
+              <Button variant="outline" size="sm" onClick={() => setIsFullscreen(false)}>
+                <Minimize2 className="h-4 w-4 mr-2" />
+                Sluiten
+              </Button>
+            )}
           </div>
         </div>
         
