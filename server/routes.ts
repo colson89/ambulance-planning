@@ -6147,7 +6147,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
   app.post("/api/verdi/config/:stationId", requireAdmin, async (req, res) => {
     try {
       const stationId = parseInt(req.params.stationId);
-      const { verdiUrl, authId, authSecret, shiftSheetGuid, enabled } = req.body;
+      const { verdiUrl, authId, authSecret, shiftSheetGuid, emergencyPersonGuid1, emergencyPersonGuid2, enabled } = req.body;
       const user = req.user!;
       
       // Get old config for comparison
@@ -6158,6 +6158,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         authId,
         authSecret,
         shiftSheetGuid,
+        emergencyPersonGuid1: emergencyPersonGuid1?.trim() || null,
+        emergencyPersonGuid2: emergencyPersonGuid2?.trim() || null,
         enabled
       });
       

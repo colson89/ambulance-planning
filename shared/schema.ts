@@ -49,6 +49,9 @@ export const shifts = pgTable("shifts", {
   splitGroup: integer("split_group"),
   splitStartTime: timestamp("split_start_time"),
   splitEndTime: timestamp("split_end_time"),
+  isEmergencyScheduling: boolean("is_emergency_scheduling").notNull().default(false), // Noodinplanning indicator
+  emergencyReason: text("emergency_reason"), // Verplichte reden bij noodinplanning
+  emergencyScheduledBy: integer("emergency_scheduled_by"), // User ID van supervisor die noodinplanning deed
   month: integer("month").notNull(),
   year: integer("year").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -233,6 +236,8 @@ export const verdiStationConfig = pgTable("verdi_station_config", {
   authId: text("auth_id"), // Verdi API authenticatie ID
   authSecret: text("auth_secret"), // Verdi API authenticatie secret
   shiftSheetGuid: text("shift_sheet_guid"), // GuidShiftSheet van Verdi export
+  emergencyPersonGuid1: text("emergency_person_guid_1"), // Nood PersonGUID 1 voor noodinplanning (personen van andere stations)
+  emergencyPersonGuid2: text("emergency_person_guid_2"), // Nood PersonGUID 2 voor noodinplanning (tweede ambulancier van ander station)
   enabled: boolean("enabled").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow()

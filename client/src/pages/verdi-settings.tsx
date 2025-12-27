@@ -107,6 +107,8 @@ export default function VerdiSettings() {
     authId: "",
     authSecret: "",
     shiftSheetGuid: "",
+    emergencyPersonGuid1: "",
+    emergencyPersonGuid2: "",
     enabled: false,
   });
 
@@ -191,6 +193,8 @@ export default function VerdiSettings() {
       authId: verdiConfig?.authId || "",
       authSecret: verdiConfig?.authSecret || "",
       shiftSheetGuid: verdiConfig?.shiftSheetGuid || "",
+      emergencyPersonGuid1: verdiConfig?.emergencyPersonGuid1 || "",
+      emergencyPersonGuid2: verdiConfig?.emergencyPersonGuid2 || "",
       enabled: verdiConfig?.enabled || false,
       stationId: effectiveStationId
     });
@@ -205,6 +209,8 @@ export default function VerdiSettings() {
           authId: verdiConfig.authId || "",
           authSecret: verdiConfig.authSecret || "",
           shiftSheetGuid: verdiConfig.shiftSheetGuid || "",
+          emergencyPersonGuid1: verdiConfig.emergencyPersonGuid1 || "",
+          emergencyPersonGuid2: verdiConfig.emergencyPersonGuid2 || "",
           enabled: verdiConfig.enabled || false,
         });
       } else {
@@ -213,6 +219,8 @@ export default function VerdiSettings() {
           authId: "",
           authSecret: "",
           shiftSheetGuid: "",
+          emergencyPersonGuid1: "",
+          emergencyPersonGuid2: "",
           enabled: false,
         });
       }
@@ -747,6 +755,36 @@ export default function VerdiSettings() {
                 <p className="text-sm text-muted-foreground">
                   Unieke identificatie voor uw planning spreadsheet in Verdi
                 </p>
+              </div>
+
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-semibold mb-2">Noodinplanning PersonGUIDs</h4>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Wanneer een ambulancier via noodinplanning wordt ingezet op dit station (iemand van een ander station), 
+                  wordt deze PersonGUID gebruikt in Verdi. Configureer 2 GUIDs voor het geval beide ambulanciers van elders komen.
+                </p>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="emergencyPersonGuid1">Nood PersonGUID 1</Label>
+                    <Input
+                      id="emergencyPersonGuid1"
+                      placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                      value={configForm.emergencyPersonGuid1}
+                      onChange={(e) => setConfigForm({ ...configForm, emergencyPersonGuid1: e.target.value })}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="emergencyPersonGuid2">Nood PersonGUID 2</Label>
+                    <Input
+                      id="emergencyPersonGuid2"
+                      placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                      value={configForm.emergencyPersonGuid2}
+                      onChange={(e) => setConfigForm({ ...configForm, emergencyPersonGuid2: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">

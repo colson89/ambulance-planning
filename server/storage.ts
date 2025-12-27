@@ -125,7 +125,7 @@ export interface IStorage {
   
   // Verdi integratie
   getVerdiStationConfig(stationId: number): Promise<any>;
-  upsertVerdiStationConfig(stationId: number, config: {verdiUrl?: string, authId?: string, authSecret?: string, shiftSheetGuid?: string, enabled?: boolean}): Promise<any>;
+  upsertVerdiStationConfig(stationId: number, config: {verdiUrl?: string, authId?: string, authSecret?: string, shiftSheetGuid?: string, emergencyPersonGuid1?: string | null, emergencyPersonGuid2?: string | null, enabled?: boolean}): Promise<any>;
   getAllVerdiStationConfigs(): Promise<any[]>;
   getVerdiUserMapping(userId: number): Promise<any>;
   upsertVerdiUserMapping(userId: number, personGuid: string): Promise<any>;
@@ -4024,7 +4024,7 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async upsertVerdiStationConfig(stationId: number, config: {verdiUrl?: string, authId?: string, authSecret?: string, shiftSheetGuid?: string, enabled?: boolean}): Promise<VerdiStationConfig> {
+  async upsertVerdiStationConfig(stationId: number, config: {verdiUrl?: string, authId?: string, authSecret?: string, shiftSheetGuid?: string, emergencyPersonGuid1?: string | null, emergencyPersonGuid2?: string | null, enabled?: boolean}): Promise<VerdiStationConfig> {
     const existing = await this.getVerdiStationConfig(stationId);
     
     if (existing) {
@@ -4034,6 +4034,8 @@ export class DatabaseStorage implements IStorage {
           authId: config.authId ?? existing.authId,
           authSecret: config.authSecret ?? existing.authSecret,
           shiftSheetGuid: config.shiftSheetGuid ?? existing.shiftSheetGuid,
+          emergencyPersonGuid1: config.emergencyPersonGuid1 !== undefined ? config.emergencyPersonGuid1 : existing.emergencyPersonGuid1,
+          emergencyPersonGuid2: config.emergencyPersonGuid2 !== undefined ? config.emergencyPersonGuid2 : existing.emergencyPersonGuid2,
           enabled: config.enabled ?? existing.enabled,
           updatedAt: new Date()
         })
@@ -4048,6 +4050,8 @@ export class DatabaseStorage implements IStorage {
           authId: config.authId || null,
           authSecret: config.authSecret || null,
           shiftSheetGuid: config.shiftSheetGuid || null,
+          emergencyPersonGuid1: config.emergencyPersonGuid1 || null,
+          emergencyPersonGuid2: config.emergencyPersonGuid2 || null,
           enabled: config.enabled ?? false
         })
         .returning();
