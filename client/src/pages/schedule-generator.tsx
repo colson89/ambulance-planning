@@ -2443,23 +2443,31 @@ function ScheduleGenerator() {
                                 )}
                               </div>
                             ) : shiftUser ? (
-                              <Button
-                                variant="link"
-                                className={`p-0 h-auto font-normal text-left hover:underline 
-                                  ${isCurrentUserShift ? "font-bold text-green-600" : ""} 
-                                  ${searchTerm && 
-                                    (shiftUser.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                     shiftUser.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                     shiftUser.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                     `${shiftUser.firstName} ${shiftUser.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()))
-                                     ? "bg-green-200 px-1 py-0.5 rounded font-medium" : ""}`}
-                                onClick={() => {
-                                  setSelectedContactUser(shiftUser);
-                                  setShowContactDialog(true);
-                                }}
-                              >
-                                {`${shiftUser.firstName} ${shiftUser.lastName}`}
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="link"
+                                  className={`p-0 h-auto font-normal text-left hover:underline 
+                                    ${isCurrentUserShift ? "font-bold text-green-600" : ""} 
+                                    ${searchTerm && 
+                                      (shiftUser.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                       shiftUser.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                       shiftUser.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                       `${shiftUser.firstName} ${shiftUser.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()))
+                                       ? "bg-green-200 px-1 py-0.5 rounded font-medium" : ""}`}
+                                  onClick={() => {
+                                    setSelectedContactUser(shiftUser);
+                                    setShowContactDialog(true);
+                                  }}
+                                >
+                                  {`${shiftUser.firstName} ${shiftUser.lastName}`}
+                                </Button>
+                                {shift.isEmergencyScheduling && (
+                                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded flex items-center gap-1" title={shift.emergencyReason || "Noodinplanning"}>
+                                    <AlertTriangle className="h-3 w-3" />
+                                    Nood
+                                  </span>
+                                )}
+                              </div>
                             ) : (
                               <span>Onbekend</span>
                             )}

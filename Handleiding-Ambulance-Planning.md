@@ -55,6 +55,7 @@ Gebruik de inhoudsopgave om snel naar de juiste sectie te navigeren.
 - [Handleiding voor Supervisors](#-handleiding-voor-supervisors)
   - [Supervisor Gebruikersbeheer](#-supervisor-gebruikersbeheer)
   - [Cross-Team Beheer](#-cross-team-beheer)
+  - [Noodinplanning](#-noodinplanning)
 
 ### Ondersteuning
 - [IT Beheerders](#-it-beheerders)
@@ -2743,6 +2744,15 @@ Vul de volgende velden in voor uw station:
 
 5. **Verdi synchronisatie ingeschakeld**: Schakelaar om sync aan/uit te zetten
 
+6. **Nood PersonGUID 1 (Chauffeur)**: PersonGUID voor noodinplanning positie 1
+   - Wordt gebruikt wanneer een medewerker van een ander station via noodinplanning wordt ingepland
+   - Omdat die persoon niet in Verdi van dit station is geregistreerd, wordt een "nood" persoon gebruikt
+   - Optioneel - alleen nodig als u noodinplanning gebruikt
+
+7. **Nood PersonGUID 2 (Ambulancier)**: PersonGUID voor noodinplanning positie 2
+   - Zelfde als Nood PersonGUID 1, maar voor de tweede positie (ambulancier)
+   - Optioneel - alleen nodig als u noodinplanning met 2 personen van andere stations gebruikt
+
 **💾 Opslaan:**
 - Klik op "Configuratie Opslaan" onderaan
 - Credentials worden veilig opgeslagen per station
@@ -3373,6 +3383,74 @@ Supervisors hebben nu volledige toegang om **andere supervisors** te bewerken:
 - Medewerker moet expliciet beschikbaar zijn
 - Uur limieten worden gerespecteerd
 - Veiligheidsregels blijven van toepassing (geen aaneensluitende shiften)
+
+### 🚨 Noodinplanning
+
+Noodinplanning is een functie waarmee supervisors in noodgevallen medewerkers van **andere stations** kunnen toewijzen aan shifts. Dit is bedoeld voor situaties waar geen reguliere bezetting beschikbaar is.
+
+#### Wanneer Gebruiken?
+
+- ❌ **Niet** voor reguliere planning - gebruik altijd eerst de normale planningsfuncties
+- ✅ **Wel** voor noodgevallen: ziekte, onvoorziene afwezigheid, geen beschikbaarheid
+- ✅ **Wel** wanneer er geen medewerker van het eigen station beschikbaar is
+
+#### Hoe Noodinplanning Gebruiken?
+
+1. **Open Planning Genereren pagina**
+   - Navigeer naar de maand en station waar u een shift wilt invullen
+
+2. **Klik op een bestaande shift**
+   - Open het shift bewerkingsvenster door op een shift te klikken
+
+3. **Klik op "Noodinplanning" knop**
+   - De oranje knop "Noodinplanning" is alleen zichtbaar voor supervisors
+   - Klik hierop om het noodinplanning venster te openen
+
+4. **Selecteer een medewerker**
+   - Filter op station (optioneel)
+   - Zoek op naam
+   - Selecteer de gewenste ambulancier uit de lijst
+   - U ziet het station en rijbewijs C status van elke medewerker
+
+5. **Vul een reden in (verplicht)**
+   - Minimaal 5 tekens
+   - Beschrijf waarom noodinplanning nodig is
+   - Bijvoorbeeld: "Ziekte Jan, geen andere beschikbaarheid"
+
+6. **Bevestig de noodinplanning**
+   - Klik op "Noodinplanning Bevestigen"
+   - De shift wordt toegewezen aan de geselecteerde medewerker
+
+#### Visuele Indicatie
+
+Shifts met noodinplanning zijn herkenbaar aan:
+- 🟠 **Oranje "Nood" badge** naast de medewerkernaam in de planning
+- Tooltip met de opgegeven reden wanneer u over de badge beweegt
+
+#### Logging en Audit Trail
+
+Elke noodinplanning wordt volledig gelogd:
+- Wie de noodinplanning heeft uitgevoerd
+- Welke medewerker is toegewezen
+- De opgegeven reden
+- Tijdstip van de wijziging
+
+Dit is terug te vinden in de Activiteitslog.
+
+#### Verdi Integratie
+
+Bij noodinplanning wordt automatisch de **Nood PersonGUID** gebruikt voor Verdi synchronisatie:
+- Omdat de medewerker niet geregistreerd is in Verdi van dit station
+- Wordt een generieke "nood" persoon gebruikt in Verdi
+- Configureer de Nood PersonGUIDs in Verdi Instellingen → Station Configuratie
+
+**Belangrijk:** Configureer de Nood PersonGUIDs voordat u noodinplanning gebruikt, anders zal Verdi synchronisatie mislukken voor deze shifts.
+
+#### Push Notificaties
+
+De toegewezen medewerker ontvangt automatisch een push notificatie:
+- Met vermelding dat het om een noodinplanning gaat
+- Met de datum, tijden en station van de shift
 
 ### 📊 Supervisor Statistieken
 

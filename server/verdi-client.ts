@@ -76,6 +76,7 @@ export class VerdiClient {
    * @param positionMappings Array van position mappings voor dit station
    * @param assignedUsers Array van User objecten die toegewezen zijn aan deze shift (max 3)
    * @param existingVerdiShiftGuid Optioneel: GUID van bestaande Verdi shift voor update
+   * @param emergencyShiftFlags Optioneel: Array van booleans die aangeven welke users emergency scheduled zijn
    */
   async sendShiftToVerdi(
     shift: Shift,
@@ -83,7 +84,8 @@ export class VerdiClient {
     userMappings: Map<number, VerdiUserMapping>,
     positionMappings: VerdiPositionMapping[],
     assignedUsers: User[],
-    existingVerdiShiftGuid?: string
+    existingVerdiShiftGuid?: string,
+    emergencyShiftFlags?: boolean[]
   ): Promise<VerdiResponse> {
     // Validatie
     if (!stationConfig.verdiUrl) {
@@ -111,10 +113,7 @@ export class VerdiClient {
     for (let i = 0; i < assignedUsers.length; i++) {
       const user = assignedUsers[i];
       const userMapping = userMappings.get(user.id);
-
-      if (!userMapping) {
-        throw new Error(`Gebruiker ${user.id} (${user.firstName} ${user.lastName}) heeft geen Verdi person GUID mapping`);
-      }
+      const isEmergencyScheduled = emergencyShiftFlags?.[i] || false;
 
       // Zoek de position mapping voor deze positie index
       // Posities beginnen bij 1: eerste persoon = positie 1 (Chauffeur), tweede persoon = positie 2 (Ambulancier)
@@ -129,9 +128,47 @@ export class VerdiClient {
         );
       }
 
+      // Bepaal PersonGUID: voor noodinplanning gebruiken we de emergency PersonGUID van het station
+      let personGuid: string;
+      
+      if (isEmergencyScheduled) {
+        // Noodinplanning: gebruik emergency PersonGUID op basis van positie
+        const emergencyGuid = positionIndex === 1 
+          ? stationConfig.emergencyPersonGuid1 
+          : stationConfig.emergencyPersonGuid2;
+          
+        if (!emergencyGuid) {
+          console.warn(
+            `Noodinplanning voor ${user.firstName} ${user.lastName} op positie ${positionIndex}: ` +
+            `geen nood PersonGUID ${positionIndex} geconfigureerd, proberen met user mapping...`
+          );
+          // Fallback: probeer toch de user mapping (voor het geval de user ook in dit station geregistreerd is)
+          if (!userMapping) {
+            throw new Error(
+              `Noodinplanning voor ${user.firstName} ${user.lastName}: ` +
+              `geen nood PersonGUID ${positionIndex} geconfigureerd en geen Verdi mapping gevonden. ` +
+              `Configureer de nood PersonGUID in Verdi instellingen.`
+            );
+          }
+          personGuid = userMapping.personGuid;
+        } else {
+          personGuid = emergencyGuid;
+          console.log(
+            `🚨 Noodinplanning: ${user.firstName} ${user.lastName} op positie ${positionIndex} ` +
+            `gebruikt nood PersonGUID ${positionIndex}: ${emergencyGuid}`
+          );
+        }
+      } else {
+        // Normale inplanning: gebruik user's Verdi mapping
+        if (!userMapping) {
+          throw new Error(`Gebruiker ${user.id} (${user.firstName} ${user.lastName}) heeft geen Verdi person GUID mapping`);
+        }
+        personGuid = userMapping.personGuid;
+      }
+
       verdiAssignments.push({
         position: positionMapping.positionGuid,
-        person: userMapping.personGuid
+        person: personGuid
       });
     }
 

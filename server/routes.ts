@@ -6915,13 +6915,21 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             if (validUsers.length > 0) {
               // Stuur UPDATE naar Verdi met reduced user list
               const representativeShift = remainingShifts[0];
+              
+              // Bepaal emergency flags voor elke user (gesorteerd op rijbewijs C)
+              const emergencyFlags = validUsers.map(user => {
+                const userShift = remainingShifts.find(s => s.userId === user.id);
+                return userShift?.isEmergencyScheduling === true;
+              });
+              
               const response = await verdiClient.sendShiftToVerdi(
                 representativeShift,
                 config,
                 userMappingMap,
                 positionMappings,
                 validUsers,
-                verdiGuid // Bestaande GUID voor UPDATE
+                verdiGuid, // Bestaande GUID voor UPDATE
+                emergencyFlags
               );
               
               if (response.result === 'Success') {
@@ -7105,6 +7113,14 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             }
           }
           
+          // Bepaal emergency flags voor elke user (gesorteerd op rijbewijs C)
+          // De volgorde van emergencyFlags moet overeenkomen met validUsers (rijbewijs C eerst)
+          const emergencyFlags = validUsers.map(user => {
+            // Zoek de shift van deze user in de groep
+            const userShift = groupShifts.find(s => s.userId === user.id);
+            return userShift?.isEmergencyScheduling === true;
+          });
+          
           // Stuur naar Verdi (met bestaande GUID voor UPDATE indien gevonden)
           const response = await verdiClient.sendShiftToVerdi(
             representativeShift,
@@ -7112,7 +7128,8 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             userMappingMap,
             positionMappings,
             validUsers,
-            existingVerdiShiftGuid
+            existingVerdiShiftGuid,
+            emergencyFlags
           );
           
           // Update sync log voor ALLE shifts in deze groep
