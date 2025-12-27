@@ -4224,6 +4224,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========================
+  // NOODINPLANNING ENDPOINT
+  // ========================
+  // Emergency scheduling - allows supervisors to assign anyone from any station
+  app.post("/api/shifts/:id/emergency-assign", requireSupervisor, async (req, res) => {
+    try {
+      const shiftId = parseInt(req.params.id);
+      const { userId, reason } = req.body;
+      const supervisor = req.user as any;
+      
+      // Validate required fields
+      if (!userId || userId <= 0) {
+        return res.status(400).json({ message: "Gebruiker ID is verplicht" });
+      }
+      if (!reason || reason.trim().length === 0) {
+        return res.status(400).json({ message: "Reden is verplicht bij noodinplanning" });
+      }
+      if (reason.trim().length < 5) {
+        return res.status(400).json({ message: "Reden moet minimaal 5 tekens bevatten" });
+      }
+      
+      // Get the shift
+      const existingShift = await storage.getShift(shiftId);
+      if (!existingShift) {
+        return res.status(404).json({ message: "Shift niet gevonden" });
+      }
+      
+      // Get the user being assigned
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "Gebruiker niet gevonden" });
+      }
+      
+      // Get station info for logging
+      const station = await storage.getStation(existingShift.stationId);
+      const targetStation = await storage.getStation(targetUser.stationId);
+      
+      // Update the shift with emergency scheduling flags
+      const updatedShift = await storage.updateShift(shiftId, {
+        userId,
+        status: 'planned' as const,
+        isEmergencyScheduling: true,
+        emergencyReason: reason.trim(),
+        emergencyScheduledBy: supervisor.id
+      });
+      
+      // Create undo record
+      try {
+        const shiftDateStr = new Date(existingShift.date).toLocaleDateString('nl-BE');
+        const shiftTypeStr = existingShift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+        
+        await storage.createUndoRecord({
+          userId: supervisor.id,
+          stationId: existingShift.stationId,
+          entityType: 'shift_assignment',
+          entityId: shiftId,
+          action: 'noodinplanning',
+          description: `NOODINPLANNING: ${shiftTypeStr} op ${shiftDateStr} toegewezen aan ${targetUser.firstName} ${targetUser.lastName} (${targetStation?.displayName || 'Onbekend station'}). Reden: ${reason.trim()}`,
+          oldValue: JSON.stringify(existingShift),
+          newValue: JSON.stringify(updatedShift),
+          month: existingShift.month,
+          year: existingShift.year,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (undoError) {
+        console.error('Failed to create undo record for emergency scheduling:', undoError);
+      }
+      
+      // Send push notification to the assigned user
+      try {
+        console.log(`📱 Sending emergency scheduling notification to user ${userId}`);
+        sendShiftChangedNotification(userId, updatedShift, 'assigned').catch(err => {
+          console.error('Failed to send emergency scheduling notification:', err);
+        });
+      } catch (notifError) {
+        console.error('Error sending notification:', notifError);
+      }
+      
+      // Log activity with emergency reason
+      try {
+        const shiftDate = new Date(existingShift.date).toLocaleDateString('nl-BE');
+        const shiftType = existingShift.type === 'day' ? 'Dagshift' : 'Nachtshift';
+        
+        await logActivity({
+          userId: supervisor.id,
+          stationId: existingShift.stationId,
+          action: 'EMERGENCY_SCHEDULING',
+          category: 'SHIFT_MANUAL',
+          details: `NOODINPLANNING: ${shiftType} op ${shiftDate} toegewezen aan ${targetUser.firstName} ${targetUser.lastName} (van ${targetStation?.displayName || 'ander station'}). Reden: ${reason.trim()}`,
+          targetUserId: userId,
+          ipAddress: getClientInfo(req).ipAddress,
+          userAgent: getClientInfo(req).userAgent
+        });
+      } catch (logError) {
+        console.error("Failed to log emergency scheduling activity:", logError);
+      }
+      
+      console.log(`🚨 EMERGENCY SCHEDULING: Shift ${shiftId} assigned to user ${userId} (${targetUser.firstName} ${targetUser.lastName}) by supervisor ${supervisor.id}. Reason: ${reason.trim()}`);
+      
+      res.status(200).json({
+        ...updatedShift,
+        assignedUser: {
+          id: targetUser.id,
+          firstName: targetUser.firstName,
+          lastName: targetUser.lastName,
+          stationId: targetUser.stationId,
+          stationName: targetStation?.displayName
+        }
+      });
+    } catch (error) {
+      console.error("Error in emergency scheduling:", error);
+      res.status(500).json({ message: "Fout bij noodinplanning" });
+    }
+  });
+
+  // Get all users for emergency scheduling (supervisor only)
+  app.get("/api/emergency-scheduling/users", requireSupervisor, async (req, res) => {
+    try {
+      // Get all users from all stations
+      const allUsers = await storage.getUsers();
+      
+      // Get all stations for display
+      const stations = await storage.getStations();
+      const stationMap = new Map(stations.map(s => [s.id, s]));
+      
+      // Filter to only ambulanciers (exclude admins/supervisors) and format response
+      const availableUsers = allUsers
+        .filter(user => user.role === 'ambulancier')
+        .map(user => ({
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+          stationId: user.stationId,
+          stationName: stationMap.get(user.stationId)?.displayName || 'Onbekend',
+          stationCode: stationMap.get(user.stationId)?.code || '',
+          hasLicenseC: user.hasLicenseC
+        }))
+        .sort((a, b) => {
+          // Sort by station name first, then by last name
+          const stationCompare = a.stationName.localeCompare(b.stationName);
+          if (stationCompare !== 0) return stationCompare;
+          return (a.lastName || '').localeCompare(b.lastName || '');
+        });
+      
+      res.json(availableUsers);
+    } catch (error) {
+      console.error("Error getting users for emergency scheduling:", error);
+      res.status(500).json({ message: "Fout bij ophalen gebruikers" });
+    }
+  });
+
   // Delete a single shift
   app.delete("/api/shifts/:id", requireAdmin, async (req, res) => {
     try {

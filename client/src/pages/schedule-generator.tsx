@@ -9,6 +9,7 @@ import { format, addMonths, isWeekend, parseISO, addDays } from "date-fns";
 import { nl } from "date-fns/locale";
 import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, UserMinus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X, CheckCircle, XCircle } from "lucide-react";
 import { UndoHistoryPanel } from "@/components/undo-history-panel";
+import { EmergencySchedulingDialog } from "@/components/emergency-scheduling-dialog";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -95,6 +96,10 @@ function ScheduleGenerator() {
   // Force assignment state (voor noodgevallen)
   const [forceAssignment, setForceAssignment] = useState<boolean>(false);
   const [showForceOption, setShowForceOption] = useState<boolean>(false);
+  
+  // Emergency scheduling state (noodinplanning voor supervisors)
+  const [showEmergencyDialog, setShowEmergencyDialog] = useState<boolean>(false);
+  const [emergencyShift, setEmergencyShift] = useState<Shift | null>(null);
   
   // Shift bid viewing state (voor admins/supervisors)
   const [showBidsDialog, setShowBidsDialog] = useState(false);
@@ -2793,6 +2798,22 @@ function ScheduleGenerator() {
                       Samenvoegen
                     </Button>
                   )}
+                  
+                  {/* Noodinplanning knop - alleen voor supervisors */}
+                  {user?.role === 'supervisor' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+                      onClick={() => {
+                        setEmergencyShift(editingShift);
+                        setShowEmergencyDialog(true);
+                      }}
+                    >
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      Noodinplanning
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
@@ -3091,6 +3112,20 @@ function ScheduleGenerator() {
           year={selectedYear} 
         />
       )}
+
+      {/* Emergency Scheduling Dialog - alleen voor supervisors */}
+      <EmergencySchedulingDialog
+        shift={emergencyShift}
+        open={showEmergencyDialog}
+        onOpenChange={(open) => {
+          setShowEmergencyDialog(open);
+          if (!open) setEmergencyShift(null);
+        }}
+        onSuccess={() => {
+          setEditingShift(null);
+          queryClient.invalidateQueries({ queryKey: ["/api/shifts", selectedMonth + 1, selectedYear, effectiveStationId] });
+        }}
+      />
 
       {/* Contact Info Dialog */}
       <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
