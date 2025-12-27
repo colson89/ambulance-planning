@@ -4344,7 +4344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/emergency-scheduling/users", requireSupervisor, async (req, res) => {
     try {
       // Get all users from all stations
-      const allUsers = await storage.getUsers();
+      const allUsers = await storage.getAllUsers();
       
       // Get all stations for display
       const stations = await storage.getStations();
@@ -4361,7 +4361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           stationId: user.stationId,
           stationName: stationMap.get(user.stationId)?.displayName || 'Onbekend',
           stationCode: stationMap.get(user.stationId)?.code || '',
-          hasLicenseC: user.hasLicenseC
+          hasLicenseC: user.hasDrivingLicenseC
         }))
         .sort((a, b) => {
           // Sort by station name first, then by last name
