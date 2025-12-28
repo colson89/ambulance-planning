@@ -2641,11 +2641,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Supervisors can view all users, admins can only view their own station OR cross-team users
+      // Supervisors can view all users, admins can only view users in stations they have access to
       if (currentUser.role !== 'supervisor') {
-        // Check if target user has access to admin's station (home station OR cross-team assignment)
-        const userHasAccess = await storage.userHasAccessToStation(targetUserId, currentUser.stationId);
-        if (!userHasAccess) {
+        // Get all stations the admin has access to
+        const adminStations = await storage.getUserAccessibleStations(currentUser.id);
+        const adminStationIds = adminStations.map(s => s.id);
+        
+        // Get all stations the target user has access to
+        const targetUserStations = await storage.getUserAccessibleStations(targetUserId);
+        const targetUserStationIds = targetUserStations.map(s => s.id);
+        
+        // Check if there's any overlap between admin's stations and target user's stations
+        const hasOverlap = adminStationIds.some(id => targetUserStationIds.includes(id));
+        if (!hasOverlap) {
           return res.status(404).json({ message: "User not found" });
         }
       }
@@ -2675,10 +2683,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Supervisors can manage all users, admins can only manage their station OR cross-team users
+      // Supervisors can manage all users, admins can only manage users in stations they have access to
       if (currentUser.role !== 'supervisor') {
-        const userHasAccess = await storage.userHasAccessToStation(targetUserId, currentUser.stationId);
-        if (!userHasAccess) {
+        // Get all stations the admin has access to
+        const adminStations = await storage.getUserAccessibleStations(currentUser.id);
+        const adminStationIds = adminStations.map(s => s.id);
+        
+        // Get all stations the target user has access to
+        const targetUserStations = await storage.getUserAccessibleStations(targetUserId);
+        const targetUserStationIds = targetUserStations.map(s => s.id);
+        
+        // Check if there's any overlap between admin's stations and target user's stations
+        const hasOverlap = adminStationIds.some(id => targetUserStationIds.includes(id));
+        if (!hasOverlap) {
           return res.status(404).json({ message: "User not found" });
         }
       }
