@@ -10,3 +10,4 @@ ecosystem.config.cjs
 .replit
 replit.nix
 .cache/
+attached_assets/
