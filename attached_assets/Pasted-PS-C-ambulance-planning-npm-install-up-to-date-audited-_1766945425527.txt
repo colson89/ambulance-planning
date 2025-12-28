@@ -1,0 +1,103 @@
+PS C:\ambulance-planning> npm install
+
+up to date, audited 997 packages in 3s
+
+150 packages are looking for funding
+  run `npm fund` for details
+
+6 vulnerabilities (5 moderate, 1 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+PS C:\ambulance-planning> npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node scripts/build-sw.js
+
+vite v5.4.20 building for production...
+✓ 2744 modules transformed.
+../dist/public/index.html                                3.20 kB │ gzip:  1.05 kB
+../dist/public/assets/index-D1oYYCMG.css               105.50 kB │ gzip: 16.72 kB
+../dist/public/assets/collapsible-_mkC8WUJ.js            0.10 kB │ gzip:  0.11 kB
+../dist/public/assets/textarea-q4vagaa1.js               0.56 kB │ gzip:  0.35 kB
+../dist/public/assets/label-DflYVkEl.js                  0.63 kB │ gzip:  0.41 kB
+../dist/public/assets/input-8lSPxWm-.js                  0.65 kB │ gzip:  0.39 kB
+../dist/public/assets/index-D8dBfhb1.js                  0.73 kB │ gzip:  0.42 kB
+../dist/public/assets/badge-zWTu8338.js                  0.75 kB │ gzip:  0.39 kB
+../dist/public/assets/not-found-DGGbeEFZ.js              0.86 kB │ gzip:  0.45 kB
+../dist/public/assets/alert-BO2oMP9X.js                  0.99 kB │ gzip:  0.51 kB
+../dist/public/assets/kiosk-BUhTdV0u.js                  1.50 kB │ gzip:  0.75 kB
+../dist/public/assets/table-Bh_XYgb4.js                  1.57 kB │ gzip:  0.56 kB
+../dist/public/assets/index-DovF6oGh.js                  2.28 kB │ gzip:  1.01 kB
+../dist/public/assets/dialog-FN3k3lqc.js                 2.28 kB │ gzip:  0.90 kB
+../dist/public/assets/switch-DPF-8ao3.js                 2.56 kB │ gzip:  1.27 kB
+../dist/public/assets/tabs-Cft-Q_zY.js                   3.37 kB │ gzip:  1.41 kB
+../dist/public/assets/index-C1_773G7.js                  3.60 kB │ gzip:  1.63 kB
+../dist/public/assets/station-select-JHhdMZ1l.js         3.98 kB │ gzip:  1.56 kB
+../dist/public/assets/checkbox-DLe9kHMQ.js               3.98 kB │ gzip:  1.75 kB
+../dist/public/assets/forgot-password-C221BwLz.js        4.43 kB │ gzip:  1.70 kB
+../dist/public/assets/alert-dialog-D0STGv8y.js           4.85 kB │ gzip:  1.78 kB
+../dist/public/assets/nl-WR0SEFLQ.js                     5.08 kB │ gzip:  1.90 kB
+../dist/public/assets/index-u3-0j4Ec.js                  5.33 kB │ gzip:  2.04 kB
+../dist/public/assets/manual-BwvXfd2j.js                 6.17 kB │ gzip:  2.42 kB
+../dist/public/assets/reset-password-DQd3U8MN.js         6.43 kB │ gzip:  2.08 kB
+../dist/public/assets/overtime-BCXfeanM.js               6.56 kB │ gzip:  2.32 kB
+../dist/public/assets/pricing-LOEdBDad.js                7.64 kB │ gzip:  2.28 kB
+../dist/public/assets/auth-page-PpesN9Wh.js              8.45 kB │ gzip:  3.02 kB
+../dist/public/assets/azure-ad-settings-BgoJWfMq.js      8.76 kB │ gzip:  2.90 kB
+../dist/public/assets/smtp-settings-CSEfeP7s.js         12.15 kB │ gzip:  3.37 kB
+../dist/public/assets/stations-Disj3c-D.js              12.20 kB │ gzip:  3.61 kB
+../dist/public/assets/holidays-management-CQnpNtIe.js   12.22 kB │ gzip:  3.56 kB
+../dist/public/assets/weekday-settings-zs_Kfdwj.js      14.01 kB │ gzip:  3.58 kB
+../dist/public/assets/push-notifications-Cmxe86eu.js    14.20 kB │ gzip:  4.66 kB
+../dist/public/assets/reportage-DurlJpgQ.js             16.59 kB │ gzip:  4.73 kB
+../dist/public/assets/index-DnyeLWTe.js                 16.76 kB │ gzip:  6.37 kB
+../dist/public/assets/shift-swaps-BAq7ZKE7.js           18.37 kB │ gzip:  4.73 kB
+../dist/public/assets/select-DtSs2Lwq.js                21.31 kB │ gzip:  7.41 kB
+../dist/public/assets/index-CAvrTb1X.js                 27.18 kB │ gzip: 10.49 kB
+../dist/public/assets/form-BKk9O4rB.js                  27.53 kB │ gzip: 10.27 kB
+../dist/public/assets/verdi-settings-BNmzEm4g.js        28.10 kB │ gzip:  6.43 kB
+../dist/public/assets/integrations-xDM4pS1k.js          33.08 kB │ gzip:  6.63 kB
+../dist/public/assets/activity-logs-BhKgZD0x.js         36.30 kB │ gzip: 11.44 kB
+../dist/public/assets/query-vendor-BsRH3NV2.js          40.99 kB │ gzip: 12.43 kB
+../dist/public/assets/shift-planner-DIhvMuxX.js         46.24 kB │ gzip: 14.01 kB
+../dist/public/assets/ui-vendor-1LeSkhrd.js             58.29 kB │ gzip: 13.85 kB
+../dist/public/assets/types-DWrhZT04.js                 60.80 kB │ gzip: 14.64 kB
+../dist/public/assets/profile-Bw-CkECB.js               61.76 kB │ gzip: 15.98 kB
+../dist/public/assets/index-DhOuUv8c.js                 74.67 kB │ gzip: 25.60 kB
+../dist/public/assets/schedule-generator-i9f5TBqZ.js    77.27 kB │ gzip: 17.59 kB
+../dist/public/assets/dashboard-p_JyXCdG.js             85.54 kB │ gzip: 19.72 kB
+../dist/public/assets/user-management-CXMzy0tr.js      105.99 kB │ gzip: 26.11 kB
+../dist/public/assets/react-vendor-B_deTkiR.js         141.28 kB │ gzip: 45.44 kB
+../dist/public/assets/statistics-D1o-W4Ip.js           301.37 kB │ gzip: 99.61 kB
+✓ built in 19.46s
+
+  dist\index.js  689.2kb
+
+Done in 682ms
+✓ Copied manifest.json
+✓ Copied service-worker.js
+✓ Copied 9 icon files
+✓ Build ID generated: 1766945372456
+Unknown input options: manualChunks. Allowed options: cache, context, experimentalCacheExpiry, experimentalLogSideEffects, external, fs, input, jsx, logLevel, makeAbsoluteExternalsRelative, maxParallelFileOps, moduleContext, onLog, onwarn, perf, plugins, preserveEntrySignatures, preserveSymlinks, shimMissingExports, strictDeprecations, treeshake, watch
+✓ Service worker generated
+  Precached 65 files, totaling 1698116 bytes
+✓ Push notification handlers added to service worker
+PS C:\ambulance-planning> pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [ambulance-planning](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning │ fork     │ 18   │ online    │ 76.6%    │ 102.3mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+PS C:\ambulance-planning>
