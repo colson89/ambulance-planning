@@ -1,0 +1,1846 @@
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+
+PS C:\Windows\system32> $env:PATH += ";$env:APPDATA\npm"
+PS C:\Windows\system32> cd C:\ambulance-planning
+PS C:\ambulance-planning> git pul origin main
+git: 'pul' is not a git command. See 'git --help'.
+
+The most similar commands are
+        pull
+        push
+PS C:\ambulance-planning> git pull origin main
+remote: Enumerating objects: 168, done.
+remote: Counting objects: 100% (168/168), done.
+remote: Compressing objects: 100% (35/35), done.
+remote: Total 149 (delta 132), reused 129 (delta 112), pack-reused 0 (from 0)
+Receiving objects: 100% (149/149), 308.24 KiB | 2.07 MiB/s, done.
+Resolving deltas: 100% (132/132), completed with 18 local objects.
+From https://github.com/colson89/ambulance-planning
+ * branch            main       -> FETCH_HEAD
+   770c7d7..471740d  main       -> origin/main
+Updating 770c7d7..471740d
+Fast-forward
+ Handleiding-Ambulance-Planning.md                  |  50 ++-
+ .../Screenshot_20251211-230441_1765490725775.png   | Bin 0 -> 168138 bytes
+ ...lanning_-_Shift_(2025-12-11)_1765528953710.xlsx | Bin 0 -> 7718 bytes
+ ...lanning_-_Shift_(2025-12-11)_1765530525706.xlsx | Bin 0 -> 7718 bytes
+ attached_assets/image_1765526057996.png            | Bin 0 -> 18809 bytes
+ attached_assets/image_1765530597185.png            | Bin 0 -> 1435 bytes
+ attached_assets/image_1765530610131.png            | Bin 0 -> 1435 bytes
+ attached_assets/image_1765531066357.png            | Bin 0 -> 66807 bytes
+ attached_assets/image_1765532413419.png            | Bin 0 -> 999 bytes
+ attached_assets/image_1765532675762.png            | Bin 0 -> 40201 bytes
+ client/src/App.tsx                                 |   2 +
+ client/src/components/my-swap-requests.tsx         |  33 +-
+ client/src/pages/dashboard.tsx                     |  18 +-
+ client/src/pages/manual.tsx                        | 156 +++++++
+ client/src/pages/profile.tsx                       |  77 +++-
+ client/src/pages/schedule-generator.tsx            | 138 ++++++-
+ client/src/pages/verdi-settings.tsx                | 393 +++++++++++++++++-
+ server/activity-logger.ts                          |   8 +
+ server/push-notifications.ts                       |  34 +-
+ server/routes.ts                                   | 459 ++++++++++++++++++++-
+ shared/schema.ts                                   |   9 +-
+ 21 files changed, 1335 insertions(+), 42 deletions(-)
+ create mode 100644 attached_assets/Screenshot_20251211-230441_1765490725775.png
+ create mode 100644 attached_assets/ShiftPlanning_-_Shift_(2025-12-11)_1765528953710.xlsx
+ create mode 100644 attached_assets/ShiftPlanning_-_Shift_(2025-12-11)_1765530525706.xlsx
+ create mode 100644 attached_assets/image_1765526057996.png
+ create mode 100644 attached_assets/image_1765530597185.png
+ create mode 100644 attached_assets/image_1765530610131.png
+ create mode 100644 attached_assets/image_1765531066357.png
+ create mode 100644 attached_assets/image_1765532413419.png
+ create mode 100644 attached_assets/image_1765532675762.png
+ create mode 100644 client/src/pages/manual.tsx
+PS C:\ambulance-planning> npm run db:push
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file 'C:\ambulance-planning\drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+[✓] Changes applied
+PS C:\ambulance-planning> npm install
+
+up to date, audited 987 packages in 5s
+
+150 packages are looking for funding
+  run `npm fund` for details
+
+7 vulnerabilities (5 moderate, 2 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+PS C:\ambulance-planning> npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node scripts/build-sw.js
+
+vite v5.4.20 building for production...
+✓ 2731 modules transformed.
+../dist/public/index.html                                3.20 kB │ gzip:  1.06 kB
+../dist/public/assets/index-CWQzWzbT.css                99.22 kB │ gzip: 15.70 kB
+../dist/public/assets/collapsible-HEApWYgN.js            0.10 kB │ gzip:  0.11 kB
+../dist/public/assets/textarea-CBgP1G2I.js               0.56 kB │ gzip:  0.36 kB
+../dist/public/assets/label-oA3i7A0W.js                  0.63 kB │ gzip:  0.42 kB
+../dist/public/assets/input-DEyGvlvI.js                  0.65 kB │ gzip:  0.39 kB
+../dist/public/assets/index-DJOLlcyQ.js                  0.73 kB │ gzip:  0.43 kB
+../dist/public/assets/badge-e57sFSoj.js                  0.75 kB │ gzip:  0.39 kB
+../dist/public/assets/not-found-CL4tSYVX.js              0.86 kB │ gzip:  0.45 kB
+../dist/public/assets/alert-BX_Xnot_.js                  0.99 kB │ gzip:  0.51 kB
+../dist/public/assets/table-BFxYJMmR.js                  1.57 kB │ gzip:  0.56 kB
+../dist/public/assets/index-DIp2_J1p.js                  2.28 kB │ gzip:  1.02 kB
+../dist/public/assets/dialog-CILPa6WM.js                 2.28 kB │ gzip:  0.90 kB
+../dist/public/assets/switch-TBodRYpv.js                 2.56 kB │ gzip:  1.28 kB
+../dist/public/assets/tabs-BMU8cMdA.js                   3.37 kB │ gzip:  1.42 kB
+../dist/public/assets/index-ChPBepKQ.js                  3.60 kB │ gzip:  1.63 kB
+../dist/public/assets/station-select-DWHts7Mi.js         3.98 kB │ gzip:  1.56 kB
+../dist/public/assets/checkbox-BRpMp6MJ.js               3.98 kB │ gzip:  1.76 kB
+../dist/public/assets/manual-C9vAaE6J.js                 4.15 kB │ gzip:  1.79 kB
+../dist/public/assets/forgot-password-Bnt1v52m.js        4.43 kB │ gzip:  1.71 kB
+../dist/public/assets/alert-dialog-mNS0gbTi.js           4.86 kB │ gzip:  1.78 kB
+../dist/public/assets/nl-DtaYuios.js                     5.08 kB │ gzip:  1.90 kB
+../dist/public/assets/index-BNFQbAyk.js                  5.33 kB │ gzip:  2.04 kB
+../dist/public/assets/reset-password-C7kMd5Cx.js         6.43 kB │ gzip:  2.08 kB
+../dist/public/assets/overtime-UXpY1qtA.js               6.54 kB │ gzip:  2.32 kB
+../dist/public/assets/auth-page-D2Yfg6tb.js              6.83 kB │ gzip:  2.62 kB
+../dist/public/assets/holidays-management-DZXKdRDT.js   12.20 kB │ gzip:  3.56 kB
+../dist/public/assets/weekday-settings-DJo1iZX-.js      13.99 kB │ gzip:  3.57 kB
+../dist/public/assets/push-notifications-DaZwEDVu.js    14.17 kB │ gzip:  4.66 kB
+../dist/public/assets/statistics-D54ejYJC.js            16.34 kB │ gzip:  3.88 kB
+../dist/public/assets/shift-swaps-BV4bPf-K.js           16.73 kB │ gzip:  4.46 kB
+../dist/public/assets/integrations-BoZEehWh.js          16.81 kB │ gzip:  3.71 kB
+../dist/public/assets/select-XESeWSTH.js                21.27 kB │ gzip:  7.40 kB
+../dist/public/assets/reportage-Clu8xPMM.js             21.33 kB │ gzip:  5.73 kB
+../dist/public/assets/verdi-settings-VNeU9252.js        26.67 kB │ gzip:  6.18 kB
+../dist/public/assets/form-Cq0oKPXP.js                  27.53 kB │ gzip: 10.27 kB
+../dist/public/assets/activity-logs-HvgsFMBG.js         36.07 kB │ gzip: 11.37 kB
+../dist/public/assets/query-vendor-BUV8puuL.js          40.99 kB │ gzip: 12.43 kB
+../dist/public/assets/profile-D-THw2Nf.js               42.00 kB │ gzip: 10.18 kB
+../dist/public/assets/index-D9tPPho7.js                 43.90 kB │ gzip: 16.40 kB
+../dist/public/assets/shift-planner-B647ZVFU.js         46.48 kB │ gzip: 14.14 kB
+../dist/public/assets/ui-vendor-C0Zm7azW.js             53.42 kB │ gzip: 13.02 kB
+../dist/public/assets/dashboard-BrKkUji_.js             56.02 kB │ gzip: 14.06 kB
+../dist/public/assets/types-bsRwxkG5.js                 60.80 kB │ gzip: 14.64 kB
+../dist/public/assets/schedule-generator-B7grWjZd.js    66.31 kB │ gzip: 15.06 kB
+../dist/public/assets/index-XFlYTPQq.js                 72.21 kB │ gzip: 24.98 kB
+../dist/public/assets/user-management-B8AaYgjz.js      102.38 kB │ gzip: 25.33 kB
+../dist/public/assets/react-vendor-BsK_Cp9f.js         141.28 kB │ gzip: 45.44 kB
+✓ built in 13.25s
+
+  dist\index.js  571.9kb
+
+Done in 264ms
+✓ Copied manifest.json
+✓ Copied service-worker.js
+✓ Copied 9 icon files
+✓ Build ID generated: 1765565513949
+✓ Service worker generated
+  Precached 59 files, totaling 1274593 bytes
+✓ Push notification handlers added to service worker
+PS C:\ambulance-planning> pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [ambulance-planning](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning │ fork     │ 20   │ online    │ 37.4%    │ 88.2mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+PS C:\ambulance-planning> pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+C:\Users\jeva400\.pm2\pm2.log last 15 lines:
+PM2        | 2025-12-11T12:38:04: PM2 log: pid=59544 msg=process killed
+PM2        | 2025-12-11T12:38:04: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-12-11T12:38:04: PM2 log: App [ambulance-planning:0] online
+PM2        | 2025-12-11T14:51:25: PM2 log: Stopping app:ambulance-planning id:0
+PM2        | 2025-12-11T14:51:25: PM2 log: App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2        | 2025-12-11T14:51:25: PM2 log: pid=59172 msg=process killed
+PM2        | 2025-12-11T14:51:25: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-12-11T14:51:25: PM2 log: App [ambulance-planning:0] online
+PM2        | 2025-12-11T20:04:11: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2025-12-11T20:04:11: PM2 log: [PM2] Upgrade to version 6.0.14
+PM2        | 2025-12-12T19:52:02: PM2 log: Stopping app:ambulance-planning id:0
+PM2        | 2025-12-12T19:52:02: PM2 log: App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2        | 2025-12-12T19:52:02: PM2 log: pid=56168 msg=process killed
+PM2        | 2025-12-12T19:52:02: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-12-12T19:52:02: PM2 log: App [ambulance-planning:0] online
+
+C:\Users\jeva400\.pm2\logs\ambulance-planning-error.log last 15 lines:
+0|ambulanc |     hostname: 'kempenverdi.cloud'
+0|ambulanc |   }
+0|ambulanc | }
+0|ambulanc | Error syncing shift group 2026-01-10T07:00:00.000Z_2026-01-10T13:00:00.000Z_day: Error: Gebruiker 299 (Els Heylen) heeft geen Verdi person GUID mapping
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:763:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:10145:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc | Error syncing shift group 2026-01-10T13:00:00.000Z_2026-01-10T19:00:00.000Z_day: Error: Gebruiker 299 (Els Heylen) heeft geen Verdi person GUID mapping
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:763:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:10145:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulanc | Error syncing shift group 2026-01-10T19:00:00.000Z_2026-01-11T07:00:00.000Z_night: Error: Gebruiker 304 (Sidney Michiels) heeft geen Verdi person GUID mapping
+0|ambulanc |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:763:19)
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:10145:47
+0|ambulanc |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+C:\Users\jeva400\.pm2\logs\ambulance-planning-out.log last 15 lines:
+0|ambulanc | DEBUG: Total 7 users returned for station 8 with cross-team info
+0|ambulanc | Supervisor requested station 8, returning 7 users (with cross-team info)
+0|ambulanc | DEBUG: Found 0 additional users for station 8: []
+0|ambulanc | DEBUG: Total 7 users returned for station 8
+0|ambulanc | 7:58:32 PM [express] GET /api/users 200 in 59ms
+0|ambulanc | 7:58:32 PM [express] GET /api/verdi/sync-status/12/2025 200 in 51ms
+0|ambulanc | 7:58:32 PM [express] GET /api/verdi/last-sync/8/12/2025 200 in 52ms
+0|ambulanc | 7:58:32 PM [express] GET /api/shift-bids/counts 200 in 99ms
+0|ambulanc | 7:58:32 PM [express] GET /api/cross-team-shifts 200 in 101ms
+0|ambulanc | === DESERIALIZE USER ===
+0|ambulanc | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulanc | Using session stationId: 8
+0|ambulanc | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulanc | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulanc | 7:58:33 PM [express] GET /api/schedule/status 403 in 3ms
+
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:33.451Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:33.451Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:33.451Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/user 200 in 10ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/system/settings/last-preferences-generated 200 in 10ms
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/system/settings/last-schedule-generated 200 in 10ms
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/user/stations 200 in 11ms
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/verdi/pending-changes/8/12/2025 200 in 26ms
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/verdi/sync-status/12/2025 200 in 53ms
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/verdi/last-sync/8/12/2025 200 in 54ms
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:41.539Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === GET /api/users DEBUG ===
+0|ambulance-planning  | Admin user object: {
+0|ambulance-planning  |   "id": 87,
+0|ambulance-planning  |   "username": "jeva400",
+0|ambulance-planning  |   "password": "01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce",
+0|ambulance-planning  |   "firstName": "jeroen",
+0|ambulance-planning  |   "lastName": "vanhoof",
+0|ambulance-planning  |   "email": "jeroen.vanhoof@brandweerzonekempen.be",
+0|ambulance-planning  |   "phoneNumber": "+32 497 71 72 4",
+0|ambulance-planning  |   "profilePhotoUrl": null,
+0|ambulance-planning  |   "role": "supervisor",
+0|ambulance-planning  |   "isAdmin": true,
+0|ambulance-planning  |   "isProfessional": false,
+0|ambulance-planning  |   "hasDrivingLicenseC": true,
+0|ambulance-planning  |   "hours": 0,
+0|ambulance-planning  |   "stationId": 8,
+0|ambulance-planning  |   "calendarOffset": 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Admin stationId: 8
+0|ambulance-planning  | Admin role: supervisor
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:41.539Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | DEBUG: getUsersByStation called with stationId: 8
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/shift-bids/counts 200 in 104ms
+0|ambulance-planning  | All users from database: 191
+0|ambulance-planning  | Users station IDs: [
+0|ambulance-planning  |   'thhu81:3',  'jope179:5', 'dimu355:6', 'rvdb189:5', 'stma453:5',
+0|ambulance-planning  |   'sevl577:5', 'ivgo344:1', 'rove319:1', 'vile170:5', 'sthe7:1',
+0|ambulance-planning  |   'havm323:5', 'gihu503:1', 'svdb435:1', 'jomi499:1', 'siba534:5',
+0|ambulance-planning  |   'toth471:1', 'jabe308:1', 'bave198:3', 'kuwu580:3', 'emth312:1',
+0|ambulance-planning  |   'rost612:4', 'tvdd19:2',  'pavh191:5', 'robu535:5', 'gime604:1',
+0|ambulance-planning  |   'mita313:1', 'maka546:1', 'kacl384:6', 'gelo665:6', 'todo73:3',
+0|ambulance-planning  |   'jeva400:8', 'nive393:6', 'tivr108:3', 'tobu445:6', 'jovv423:5',
+0|ambulance-planning  |   'phho162:5', 'koge76:3',  'anwo64:3',  'ivve60:3',  'rigo488:5',
+0|ambulance-planning  |   'gico556:5', 'mast555:3', 'leve509:3', 'pave61:3',  'mvdb95:3',
+0|ambulance-planning  |   'dero484:7', 'stke427:3', 'rume450:7', 'mavc388:6', 'gube551:7',
+0|ambulance-planning  |   'gist529:7', 'jolu48:3',  'bvda377:6', 'jile572:2', 'calu582:6',
+0|ambulance-planning  |   'jolu381:6', 'chbr387:6', 'math573:6', 'elru411:8', 'tage397:6',
+0|ambulance-planning  |   'make389:6', 'dica261:6', 'pvdp385:6', 'bjlo22:6',  'dawi696:4',
+0|ambulance-planning  |   'rosm697:4', 'dave203:5', 'nilu84:5',  'chve200:5', 'didi617:5',
+0|ambulance-planning  |   'rove537:5', 'drpa338:1', 'fima342:1', 'gihe566:1', 'stry334:3',
+0|ambulance-planning  |   'bami339:1', 'jevb631:3', 'jobo31:8',  'stca391:6', 'davc374:6',
+0|ambulance-planning  |   'kepe505:3', 'stra614:3', 'elvs521:8', 'esds634:8', 'dygr460:2',
+0|ambulance-planning  |   'fidr571:2', 'elhe699:4', 'jeva418:2', 'roha382:6', 'toho21:2',
+0|ambulance-planning  |   'mihe695:4', 'glph405:2', 'frba17:2',  'simi692:4', 'joni495:2',
+0|ambulance-planning  |   'liro562:2', 'lale702:4', 'lasm703:4', 'mava296:2', 'nahe701:4',
+0|ambulance-planning  |   ... 91 more items
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: 8
+0|ambulance-planning  | DEBUG: Found 7 primary users for station 8: [
+0|ambulance-planning  |   'jeva400:87',
+0|ambulance-planning  |   'elru411:128',
+0|ambulance-planning  |   'jobo31:127',
+0|ambulance-planning  |   'elvs521:145',
+0|ambulance-planning  |   'esds634:146',
+0|ambulance-planning  |   'jova442:331',
+0|ambulance-planning  |   'rami511:333'
+0|ambulance-planning  | ]
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | DEBUG: Found 7 primary users for station 8
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/weekday-configs 403 in 102ms
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/preferences/all 403 in 104ms
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/comments/all/12/2025 403 in 104ms
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | DEBUG: Found 0 additional users for station 8: []
+0|ambulance-planning  | DEBUG: Total 7 users returned for station 8
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/shifts 403 in 105ms
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/schedule/status 403 in 105ms
+0|ambulance-planning  | DEBUG: Found 0 cross-team users for station 8
+0|ambulance-planning  | DEBUG: Total 7 users returned for station 8 with cross-team info
+0|ambulance-planning  | Supervisor requested station 8, returning 7 users (with cross-team info)
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/users 200 in 108ms
+0|ambulance-planning  | 7:58:41 PM [express] GET /api/cross-team-shifts 200 in 106ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:41.651Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/user 200 in 4ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:41.651Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:45.234Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/user/stations 200 in 8ms
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/system/settings/last-preferences-generated 200 in 8ms
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/system/settings/last-schedule-generated 200 in 5ms
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/schedule/status 403 in 12ms
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === GET /api/users DEBUG ===
+0|ambulance-planning  | Admin user object: {
+0|ambulance-planning  |   "id": 87,
+0|ambulance-planning  |   "username": "jeva400",
+0|ambulance-planning  |   "password": "01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce",
+0|ambulance-planning  |   "firstName": "jeroen",
+0|ambulance-planning  |   "lastName": "vanhoof",
+0|ambulance-planning  |   "email": "jeroen.vanhoof@brandweerzonekempen.be",
+0|ambulance-planning  |   "phoneNumber": "+32 497 71 72 4",
+0|ambulance-planning  |   "profilePhotoUrl": null,
+0|ambulance-planning  |   "role": "supervisor",
+0|ambulance-planning  |   "isAdmin": true,
+0|ambulance-planning  |   "isProfessional": false,
+0|ambulance-planning  |   "hasDrivingLicenseC": true,
+0|ambulance-planning  |   "hours": 0,
+0|ambulance-planning  |   "stationId": 8,
+0|ambulance-planning  |   "calendarOffset": 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Admin stationId: 8
+0|ambulance-planning  | Admin role: supervisor
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:45.240Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:45.240Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | DEBUG: getUsersByStation called with stationId: 8
+0|ambulance-planning  | All users from database: 191
+0|ambulance-planning  | Users station IDs: [
+0|ambulance-planning  |   'thhu81:3',  'jope179:5', 'dimu355:6', 'rvdb189:5', 'stma453:5',
+0|ambulance-planning  |   'sevl577:5', 'ivgo344:1', 'rove319:1', 'vile170:5', 'sthe7:1',
+0|ambulance-planning  |   'havm323:5', 'gihu503:1', 'svdb435:1', 'jomi499:1', 'siba534:5',
+0|ambulance-planning  |   'toth471:1', 'jabe308:1', 'bave198:3', 'kuwu580:3', 'emth312:1',
+0|ambulance-planning  |   'rost612:4', 'tvdd19:2',  'pavh191:5', 'robu535:5', 'gime604:1',
+0|ambulance-planning  |   'mita313:1', 'maka546:1', 'kacl384:6', 'gelo665:6', 'todo73:3',
+0|ambulance-planning  |   'jeva400:8', 'nive393:6', 'tivr108:3', 'tobu445:6', 'jovv423:5',
+0|ambulance-planning  |   'phho162:5', 'koge76:3',  'anwo64:3',  'ivve60:3',  'rigo488:5',
+0|ambulance-planning  |   'gico556:5', 'mast555:3', 'leve509:3', 'pave61:3',  'mvdb95:3',
+0|ambulance-planning  |   'dero484:7', 'stke427:3', 'rume450:7', 'mavc388:6', 'gube551:7',
+0|ambulance-planning  |   'gist529:7', 'jolu48:3',  'bvda377:6', 'jile572:2', 'calu582:6',
+0|ambulance-planning  |   'jolu381:6', 'chbr387:6', 'math573:6', 'elru411:8', 'tage397:6',
+0|ambulance-planning  |   'make389:6', 'dica261:6', 'pvdp385:6', 'bjlo22:6',  'dawi696:4',
+0|ambulance-planning  |   'rosm697:4', 'dave203:5', 'nilu84:5',  'chve200:5', 'didi617:5',
+0|ambulance-planning  |   'rove537:5', 'drpa338:1', 'fima342:1', 'gihe566:1', 'stry334:3',
+0|ambulance-planning  |   'bami339:1', 'jevb631:3', 'jobo31:8',  'stca391:6', 'davc374:6',
+0|ambulance-planning  |   'kepe505:3', 'stra614:3', 'elvs521:8', 'esds634:8', 'dygr460:2',
+0|ambulance-planning  |   'fidr571:2', 'elhe699:4', 'jeva418:2', 'roha382:6', 'toho21:2',
+0|ambulance-planning  |   'mihe695:4', 'glph405:2', 'frba17:2',  'simi692:4', 'joni495:2',
+0|ambulance-planning  |   'liro562:2', 'lale702:4', 'lasm703:4', 'mava296:2', 'nahe701:4',
+0|ambulance-planning  |   ... 91 more items
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: 8
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/verdi/pending-changes/8/12/2025 200 in 43ms
+0|ambulance-planning  | DEBUG: Found 7 primary users for station 8: [
+0|ambulance-planning  |   'jeva400:87',
+0|ambulance-planning  |   'elru411:128',
+0|ambulance-planning  |   'jobo31:127',
+0|ambulance-planning  |   'elvs521:145',
+0|ambulance-planning  |   'esds634:146',
+0|ambulance-planning  |   'jova442:331',
+0|ambulance-planning  |   'rami511:333'
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: Found 7 primary users for station 8
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/preferences/all 403 in 50ms
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/comments/all/12/2025 403 in 50ms
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/weekday-configs 403 in 49ms
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/verdi/sync-status/12/2025 200 in 50ms
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/verdi/last-sync/8/12/2025 200 in 51ms
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | DEBUG: Found 0 additional users for station 8: []
+0|ambulance-planning  | DEBUG: Total 7 users returned for station 8
+0|ambulance-planning  | DEBUG: Found 0 cross-team users for station 8
+0|ambulance-planning  | DEBUG: Total 7 users returned for station 8 with cross-team info
+0|ambulance-planning  | Supervisor requested station 8, returning 7 users (with cross-team info)
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/shift-bids/counts 200 in 92ms
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/shifts 403 in 92ms
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/users 200 in 95ms
+0|ambulance-planning  | 7:58:45 PM [express] GET /api/cross-team-shifts 200 in 93ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/schedule/status 403 in 4ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:46.271Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:46.271Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:46.271Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/system/settings/last-preferences-generated 200 in 12ms
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/system/settings/last-schedule-generated 200 in 11ms
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | DEBUG: getUsersByStation called with stationId: 8
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/schedule/status 403 in 14ms
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/preferences/all 403 in 16ms
+0|ambulance-planning  | DEBUG: Found 7 primary users for station 8: [
+0|ambulance-planning  |   'jeva400:87',
+0|ambulance-planning  |   'elru411:128',
+0|ambulance-planning  |   'jobo31:127',
+0|ambulance-planning  |   'elvs521:145',
+0|ambulance-planning  |   'esds634:146',
+0|ambulance-planning  |   'jova442:331',
+0|ambulance-planning  |   'rami511:333'
+0|ambulance-planning  | ]
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/verdi/sync-status/1/2026 200 in 14ms
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/shifts 403 in 17ms
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/verdi/last-sync/8/1/2026 200 in 12ms
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/verdi/pending-changes/8/1/2026 200 in 12ms
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | DEBUG: Found 0 additional users for station 8: []
+0|ambulance-planning  | DEBUG: Total 7 users returned for station 8
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/shift-bids/counts 200 in 13ms
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/comments/all/1/2026 403 in 18ms
+0|ambulance-planning  | 7:58:46 PM [express] GET /api/cross-team-shifts 200 in 19ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | 7:58:47 PM [express] GET /api/schedule/status 403 in 4ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | [SECURITY] supervisor 87 probeerde toegang tot niet-geautoriseerd station 8
+0|ambulance-planning  | 7:58:49 PM [express] GET /api/schedule/status 403 in 4ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:49.685Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/system/settings/last-preferences-generated 200 in 6ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:49.685Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === GET /api/users DEBUG ===
+0|ambulance-planning  | Admin user object: {
+0|ambulance-planning  |   "id": 87,
+0|ambulance-planning  |   "username": "jeva400",
+0|ambulance-planning  |   "password": "01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce",
+0|ambulance-planning  |   "firstName": "jeroen",
+0|ambulance-planning  |   "lastName": "vanhoof",
+0|ambulance-planning  |   "email": "jeroen.vanhoof@brandweerzonekempen.be",
+0|ambulance-planning  |   "phoneNumber": "+32 497 71 72 4",
+0|ambulance-planning  |   "profilePhotoUrl": null,
+0|ambulance-planning  |   "role": "supervisor",
+0|ambulance-planning  |   "isAdmin": true,
+0|ambulance-planning  |   "isProfessional": false,
+0|ambulance-planning  |   "hasDrivingLicenseC": true,
+0|ambulance-planning  |   "hours": 0,
+0|ambulance-planning  |   "stationId": 8,
+0|ambulance-planning  |   "calendarOffset": 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Admin stationId: 8
+0|ambulance-planning  | Admin role: supervisor
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:54.417Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:58:54.417Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/system/settings/last-schedule-generated 200 in 13ms
+0|ambulance-planning  | All users from database: 191
+0|ambulance-planning  | Users station IDs: [
+0|ambulance-planning  |   'thhu81:3',  'jope179:5', 'dimu355:6', 'rvdb189:5', 'stma453:5',
+0|ambulance-planning  |   'sevl577:5', 'ivgo344:1', 'rove319:1', 'vile170:5', 'sthe7:1',
+0|ambulance-planning  |   'havm323:5', 'gihu503:1', 'svdb435:1', 'jomi499:1', 'siba534:5',
+0|ambulance-planning  |   'toth471:1', 'jabe308:1', 'bave198:3', 'kuwu580:3', 'emth312:1',
+0|ambulance-planning  |   'rost612:4', 'tvdd19:2',  'pavh191:5', 'robu535:5', 'gime604:1',
+0|ambulance-planning  |   'mita313:1', 'maka546:1', 'kacl384:6', 'gelo665:6', 'todo73:3',
+0|ambulance-planning  |   'jeva400:8', 'nive393:6', 'tivr108:3', 'tobu445:6', 'jovv423:5',
+0|ambulance-planning  |   'phho162:5', 'koge76:3',  'anwo64:3',  'ivve60:3',  'rigo488:5',
+0|ambulance-planning  |   'gico556:5', 'mast555:3', 'leve509:3', 'pave61:3',  'mvdb95:3',
+0|ambulance-planning  |   'dero484:7', 'stke427:3', 'rume450:7', 'mavc388:6', 'gube551:7',
+0|ambulance-planning  |   'gist529:7', 'jolu48:3',  'bvda377:6', 'jile572:2', 'calu582:6',
+0|ambulance-planning  |   'jolu381:6', 'chbr387:6', 'math573:6', 'elru411:8', 'tage397:6',
+0|ambulance-planning  |   'make389:6', 'dica261:6', 'pvdp385:6', 'bjlo22:6',  'dawi696:4',
+0|ambulance-planning  |   'rosm697:4', 'dave203:5', 'nilu84:5',  'chve200:5', 'didi617:5',
+0|ambulance-planning  |   'rove537:5', 'drpa338:1', 'fima342:1', 'gihe566:1', 'stry334:3',
+0|ambulance-planning  |   'bami339:1', 'jevb631:3', 'jobo31:8',  'stca391:6', 'davc374:6',
+0|ambulance-planning  |   'kepe505:3', 'stra614:3', 'elvs521:8', 'esds634:8', 'dygr460:2',
+0|ambulance-planning  |   'fidr571:2', 'elhe699:4', 'jeva418:2', 'roha382:6', 'toho21:2',
+0|ambulance-planning  |   'mihe695:4', 'glph405:2', 'frba17:2',  'simi692:4', 'joni495:2',
+0|ambulance-planning  |   'liro562:2', 'lale702:4', 'lasm703:4', 'mava296:2', 'nahe701:4',
+0|ambulance-planning  |   ... 91 more items
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: 4
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | DEBUG: getUsersByStation called with stationId: 4
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | DEBUG: Found 22 primary users for station 4
+0|ambulance-planning  | DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: 4
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Fetching comments for month: 1, year: 2026, station: 4
+0|ambulance-planning  | DEBUG: Found 22 primary users for station 4: [
+0|ambulance-planning  |   'rost612:54',  'dawi696:294',
+0|ambulance-planning  |   'rosm697:295', 'elhe699:299',
+0|ambulance-planning  |   'mihe695:293', 'simi692:304',
+0|ambulance-planning  |   'lale702:302', 'lasm703:303',
+0|ambulance-planning  |   'nahe701:301', 'frcl34:305',
+0|ambulance-planning  |   'pibe297:309', 'guva285:314',
+0|ambulance-planning  |   'sile305:313', 'jodr291:311',
+0|ambulance-planning  |   'ceva694:292', 'brhe693:320',
+0|ambulance-planning  |   'stte543:312', 'drsm700:300',
+0|ambulance-planning  |   'toge75:307',  'daca494:308',
+0|ambulance-planning  |   'joli301:310', 'suku611:315'
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: Found 8 cross-team users for station 4
+0|ambulance-planning  | DEBUG: Adding cross-team user tvdd19:17 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user dygr460:181 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user fidr571:166 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jeva418:159 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user joni495:170 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user liro562:171 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user simo542:259 with maxHours 24
+0|ambulance-planning  | DEBUG: Total 30 users returned for station 4 with cross-team info
+0|ambulance-planning  | Supervisor requested station 4, returning 30 users (with cross-team info)
+0|ambulance-planning  | DEBUG: Found 22 primary users for station 4
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/users 200 in 28ms
+0|ambulance-planning  | Found 0 comments for station 4: []
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/shift-bids/counts 200 in 22ms
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/shifts 200 in 35ms
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/weekday-configs 200 in 32ms
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/schedule/status 200 in 38ms
+0|ambulance-planning  | DEBUG: Found 8 additional users for station 4: [
+0|ambulance-planning  |   'tvdd19:17',
+0|ambulance-planning  |   'dygr460:181',
+0|ambulance-planning  |   'fidr571:166',
+0|ambulance-planning  |   'jeva418:159',
+0|ambulance-planning  |   'joni495:170',
+0|ambulance-planning  |   'liro562:171',
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  |   'simo542:259'
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: Adding additional cross-team user tvdd19:17 to results
+0|ambulance-planning  | DEBUG: Adding additional cross-team user dygr460:181 to results
+0|ambulance-planning  | DEBUG: Adding additional cross-team user fidr571:166 to results
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jeva418:159 to results
+0|ambulance-planning  | DEBUG: Adding additional cross-team user joni495:170 to results
+0|ambulance-planning  | DEBUG: Adding additional cross-team user liro562:171 to results
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding additional cross-team user simo542:259 to results
+0|ambulance-planning  | DEBUG: Total 30 users returned for station 4
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/verdi/sync-status/1/2026 200 in 35ms
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/verdi/last-sync/4/1/2026 200 in 35ms
+0|ambulance-planning  | DEBUG: Found 8 cross-team users for station 4
+0|ambulance-planning  | DEBUG: Adding cross-team user tvdd19:17 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user dygr460:181 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user fidr571:166 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jeva418:159 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user joni495:170 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user liro562:171 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user simo542:259 with maxHours 24
+0|ambulance-planning  | DEBUG: Total 30 users returned for station 4 with cross-team info
+0|ambulance-planning  | Returning 0 comments with user details for station 4
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/comments/all/1/2026 200 in 45ms
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/cross-team-shifts 200 in 44ms
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/preferences/all 200 in 51ms
+0|ambulance-planning  | 7:58:54 PM [express] GET /api/verdi/pending-changes/4/1/2026 200 in 39ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Verdi sync: Found 100 existing sync logs, 0 with valid Verdi GUIDs
+0|ambulance-planning  | Verdi cleanup: 0 deleted, 0 updated, 0 errors
+0|ambulance-planning  | Error syncing shift group 2026-01-04T07:00:00.000Z_2026-01-04T13:00:00.000Z_day: Error: Gebruiker 295 (Rose Smeyers) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-04T13:00:00.000Z_2026-01-04T19:00:00.000Z_day: Error: Gebruiker 295 (Rose Smeyers) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-04T19:00:00.000Z_2026-01-05T07:00:00.000Z_night: Error: Gebruiker 293 (Mie Heymans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Sending shift to Verdi: https://kempenverdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11158,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-01-11T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-11T13:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-11T07:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-11T13:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Error sending shift to Verdi: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-11T07:00:00.000Z_2026-01-11T13:00:00.000Z_day: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempenverdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11161,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-01-11T13:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-11T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-11T13:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-11T19:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Error sending shift to Verdi: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-11T13:00:00.000Z_2026-01-11T19:00:00.000Z_day: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-11T19:00:00.000Z_2026-01-12T07:00:00.000Z_night: Error: Gebruiker 294 (Damiën Willems) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-17T07:00:00.000Z_2026-01-17T13:00:00.000Z_day: Error: Gebruiker 320 (Brent Hesemans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-17T13:00:00.000Z_2026-01-17T19:00:00.000Z_day: Error: Gebruiker 320 (Brent Hesemans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-17T19:00:00.000Z_2026-01-18T07:00:00.000Z_night: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-18T07:00:00.000Z_2026-01-18T13:00:00.000Z_day: Error: Gebruiker 301 (Nanne Heesters) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-18T13:00:00.000Z_2026-01-18T19:00:00.000Z_day: Error: Gebruiker 301 (Nanne Heesters) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-18T19:00:00.000Z_2026-01-19T07:00:00.000Z_night: Error: Gebruiker 303 (Laura Smets) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-24T07:00:00.000Z_2026-01-24T13:00:00.000Z_day: Error: Gebruiker 292 (Celine Vanhoof) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-24T13:00:00.000Z_2026-01-24T19:00:00.000Z_day: Error: Gebruiker 292 (Celine Vanhoof) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-24T19:00:00.000Z_2026-01-25T07:00:00.000Z_night: Error: Gebruiker 320 (Brent Hesemans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-25T07:00:00.000Z_2026-01-25T13:00:00.000Z_day: Error: Gebruiker 304 (Sidney Michiels) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-25T13:00:00.000Z_2026-01-25T19:00:00.000Z_day: Error: Gebruiker 304 (Sidney Michiels) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Sending shift to Verdi: https://kempenverdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11138,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-01-25T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-26T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-25T19:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-26T07:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Error sending shift to Verdi: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-25T19:00:00.000Z_2026-01-26T07:00:00.000Z_night: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-31T07:00:00.000Z_2026-01-31T13:00:00.000Z_day: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-31T13:00:00.000Z_2026-01-31T19:00:00.000Z_day: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-31T19:00:00.000Z_2026-02-01T07:00:00.000Z_night: Error: Gebruiker 303 (Laura Smets) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Sending shift to Verdi: https://kempenverdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11172,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-01-03T13:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-03T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-03T13:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-03T19:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Error sending shift to Verdi: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-03T13:00:00.000Z_2026-01-03T19:00:00.000Z_day: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-03T19:00:00.000Z_2026-01-04T07:00:00.000Z_night: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-14T19:00:00.000Z_2026-01-15T07:00:00.000Z_night: Error: Gebruiker 299 (Els Heylen) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-15T19:00:00.000Z_2026-01-16T07:00:00.000Z_night: Error: Gebruiker 295 (Rose Smeyers) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-16T19:00:00.000Z_2026-01-17T07:00:00.000Z_night: Error: Gebruiker 311 (Joris  Droogmans ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-19T19:00:00.000Z_2026-01-20T07:00:00.000Z_night: Error: Gebruiker 292 (Celine Vanhoof) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-20T19:00:00.000Z_2026-01-21T07:00:00.000Z_night: Error: Gebruiker 304 (Sidney Michiels) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-21T19:00:00.000Z_2026-01-22T07:00:00.000Z_night: Error: Gebruiker 295 (Rose Smeyers) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-22T19:00:00.000Z_2026-01-23T07:00:00.000Z_night: Error: Gebruiker 303 (Laura Smets) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-23T19:00:00.000Z_2026-01-24T07:00:00.000Z_night: Error: Gebruiker 301 (Nanne Heesters) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-26T19:00:00.000Z_2026-01-27T07:00:00.000Z_night: Error: Gebruiker 293 (Mie Heymans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Sending shift to Verdi: https://kempenverdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11182,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-01-27T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-28T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-27T19:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-28T07:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Error sending shift to Verdi: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-27T19:00:00.000Z_2026-01-28T07:00:00.000Z_night: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-28T19:00:00.000Z_2026-01-29T07:00:00.000Z_night: Error: Gebruiker 299 (Els Heylen) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-29T19:00:00.000Z_2026-01-30T07:00:00.000Z_night: Error: Gebruiker 301 (Nanne Heesters) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-30T19:00:00.000Z_2026-01-31T07:00:00.000Z_night: Error: Gebruiker 320 (Brent Hesemans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-09T19:00:00.000Z_2026-01-10T07:00:00.000Z_night: Error: Gebruiker 301 (Nanne Heesters) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-12T19:00:00.000Z_2026-01-13T07:00:00.000Z_night: Error: Gebruiker 293 (Mie Heymans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-13T19:00:00.000Z_2026-01-14T07:00:00.000Z_night: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Sending shift to Verdi: https://kempenverdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11170,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-01-03T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-03T13:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-03T07:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-03T13:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Error sending shift to Verdi: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-03T07:00:00.000Z_2026-01-03T13:00:00.000Z_day: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Sending shift to Verdi: https://kempenverdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11212,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-01-06T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-07T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-06T19:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-07T07:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Error sending shift to Verdi: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-06T19:00:00.000Z_2026-01-07T07:00:00.000Z_night: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-07T19:00:00.000Z_2026-01-08T07:00:00.000Z_night: Error: Gebruiker 311 (Joris  Droogmans ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-08T19:00:00.000Z_2026-01-09T07:00:00.000Z_night: Error: Gebruiker 303 (Laura Smets) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Sending shift to Verdi: https://kempenverdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11471,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-01-01T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-01T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-01T07:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-01T19:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Error sending shift to Verdi: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-01T07:00:00.000Z_2026-01-01T19:00:00.000Z_day: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-05T19:00:00.000Z_2026-01-06T07:00:00.000Z_night: Error: Gebruiker 292 (Celine Vanhoof) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-01T19:00:00.000Z_2026-01-02T07:00:00.000Z_night: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Sending shift to Verdi: https://kempenverdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11216,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: false,
+0|ambulance-planning  |   rawStartTime: 2026-01-02T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-03T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-02T19:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-03T07:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Error sending shift to Verdi: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-02T19:00:00.000Z_2026-01-03T07:00:00.000Z_night: TypeError: fetch failed
+0|ambulance-planning  |     at node:internal/deps/undici/undici:13510:13
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  |     at async VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:807:28)
+0|ambulance-planning  |     at async file:///C:/ambulance-planning/dist/index.js:10409:28 {
+0|ambulance-planning  |   [cause]: Error: getaddrinfo ENOTFOUND kempenverdi.cloud
+0|ambulance-planning  |       at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+0|ambulance-planning  |     errno: -3008,
+0|ambulance-planning  |     code: 'ENOTFOUND',
+0|ambulance-planning  |     syscall: 'getaddrinfo',
+0|ambulance-planning  |     hostname: 'kempenverdi.cloud'
+0|ambulance-planning  |   }
+0|ambulance-planning  | }
+0|ambulance-planning  | Error syncing shift group 2026-01-10T07:00:00.000Z_2026-01-10T13:00:00.000Z_day: Error: Gebruiker 299 (Els Heylen) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-10T13:00:00.000Z_2026-01-10T19:00:00.000Z_day: Error: Gebruiker 299 (Els Heylen) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | Error syncing shift group 2026-01-10T19:00:00.000Z_2026-01-11T07:00:00.000Z_night: Error: Gebruiker 304 (Sidney Michiels) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10409:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 7:59:00 PM [express] POST /api/verdi/sync 200 in 420ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:59:00.770Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | 7:59:00 PM [express] GET /api/shifts 200 in 6ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-13T18:59:00.785Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | 7:59:00 PM [express] GET /api/verdi/sync-status/1/2026 200 in 11ms
+0|ambulance-planning  | 7:59:00 PM [express] GET /api/verdi/last-sync/4/1/2026 200 in 11ms
+0|ambulance-planning  | 7:59:00 PM [express] GET /api/verdi/pending-changes/4/1/2026 200 in 18ms
+0|ambulance-planning  | 7:59:00 PM [express] GET /api/shifts 200 in 16ms

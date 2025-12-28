@@ -1,0 +1,2260 @@
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+
+PS C:\Windows\system32> $env:PATH += ";$env:APPDATA\npm"
+PS C:\Windows\system32> cd C:\ambulance-planning
+PS C:\ambulance-planning> pm2 logs --lines 1000 | Select-String "Processing day 7|Processing day 8|availableForDay|257"
+
+0|ambulanc | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | 6:13:25 PM [express] GET /api/preferences/257/2/2026 200 in 4ms
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | User jost658 (257): station 4 limit = 24h
+0|ambulance-planning  | Processing day 7: Sat Feb 07 2026 (9/28)
+0|ambulance-planning  | Processing day 8: Sun Feb 08 2026 (10/28)
+0|ambulance-planning  | 6:14:04 PM [express] POST /api/schedule/generate 200 in 257ms
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | 6:22:22 PM [express] GET /api/preferences/257/12/2025 200 in 5ms
+0|ambulance-planning  | 6:22:25 PM [express] GET /api/preferences/257/2/2025 200 in 3ms
+0|ambulance-planning  | 6:22:26 PM [express] GET /api/preferences/257/2/2026 200 in 4ms
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | 6:24:06 PM [express] GET /api/preferences/257/12/2025 200 in 3ms
+0|ambulance-planning  | 6:24:09 PM [express] GET /api/preferences/257/2/2025 200 in 4ms
+0|ambulance-planning  | 6:24:10 PM [express] GET /api/preferences/257/2/2026 200 in 4ms
+0|ambulance-planning  | 6:24:13 PM [express] GET /api/preferences/257/2/2026 200 in 3ms
+0|ambulance-planning  | 6:24:19 PM [express] GET /api/preferences/257/2/2026 200 in 4ms
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Admin access denied: { isAuthenticated: true, userRole: 'ambulancier', userId: 257 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | ≡ƒöä Station switch requested: { userId: 257, stationId: '4' }
+0|ambulance-planning  | Serializing user: { id: 257, username: 'jost658', stationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Admin access denied: { isAuthenticated: true, userRole: 'ambulancier', userId: 257 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 4 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 4, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 4 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | ≡ƒöä Station switch requested: { userId: 257, stationId: '2' }
+0|ambulance-planning  | Serializing user: { id: 257, username: 'jost658', stationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Admin access denied: { isAuthenticated: true, userRole: 'ambulancier', userId: 257 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | 6:26:19 PM [express] GET /api/preferences/257/2/2026 200 in 4ms
+0|ambulance-planning  | 6:26:22 PM [express] GET /api/preferences/257/2/2026 200 in 4ms
+0|ambulance-planning  | 6:26:29 PM [express] GET /api/preferences/257/12/2025 200 in 4ms
+0|ambulance-planning  | 6:26:32 PM [express] GET /api/preferences/257/2/2025 200 in 3ms
+0|ambulance-planning  | 6:26:33 PM [express] GET /api/preferences/257/2/2026 200 in 3ms
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | 6:27:18 PM [express] GET /api/preferences/257/2/2026 200 in 12ms
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | 6:27:26 PM [express] GET /api/preferences/257/2/2026 200 in 4ms
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  |   userId: 257,
+0|ambulance-planning  | Deserializing user: { id: 257, sessionStationId: 2 }
+0|ambulance-planning  | Retrieved user: { id: 257, username: 'jost658', stationId: 2, role: 'ambulancier' }
+0|ambulance-planning  |   passport: { user: { id: 257, stationId: 2 } }
+0|ambulance-planning  |   id: 257,
+0|ambulance-planning  | 6:27:31 PM [express] GET /api/preferences/257/2/2026 200 in 4ms
+0|ambulance-planning  | 6:27:34 PM [express] GET /api/preferences/257/2/2026 200 in 4ms
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',     'nave654:254',
+0|ambulance-planning  |   'jost658:257',     'nave654:254',
+0|ambulance-planning  |   'jost658:257',     'nave654:254',
+0|ambulance-planning  | User jost658 (257): station 2 limit = 36h
+0|ambulance-planning  | Processing day 7: Sat Feb 07 2026 (8/28)
+0|ambulance-planning  | Processing day 8: Sun Feb 08 2026 (10/28)
+0|ambulance-planning  | SKIP USER: jost658 (257) has no day preference for day 6
+0|ambulance-planning  | SKIP USER: jost658 (257) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: jost658 (257) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: jost658 (257) has no night preference for day 23
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | User jost658 (257): station 4 limit = 24h
+0|ambulance-planning  | Processing day 7: Sat Feb 07 2026 (9/28)
+0|ambulance-planning  | Processing day 8: Sun Feb 08 2026 (10/28)
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',
+0|ambulance-planning  | DEBUG: Adding additional cross-team user jost658:257 to results
+0|ambulance-planning  | DEBUG: Adding cross-team user jost658:257 with maxHours 24
+0|ambulance-planning  |   'jost658:257',     'nave654:254',
+0|ambulance-planning  |   'jost658:257',     'nave654:254',
+PS C:\ambulance-planning> tzutil /g
+Romance Standard Time
+PS C:\ambulance-planning> pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+C:\Users\jeva400\.pm2\pm2.log last 15 lines:
+PM2        | 2025-12-24T09:27:32: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-12-24T09:27:32: PM2 log: App [ambulance-planning:0] online
+PM2        | 2025-12-24T17:55:49: PM2 log: Stopping app:ambulance-planning id:0
+PM2        | 2025-12-24T17:55:50: PM2 log: App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2        | 2025-12-24T17:55:50: PM2 log: pid=77780 msg=process killed
+PM2        | 2025-12-24T17:55:50: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-12-24T17:55:50: PM2 log: App [ambulance-planning:0] online
+PM2        | 2025-12-24T20:05:04: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2025-12-24T20:05:04: PM2 log: [PM2] Upgrade to version 6.0.14
+PM2        | 2025-12-25T20:05:05: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2025-12-25T20:05:05: PM2 log: [PM2] Upgrade to version 6.0.14
+PM2        | 2025-12-26T20:05:06: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2025-12-26T20:05:06: PM2 log: [PM2] Upgrade to version 6.0.14
+PM2        | 2025-12-27T20:05:07: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2025-12-27T20:05:07: PM2 log: [PM2] Upgrade to version 6.0.14
+
+C:\Users\jeva400\.pm2\logs\ambulance-planning-error.log last 15 lines:
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Error exporting XLSX schedule: ReferenceError: targetStationId is not defined
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:10294:20
+
+C:\Users\jeva400\.pm2\logs\ambulance-planning-out.log last 15 lines:
+0|ambulanc |     kioskToken: 'e7a267f4481928fa1e3ff5c8d07397632b6e39cd13b726fec95b9959e40b3590',
+0|ambulanc |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulanc |     updatedAt: 2025-12-25T09:57:18.946Z
+0|ambulanc |   }
+0|ambulanc | ]
+0|ambulanc | 6:42:22 PM [express] GET /api/user/stations 200 in 16ms
+0|ambulanc | DEBUG: Found 25 primary users for station 2
+0|ambulanc | DEBUG: Found 3 cross-team users for station 2
+0|ambulanc | DEBUG: Adding cross-team user rost612:54 with maxHours 24
+0|ambulanc | DEBUG: Adding cross-team user math573:210 with maxHours 24
+0|ambulanc | DEBUG: Adding cross-team user edve652:238 with maxHours 24
+0|ambulanc | DEBUG: Total 28 users returned for station 2 with cross-team info
+0|ambulanc | Supervisor requested station 2, returning 28 users (with cross-team info)
+0|ambulanc | 6:42:22 PM [express] GET /api/users 200 in 18ms
+0|ambulanc | 6:42:35 PM [express] GET /api/build-info 200 in 1ms
+
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:42:22.241Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === GET /api/users DEBUG ===
+0|ambulance-planning  | Admin user object: {
+0|ambulance-planning  |   "id": 87,
+0|ambulance-planning  |   "username": "jeva400",
+0|ambulance-planning  |   "password": "01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce",
+0|ambulance-planning  |   "firstName": "jeroen",
+0|ambulance-planning  |   "lastName": "vanhoof",
+0|ambulance-planning  |   "email": "jeroen.vanhoof@brandweerzonekempen.be",
+0|ambulance-planning  |   "phoneNumber": "+32 497 71 72 4",
+0|ambulance-planning  |   "profilePhotoUrl": null,
+0|ambulance-planning  |   "role": "supervisor",
+0|ambulance-planning  |   "isAdmin": true,
+0|ambulance-planning  |   "isProfessional": false,
+0|ambulance-planning  |   "hasDrivingLicenseC": true,
+0|ambulance-planning  |   "hours": 0,
+0|ambulance-planning  |   "stationId": 8,
+0|ambulance-planning  |   "calendarOffset": 0,
+0|ambulance-planning  |   "kioskToken": null,
+0|ambulance-planning  |   "shiftReminderHours": 12,
+0|ambulance-planning  |   "darkMode": false
+0|ambulance-planning  | }
+0|ambulance-planning  | Admin stationId: 8
+0|ambulance-planning  | Admin role: supervisor
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Getting all users for cross-team management
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | All users from database: 197
+0|ambulance-planning  | Users station IDs: [
+0|ambulance-planning  |   'thhu81:3',  'jope179:5', 'dimu355:6', 'rvdb189:5', 'stma453:5',
+0|ambulance-planning  |   'sevl577:5', 'ivgo344:1', 'rove319:1', 'vile170:5', 'sthe7:1',
+0|ambulance-planning  |   'havm323:5', 'gihu503:1', 'svdb435:1', 'jomi499:1', 'tvdd19:2',
+0|ambulance-planning  |   'toth471:1', 'jabe308:1', 'bave198:3', 'kuwu580:3', 'emth312:1',
+0|ambulance-planning  |   'rost612:4', 'pavh191:5', 'siba534:5', 'robu535:5', 'gime604:1',
+0|ambulance-planning  |   'mita313:1', 'maka546:1', 'kacl384:6', 'gelo665:6', 'todo73:3',
+0|ambulance-planning  |   'gube551:7', 'jeva400:8', 'nive393:6', 'tivr108:3', 'tobu445:6',
+0|ambulance-planning  |   'jovv423:5', 'phho162:5', 'koge76:3',  'anwo64:3',  'ivve60:3',
+0|ambulance-planning  |   'rigo488:5', 'gico556:5', 'mast555:3', 'leve509:3', 'pave61:3',
+0|ambulance-planning  |   'mvdb95:3',  'stke427:3', 'rume450:7', 'mavc388:6', 'dero484:7',
+0|ambulance-planning  |   'gist529:7', 'jolu48:3',  'rosm697:4', 'bvda377:6', 'jile572:2',
+0|ambulance-planning  |   'calu582:6', 'jolu381:6', 'chbr387:6', 'math573:6', 'elru411:8',
+0|ambulance-planning  |   'tage397:6', 'make389:6', 'dica261:6', 'pvdp385:6', 'bjlo22:6',
+0|ambulance-planning  |   'dawi696:4', 'jobo31:8',  'dave203:5', 'nilu84:5',  'chve200:5',
+0|ambulance-planning  |   'didi617:5', 'drpa338:1', 'fima342:1', 'gihe566:1', 'stry334:3',
+0|ambulance-planning  |   'bami339:1', 'jevb631:3', 'stca391:6', 'davc374:6', 'kepe505:3',
+0|ambulance-planning  |   'stra614:3', 'elvs521:8', 'esds634:8', 'dygr460:2', 'fidr571:2',
+0|ambulance-planning  |   'elhe699:4', 'simi692:4', 'roha382:6', 'toho21:2',  'mihe695:4',
+0|ambulance-planning  |   'glph405:2', 'frba17:2',  'joni495:2', 'liro562:2', 'lale702:4',
+0|ambulance-planning  |   'lasm703:4', 'mava296:2', 'nahe701:4', 'jeva418:2', 'niae66:2',
+0|ambulance-planning  |   ... 97 more items
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: 2
+0|ambulance-planning  | 6:45:17 PM [express] GET /api/user 200 in 8ms
+0|ambulance-planning  | Found 197 total users for cross-team management
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '9652636fe1277b2c8ce58127d56c7684eada849a1674ee33fc878ff66bd5b13f',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:10.361Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '4e4fc231ba40d697c86bdaa3f4a50b0bdacd61bc43c1497bdda71b4577c0b316',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:11.900Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: 'ec9f757aeea3f83cba1f6d53235c98a84dc2e39d17f5e84c59f1b638bce6205b',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:13.015Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '192222a756d479f551532a87170df15e1d99f9c8000494be2f10039ea30e4ad8',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:14.477Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: null,
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '5faa808c0e7766081f2cd462c33d65424dbebdefcfc8188226d7a1a46e5aa219',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:16.592Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: 'c4aff658aa0c98d5c0d0f9985947bf19f85bc40c56ea8ce94bdf526323bb4d8e',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:17.782Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: 'e7a267f4481928fa1e3ff5c8d07397632b6e39cd13b726fec95b9959e40b3590',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:18.946Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | DEBUG: Found 25 primary users for station 2
+0|ambulance-planning  | 6:45:17 PM [express] GET /api/users/all 200 in 11ms
+0|ambulance-planning  | 6:45:17 PM [express] GET /api/user/stations 200 in 12ms
+0|ambulance-planning  | DEBUG: Found 3 cross-team users for station 2
+0|ambulance-planning  | DEBUG: Adding cross-team user rost612:54 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user math573:210 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user edve652:238 with maxHours 24
+0|ambulance-planning  | DEBUG: Total 28 users returned for station 2 with cross-team info
+0|ambulance-planning  | Supervisor requested station 2, returning 28 users (with cross-team info)
+0|ambulance-planning  | 6:45:17 PM [express] GET /api/users 200 in 12ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:45:17.748Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:45:17.748Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | === GET /api/users/colleagues for user jeva400 (role: supervisor) ===
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === GET /api/users DEBUG ===
+0|ambulance-planning  | Admin user object: {
+0|ambulance-planning  |   "id": 87,
+0|ambulance-planning  |   "username": "jeva400",
+0|ambulance-planning  |   "password": "01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce",
+0|ambulance-planning  |   "firstName": "jeroen",
+0|ambulance-planning  |   "lastName": "vanhoof",
+0|ambulance-planning  |   "email": "jeroen.vanhoof@brandweerzonekempen.be",
+0|ambulance-planning  |   "phoneNumber": "+32 497 71 72 4",
+0|ambulance-planning  |   "profilePhotoUrl": null,
+0|ambulance-planning  |   "role": "supervisor",
+0|ambulance-planning  |   "isAdmin": true,
+0|ambulance-planning  |   "isProfessional": false,
+0|ambulance-planning  |   "hasDrivingLicenseC": true,
+0|ambulance-planning  |   "hours": 0,
+0|ambulance-planning  |   "stationId": 8,
+0|ambulance-planning  |   "calendarOffset": 0,
+0|ambulance-planning  |   "kioskToken": null,
+0|ambulance-planning  |   "shiftReminderHours": 12,
+0|ambulance-planning  |   "darkMode": false
+0|ambulance-planning  | }
+0|ambulance-planning  | Admin stationId: 8
+0|ambulance-planning  | Admin role: supervisor
+0|ambulance-planning  | User jeva400 has access to stations: 8
+0|ambulance-planning  | DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: 8
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/shifts 200 in 11ms
+0|ambulance-planning  | All users from database: 197
+0|ambulance-planning  | Users station IDs: [
+0|ambulance-planning  |   'thhu81:3',  'jope179:5', 'dimu355:6', 'rvdb189:5', 'stma453:5',
+0|ambulance-planning  |   'sevl577:5', 'ivgo344:1', 'rove319:1', 'vile170:5', 'sthe7:1',
+0|ambulance-planning  |   'havm323:5', 'gihu503:1', 'svdb435:1', 'jomi499:1', 'tvdd19:2',
+0|ambulance-planning  |   'toth471:1', 'jabe308:1', 'bave198:3', 'kuwu580:3', 'emth312:1',
+0|ambulance-planning  |   'rost612:4', 'pavh191:5', 'siba534:5', 'robu535:5', 'gime604:1',
+0|ambulance-planning  |   'mita313:1', 'maka546:1', 'kacl384:6', 'gelo665:6', 'todo73:3',
+0|ambulance-planning  |   'gube551:7', 'jeva400:8', 'nive393:6', 'tivr108:3', 'tobu445:6',
+0|ambulance-planning  |   'jovv423:5', 'phho162:5', 'koge76:3',  'anwo64:3',  'ivve60:3',
+0|ambulance-planning  |   'rigo488:5', 'gico556:5', 'mast555:3', 'leve509:3', 'pave61:3',
+0|ambulance-planning  |   'mvdb95:3',  'stke427:3', 'rume450:7', 'mavc388:6', 'dero484:7',
+0|ambulance-planning  |   'gist529:7', 'jolu48:3',  'rosm697:4', 'bvda377:6', 'jile572:2',
+0|ambulance-planning  |   'calu582:6', 'jolu381:6', 'chbr387:6', 'math573:6', 'elru411:8',
+0|ambulance-planning  |   'tage397:6', 'make389:6', 'dica261:6', 'pvdp385:6', 'bjlo22:6',
+0|ambulance-planning  |   'dawi696:4', 'jobo31:8',  'dave203:5', 'nilu84:5',  'chve200:5',
+0|ambulance-planning  |   'didi617:5', 'drpa338:1', 'fima342:1', 'gihe566:1', 'stry334:3',
+0|ambulance-planning  |   'bami339:1', 'jevb631:3', 'stca391:6', 'davc374:6', 'kepe505:3',
+0|ambulance-planning  |   'stra614:3', 'elvs521:8', 'esds634:8', 'dygr460:2', 'fidr571:2',
+0|ambulance-planning  |   'elhe699:4', 'simi692:4', 'roha382:6', 'toho21:2',  'mihe695:4',
+0|ambulance-planning  |   'glph405:2', 'frba17:2',  'joni495:2', 'liro562:2', 'lale702:4',
+0|ambulance-planning  |   'lasm703:4', 'mava296:2', 'nahe701:4', 'jeva418:2', 'niae66:2',
+0|ambulance-planning  |   ... 97 more items
+0|ambulance-planning  | ]
+0|ambulance-planning  | Supervisor gets all users including station 8: 197 users
+0|ambulance-planning  | DEBUG: Found 7 primary users for station 8
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: 8
+0|ambulance-planning  | DEBUG: Found 0 cross-team users for station 8
+0|ambulance-planning  | DEBUG: Total 7 users returned for station 8 with cross-team info
+0|ambulance-planning  | Returning 7 colleagues for user jeva400
+0|ambulance-planning  | DEBUG: Found 7 primary users for station 8
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/users 200 in 16ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/users/colleagues 200 in 17ms
+0|ambulance-planning  | DEBUG: Found 0 cross-team users for station 8
+0|ambulance-planning  | DEBUG: Total 7 users returned for station 8 with cross-team info
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:45:19.086Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '9652636fe1277b2c8ce58127d56c7684eada849a1674ee33fc878ff66bd5b13f',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:10.361Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '4e4fc231ba40d697c86bdaa3f4a50b0bdacd61bc43c1497bdda71b4577c0b316',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:11.900Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: 'ec9f757aeea3f83cba1f6d53235c98a84dc2e39d17f5e84c59f1b638bce6205b',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:13.015Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '192222a756d479f551532a87170df15e1d99f9c8000494be2f10039ea30e4ad8',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:14.477Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: null,
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '5faa808c0e7766081f2cd462c33d65424dbebdefcfc8188226d7a1a46e5aa219',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:16.592Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: 'c4aff658aa0c98d5c0d0f9985947bf19f85bc40c56ea8ce94bdf526323bb4d8e',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:17.782Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: 'e7a267f4481928fa1e3ff5c8d07397632b6e39cd13b726fec95b9959e40b3590',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:18.946Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:45:19.088Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:45:19.088Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/preferences/all 200 in 23ms
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/stations 200 in 11ms
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/weekday-configs 200 in 12ms
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/shift-bids/my-bids 200 in 11ms
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/overtime/my/2025/12 200 in 10ms
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/shift-swaps/pending/count 200 in 10ms
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/shift-bids/pending/count 200 in 10ms
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/system/deadline-days 200 in 11ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:45:19.103Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:45:19.103Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:45:19.103Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:45:19.103Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | Fetching stations from database...
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/open-swap-requests/my 200 in 6ms
+0|ambulance-planning  | Stations fetched successfully: [
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 6,
+0|ambulance-planning  |     name: 'balen',
+0|ambulance-planning  |     code: 'balen',
+0|ambulance-planning  |     displayName: 'ZW Balen',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '9652636fe1277b2c8ce58127d56c7684eada849a1674ee33fc878ff66bd5b13f',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:10.361Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 3,
+0|ambulance-planning  |     name: 'geel',
+0|ambulance-planning  |     code: 'geel',
+0|ambulance-planning  |     displayName: 'PIT Geel',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '4e4fc231ba40d697c86bdaa3f4a50b0bdacd61bc43c1497bdda71b4577c0b316',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:11.900Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 5,
+0|ambulance-planning  |     name: 'herentals',
+0|ambulance-planning  |     code: 'herentals',
+0|ambulance-planning  |     displayName: 'ZW Herentals',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: 'ec9f757aeea3f83cba1f6d53235c98a84dc2e39d17f5e84c59f1b638bce6205b',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:13.015Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 2,
+0|ambulance-planning  |     name: 'mol',
+0|ambulance-planning  |     code: 'mol',
+0|ambulance-planning  |     displayName: 'PIT Mol',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '192222a756d479f551532a87170df15e1d99f9c8000494be2f10039ea30e4ad8',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:14.477Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 8,
+0|ambulance-planning  |     name: 'supervisor',
+0|ambulance-planning  |     code: 'SUPERVISOR',
+0|ambulance-planning  |     displayName: 'Supervisor Station',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: null,
+0|ambulance-planning  |     createdAt: 2025-09-12T02:18:33.938Z,
+0|ambulance-planning  |     updatedAt: 2025-09-12T02:18:33.938Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 1,
+0|ambulance-planning  |     name: 'westerlo',
+0|ambulance-planning  |     code: 'westerlo',
+0|ambulance-planning  |     displayName: 'ZW Westerlo',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: '5faa808c0e7766081f2cd462c33d65424dbebdefcfc8188226d7a1a46e5aa219',
+0|ambulance-planning  |     createdAt: 2025-07-09T05:48:13.637Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:16.592Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 7,
+0|ambulance-planning  |     name: 'zwgeel',
+0|ambulance-planning  |     code: 'zwgeel',
+0|ambulance-planning  |     displayName: 'ZW Geel',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: 'c4aff658aa0c98d5c0d0f9985947bf19f85bc40c56ea8ce94bdf526323bb4d8e',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:17.782Z
+0|ambulance-planning  |   },
+0|ambulance-planning  |   {
+0|ambulance-planning  |     id: 4,
+0|ambulance-planning  |     name: 'zwmol',
+0|ambulance-planning  |     code: 'zwmol',
+0|ambulance-planning  |     displayName: 'ZW Mol',
+0|ambulance-planning  |     isSupervisorStation: false,
+0|ambulance-planning  |     kioskToken: 'e7a267f4481928fa1e3ff5c8d07397632b6e39cd13b726fec95b9959e40b3590',
+0|ambulance-planning  |     createdAt: 2025-09-11T00:39:55.202Z,
+0|ambulance-planning  |     updatedAt: 2025-12-25T09:57:18.946Z
+0|ambulance-planning  |   }
+0|ambulance-planning  | ]
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/shift-swaps/my-requests 200 in 8ms
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/user/stations 200 in 10ms
+0|ambulance-planning  | 6:45:19 PM [express] GET /api/open-swap-requests 200 in 9ms
+PS C:\ambulance-planning> pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+C:\Users\jeva400\.pm2\pm2.log last 15 lines:
+PM2        | 2025-12-24T09:27:32: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-12-24T09:27:32: PM2 log: App [ambulance-planning:0] online
+PM2        | 2025-12-24T17:55:49: PM2 log: Stopping app:ambulance-planning id:0
+PM2        | 2025-12-24T17:55:50: PM2 log: App [ambulance-planning:0] exited with code [1] via signal [SIGINT]
+PM2        | 2025-12-24T17:55:50: PM2 log: pid=77780 msg=process killed
+PM2        | 2025-12-24T17:55:50: PM2 log: App [ambulance-planning:0] starting in -fork mode-
+PM2        | 2025-12-24T17:55:50: PM2 log: App [ambulance-planning:0] online
+PM2        | 2025-12-24T20:05:04: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2025-12-24T20:05:04: PM2 log: [PM2] Upgrade to version 6.0.14
+PM2        | 2025-12-25T20:05:05: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2025-12-25T20:05:05: PM2 log: [PM2] Upgrade to version 6.0.14
+PM2        | 2025-12-26T20:05:06: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2025-12-26T20:05:06: PM2 log: [PM2] Upgrade to version 6.0.14
+PM2        | 2025-12-27T20:05:07: PM2 log: [PM2] This PM2 is not UP TO DATE
+PM2        | 2025-12-27T20:05:07: PM2 log: [PM2] Upgrade to version 6.0.14
+
+C:\Users\jeva400\.pm2\logs\ambulance-planning-error.log last 15 lines:
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Verdi ERROR details: [ 'This shift conflicts with one or more already planned shifts' ]
+0|ambulanc | Error exporting XLSX schedule: ReferenceError: targetStationId is not defined
+0|ambulanc |     at file:///C:/ambulance-planning/dist/index.js:10294:20
+
+C:\Users\jeva400\.pm2\logs\ambulance-planning-out.log last 15 lines:
+0|ambulanc |   profilePhotoUrl: null,
+0|ambulanc |   role: 'supervisor',
+0|ambulanc |   isAdmin: true,
+0|ambulanc |   isProfessional: false,
+0|ambulanc |   hasDrivingLicenseC: true,
+0|ambulanc |   hours: 0,
+0|ambulanc |   stationId: 8,
+0|ambulanc |   calendarOffset: 0,
+0|ambulanc |   kioskToken: null,
+0|ambulanc |   shiftReminderHours: 12,
+0|ambulanc |   darkMode: false
+0|ambulanc | }
+0|ambulanc | 6:45:42 PM [express] GET /api/shifts 200 in 7ms
+0|ambulanc | 6:45:42 PM [express] GET /api/system/settings/last-schedule-generated 200 in 5ms
+0|ambulanc | 6:45:42 PM [express] GET /api/schedule/status 200 in 7ms
+
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | 6:45:59 PM [express] GET /api/verdi/pending-changes/2/2/2026 200 in 6ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:45:59.880Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | [0%] Planning generatie gestart voor 2/2026 voor station 2
+0|ambulance-planning  | generateMonthlySchedule called with stationId: 2
+0|ambulance-planning  | Deleted swap requests and bids for 56 shifts before regenerating schedule
+0|ambulance-planning  | DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: 2
+0|ambulance-planning  | DEBUG: Found 25 primary users for station 2
+0|ambulance-planning  | DEBUG: Found 3 cross-team users for station 2
+0|ambulance-planning  | DEBUG: Adding cross-team user rost612:54 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user math573:210 with maxHours 24
+0|ambulance-planning  | DEBUG: Adding cross-team user edve652:238 with maxHours 24
+0|ambulance-planning  | DEBUG: Total 28 users returned for station 2 with cross-team info
+0|ambulance-planning  | Found 28 users for station 2, 27 active users (using effectiveHours)
+0|ambulance-planning  | 🔒 DOUBLE-BOOKING GUARD: Loaded 142 cross-station day assignments for 2/2026
+0|ambulance-planning  | Initializing station-specific hour limits...
+0|ambulance-planning  | User bagi20 (322): station 2 limit = 24h
+0|ambulance-planning  | User bawo25 (321): station 2 limit = 24h
+0|ambulance-planning  | User doba653 (253): station 2 limit = 36h
+0|ambulance-planning  | User dygr460 (181): station 2 limit = 24h
+0|ambulance-planning  | User edve652 (238): station 2 limit = 24h
+0|ambulance-planning  | User fidr571 (166): station 2 limit = 24h
+0|ambulance-planning  | User frba17 (155): station 2 limit = 24h
+0|ambulance-planning  | User glph405 (167): station 2 limit = 24h
+0|ambulance-planning  | User jeva418 (159): station 2 limit = 24h
+0|ambulance-planning  | User jile572 (209): station 2 limit = 36h
+0|ambulance-planning  | User joni495 (170): station 2 limit = 24h
+0|ambulance-planning  | User jost658 (257): station 2 limit = 36h
+0|ambulance-planning  | User kaja559 (260): station 2 limit = 36h
+0|ambulance-planning  | User liro562 (171): station 2 limit = 24h
+0|ambulance-planning  | User lova655 (255): station 2 limit = 36h
+0|ambulance-planning  | User math573 (210): station 2 limit = 24h
+0|ambulance-planning  | User mava296 (174): station 2 limit = 24h
+0|ambulance-planning  | User nave654 (254): station 2 limit = 36h
+0|ambulance-planning  | User niae66 (179): station 2 limit = 24h
+0|ambulance-planning  | User ribo698 (327): station 2 limit = 36h
+0|ambulance-planning  | User rost612 (54): station 2 limit = 24h
+0|ambulance-planning  | User rova656 (256): station 2 limit = 36h
+0|ambulance-planning  | User sabo657 (328): station 2 limit = 36h
+0|ambulance-planning  | User simo542 (259): station 2 limit = 24h
+0|ambulance-planning  | User toho21 (157): station 2 limit = 24h
+0|ambulance-planning  | User tvdd19 (17): station 2 limit = 24h
+0|ambulance-planning  | User winu431 (258): station 2 limit = 36h
+0|ambulance-planning  | Generating schedule for 2/2026 with 27 eligible users (filtered from 27 active)
+0|ambulance-planning  | Performance optimizations: 1371 preferences preloaded, 614 weekend shifts analyzed
+0|ambulance-planning  | Weekday configs loaded: 7 configs for station 2
+0|ambulance-planning  | [5%] Voorbereidingen afgerond. 27 actieve gebruikers gevonden.
+0|ambulance-planning  | === SCARCITY-FIRST ANALYSIS STARTING ===
+0|ambulance-planning  | Day 1: 11 candidates for 2 shifts (difficulty: 0.68)
+0|ambulance-planning  | Day 2: 14 candidates for 2 shifts (difficulty: 0.14)
+0|ambulance-planning  | Day 3: 10 candidates for 2 shifts (difficulty: 0.20)
+0|ambulance-planning  | Day 4: 8 candidates for 2 shifts (difficulty: 0.25)
+0|ambulance-planning  | Day 5: 9 candidates for 2 shifts (difficulty: 0.22)
+0|ambulance-planning  | Day 6: 5 candidates for 2 shifts (difficulty: 0.40)
+0|ambulance-planning  | Day 7: 11 candidates for 2 shifts (difficulty: 0.68)
+0|ambulance-planning  | Day 8: 15 candidates for 2 shifts (difficulty: 0.63)
+0|ambulance-planning  | Day 9: 13 candidates for 2 shifts (difficulty: 0.15)
+0|ambulance-planning  | Day 10: 11 candidates for 2 shifts (difficulty: 0.18)
+0|ambulance-planning  | Day 11: 8 candidates for 2 shifts (difficulty: 0.25)
+0|ambulance-planning  | Day 12: 4 candidates for 2 shifts (difficulty: 0.50)
+0|ambulance-planning  | Day 13: 7 candidates for 2 shifts (difficulty: 0.29)
+0|ambulance-planning  | Day 14: 11 candidates for 2 shifts (difficulty: 0.68)
+0|ambulance-planning  | Day 15: 7 candidates for 2 shifts (difficulty: 0.79)
+0|ambulance-planning  | Day 16: 6 candidates for 2 shifts (difficulty: 0.33)
+0|ambulance-planning  | Day 17: 9 candidates for 2 shifts (difficulty: 0.22)
+0|ambulance-planning  | Day 18: 9 candidates for 2 shifts (difficulty: 0.22)
+0|ambulance-planning  | Day 19: 6 candidates for 2 shifts (difficulty: 0.33)
+0|ambulance-planning  | Day 20: 8 candidates for 2 shifts (difficulty: 0.25)
+0|ambulance-planning  | Day 21: 10 candidates for 2 shifts (difficulty: 0.70)
+0|ambulance-planning  | Day 22: 8 candidates for 2 shifts (difficulty: 0.75)
+0|ambulance-planning  | Day 23: 10 candidates for 2 shifts (difficulty: 0.20)
+0|ambulance-planning  | Day 24: 5 candidates for 2 shifts (difficulty: 0.40)
+0|ambulance-planning  | Day 25: 5 candidates for 2 shifts (difficulty: 0.40)
+0|ambulance-planning  | Day 26: 5 candidates for 2 shifts (difficulty: 0.70)
+0|ambulance-planning  | Day 27: 7 candidates for 2 shifts (difficulty: 0.59)
+0|ambulance-planning  | Day 28: 12 candidates for 2 shifts (difficulty: 0.97)
+0|ambulance-planning  | === SCARCITY-FIRST ORDER ===
+0|ambulance-planning  | Processing order: Day 28 (difficulty: 0.97, candidates: 12)
+0|ambulance-planning  | Processing order: Day 26 (difficulty: 0.70, candidates: 5)
+0|ambulance-planning  | Processing order: Day 15 (difficulty: 0.79, candidates: 7)
+0|ambulance-planning  | Processing order: Day 22 (difficulty: 0.75, candidates: 8)
+0|ambulance-planning  | Processing order: Day 21 (difficulty: 0.70, candidates: 10)
+0|ambulance-planning  | Processing order: Day 27 (difficulty: 0.59, candidates: 7)
+0|ambulance-planning  | Processing order: Day 14 (difficulty: 0.68, candidates: 11)
+0|ambulance-planning  | Processing order: Day 7 (difficulty: 0.68, candidates: 11)
+0|ambulance-planning  | Processing order: Day 1 (difficulty: 0.68, candidates: 11)
+0|ambulance-planning  | Processing order: Day 8 (difficulty: 0.63, candidates: 15)
+0|ambulance-planning  | Processing order: Day 12 (difficulty: 0.50, candidates: 4)
+0|ambulance-planning  | Processing order: Day 25 (difficulty: 0.40, candidates: 5)
+0|ambulance-planning  | Processing order: Day 24 (difficulty: 0.40, candidates: 5)
+0|ambulance-planning  | Processing order: Day 6 (difficulty: 0.40, candidates: 5)
+0|ambulance-planning  | Processing order: Day 19 (difficulty: 0.33, candidates: 6)
+0|ambulance-planning  | Processing order: Day 16 (difficulty: 0.33, candidates: 6)
+0|ambulance-planning  | Processing order: Day 13 (difficulty: 0.29, candidates: 7)
+0|ambulance-planning  | Processing order: Day 20 (difficulty: 0.25, candidates: 8)
+0|ambulance-planning  | Processing order: Day 11 (difficulty: 0.25, candidates: 8)
+0|ambulance-planning  | Processing order: Day 4 (difficulty: 0.25, candidates: 8)
+0|ambulance-planning  | Processing order: Day 18 (difficulty: 0.22, candidates: 9)
+0|ambulance-planning  | Processing order: Day 17 (difficulty: 0.22, candidates: 9)
+0|ambulance-planning  | Processing order: Day 5 (difficulty: 0.22, candidates: 9)
+0|ambulance-planning  | Processing order: Day 23 (difficulty: 0.20, candidates: 10)
+0|ambulance-planning  | Processing order: Day 3 (difficulty: 0.20, candidates: 10)
+0|ambulance-planning  | Processing order: Day 10 (difficulty: 0.18, candidates: 11)
+0|ambulance-planning  | Processing order: Day 9 (difficulty: 0.15, candidates: 13)
+0|ambulance-planning  | Processing order: Day 2 (difficulty: 0.14, candidates: 14)
+0|ambulance-planning  | Processing day 28: Sat Feb 28 2026 (1/28)
+0|ambulance-planning  | [5%] Verwerken dag 28 van 28 (scarcity-first)
+0|ambulance-planning  | Day 28 (Zaterdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 28 UPDATED availability: Day=6, Night=6 (original: 12)
+0|ambulance-planning  | Day 28 availability: Day=6, DayFirstHalf=0, DaySecondHalf=0, Night=6, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user joni495 (ID: 170): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | ❌ CROSS-TEAM SAME-DAY CONFLICT: User 170 heeft al shift op dag 28 in ZW Mol (shift 13356), kan niet ook inprogrammeren bij PIT Mol
+0|ambulance-planning  | ⚠️ Skipping VOLLEDIGE day shift voor cross-team user 170 - conflict gedetecteerd met andere station
+0|ambulance-planning  | Checking user rova656 (ID: 256): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 256 for day 28
+0|ambulance-planning  | Checking user rost612 (ID: 54): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | ❌ CROSS-TEAM SAME-DAY CONFLICT: User 54 heeft al shift op dag 28 in ZW Mol (shift 13357), kan niet ook inprogrammeren bij PIT Mol
+0|ambulance-planning  | ⚠️ Skipping VOLLEDIGE night shift voor cross-team user 54 - conflict gedetecteerd met andere station
+0|ambulance-planning  | Checking user dygr460 (ID: 181): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 181 for day 28
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 26: Thu Feb 26 2026 (2/28)
+0|ambulance-planning  | [8%] Verwerken dag 26 van 28 (scarcity-first)
+0|ambulance-planning  | Day 26 (Donderdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 26 UPDATED availability: Day=2, Night=3 (original: 5)
+0|ambulance-planning  | Day 26 availability: Day=2, DayFirstHalf=0, DaySecondHalf=0, Night=3, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user kaja559 (ID: 260): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 260 for day 26
+0|ambulance-planning  | Checking user joni495 (ID: 170): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 170 for day 26
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 15: Sun Feb 15 2026 (3/28)
+0|ambulance-planning  | [11%] Verwerken dag 15 van 28 (scarcity-first)
+0|ambulance-planning  | Day 15 (Zondag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 15 UPDATED availability: Day=5, Night=2 (original: 7)
+0|ambulance-planning  | Day 15 availability: Day=5, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user joni495 (ID: 170): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 170 for day 15
+0|ambulance-planning  | Checking user liro562 (ID: 171): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 171 for day 15
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 22: Sun Feb 22 2026 (4/28)
+0|ambulance-planning  | [15%] Verwerken dag 22 van 28 (scarcity-first)
+0|ambulance-planning  | Day 22 (Zondag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 22 UPDATED availability: Day=4, Night=4 (original: 8)
+0|ambulance-planning  | Day 22 availability: Day=4, DayFirstHalf=0, DaySecondHalf=0, Night=4, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user rova656 (ID: 256): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 256 for day 22
+0|ambulance-planning  | Checking user rost612 (ID: 54): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 54 for day 22
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 21: Sat Feb 21 2026 (5/28)
+0|ambulance-planning  | [18%] Verwerken dag 21 van 28 (scarcity-first)
+0|ambulance-planning  | Day 21 (Zaterdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 21 UPDATED availability: Day=6, Night=2 (original: 10)
+0|ambulance-planning  | Day 21 availability: Day=6, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user fidr571 (ID: 166): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 166 for day 21
+0|ambulance-planning  | Professional niae66 (179) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user niae66 (ID: 179): stationLimit=24, currentHours=0, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 179 for day 21
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 27: Fri Feb 27 2026 (6/28)
+0|ambulance-planning  | [21%] Verwerken dag 27 van 28 (scarcity-first)
+0|ambulance-planning  | Day 27 (Vrijdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 27 UPDATED availability: Day=3, Night=3 (original: 7)
+0|ambulance-planning  | Day 27 availability: Day=3, DayFirstHalf=0, DaySecondHalf=0, Night=3, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user sabo657 (ID: 328): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 328 for day 27
+0|ambulance-planning  | Checking user glph405 (ID: 167): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 167 for day 27
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 14: Sat Feb 14 2026 (7/28)
+0|ambulance-planning  | [24%] Verwerken dag 14 van 28 (scarcity-first)
+0|ambulance-planning  | Day 14 (Zaterdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 14 UPDATED availability: Day=7, Night=2 (original: 11)
+0|ambulance-planning  | Day 14 availability: Day=7, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user winu431 (ID: 258): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 258 for day 14
+0|ambulance-planning  | Checking user liro562 (ID: 171): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 171 for day 14
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 7: Sat Feb 07 2026 (8/28)
+0|ambulance-planning  | [28%] Verwerken dag 7 van 28 (scarcity-first)
+0|ambulance-planning  | Day 7 (Zaterdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 7 UPDATED availability: Day=6, Night=2 (original: 11)
+0|ambulance-planning  | Day 7 availability: Day=6, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user mava296 (ID: 174): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 174 for day 7
+0|ambulance-planning  | Checking user dygr460 (ID: 181): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | ❌ CROSS-TEAM SAME-DAY CONFLICT: User 181 heeft al shift op dag 7 in ZW Mol (shift 13383), kan niet ook inprogrammeren bij PIT Mol
+0|ambulance-planning  | ⚠️ Skipping VOLLEDIGE night shift voor cross-team user 181 - conflict gedetecteerd met andere station
+0|ambulance-planning  | Checking user fidr571 (ID: 166): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | ❌ CROSS-TEAM SAME-DAY CONFLICT: User 166 heeft al shift op dag 7 in ZW Mol (shift 13386), kan niet ook inprogrammeren bij PIT Mol
+0|ambulance-planning  | ⚠️ Skipping VOLLEDIGE night shift voor cross-team user 166 - conflict gedetecteerd met andere station
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 7
+0|ambulance-planning  | Processing day 1: Sun Feb 01 2026 (9/28)
+0|ambulance-planning  | [31%] Verwerken dag 1 van 28 (scarcity-first)
+0|ambulance-planning  | Day 1 (Zondag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 1 UPDATED availability: Day=5, Night=2 (original: 11)
+0|ambulance-planning  | Day 1 availability: Day=5, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Professional tvdd19 (17) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user tvdd19 (ID: 17): stationLimit=24, currentHours=0, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 17 for day 1
+0|ambulance-planning  | Checking user edve652 (ID: 238): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | 🚨 CROSS-STATION DOUBLE-BOOKING BLOCKED: User 238 already has shift on 2026-02-01 in station 5 - cannot assign to station 2
+0|ambulance-planning  | 🚨 SAFETY BLOCK: Skipping night shift voor user 238 - consecutive shift conflict
+0|ambulance-planning  | Checking user winu431 (ID: 258): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 258 for day 1
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 8: Sun Feb 08 2026 (10/28)
+0|ambulance-planning  | [34%] Verwerken dag 8 van 28 (scarcity-first)
+0|ambulance-planning  | Day 8 (Zondag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 8 UPDATED availability: Day=5, Night=6 (original: 15)
+0|ambulance-planning  | Day 8 availability: Day=5, DayFirstHalf=0, DaySecondHalf=0, Night=6, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user kaja559 (ID: 260): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 260 for day 8
+0|ambulance-planning  | Professional frba17 (155) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user frba17 (ID: 155): stationLimit=24, currentHours=0, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 155 for day 8
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 12: Thu Feb 12 2026 (11/28)
+0|ambulance-planning  | [37%] Verwerken dag 12 van 28 (scarcity-first)
+0|ambulance-planning  | Day 12 (Donderdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 12 UPDATED availability: Day=1, Night=2 (original: 4)
+0|ambulance-planning  | Day 12 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user lova655 (ID: 255): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 255 for day 12
+0|ambulance-planning  | Checking user sabo657 (ID: 328): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 328 for day 12
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 25: Wed Feb 25 2026 (12/28)
+0|ambulance-planning  | [40%] Verwerken dag 25 van 28 (scarcity-first)
+0|ambulance-planning  | Day 25 (Woensdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 25 UPDATED availability: Day=1, Night=4 (original: 5)
+0|ambulance-planning  | Day 25 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=4, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user jile572 (ID: 209): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 209 for day 25
+0|ambulance-planning  | Checking user jeva418 (ID: 159): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 159 for day 25
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 24: Tue Feb 24 2026 (13/28)
+0|ambulance-planning  | [44%] Verwerken dag 24 van 28 (scarcity-first)
+0|ambulance-planning  | Day 24 (Dinsdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 24 UPDATED availability: Day=1, Night=3 (original: 5)
+0|ambulance-planning  | Day 24 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=3, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user simo542 (ID: 259): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 259 for day 24
+0|ambulance-planning  | Checking user mava296 (ID: 174): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 174 for day 24
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 6: Fri Feb 06 2026 (14/28)
+0|ambulance-planning  | [47%] Verwerken dag 6 van 28 (scarcity-first)
+0|ambulance-planning  | Day 6 (Vrijdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 6 UPDATED availability: Day=0, Night=4 (original: 5)
+0|ambulance-planning  | Day 6 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=4, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 6
+0|ambulance-planning  | Checking user jeva418 (ID: 159): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 159 for day 6
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 19: Thu Feb 19 2026 (15/28)
+0|ambulance-planning  | [50%] Verwerken dag 19 van 28 (scarcity-first)
+0|ambulance-planning  | Day 19 (Donderdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 19 UPDATED availability: Day=1, Night=2 (original: 6)
+0|ambulance-planning  | Day 19 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user ribo698 (ID: 327): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 327 for day 19
+0|ambulance-planning  | Checking user kaja559 (ID: 260): stationLimit=36, currentHours=24, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 260 for day 19
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 16: Mon Feb 16 2026 (16/28)
+0|ambulance-planning  | [53%] Verwerken dag 16 van 28 (scarcity-first)
+0|ambulance-planning  | Day 16 (Maandag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 16 UPDATED availability: Day=1, Night=1 (original: 6)
+0|ambulance-planning  | Day 16 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user fidr571 (ID: 166): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 166 for day 16
+0|ambulance-planning  | Checking user rova656 (ID: 256): stationLimit=36, currentHours=24, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 256 for day 16
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 13: Fri Feb 13 2026 (17/28)
+0|ambulance-planning  | [56%] Verwerken dag 13 van 28 (scarcity-first)
+0|ambulance-planning  | Day 13 (Vrijdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 13 UPDATED availability: Day=0, Night=5 (original: 7)
+0|ambulance-planning  | Day 13 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=5, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 13
+0|ambulance-planning  | Professional toho21 (157) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user toho21 (ID: 157): stationLimit=24, currentHours=0, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 157 for day 13
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 20: Fri Feb 20 2026 (18/28)
+0|ambulance-planning  | [60%] Verwerken dag 20 van 28 (scarcity-first)
+0|ambulance-planning  | Day 20 (Vrijdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 20 UPDATED availability: Day=1, Night=3 (original: 8)
+0|ambulance-planning  | Day 20 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=3, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Professional bagi20 (322) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user bagi20 (ID: 322): stationLimit=24, currentHours=0, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 322 for day 20
+0|ambulance-planning  | Checking user rost612 (ID: 54): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 54 for day 20
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 11: Wed Feb 11 2026 (19/28)
+0|ambulance-planning  | [63%] Verwerken dag 11 van 28 (scarcity-first)
+0|ambulance-planning  | Day 11 (Woensdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 11 UPDATED availability: Day=2, Night=3 (original: 8)
+0|ambulance-planning  | Day 11 availability: Day=2, DayFirstHalf=0, DaySecondHalf=0, Night=3, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user lova655 (ID: 255): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 255 for day 11
+0|ambulance-planning  | Checking user dygr460 (ID: 181): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 181 for day 11
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 4: Wed Feb 04 2026 (20/28)
+0|ambulance-planning  | [66%] Verwerken dag 4 van 28 (scarcity-first)
+0|ambulance-planning  | Day 4 (Woensdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 4 UPDATED availability: Day=2, Night=3 (original: 8)
+0|ambulance-planning  | Day 4 availability: Day=2, DayFirstHalf=0, DaySecondHalf=0, Night=3, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Professional bawo25 (321) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user bawo25 (ID: 321): stationLimit=24, currentHours=0, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 321 for day 4
+0|ambulance-planning  | Checking user edve652 (ID: 238): stationLimit=24, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 238 for day 4
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 18: Wed Feb 18 2026 (21/28)
+0|ambulance-planning  | [69%] Verwerken dag 18 van 28 (scarcity-first)
+0|ambulance-planning  | Day 18 (Woensdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 18 UPDATED availability: Day=4, Night=0 (original: 9)
+0|ambulance-planning  | Day 18 availability: Day=4, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | BEPERKING: Professional bagi20 (322) heeft al shifts op andere dagen deze week: Fri Feb 20 2026 - max 1 dag per week
+0|ambulance-planning  | Checking user ribo698 (ID: 327): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 327 for day 18
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 18
+0|ambulance-planning  | Processing day 17: Tue Feb 17 2026 (22/28)
+0|ambulance-planning  | [73%] Verwerken dag 17 van 28 (scarcity-first)
+0|ambulance-planning  | Day 17 (Dinsdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 17 UPDATED availability: Day=2, Night=2 (original: 9)
+0|ambulance-planning  | Day 17 availability: Day=2, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user jile572 (ID: 209): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 209 for day 17
+0|ambulance-planning  | Checking user doba653 (ID: 253): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 253 for day 17
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 5: Thu Feb 05 2026 (23/28)
+0|ambulance-planning  | [76%] Verwerken dag 5 van 28 (scarcity-first)
+0|ambulance-planning  | Day 5 (Donderdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 5 UPDATED availability: Day=3, Night=3 (original: 9)
+0|ambulance-planning  | Day 5 availability: Day=3, DayFirstHalf=0, DaySecondHalf=0, Night=3, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user edve652 (ID: 238): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | 🚨 CONSECUTIVE SHIFT BLOCKED: User 238 has shift ending 08:00:00 on day 4, too close to proposed shift starting 08:00:00 on day 5 (0.0h gap)
+0|ambulance-planning  | 🚨 SAFETY BLOCK: Skipping day shift voor user 238 - consecutive shift conflict
+0|ambulance-planning  | BEPERKING: Professional frba17 (155) heeft al shifts op andere dagen deze week: Sun Feb 08 2026 - max 1 dag per week
+0|ambulance-planning  | Professional toho21 (157) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user toho21 (ID: 157): stationLimit=24, currentHours=12, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 157 for day 5
+0|ambulance-planning  | Checking user simo542 (ID: 259): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 259 for day 5
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 23: Mon Feb 23 2026 (24/28)
+0|ambulance-planning  | [79%] Verwerken dag 23 van 28 (scarcity-first)
+0|ambulance-planning  | Day 23 (Maandag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 23 UPDATED availability: Day=3, Night=0 (original: 10)
+0|ambulance-planning  | Day 23 availability: Day=3, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user doba653 (ID: 253): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 253 for day 23
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 23
+0|ambulance-planning  | Processing day 3: Tue Feb 03 2026 (25/28)
+0|ambulance-planning  | [82%] Verwerken dag 3 van 28 (scarcity-first)
+0|ambulance-planning  | Day 3 (Dinsdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 3 UPDATED availability: Day=3, Night=1 (original: 10)
+0|ambulance-planning  | Day 3 availability: Day=3, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user glph405 (ID: 167): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 167 for day 3
+0|ambulance-planning  | Checking user jile572 (ID: 209): stationLimit=36, currentHours=24, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 209 for day 3
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 10: Tue Feb 10 2026 (26/28)
+0|ambulance-planning  | [85%] Verwerken dag 10 van 28 (scarcity-first)
+0|ambulance-planning  | Day 10 (Dinsdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 10 UPDATED availability: Day=3, Night=3 (original: 11)
+0|ambulance-planning  | Day 10 availability: Day=3, DayFirstHalf=0, DaySecondHalf=0, Night=3, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user nave654 (ID: 254): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 254 for day 10
+0|ambulance-planning  | Checking user sabo657 (ID: 328): stationLimit=36, currentHours=24, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 328 for day 10
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 9: Mon Feb 09 2026 (27/28)
+0|ambulance-planning  | [89%] Verwerken dag 9 van 28 (scarcity-first)
+0|ambulance-planning  | Day 9 (Maandag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 9 UPDATED availability: Day=3, Night=2 (original: 13)
+0|ambulance-planning  | Day 9 availability: Day=3, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user ribo698 (ID: 327): stationLimit=36, currentHours=24, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 327 for day 9
+0|ambulance-planning  | Professional frba17 (155) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user frba17 (ID: 155): stationLimit=24, currentHours=12, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 155 for day 9
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 2: Mon Feb 02 2026 (28/28)
+0|ambulance-planning  | [92%] Verwerken dag 2 van 28 (scarcity-first)
+0|ambulance-planning  | Day 2 (Maandag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 2 UPDATED availability: Day=4, Night=2 (original: 14)
+0|ambulance-planning  | Day 2 availability: Day=4, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | BEPERKING: Professional bawo25 (321) heeft al shifts op andere dagen deze week: Wed Feb 04 2026 - max 1 dag per week
+0|ambulance-planning  | Checking user nave654 (ID: 254): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 254 for day 2
+0|ambulance-planning  | Checking user doba653 (ID: 253): stationLimit=36, currentHours=24, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 253 for day 2
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Generated 56 shifts for month 2/2026
+0|ambulance-planning  | [92%] Planning basis voltooid. Start geavanceerde gap-filling...
+0|ambulance-planning  | === STARTING ADVANCED GAP-FILLING OPTIMIZATION ===
+0|ambulance-planning  | INITIAL STATE: 5 open shifts, 51 assigned shifts
+0|ambulance-planning  | PRIORITIZED OPEN SHIFTS:
+0|ambulance-planning  |   - Day 7 (Za) night shift - PRIORITY
+0|ambulance-planning  |   - Day 23 (Ma) night shift - PRIORITY
+0|ambulance-planning  |   - Day 18 (Wo) night shift - PRIORITY
+0|ambulance-planning  |   - Day 13 (Vr) day shift - PRIORITY
+0|ambulance-planning  |   - Day 6 (Vr) day shift - PRIORITY
+0|ambulance-planning  | === GAP-FILLING PASS 1: RESERVE CAPACITY ASSIGNMENT ===
+0|ambulance-planning  | === GAP-FILLING PASS 2: INTELLIGENT SWAPPING ===
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 179 is UNAVAILABLE for open shift day 7 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 259 is UNAVAILABLE for open shift day 6 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 259 is UNAVAILABLE for open shift day 6 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 254 is UNAVAILABLE for open shift day 6 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 254 is UNAVAILABLE for open shift day 6 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 159 is UNAVAILABLE for open shift day 13 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 159 is UNAVAILABLE for open shift day 13 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 254 is UNAVAILABLE for open shift day 18 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 254 is UNAVAILABLE for open shift day 18 - no swap allowed
+0|ambulance-planning  | === GAP-FILLING PASS 3: CAREFUL LAST RESORT ASSIGNMENT ===
+0|ambulance-planning  | === GAP-FILLING RESULTS SUMMARY ===
+0|ambulance-planning  | ✅ Pass 1 (Reserve Capacity): 0 shifts filled
+0|ambulance-planning  | 🔄 Pass 2 (Smart Swapping): 0 swaps performed
+0|ambulance-planning  | ⚠️ Pass 3 (Last Resort): 0 critical shifts filled
+0|ambulance-planning  | 📊 TOTAL IMPROVEMENTS: 0 gaps filled
+0|ambulance-planning  | 📋 REMAINING OPEN SHIFTS: 5
+0|ambulance-planning  | === ANALYSIS: REMAINING OPEN SHIFTS ===
+0|ambulance-planning  |   🔴 OPEN: Day 7 (Zaterdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 10 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 6 (Vrijdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 10 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 13 (Vrijdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 10 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 18 (Woensdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 10 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 23 (Maandag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 10 users available but no preferences for night shifts
+0|ambulance-planning  | [95%] Gap-filling voltooid! 0 extra shifts ingevuld. Start post-optimalisatie...
+0|ambulance-planning  | === STARTING POST-OPTIMIZATION ===
+0|ambulance-planning  | Found 5 open shifts and 51 assigned shifts
+0|ambulance-planning  | SKIP USER: bagi20 (322) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: bawo25 (321) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: edve652 (238) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: fidr571 (166) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: glph405 (167) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: joni495 (170) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jost658 (257) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: lova655 (255) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: math573 (210) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: mava296 (174) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: nave654 (254) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: niae66 (179) is unavailable for day 7 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: simo542 (259) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: toho21 (157) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tvdd19 (17) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: winu431 (258) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: bagi20 (322) has no day preference for day 6
+0|ambulance-planning  | SKIP USER: bawo25 (321) has no day preference for day 6
+0|ambulance-planning  | SKIP USER: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: edve652 (238) has no day preference for day 6
+0|ambulance-planning  | SKIP USER: fidr571 (166) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: glph405 (167) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: joni495 (170) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jost658 (257) has no day preference for day 6
+0|ambulance-planning  | SKIP USER: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: lova655 (255) has no day preference for day 6
+0|ambulance-planning  | SKIP USER: math573 (210) has no day preference for day 6
+0|ambulance-planning  | SKIP USER: mava296 (174) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: nave654 (254) is unavailable for day 6 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: niae66 (179) has no day preference for day 6
+0|ambulance-planning  | SKIP USER: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: simo542 (259) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: toho21 (157) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tvdd19 (17) has no day preference for day 6
+0|ambulance-planning  | SKIP USER: winu431 (258) has no day preference for day 6
+0|ambulance-planning  | SKIP USER: bagi20 (322) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: bawo25 (321) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: edve652 (238) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: fidr571 (166) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: glph405 (167) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: joni495 (170) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jost658 (257) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: lova655 (255) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: math573 (210) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: mava296 (174) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: nave654 (254) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: niae66 (179) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: simo542 (259) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: toho21 (157) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tvdd19 (17) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: winu431 (258) has no day preference for day 13
+0|ambulance-planning  | SKIP USER: bagi20 (322) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: bawo25 (321) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: edve652 (238) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: fidr571 (166) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: glph405 (167) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: joni495 (170) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jost658 (257) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: lova655 (255) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: math573 (210) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: mava296 (174) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: nave654 (254) is unavailable for day 18 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: niae66 (179) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: simo542 (259) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: toho21 (157) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tvdd19 (17) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: winu431 (258) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: bagi20 (322) has no night preference for day 23
+0|ambulance-planning  | SKIP USER: bawo25 (321) has no night preference for day 23
+0|ambulance-planning  | SKIP USER: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: edve652 (238) has no night preference for day 23
+0|ambulance-planning  | SKIP USER: fidr571 (166) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: glph405 (167) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: joni495 (170) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: jost658 (257) has no night preference for day 23
+0|ambulance-planning  | SKIP USER: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: lova655 (255) has no night preference for day 23
+0|ambulance-planning  | SKIP USER: math573 (210) has no night preference for day 23
+0|ambulance-planning  | SKIP USER: mava296 (174) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: nave654 (254) has no night preference for day 23
+0|ambulance-planning  | SKIP USER: niae66 (179) has no night preference for day 23
+0|ambulance-planning  | SKIP USER: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: simo542 (259) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: toho21 (157) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tvdd19 (17) has no night preference for day 23
+0|ambulance-planning  | SKIP USER: winu431 (258) has no night preference for day 23
+0|ambulance-planning  | DIRECT FILL completed: 0 shifts filled
+0|ambulance-planning  | SKIP SMART SWAP: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: joni495 (170) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: niae66 (179) is unavailable for open shift day 7
+0|ambulance-planning  | SKIP SMART SWAP: glph405 (167) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: winu431 (258) has no night preference for day 7
+0|ambulance-planning  | SKIP SMART SWAP: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mava296 (174) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: toho21 (157) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: edve652 (238) has no night preference for day 7
+0|ambulance-planning  | SKIP SMART SWAP: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: simo542 (259) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: joni495 (170) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: fidr571 (166) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: winu431 (258) has no day preference for day 6
+0|ambulance-planning  | SKIP SMART SWAP: mava296 (174) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tvdd19 (17) has no day preference for day 6
+0|ambulance-planning  | SKIP SMART SWAP: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: lova655 (255) has no day preference for day 6
+0|ambulance-planning  | SKIP SMART SWAP: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: simo542 (259) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: fidr571 (166) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: bagi20 (322) has no day preference for day 6
+0|ambulance-planning  | SKIP SMART SWAP: lova655 (255) has no day preference for day 6
+0|ambulance-planning  | SKIP SMART SWAP: bawo25 (321) has no day preference for day 6
+0|ambulance-planning  | SKIP SMART SWAP: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: toho21 (157) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: glph405 (167) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: nave654 (254) is unavailable for open shift day 6
+0|ambulance-planning  | SKIP SMART SWAP: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: nave654 (254) is unavailable for open shift day 6
+0|ambulance-planning  | SKIP SMART SWAP: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: joni495 (170) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: fidr571 (166) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: winu431 (258) has no day preference for day 13
+0|ambulance-planning  | SKIP SMART SWAP: mava296 (174) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tvdd19 (17) has no day preference for day 13
+0|ambulance-planning  | SKIP SMART SWAP: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: lova655 (255) has no day preference for day 13
+0|ambulance-planning  | SKIP SMART SWAP: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: simo542 (259) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: fidr571 (166) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: bagi20 (322) has no day preference for day 13
+0|ambulance-planning  | SKIP SMART SWAP: lova655 (255) has no day preference for day 13
+0|ambulance-planning  | SKIP SMART SWAP: bawo25 (321) has no day preference for day 13
+0|ambulance-planning  | SKIP SMART SWAP: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: toho21 (157) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: glph405 (167) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: nave654 (254) has no day preference for day 13
+0|ambulance-planning  | SKIP SMART SWAP: ribo698 (327) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: nave654 (254) has no day preference for day 13
+0|ambulance-planning  | SKIP SMART SWAP: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: joni495 (170) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: niae66 (179) has no night preference for day 18
+0|ambulance-planning  | SKIP SMART SWAP: glph405 (167) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: winu431 (258) has no night preference for day 18
+0|ambulance-planning  | SKIP SMART SWAP: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mava296 (174) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: toho21 (157) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: edve652 (238) has no night preference for day 18
+0|ambulance-planning  | SKIP SMART SWAP: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: simo542 (259) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: joni495 (170) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: niae66 (179) has no night preference for day 23
+0|ambulance-planning  | SKIP SMART SWAP: glph405 (167) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: liro562 (171) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: winu431 (258) has no night preference for day 23
+0|ambulance-planning  | SKIP SMART SWAP: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mava296 (174) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jeva418 (159) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: kaja559 (260) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: rova656 (256) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: toho21 (157) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: rost612 (54) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: dygr460 (181) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: edve652 (238) has no night preference for day 23
+0|ambulance-planning  | SKIP SMART SWAP: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: simo542 (259) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jile572 (209) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: sabo657 (328) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: frba17 (155) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: doba653 (253) already at/above target (36/36)
+0|ambulance-planning  | SMART SWAPS completed: 0 swaps performed
+0|ambulance-planning  | [100%] Planning voor 2/2026 succesvol gegenereerd!
+0|ambulance-planning  | === MONTHLY SCHEDULE GENERATION COMPLETED ===
+0|ambulance-planning  | Total shifts generated: 56
+0|ambulance-planning  | User bagi20 (target: 24h): assigned 12h
+0|ambulance-planning  | User bawo25 (target: 24h): assigned 12h
+0|ambulance-planning  | User doba653 (target: 36h): assigned 36h
+0|ambulance-planning  | User dygr460 (target: 24h): assigned 24h
+0|ambulance-planning  | User edve652 (target: 24h): assigned 12h
+0|ambulance-planning  | User fidr571 (target: 24h): assigned 24h
+0|ambulance-planning  | User frba17 (target: 24h): assigned 24h
+0|ambulance-planning  | User glph405 (target: 24h): assigned 24h
+0|ambulance-planning  | User jeva418 (target: 24h): assigned 24h
+0|ambulance-planning  | User jile572 (target: 36h): assigned 36h
+0|ambulance-planning  | User joni495 (target: 24h): assigned 24h
+0|ambulance-planning  | User jost658 (target: 36h): assigned 0h
+0|ambulance-planning  | User kaja559 (target: 36h): assigned 36h
+0|ambulance-planning  | User liro562 (target: 24h): assigned 24h
+0|ambulance-planning  | User lova655 (target: 36h): assigned 24h
+0|ambulance-planning  | User math573 (target: 24h): assigned 0h
+0|ambulance-planning  | User mava296 (target: 24h): assigned 24h
+0|ambulance-planning  | User nave654 (target: 36h): assigned 24h
+0|ambulance-planning  | User niae66 (target: 24h): assigned 12h
+0|ambulance-planning  | User ribo698 (target: 36h): assigned 36h
+0|ambulance-planning  | User rost612 (target: 24h): assigned 24h
+0|ambulance-planning  | User rova656 (target: 36h): assigned 36h
+0|ambulance-planning  | User sabo657 (target: 36h): assigned 36h
+0|ambulance-planning  | User simo542 (target: 24h): assigned 24h
+0|ambulance-planning  | User toho21 (target: 24h): assigned 24h
+0|ambulance-planning  | User tvdd19 (target: 24h): assigned 12h
+0|ambulance-planning  | User winu431 (target: 36h): assigned 24h
+0|ambulance-planning  | [100%] Planning generatie voltooid voor 2/2026
+0|ambulance-planning  | 6:46:00 PM [express] POST /api/schedule/generate 200 in 300ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:46:00.575Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:46:00.575Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | 6:46:00 PM [express] GET /api/system/settings/last-schedule-generated 200 in 5ms
+0|ambulance-planning  | 6:46:00 PM [express] GET /api/shifts 200 in 10ms
+0|ambulance-planning  | 6:46:00 PM [express] GET /api/schedule/status 200 in 9ms

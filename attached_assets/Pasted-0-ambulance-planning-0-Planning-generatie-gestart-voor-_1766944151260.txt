@@ -1,0 +1,1895 @@
+0|ambulance-planning  | [0%] Planning generatie gestart voor 2/2026 voor station 3
+0|ambulance-planning  | generateMonthlySchedule called with stationId: 3
+0|ambulance-planning  | DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: 3
+0|ambulance-planning  | DEBUG: Found 25 primary users for station 3
+0|ambulance-planning  | DEBUG: Found 0 cross-team users for station 3
+0|ambulance-planning  | DEBUG: Total 25 users returned for station 3 with cross-team info
+0|ambulance-planning  | Found 25 users for station 3, 24 active users (using effectiveHours)
+0|ambulance-planning  | 🔒 DOUBLE-BOOKING GUARD: Loaded 216 cross-station day assignments for 2/2026
+0|ambulance-planning  | Initializing station-specific hour limits...
+0|ambulance-planning  | User anwo64 (193): station 3 limit = 24h
+0|ambulance-planning  | User babe648 (247): station 3 limit = 36h
+0|ambulance-planning  | User bave198 (67): station 3 limit = 24h
+0|ambulance-planning  | User ceve651 (250): station 3 limit = 60h
+0|ambulance-planning  | User ivve60 (194): station 3 limit = 24h
+0|ambulance-planning  | User java650 (266): station 3 limit = 36h
+0|ambulance-planning  | User jevb631 (56): station 3 limit = 36h
+0|ambulance-planning  | User jobo257 (265): station 3 limit = 48h
+0|ambulance-planning  | User jolu48 (196): station 3 limit = 24h
+0|ambulance-planning  | User kepe505 (176): station 3 limit = 24h
+0|ambulance-planning  | User koge76 (190): station 3 limit = 36h
+0|ambulance-planning  | User kuwu580 (42): station 3 limit = 36h
+0|ambulance-planning  | User leve509 (189): station 3 limit = 36h
+0|ambulance-planning  | User mast555 (185): station 3 limit = 24h
+0|ambulance-planning  | User mvdb95 (191): station 3 limit = 24h
+0|ambulance-planning  | User pave61 (192): station 3 limit = 24h
+0|ambulance-planning  | User stke427 (195): station 3 limit = 24h
+0|ambulance-planning  | User stra614 (177): station 3 limit = 36h
+0|ambulance-planning  | User stry334 (48): station 3 limit = 24h
+0|ambulance-planning  | User thhu81 (184): station 3 limit = 24h
+0|ambulance-planning  | User tibi649 (248): station 3 limit = 36h
+0|ambulance-planning  | User tivr108 (188): station 3 limit = 36h
+0|ambulance-planning  | User todo73 (187): station 3 limit = 24h
+0|ambulance-planning  | User vidb464 (51): station 3 limit = 36h
+0|ambulance-planning  | Generating schedule for 2/2026 with 24 eligible users (filtered from 24 active)
+0|ambulance-planning  | Performance optimizations: 1371 preferences preloaded, 614 weekend shifts analyzed
+0|ambulance-planning  | Weekday configs loaded: 7 configs for station 3
+0|ambulance-planning  | [5%] Voorbereidingen afgerond. 24 actieve gebruikers gevonden.
+0|ambulance-planning  | === SCARCITY-FIRST ANALYSIS STARTING ===
+0|ambulance-planning  | Day 1: 3 candidates for 2 shifts (difficulty: 1.17)
+0|ambulance-planning  | Day 2: 2 candidates for 2 shifts (difficulty: 1.00)
+0|ambulance-planning  | Day 3: 2 candidates for 2 shifts (difficulty: 1.00)
+0|ambulance-planning  | Day 4: 1 candidates for 2 shifts (difficulty: 2.00)
+0|ambulance-planning  | Day 5: 1 candidates for 2 shifts (difficulty: 2.00)
+0|ambulance-planning  | Day 6: 2 candidates for 2 shifts (difficulty: 1.00)
+0|ambulance-planning  | Day 7: 2 candidates for 2 shifts (difficulty: 1.50)
+0|ambulance-planning  | Day 8: 3 candidates for 2 shifts (difficulty: 1.17)
+0|ambulance-planning  | Day 9: 2 candidates for 2 shifts (difficulty: 1.00)
+0|ambulance-planning  | Day 10: 1 candidates for 2 shifts (difficulty: 2.00)
+0|ambulance-planning  | Day 11: 1 candidates for 2 shifts (difficulty: 2.00)
+0|ambulance-planning  | Day 12: 0 candidates for 2 shifts (difficulty: 999.00)
+0|ambulance-planning  | Day 13: 1 candidates for 2 shifts (difficulty: 2.00)
+0|ambulance-planning  | Day 14: 2 candidates for 2 shifts (difficulty: 1.50)
+0|ambulance-planning  | Day 15: 5 candidates for 2 shifts (difficulty: 0.90)
+0|ambulance-planning  | Day 16: 1 candidates for 2 shifts (difficulty: 2.00)
+0|ambulance-planning  | Day 17: 4 candidates for 2 shifts (difficulty: 0.50)
+0|ambulance-planning  | Day 18: 1 candidates for 2 shifts (difficulty: 2.00)
+0|ambulance-planning  | Day 19: 1 candidates for 2 shifts (difficulty: 2.00)
+0|ambulance-planning  | Day 20: 1 candidates for 2 shifts (difficulty: 2.00)
+0|ambulance-planning  | Day 21: 0 candidates for 2 shifts (difficulty: 999.50)
+0|ambulance-planning  | Day 22: 0 candidates for 2 shifts (difficulty: 999.50)
+0|ambulance-planning  | Day 23: 1 candidates for 2 shifts (difficulty: 2.00)
+0|ambulance-planning  | Day 24: 0 candidates for 2 shifts (difficulty: 999.00)
+0|ambulance-planning  | Day 25: 2 candidates for 2 shifts (difficulty: 1.00)
+0|ambulance-planning  | Day 26: 0 candidates for 2 shifts (difficulty: 999.30)
+0|ambulance-planning  | Day 27: 2 candidates for 2 shifts (difficulty: 1.30)
+0|ambulance-planning  | Day 28: 2 candidates for 2 shifts (difficulty: 1.80)
+0|ambulance-planning  | === SCARCITY-FIRST ORDER ===
+0|ambulance-planning  | Processing order: Day 22 (difficulty: 999.50, candidates: 0)
+0|ambulance-planning  | Processing order: Day 21 (difficulty: 999.50, candidates: 0)
+0|ambulance-planning  | Processing order: Day 26 (difficulty: 999.30, candidates: 0)
+0|ambulance-planning  | Processing order: Day 24 (difficulty: 999.00, candidates: 0)
+0|ambulance-planning  | Processing order: Day 12 (difficulty: 999.00, candidates: 0)
+0|ambulance-planning  | Processing order: Day 23 (difficulty: 2.00, candidates: 1)
+0|ambulance-planning  | Processing order: Day 20 (difficulty: 2.00, candidates: 1)
+0|ambulance-planning  | Processing order: Day 19 (difficulty: 2.00, candidates: 1)
+0|ambulance-planning  | Processing order: Day 18 (difficulty: 2.00, candidates: 1)
+0|ambulance-planning  | Processing order: Day 16 (difficulty: 2.00, candidates: 1)
+0|ambulance-planning  | Processing order: Day 13 (difficulty: 2.00, candidates: 1)
+0|ambulance-planning  | Processing order: Day 11 (difficulty: 2.00, candidates: 1)
+0|ambulance-planning  | Processing order: Day 10 (difficulty: 2.00, candidates: 1)
+0|ambulance-planning  | Processing order: Day 5 (difficulty: 2.00, candidates: 1)
+0|ambulance-planning  | Processing order: Day 4 (difficulty: 2.00, candidates: 1)
+0|ambulance-planning  | Processing order: Day 28 (difficulty: 1.80, candidates: 2)
+0|ambulance-planning  | Processing order: Day 14 (difficulty: 1.50, candidates: 2)
+0|ambulance-planning  | Processing order: Day 7 (difficulty: 1.50, candidates: 2)
+0|ambulance-planning  | Processing order: Day 27 (difficulty: 1.30, candidates: 2)
+0|ambulance-planning  | Processing order: Day 8 (difficulty: 1.17, candidates: 3)
+0|ambulance-planning  | Processing order: Day 1 (difficulty: 1.17, candidates: 3)
+0|ambulance-planning  | Processing order: Day 25 (difficulty: 1.00, candidates: 2)
+0|ambulance-planning  | Processing order: Day 9 (difficulty: 1.00, candidates: 2)
+0|ambulance-planning  | Processing order: Day 6 (difficulty: 1.00, candidates: 2)
+0|ambulance-planning  | Processing order: Day 3 (difficulty: 1.00, candidates: 2)
+0|ambulance-planning  | Processing order: Day 2 (difficulty: 1.00, candidates: 2)
+0|ambulance-planning  | Processing order: Day 15 (difficulty: 0.90, candidates: 5)
+0|ambulance-planning  | Processing order: Day 17 (difficulty: 0.50, candidates: 4)
+0|ambulance-planning  | Processing day 22: Sun Feb 22 2026 (1/28)
+0|ambulance-planning  | [5%] Verwerken dag 22 van 28 (scarcity-first)
+0|ambulance-planning  | Day 22 (Zondag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 22 UPDATED availability: Day=0, Night=0 (original: 0)
+0|ambulance-planning  | Day 22 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 22
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 22
+0|ambulance-planning  | Processing day 21: Sat Feb 21 2026 (2/28)
+0|ambulance-planning  | [8%] Verwerken dag 21 van 28 (scarcity-first)
+0|ambulance-planning  | Day 21 (Zaterdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 21 UPDATED availability: Day=0, Night=0 (original: 0)
+0|ambulance-planning  | Day 21 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 21
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 21
+0|ambulance-planning  | Processing day 26: Thu Feb 26 2026 (3/28)
+0|ambulance-planning  | [11%] Verwerken dag 26 van 28 (scarcity-first)
+0|ambulance-planning  | Day 26 (Donderdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 26 UPDATED availability: Day=0, Night=0 (original: 0)
+0|ambulance-planning  | Day 26 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 26
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 26
+0|ambulance-planning  | Processing day 24: Tue Feb 24 2026 (4/28)
+0|ambulance-planning  | [15%] Verwerken dag 24 van 28 (scarcity-first)
+0|ambulance-planning  | Day 24 (Dinsdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 24 UPDATED availability: Day=0, Night=0 (original: 0)
+0|ambulance-planning  | Day 24 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 24
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 24
+0|ambulance-planning  | Processing day 12: Thu Feb 12 2026 (5/28)
+0|ambulance-planning  | [18%] Verwerken dag 12 van 28 (scarcity-first)
+0|ambulance-planning  | Day 12 (Donderdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 12 UPDATED availability: Day=0, Night=0 (original: 0)
+0|ambulance-planning  | Day 12 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 12
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 12
+0|ambulance-planning  | Processing day 23: Mon Feb 23 2026 (6/28)
+0|ambulance-planning  | [21%] Verwerken dag 23 van 28 (scarcity-first)
+0|ambulance-planning  | Day 23 (Maandag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 23 UPDATED availability: Day=0, Night=1 (original: 1)
+0|ambulance-planning  | Day 23 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 23
+0|ambulance-planning  | Checking user jevb631 (ID: 56): stationLimit=36, currentHours=0, adding=12, isProfessional=false0|ambulance-planning  | Assigned FULL night shift (12h) to user 56 for day 23
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 20: Fri Feb 20 2026 (7/28)
+0|ambulance-planning  | [24%] Verwerken dag 20 van 28 (scarcity-first)
+0|ambulance-planning  | Day 20 (Vrijdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 20 UPDATED availability: Day=1, Night=0 (original: 1)
+0|ambulance-planning  | Day 20 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user tivr108 (ID: 188): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 188 for day 20
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 20
+0|ambulance-planning  | Processing day 19: Thu Feb 19 2026 (8/28)
+0|ambulance-planning  | [28%] Verwerken dag 19 van 28 (scarcity-first)
+0|ambulance-planning  | Day 19 (Donderdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 19 UPDATED availability: Day=0, Night=1 (original: 1)
+0|ambulance-planning  | Day 19 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 19
+0|ambulance-planning  | Checking user thhu81 (ID: 184): stationLimit=24, currentHours=0, adding=12, isProfessional=false0|ambulance-planning  | Assigned FULL night shift (12h) to user 184 for day 19
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 18: Wed Feb 18 2026 (9/28)
+0|ambulance-planning  | [31%] Verwerken dag 18 van 28 (scarcity-first)
+0|ambulance-planning  | Day 18 (Woensdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 18 UPDATED availability: Day=1, Night=0 (original: 1)
+0|ambulance-planning  | Day 18 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Professional jolu48 (196) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user jolu48 (ID: 196): stationLimit=24, currentHours=0, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 196 for day 18
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 18
+0|ambulance-planning  | Processing day 16: Mon Feb 16 2026 (10/28)
+0|ambulance-planning  | [34%] Verwerken dag 16 van 28 (scarcity-first)
+0|ambulance-planning  | Day 16 (Maandag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 16 UPDATED availability: Day=0, Night=1 (original: 1)
+0|ambulance-planning  | Day 16 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 16
+0|ambulance-planning  | Professional anwo64 (193) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user anwo64 (ID: 193): stationLimit=24, currentHours=0, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 193 for day 16
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 13: Fri Feb 13 2026 (11/28)
+0|ambulance-planning  | [37%] Verwerken dag 13 van 28 (scarcity-first)
+0|ambulance-planning  | Day 13 (Vrijdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 13 UPDATED availability: Day=1, Night=0 (original: 1)
+0|ambulance-planning  | Day 13 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Professional jolu48 (196) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user jolu48 (ID: 196): stationLimit=24, currentHours=12, adding=12, isProfessional=true0|ambulance-planning  | Assigned FULL day shift (12h) to user 196 for day 13
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 13
+0|ambulance-planning  | Processing day 11: Wed Feb 11 2026 (12/28)
+0|ambulance-planning  | [40%] Verwerken dag 11 van 28 (scarcity-first)
+0|ambulance-planning  | Day 11 (Woensdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 11 UPDATED availability: Day=0, Night=1 (original: 1)
+0|ambulance-planning  | Day 11 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 11
+0|ambulance-planning  | Checking user tivr108 (ID: 188): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 188 for day 11
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 10: Tue Feb 10 2026 (13/28)
+0|ambulance-planning  | [44%] Verwerken dag 10 van 28 (scarcity-first)
+0|ambulance-planning  | Day 10 (Dinsdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 10 UPDATED availability: Day=0, Night=1 (original: 1)
+0|ambulance-planning  | Day 10 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 10
+0|ambulance-planning  | Checking user jevb631 (ID: 56): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 56 for day 10
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 5: Thu Feb 05 2026 (14/28)
+0|ambulance-planning  | [47%] Verwerken dag 5 van 28 (scarcity-first)
+0|ambulance-planning  | Day 5 (Donderdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 5 UPDATED availability: Day=1, Night=0 (original: 1)
+0|ambulance-planning  | Day 5 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user tivr108 (ID: 188): stationLimit=36, currentHours=24, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 188 for day 5
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 5
+0|ambulance-planning  | Processing day 4: Wed Feb 04 2026 (15/28)
+0|ambulance-planning  | [50%] Verwerken dag 4 van 28 (scarcity-first)
+0|ambulance-planning  | Day 4 (Woensdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 4 UPDATED availability: Day=0, Night=1 (original: 1)
+0|ambulance-planning  | Day 4 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 4
+0|ambulance-planning  | Checking user jevb631 (ID: 56): stationLimit=36, currentHours=24, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 56 for day 4
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 28: Sat Feb 28 2026 (16/28)
+0|ambulance-planning  | [53%] Verwerken dag 28 van 28 (scarcity-first)
+0|ambulance-planning  | Day 28 (Zaterdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 28 UPDATED availability: Day=1, Night=1 (original: 2)
+0|ambulance-planning  | Day 28 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user stra614 (ID: 177): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 177 for day 28
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 28
+0|ambulance-planning  | Processing day 14: Sat Feb 14 2026 (17/28)
+0|ambulance-planning  | [56%] Verwerken dag 14 van 28 (scarcity-first)
+0|ambulance-planning  | Day 14 (Zaterdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 14 UPDATED availability: Day=0, Night=1 (original: 2)
+0|ambulance-planning  | Day 14 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 14
+0|ambulance-planning  | Professional pave61 (192) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user pave61 (ID: 192): stationLimit=24, currentHours=0, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 192 for day 14
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 7: Sat Feb 07 2026 (18/28)
+0|ambulance-planning  | [60%] Verwerken dag 7 van 28 (scarcity-first)
+0|ambulance-planning  | Day 7 (Zaterdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 7 UPDATED availability: Day=1, Night=1 (original: 2)
+0|ambulance-planning  | Day 7 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user stra614 (ID: 177): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 177 for day 7
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 7
+0|ambulance-planning  | Processing day 27: Fri Feb 27 2026 (19/28)
+0|ambulance-planning  | [63%] Verwerken dag 27 van 28 (scarcity-first)
+0|ambulance-planning  | Day 27 (Vrijdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 27 UPDATED availability: Day=1, Night=1 (original: 2)
+0|ambulance-planning  | Day 27 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=1, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user java650 (ID: 266): stationLimit=36, currentHours=0, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 266 for day 27
+0|ambulance-planning  | Checking user thhu81 (ID: 184): stationLimit=24, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL night shift (12h) to user 184 for day 27
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 8: Sun Feb 08 2026 (20/28)
+0|ambulance-planning  | [66%] Verwerken dag 8 van 28 (scarcity-first)
+0|ambulance-planning  | Day 8 (Zondag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 8 UPDATED availability: Day=0, Night=2 (original: 3)
+0|ambulance-planning  | Day 8 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=2, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 8
+0|ambulance-planning  | Professional pave61 (192) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user pave61 (ID: 192): stationLimit=24, currentHours=12, adding=12, isProfessional=true0|ambulance-planning  | Assigned FULL night shift (12h) to user 192 for day 8
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 1: Sun Feb 01 2026 (21/28)
+0|ambulance-planning  | [69%] Verwerken dag 1 van 28 (scarcity-first)
+0|ambulance-planning  | Day 1 (Zondag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 1 UPDATED availability: Day=1, Night=0 (original: 3)
+0|ambulance-planning  | Day 1 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Professional anwo64 (193) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user anwo64 (ID: 193): stationLimit=24, currentHours=12, adding=12, isProfessional=true0|ambulance-planning  | Assigned FULL day shift (12h) to user 193 for day 1
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 1
+0|ambulance-planning  | Processing day 25: Wed Feb 25 2026 (22/28)
+0|ambulance-planning  | [73%] Verwerken dag 25 van 28 (scarcity-first)
+0|ambulance-planning  | Day 25 (Woensdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 25 UPDATED availability: Day=0, Night=0 (original: 2)
+0|ambulance-planning  | Day 25 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 25
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 25
+0|ambulance-planning  | Processing day 9: Mon Feb 09 2026 (23/28)
+0|ambulance-planning  | [76%] Verwerken dag 9 van 28 (scarcity-first)
+0|ambulance-planning  | Day 9 (Maandag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 9 UPDATED availability: Day=0, Night=0 (original: 2)
+0|ambulance-planning  | Day 9 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 9
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 9
+0|ambulance-planning  | Processing day 6: Fri Feb 06 2026 (24/28)
+0|ambulance-planning  | [79%] Verwerken dag 6 van 28 (scarcity-first)
+0|ambulance-planning  | Day 6 (Vrijdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 6 UPDATED availability: Day=1, Night=0 (original: 2)
+0|ambulance-planning  | Day 6 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user java650 (ID: 266): stationLimit=36, currentHours=12, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 266 for day 6
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 6
+0|ambulance-planning  | Processing day 3: Tue Feb 03 2026 (25/28)
+0|ambulance-planning  | [82%] Verwerken dag 3 van 28 (scarcity-first)
+0|ambulance-planning  | Day 3 (Dinsdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 3 UPDATED availability: Day=0, Night=0 (original: 2)
+0|ambulance-planning  | Day 3 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 3
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 3
+0|ambulance-planning  | Processing day 2: Mon Feb 02 2026 (26/28)
+0|ambulance-planning  | [85%] Verwerken dag 2 van 28 (scarcity-first)
+0|ambulance-planning  | Day 2 (Maandag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 2 UPDATED availability: Day=1, Night=0 (original: 2)
+0|ambulance-planning  | Day 2 availability: Day=1, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Professional mvdb95 (191) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user mvdb95 (ID: 191): stationLimit=24, currentHours=0, adding=12, isProfessional=true
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 191 for day 2
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 2
+0|ambulance-planning  | Processing day 15: Sun Feb 15 2026 (27/28)
+0|ambulance-planning  | [89%] Verwerken dag 15 van 28 (scarcity-first)
+0|ambulance-planning  | Day 15 (Zondag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 15 UPDATED availability: Day=2, Night=3 (original: 5)
+0|ambulance-planning  | Day 15 availability: Day=2, DayFirstHalf=0, DaySecondHalf=0, Night=3, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | Checking user java650 (ID: 266): stationLimit=36, currentHours=24, adding=12, isProfessional=false
+0|ambulance-planning  | Assigned FULL day shift (12h) to user 266 for day 15
+0|ambulance-planning  | Professional mvdb95 (191) heeft nog geen shifts deze week - mag worden toegewezen
+0|ambulance-planning  | Checking user mvdb95 (ID: 191): stationLimit=24, currentHours=12, adding=12, isProfessional=true0|ambulance-planning  | Assigned FULL night shift (12h) to user 191 for day 15
+0|ambulance-planning  | Night shifts: assigned 1/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Processing day 17: Tue Feb 17 2026 (28/28)
+0|ambulance-planning  | [92%] Verwerken dag 17 van 28 (scarcity-first)
+0|ambulance-planning  | Day 17 (Dinsdag): target 1 dag, 1 nacht shifts
+0|ambulance-planning  | Day 17 UPDATED availability: Day=0, Night=0 (original: 4)
+0|ambulance-planning  | Day 17 availability: Day=0, DayFirstHalf=0, DaySecondHalf=0, Night=0, NightFirstHalf=0, NightSecondHalf=0
+0|ambulance-planning  | ✅ Created open full day shift (7:00-19:00) for day 17
+0|ambulance-planning  | Night shifts: assigned 0/1 full shifts (12h each). No split shifts for nights.
+0|ambulance-planning  | Creating 1 open full night shifts (19h-7h) for day 17
+0|ambulance-planning  | Generated 56 shifts for month 2/2026
+0|ambulance-planning  | [92%] Planning basis voltooid. Start geavanceerde gap-filling...
+0|ambulance-planning  | === STARTING ADVANCED GAP-FILLING OPTIMIZATION ===
+0|ambulance-planning  | INITIAL STATE: 35 open shifts, 21 assigned shifts
+0|ambulance-planning  | PRIORITIZED OPEN SHIFTS:
+0|ambulance-planning  |   - Day 28 (Za) night shift - PRIORITY
+0|ambulance-planning  |   - Day 26 (Do) night shift - PRIORITY
+0|ambulance-planning  |   - Day 26 (Do) day shift - PRIORITY
+0|ambulance-planning  |   - Day 22 (Zo) night shift - PRIORITY
+0|ambulance-planning  |   - Day 21 (Za) night shift - PRIORITY
+0|ambulance-planning  |   - Day 7 (Za) night shift - PRIORITY
+0|ambulance-planning  |   - Day 1 (Zo) night shift - PRIORITY
+0|ambulance-planning  |   - Day 22 (Zo) day shift - PRIORITY
+0|ambulance-planning  |   - Day 21 (Za) day shift - PRIORITY
+0|ambulance-planning  |   - Day 14 (Za) day shift - PRIORITY
+0|ambulance-planning  |   - Day 8 (Zo) day shift - PRIORITY
+0|ambulance-planning  |   - Day 25 (Wo) night shift - PRIORITY
+0|ambulance-planning  |   - Day 24 (Di) night shift - PRIORITY
+0|ambulance-planning  |   - Day 20 (Vr) night shift - PRIORITY
+0|ambulance-planning  |   - Day 18 (Wo) night shift - PRIORITY
+0|ambulance-planning  |   - Day 17 (Di) night shift - PRIORITY
+0|ambulance-planning  |   - Day 13 (Vr) night shift - PRIORITY
+0|ambulance-planning  |   - Day 12 (Do) night shift - PRIORITY
+0|ambulance-planning  |   - Day 9 (Ma) night shift - PRIORITY
+0|ambulance-planning  |   - Day 6 (Vr) night shift - PRIORITY
+0|ambulance-planning  |   - Day 5 (Do) night shift - PRIORITY
+0|ambulance-planning  |   - Day 3 (Di) night shift - PRIORITY
+0|ambulance-planning  |   - Day 2 (Ma) night shift - PRIORITY
+0|ambulance-planning  |   - Day 25 (Wo) day shift - PRIORITY
+0|ambulance-planning  |   - Day 24 (Di) day shift - PRIORITY
+0|ambulance-planning  |   - Day 23 (Ma) day shift - PRIORITY
+0|ambulance-planning  |   - Day 19 (Do) day shift - PRIORITY
+0|ambulance-planning  |   - Day 17 (Di) day shift - PRIORITY
+0|ambulance-planning  |   - Day 16 (Ma) day shift - PRIORITY
+0|ambulance-planning  |   - Day 12 (Do) day shift - PRIORITY
+0|ambulance-planning  |   - Day 11 (Wo) day shift - PRIORITY
+0|ambulance-planning  |   - Day 10 (Di) day shift - PRIORITY
+0|ambulance-planning  |   - Day 9 (Ma) day shift - PRIORITY
+0|ambulance-planning  |   - Day 4 (Wo) day shift - PRIORITY
+0|ambulance-planning  |   - Day 3 (Di) day shift - PRIORITY
+0|ambulance-planning  | === GAP-FILLING PASS 1: RESERVE CAPACITY ASSIGNMENT ===
+0|ambulance-planning  | 🚨 CONSECUTIVE SHIFT BLOCKED: User 177 already has shift on day 28 - maximum 1 shift per day
+0|ambulance-planning  | 🚨 GAP-FILL PASS1 SAFETY BLOCK: Skipping shift voor user 177 - consecutive shift conflict
+0|ambulance-planning  | 🚨 CONSECUTIVE SHIFT BLOCKED: User 177 already has shift on day 7 - maximum 1 shift per day
+0|ambulance-planning  | 🚨 GAP-FILL PASS1 SAFETY BLOCK: Skipping shift voor user 177 - consecutive shift conflict
+0|ambulance-planning  | === GAP-FILLING PASS 2: INTELLIGENT SWAPPING ===
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 22 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 22 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 191 is UNAVAILABLE for open shift day 22 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 191 is UNAVAILABLE for open shift day 22 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 22 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 22 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 191 is UNAVAILABLE for open shift day 22 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 191 is UNAVAILABLE for open shift day 22 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 21 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 21 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 21 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 21 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 26 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 26 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 26 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 26 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 56 is UNAVAILABLE for open shift day 24 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 56 is UNAVAILABLE for open shift day 24 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 56 is UNAVAILABLE for open shift day 24 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 24 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 24 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 56 is UNAVAILABLE for open shift day 24 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 56 is UNAVAILABLE for open shift day 24 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 56 is UNAVAILABLE for open shift day 24 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 24 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 24 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 12 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 12 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 12 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 12 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 23 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 23 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 20 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 20 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 19 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 19 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 18 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 18 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 16 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 16 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 13 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 13 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 11 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 11 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 10 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 10 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 5 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 5 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 4 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 4 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 266 is UNAVAILABLE for open shift day 28 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 266 is UNAVAILABLE for open shift day 28 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 266 is UNAVAILABLE for open shift day 28 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 14 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 14 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 192 is UNAVAILABLE for open shift day 7 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 192 is UNAVAILABLE for open shift day 7 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 8 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 8 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 1 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 1 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 25 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 25 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 25 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 25 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 9 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 9 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 9 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 9 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 6 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 6 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 3 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 3 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 3 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 3 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 2 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 192 is UNAVAILABLE for open shift day 2 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 2 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 192 is UNAVAILABLE for open shift day 2 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 184 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 192 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 184 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 192 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 184 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 192 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 177 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 184 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | 🚨 PASS2 SKIP: User 192 is UNAVAILABLE for open shift day 17 - no swap allowed
+0|ambulance-planning  | === GAP-FILLING PASS 3: CAREFUL LAST RESORT ASSIGNMENT ===
+0|ambulance-planning  | === GAP-FILLING RESULTS SUMMARY ===
+0|ambulance-planning  | ✅ Pass 1 (Reserve Capacity): 0 shifts filled
+0|ambulance-planning  | 🔄 Pass 2 (Smart Swapping): 0 swaps performed
+0|ambulance-planning  | ⚠️ Pass 3 (Last Resort): 0 critical shifts filled
+0|ambulance-planning  | 📊 TOTAL IMPROVEMENTS: 0 gaps filled
+0|ambulance-planning  | 📋 REMAINING OPEN SHIFTS: 35
+0|ambulance-planning  | === ANALYSIS: REMAINING OPEN SHIFTS ===
+0|ambulance-planning  |   🔴 OPEN: Day 22 (Zondag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 22 (Zondag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 21 (Zaterdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 21 (Zaterdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 26 (Donderdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 26 (Donderdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 24 (Dinsdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 24 (Dinsdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 12 (Donderdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 12 (Donderdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 23 (Maandag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 20 (Vrijdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 19 (Donderdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 18 (Woensdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 16 (Maandag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 13 (Vrijdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 11 (Woensdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 10 (Dinsdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 5 (Donderdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 4 (Woensdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 28 (Zaterdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 14 (Zaterdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 7 (Zaterdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 8 (Zondag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 1 (Zondag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 25 (Woensdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 25 (Woensdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 9 (Maandag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 9 (Maandag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 6 (Vrijdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 3 (Dinsdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 3 (Dinsdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 2 (Maandag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  |   🔴 OPEN: Day 17 (Dinsdag) day shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for day shifts
+0|ambulance-planning  |   🔴 OPEN: Day 17 (Dinsdag) night shift - NEEDS MANUAL ATTENTION
+0|ambulance-planning  |     📊 Analysis: 16 users available but no preferences for night shifts
+0|ambulance-planning  | 🚨 END-OF-MONTH PROBLEM: 3 open shifts after day 25
+0|ambulance-planning  | 💡 RECOMMENDATION: Review user hour targets or add more preferences for end-of-month days
+0|ambulance-planning  | [95%] Gap-filling voltooid! 0 extra shifts ingevuld. Start post-optimalisatie...
+0|ambulance-planning  | === STARTING POST-OPTIMIZATION ===
+0|ambulance-planning  | Found 35 open shifts and 21 assigned shifts
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 22 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 22 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 22 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 22 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 22
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 22 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 22 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 22 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 22 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 22
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 21 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 21 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 21 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 21 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 21
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 21 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 21 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 21 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 21 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 21
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 26 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 26 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 26 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 26 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 26
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 26 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 26 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 26 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 26 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 26
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 24 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 24 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 24 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 24 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 24
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 24 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 24 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 24 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 24 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 24
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 12 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 12 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 12 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 12 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 12
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 12 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 12 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 12 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 12 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 12
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 23 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 23 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 23 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 23 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 23
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 20 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 20 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 20 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 20 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 20
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 19 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 19 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 19 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 19 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 19
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 18 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 18 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 18 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 18 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 18
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 16 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 16 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 16 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 16 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 16
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 13 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 13 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 13 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 13 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 13
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 11 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 11 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 11 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 11 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 11
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 10 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 10 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 10 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 10 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 10
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 5 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 5 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 5 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 5 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 5
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 4 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 4 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 4 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 4 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 4
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 28 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 28 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 28 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 28
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 14 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 14 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 14 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 14 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 14
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 7 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 7 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 7 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 7
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 8 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 8 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 8 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 8 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 8
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 1 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 1 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 1 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 1 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 1
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 25 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 25 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 25 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 25 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 25
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 25 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 25 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 25 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 25 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 25
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 9 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 9 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 9 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 9 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 9
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 9 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 9 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 9 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 9 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 9
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 6 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 6 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 6 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 6 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 6
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 3 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 3 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 3 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 3 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 3
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 3 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 3 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 3 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 3 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 3
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 2 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 2 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 2 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 2 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 2
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 17 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 17 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 17 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: leve509 (189) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: mast555 (185) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 17 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no day preference for day 17
+0|ambulance-planning  | SKIP USER: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: babe648 (247) is unavailable for day 17 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: bave198 (67) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: ceve651 (250) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: ivve60 (194) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: jobo257 (265) is unavailable for day 17 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: kepe505 (176) is unavailable for day 17 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: koge76 (190) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: kuwu580 (42) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: leve509 (189) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: mast555 (185) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: stke427 (195) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: stra614 (177) is unavailable for day 17 (explicit unavailable preference)
+0|ambulance-planning  | SKIP USER: stry334 (48) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP USER: tibi649 (248) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP USER: todo73 (187) has no night preference for day 17
+0|ambulance-planning  | SKIP USER: vidb464 (51) has no night preference for day 17
+0|ambulance-planning  | DIRECT FILL completed: 0 shifts filled
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 22
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 22
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 21
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 21
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 26
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 26
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 24
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 24
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 12
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 12
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 23
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 23
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 19
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 19
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 16
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 16
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 11
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 11
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 10
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 10
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 4
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 4
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 14
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 14
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 8
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 8
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 25
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 25
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 9
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 9
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 3
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 3
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: jolu48 (196) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 17
+0|ambulance-planning  | SKIP SMART SWAP: stra614 (177) is unavailable for open shift day 17
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: java650 (266) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: anwo64 (193) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: tivr108 (188) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: jevb631 (56) already at/above target (36/36)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: thhu81 (184) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: pave61 (192) already at/above target (24/24)
+0|ambulance-planning  | SKIP SMART SWAP: mvdb95 (191) already at/above target (24/24)
+0|ambulance-planning  | SMART SWAPS completed: 0 swaps performed
+0|ambulance-planning  | [100%] Planning voor 2/2026 succesvol gegenereerd!
+0|ambulance-planning  | === MONTHLY SCHEDULE GENERATION COMPLETED ===
+0|ambulance-planning  | Total shifts generated: 56
+0|ambulance-planning  | User anwo64 (target: 24h): assigned 24h
+0|ambulance-planning  | User babe648 (target: 36h): assigned 0h
+0|ambulance-planning  | User bave198 (target: 24h): assigned 0h
+0|ambulance-planning  | User ceve651 (target: 60h): assigned 0h
+0|ambulance-planning  | User ivve60 (target: 24h): assigned 0h
+0|ambulance-planning  | User java650 (target: 36h): assigned 36h
+0|ambulance-planning  | User jevb631 (target: 36h): assigned 36h
+0|ambulance-planning  | User jobo257 (target: 48h): assigned 0h
+0|ambulance-planning  | User jolu48 (target: 24h): assigned 24h
+0|ambulance-planning  | User kepe505 (target: 24h): assigned 0h
+0|ambulance-planning  | User koge76 (target: 36h): assigned 0h
+0|ambulance-planning  | User kuwu580 (target: 36h): assigned 0h
+0|ambulance-planning  | User leve509 (target: 36h): assigned 0h
+0|ambulance-planning  | User mast555 (target: 24h): assigned 0h
+0|ambulance-planning  | User mvdb95 (target: 24h): assigned 24h
+0|ambulance-planning  | User pave61 (target: 24h): assigned 24h
+0|ambulance-planning  | User stke427 (target: 24h): assigned 0h
+0|ambulance-planning  | User stra614 (target: 36h): assigned 24h
+0|ambulance-planning  | User stry334 (target: 24h): assigned 0h
+0|ambulance-planning  | User thhu81 (target: 24h): assigned 24h
+0|ambulance-planning  | User tibi649 (target: 36h): assigned 0h
+0|ambulance-planning  | User tivr108 (target: 36h): assigned 36h
+0|ambulance-planning  | User todo73 (target: 24h): assigned 0h
+0|ambulance-planning  | User vidb464 (target: 36h): assigned 0h
+0|ambulance-planning  | [100%] Planning generatie voltooid voor 2/2026
+0|ambulance-planning  | 6:47:28 PM [express] POST /api/schedule/generate 200 in 269ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | 6:47:28 PM [express] GET /api/schedule/generate-progress 200 in 3ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:47:28.626Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | === REQUIRE AUTH DEBUG ===
+0|ambulance-planning  | isAuthenticated: true
+0|ambulance-planning  | session: Session {
+0|ambulance-planning  |   cookie: {
+0|ambulance-planning  |     path: '/',
+0|ambulance-planning  |     _expires: 2025-12-29T17:47:28.626Z,
+0|ambulance-planning  |     originalMaxAge: 86400000,
+0|ambulance-planning  |     httpOnly: true,
+0|ambulance-planning  |     secure: false,
+0|ambulance-planning  |     sameSite: 'lax'
+0|ambulance-planning  |   },
+0|ambulance-planning  |   passport: { user: { id: 87, stationId: 8 } }
+0|ambulance-planning  | }
+0|ambulance-planning  | user: {
+0|ambulance-planning  |   id: 87,
+0|ambulance-planning  |   username: 'jeva400',
+0|ambulance-planning  |   password: '01215d567937b83c82180713fc201036b73694dd0e1dcd22873d6710f802d4f79e1f581968ffdfdfc8e43dc7d76c5b62739331c0f2ce7681416a052ecdeee0f0.9eecea767e3210051216425ef43ac2ce',
+0|ambulance-planning  |   firstName: 'jeroen',
+0|ambulance-planning  |   lastName: 'vanhoof',
+0|ambulance-planning  |   email: 'jeroen.vanhoof@brandweerzonekempen.be',
+0|ambulance-planning  |   phoneNumber: '+32 497 71 72 4',
+0|ambulance-planning  |   profilePhotoUrl: null,
+0|ambulance-planning  |   role: 'supervisor',
+0|ambulance-planning  |   isAdmin: true,
+0|ambulance-planning  |   isProfessional: false,
+0|ambulance-planning  |   hasDrivingLicenseC: true,
+0|ambulance-planning  |   hours: 0,
+0|ambulance-planning  |   stationId: 8,
+0|ambulance-planning  |   calendarOffset: 0,
+0|ambulance-planning  |   kioskToken: null,
+0|ambulance-planning  |   shiftReminderHours: 12,
+0|ambulance-planning  |   darkMode: false
+0|ambulance-planning  | }
+0|ambulance-planning  | 6:47:28 PM [express] GET /api/system/settings/last-schedule-generated 200 in 5ms
+0|ambulance-planning  | 6:47:28 PM [express] GET /api/shifts 200 in 9ms
+0|ambulance-planning  | 6:47:28 PM [express] GET /api/schedule/status 200 in 9ms
+0|ambulance-planning  | 6:47:35 PM [express] GET /api/build-info 200 in 0ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | 6:47:40 PM [express] GET /api/verdi/pending-changes/3/2/2026 200 in 5ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | 6:48:10 PM [express] GET /api/verdi/pending-changes/3/2/2026 200 in 6ms

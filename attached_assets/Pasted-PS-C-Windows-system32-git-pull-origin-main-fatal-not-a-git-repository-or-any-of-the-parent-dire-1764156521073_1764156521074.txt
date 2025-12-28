@@ -1,0 +1,108 @@
+PS C:\Windows\system32> git pull origin main
+fatal: not a git repository (or any of the parent directories): .git
+PS C:\Windows\system32> $env:PATH += ";$env:APPDATA\npm"
+PS C:\Windows\system32> cd C:\ambulance-planning
+PS C:\ambulance-planning> git pull origin main
+remote: Enumerating objects: 96, done.
+remote: Counting objects: 100% (96/96), done.
+remote: Compressing objects: 100% (10/10), done.
+remote: Total 79 (delta 68), reused 78 (delta 67), pack-reused 0 (from 0)
+Unpacking objects: 100% (79/79), 468.19 KiB | 1.37 MiB/s, done.
+From https://github.com/colson89/ambulance-planning
+ * branch            main       -> FETCH_HEAD
+   92c7f76..7b70725  main       -> origin/main
+Updating 92c7f76..7b70725
+error: Your local changes to the following files would be overwritten by merge:
+        package-lock.json
+Please commit your changes or stash them before you merge.
+Aborting
+PS C:\ambulance-planning> npm run db:push
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file 'C:\ambulance-planning\drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+[i] No changes detected
+PS C:\ambulance-planning> npm install
+
+up to date, audited 902 packages in 3s
+
+148 packages are looking for funding
+  run `npm fund` for details
+
+6 vulnerabilities (5 moderate, 1 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+PS C:\ambulance-planning> npm run build
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && node scripts/build-sw.js
+
+vite v5.4.20 building for production...
+✓ 2697 modules transformed.
+../dist/public/index.html                                3.20 kB │ gzip:  1.06 kB
+../dist/public/assets/index-DsRzPlyD.css                74.16 kB │ gzip: 12.50 kB
+../dist/public/assets/badge-CBE9R_Kf.js                  0.75 kB │ gzip:  0.39 kB
+../dist/public/assets/not-found-C_5rOTmz.js              0.86 kB │ gzip:  0.45 kB
+../dist/public/assets/alert-DZTZx4Uv.js                  0.99 kB │ gzip:  0.51 kB
+../dist/public/assets/label-4AyLjxgC.js                  1.14 kB │ gzip:  0.60 kB
+../dist/public/assets/table-BIlSdPBp.js                  1.57 kB │ gzip:  0.56 kB
+../dist/public/assets/switch-wD9yjzUn.js                 2.56 kB │ gzip:  1.28 kB
+../dist/public/assets/station-select-_tbf-b6O.js         3.98 kB │ gzip:  1.56 kB
+../dist/public/assets/integrations-DaVPFwV_.js           4.66 kB │ gzip:  1.46 kB
+../dist/public/assets/alert-dialog-BO2jJZbP.js           4.86 kB │ gzip:  1.79 kB
+../dist/public/assets/nl-BT2id1x9.js                     5.08 kB │ gzip:  1.89 kB
+../dist/public/assets/auth-page-vN54gxmd.js              5.12 kB │ gzip:  2.10 kB
+../dist/public/assets/open-slot-warning-D7NGNmTB.js      6.35 kB │ gzip:  2.20 kB
+../dist/public/assets/dialog-DSzlpBfy.js                 7.42 kB │ gzip:  2.75 kB
+../dist/public/assets/checkbox-B7TyeZ1r.js              10.49 kB │ gzip:  3.90 kB
+../dist/public/assets/weekday-settings-iiGcRJFm.js      11.47 kB │ gzip:  3.10 kB
+../dist/public/assets/holidays-management-BEUH32_L.js   12.46 kB │ gzip:  3.68 kB
+../dist/public/assets/statistics-VjsPuoGE.js            15.82 kB │ gzip:  3.72 kB
+../dist/public/assets/verdi-settings-CfVyOAR9.js        18.83 kB │ gzip:  5.00 kB
+../dist/public/assets/form-1886xZ3d.js                  27.53 kB │ gzip: 10.27 kB
+../dist/public/assets/dashboard-CMsnt6Jt.js             27.66 kB │ gzip:  7.29 kB
+../dist/public/assets/profile-YP6jZzjU.js               40.80 kB │ gzip: 10.21 kB
+../dist/public/assets/query-vendor-BUV8puuL.js          40.99 kB │ gzip: 12.43 kB
+../dist/public/assets/shift-planner-C88vNIqC.js         44.82 kB │ gzip: 13.71 kB
+../dist/public/assets/ui-vendor-zdXfYbEu.js             46.34 kB │ gzip: 11.30 kB
+../dist/public/assets/schedule-generator-BfEbopmR.js    50.41 kB │ gzip: 11.72 kB
+../dist/public/assets/types-C7ua2blS.js                 60.80 kB │ gzip: 14.64 kB
+../dist/public/assets/select-Co5hp_UC.js                65.51 kB │ gzip: 23.25 kB
+../dist/public/assets/index-Caq488Lx.js                 70.12 kB │ gzip: 24.28 kB
+../dist/public/assets/user-management-v0nT8OO0.js       85.16 kB │ gzip: 21.83 kB
+../dist/public/assets/react-vendor-BsK_Cp9f.js         141.28 kB │ gzip: 45.44 kB
+✓ built in 10.61s
+
+  dist\index.js  306.5kb
+
+Done in 26ms
+✓ Copied manifest.json
+✓ Copied service-worker.js
+✓ Copied 9 icon files
+✓ Build ID generated: 1764156408284
+✓ Service worker generated
+  Precached 43 files, totaling 1043870 bytes
+✓ Push notification handlers added to service worker
+PS C:\ambulance-planning> pm2 restart all
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [all](ids: [ 0 ])
+[PM2] [ambulance-planning](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ ambulance-planning │ fork     │ 18   │ online    │ 67.3%    │ 127.1mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+PS C:\ambulance-planning>

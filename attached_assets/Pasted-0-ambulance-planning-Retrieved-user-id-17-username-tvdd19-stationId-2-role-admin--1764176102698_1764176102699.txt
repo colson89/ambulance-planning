@@ -1,0 +1,57 @@
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Error creating overtime: TypeError: storage.getShiftById is not a function
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:7739:35
+0|ambulance-planning  |     at Layer.handle [as handle_request] (C:\ambulance-planning\node_modules\express\lib\router\layer.js:95:5)
+0|ambulance-planning  |     at next (C:\ambulance-planning\node_modules\express\lib\router\route.js:149:13)
+0|ambulance-planning  |     at Route.dispatch (C:\ambulance-planning\node_modules\express\lib\router\route.js:119:3)
+0|ambulance-planning  |     at Layer.handle [as handle_request] (C:\ambulance-planning\node_modules\express\lib\router\layer.js:95:5)
+0|ambulance-planning  |     at C:\ambulance-planning\node_modules\express\lib\router\index.js:284:15
+0|ambulance-planning  |     at Function.process_params (C:\ambulance-planning\node_modules\express\lib\router\index.js:346:12)
+0|ambulance-planning  |     at next (C:\ambulance-planning\node_modules\express\lib\router\index.js:280:10)
+0|ambulance-planning  |     at strategy.pass (C:\ambulance-planning\node_modules\passport\lib\middleware\authenticate.js:355:9)
+0|ambulance-planning  |     at C:\ambulance-planning\node_modules\passport\lib\strategies\session.js:120:12
+0|ambulance-planning  |     at pass (C:\ambulance-planning\node_modules\passport\lib\authenticator.js:352:31)
+0|ambulance-planning  |     at deserialized (C:\ambulance-planning\node_modules\passport\lib\authenticator.js:364:7)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:4063:7
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 5:54:47 PM [express] POST /api/overtime 500 in 3ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Error creating overtime: TypeError: storage.getShiftById is not a function
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:7739:35
+0|ambulance-planning  |     at Layer.handle [as handle_request] (C:\ambulance-planning\node_modules\express\lib\router\layer.js:95:5)
+0|ambulance-planning  |     at next (C:\ambulance-planning\node_modules\express\lib\router\route.js:149:13)
+0|ambulance-planning  |     at Route.dispatch (C:\ambulance-planning\node_modules\express\lib\router\route.js:119:3)
+0|ambulance-planning  |     at Layer.handle [as handle_request] (C:\ambulance-planning\node_modules\express\lib\router\layer.js:95:5)
+0|ambulance-planning  |     at C:\ambulance-planning\node_modules\express\lib\router\index.js:284:15
+0|ambulance-planning  |     at Function.process_params (C:\ambulance-planning\node_modules\express\lib\router\index.js:346:12)
+0|ambulance-planning  |     at next (C:\ambulance-planning\node_modules\express\lib\router\index.js:280:10)
+0|ambulance-planning  |     at strategy.pass (C:\ambulance-planning\node_modules\passport\lib\middleware\authenticate.js:355:9)
+0|ambulance-planning  |     at C:\ambulance-planning\node_modules\passport\lib\strategies\session.js:120:12
+0|ambulance-planning  |     at pass (C:\ambulance-planning\node_modules\passport\lib\authenticator.js:352:31)
+0|ambulance-planning  |     at deserialized (C:\ambulance-planning\node_modules\passport\lib\authenticator.js:364:7)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:4063:7
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 5:54:48 PM [express] POST /api/overtime 500 in 3ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 17, sessionStationId: 2 }
+0|ambulance-planning  | Using session stationId: 2
+0|ambulance-planning  | Retrieved user: { id: 17, username: 'tvdd19', stationId: 2, role: 'admin' }
+0|ambulance-planning  | Error creating overtime: TypeError: storage.getShiftById is not a function
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:7739:35
+0|ambulance-planning  |     at Layer.handle [as handle_request] (C:\ambulance-planning\node_modules\express\lib\router\layer.js:95:5)
+0|ambulance-planning  |     at next (C:\ambulance-planning\node_modules\express\lib\router\route.js:149:13)
+0|ambulance-planning  |     at Route.dispatch (C:\ambulance-planning\node_modules\express\lib\router\route.js:119:3)
+0|ambulance-planning  |     at Layer.handle [as handle_request] (C:\ambulance-planning\node_modules\express\lib\router\layer.js:95:5)
+0|ambulance-planning  |     at C:\ambulance-planning\node_modules\express\lib\router\index.js:284:15
+0|ambulance-planning  |     at Function.process_params (C:\ambulance-planning\node_modules\express\lib\router\index.js:346:12)
+0|ambulance-planning  |     at next (C:\ambulance-planning\node_modules\express\lib\router\index.js:280:10)
+0|ambulance-planning  |     at strategy.pass (C:\ambulance-planning\node_modules\passport\lib\middleware\authenticate.js:355:9)
+0|ambulance-planning  |     at C:\ambulance-planning\node_modules\passport\lib\strategies\session.js:120:12
+0|ambulance-planning  |     at pass (C:\ambulance-planning\node_modules\passport\lib\authenticator.js:352:31)
+0|ambulance-planning  |     at deserialized (C:\ambulance-planning\node_modules\passport\lib\authenticator.js:364:7)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:4063:7
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 5:54:48 PM [express] POST /api/overtime 500 in 3ms

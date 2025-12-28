@@ -1,0 +1,378 @@
+0|ambulance-planning  | Verdi sync: Found 100 existing sync logs, 9 with valid Verdi GUIDs
+0|ambulance-planning  | Verdi cleanup: 0 deleted, 0 updated, 0 errors
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-04T07:00:00.000Z_2026-01-04T13:00:00.000Z_day: 1. Guy Vannuten (rijbewijs C: JA), 2. Rose Smeyers (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-04T07:00:00.000Z_2026-01-04T13:00:00.000Z_day: Error: Gebruiker 295 (Rose Smeyers) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-04T13:00:00.000Z_2026-01-04T19:00:00.000Z_day: 1. Guy Vannuten (rijbewijs C: JA), 2. Rose Smeyers (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-04T13:00:00.000Z_2026-01-04T19:00:00.000Z_day: Error: Gebruiker 295 (Rose Smeyers) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-04T19:00:00.000Z_2026-01-05T07:00:00.000Z_night: 1. Joost Lievens  (rijbewijs C: JA), 2. Mie Heymans (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-04T19:00:00.000Z_2026-01-05T07:00:00.000Z_night: Error: Gebruiker 293 (Mie Heymans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-11T07:00:00.000Z_2026-01-11T13:00:00.000Z_day: 1. Simon  Mouri (rijbewijs C: JA), 2. Jordy Steegen (rijbewijs C: JA)
+0|ambulance-planning  | ✓ Found PERSISTENT Verdi GUID from registry for 2026-01-11T07:00:00.000Z_2026-01-11T13:00:00.000Z_day: 42082dd4-4571-4520-9ce7-b3b1013b7ea9
+0|ambulance-planning  | Sending shift to Verdi: https://kempen.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11158,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-01-11T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-11T13:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-11T07:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-11T13:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shift: '42082dd4-4571-4520-9ce7-b3b1013b7ea9',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | ✓ Saved GUID 42082dd4-4571-4520-9ce7-b3b1013b7ea9 to registry for future use
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-11T13:00:00.000Z_2026-01-11T19:00:00.000Z_day: 1. Simon  Mouri (rijbewijs C: JA), 2. Jordy Steegen (rijbewijs C: JA)
+0|ambulance-planning  | ✓ Found PERSISTENT Verdi GUID from registry for 2026-01-11T13:00:00.000Z_2026-01-11T19:00:00.000Z_day: 7e683234-4c4d-435a-bc57-b3b1013b7f35
+0|ambulance-planning  | Sending shift to Verdi: https://kempen.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11161,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-01-11T13:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-11T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-11T13:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-11T19:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shift: '7e683234-4c4d-435a-bc57-b3b1013b7f35',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | ✓ Saved GUID 7e683234-4c4d-435a-bc57-b3b1013b7f35 to registry for future use
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-11T19:00:00.000Z_2026-01-12T07:00:00.000Z_night: 1. Damiën Willems (rijbewijs C: JA), 2. Dries Smeyers (rijbewijs C: JA)
+0|ambulance-planning  | Error syncing shift group 2026-01-11T19:00:00.000Z_2026-01-12T07:00:00.000Z_night: Error: Gebruiker 294 (Damiën Willems) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-17T07:00:00.000Z_2026-01-17T13:00:00.000Z_day: 1. Rob Staes (rijbewijs C: JA), 2. Brent Hesemans (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-17T07:00:00.000Z_2026-01-17T13:00:00.000Z_day: Error: Gebruiker 320 (Brent Hesemans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-17T13:00:00.000Z_2026-01-17T19:00:00.000Z_day: 1. Rob Staes (rijbewijs C: JA), 2. Brent Hesemans (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-17T13:00:00.000Z_2026-01-17T19:00:00.000Z_day: Error: Gebruiker 320 (Brent Hesemans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-17T19:00:00.000Z_2026-01-18T07:00:00.000Z_night: 1. Stijn  Testelmans (rijbewijs C: JA), 2. Lander Leysen  (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-17T19:00:00.000Z_2026-01-18T07:00:00.000Z_night: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-18T07:00:00.000Z_2026-01-18T13:00:00.000Z_day: 1. Tom Gebruers (rijbewijs C: JA), 2. Nanne Heesters (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-18T07:00:00.000Z_2026-01-18T13:00:00.000Z_day: Error: Gebruiker 301 (Nanne Heesters) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-18T13:00:00.000Z_2026-01-18T19:00:00.000Z_day: 1. Tom Gebruers (rijbewijs C: JA), 2. Nanne Heesters (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-18T13:00:00.000Z_2026-01-18T19:00:00.000Z_day: Error: Gebruiker 301 (Nanne Heesters) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-18T19:00:00.000Z_2026-01-19T07:00:00.000Z_night: 1. Dylan Granville Smith (rijbewijs C: JA), 2. Laura Smets (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-18T19:00:00.000Z_2026-01-19T07:00:00.000Z_night: Error: Gebruiker 303 (Laura Smets) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-24T07:00:00.000Z_2026-01-24T13:00:00.000Z_day: 1. Jordy Steegen (rijbewijs C: JA), 2. Celine Vanhoof (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-24T07:00:00.000Z_2026-01-24T13:00:00.000Z_day: Error: Gebruiker 292 (Celine Vanhoof) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-24T13:00:00.000Z_2026-01-24T19:00:00.000Z_day: 1. Jordy Steegen (rijbewijs C: JA), 2. Celine Vanhoof (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-24T13:00:00.000Z_2026-01-24T19:00:00.000Z_day: Error: Gebruiker 292 (Celine Vanhoof) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-24T19:00:00.000Z_2026-01-25T07:00:00.000Z_night: 1. Siebe Lembrechts (rijbewijs C: JA), 2. Brent Hesemans (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-24T19:00:00.000Z_2026-01-25T07:00:00.000Z_night: Error: Gebruiker 320 (Brent Hesemans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-25T07:00:00.000Z_2026-01-25T13:00:00.000Z_day: 1. Dries Smeyers (rijbewijs C: JA), 2. Sidney Michiels (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-25T07:00:00.000Z_2026-01-25T13:00:00.000Z_day: Error: Gebruiker 300 (Dries Smeyers) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-25T13:00:00.000Z_2026-01-25T19:00:00.000Z_day: 1. Dries Smeyers (rijbewijs C: JA), 2. Sidney Michiels (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-25T13:00:00.000Z_2026-01-25T19:00:00.000Z_day: Error: Gebruiker 300 (Dries Smeyers) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-25T19:00:00.000Z_2026-01-26T07:00:00.000Z_night: 1. Daan Caeyers (rijbewijs C: JA), 2. Suzanne Kuppens (rijbewijs C: JA)
+0|ambulance-planning  | ✓ Found PERSISTENT Verdi GUID from registry for 2026-01-25T19:00:00.000Z_2026-01-26T07:00:00.000Z_night: 896d8284-d587-4535-97e3-b3b1013b7f6f
+0|ambulance-planning  | Sending shift to Verdi: https://kempen.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11138,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-01-25T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-26T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-25T19:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-26T07:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shift: '896d8284-d587-4535-97e3-b3b1013b7f6f',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | ✓ Saved GUID 896d8284-d587-4535-97e3-b3b1013b7f6f to registry for future use
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-31T07:00:00.000Z_2026-01-31T13:00:00.000Z_day: 1. Lisa Roels (rijbewijs C: JA), 2. Lander Leysen  (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-31T07:00:00.000Z_2026-01-31T13:00:00.000Z_day: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-31T13:00:00.000Z_2026-01-31T19:00:00.000Z_day: 1. Lisa Roels (rijbewijs C: JA), 2. Lander Leysen  (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-31T13:00:00.000Z_2026-01-31T19:00:00.000Z_day: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-31T19:00:00.000Z_2026-02-01T07:00:00.000Z_night: 1. Damiën Willems (rijbewijs C: JA), 2. Laura Smets (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-31T19:00:00.000Z_2026-02-01T07:00:00.000Z_night: Error: Gebruiker 294 (Damiën Willems) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-03T13:00:00.000Z_2026-01-03T19:00:00.000Z_day: 1. Rob Staes (rijbewijs C: JA), 2. Siebe Lembrechts (rijbewijs C: JA)
+0|ambulance-planning  | ✓ Found PERSISTENT Verdi GUID from registry for 2026-01-03T13:00:00.000Z_2026-01-03T19:00:00.000Z_day: b5d4da48-3fc0-4bc8-aa97-b3b1013b7f9a
+0|ambulance-planning  | Sending shift to Verdi: https://kempen.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11172,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-01-03T13:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-03T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-03T13:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-03T19:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shift: 'b5d4da48-3fc0-4bc8-aa97-b3b1013b7f9a',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | ✓ Saved GUID b5d4da48-3fc0-4bc8-aa97-b3b1013b7f9a to registry for future use
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-03T19:00:00.000Z_2026-01-04T07:00:00.000Z_night: 1. Fiene Drees (rijbewijs C: JA), 2. Lander Leysen  (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-03T19:00:00.000Z_2026-01-04T07:00:00.000Z_night: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-14T19:00:00.000Z_2026-01-15T07:00:00.000Z_night: 1. Fiene Drees (rijbewijs C: JA), 2. Els Heylen (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-14T19:00:00.000Z_2026-01-15T07:00:00.000Z_night: Error: Gebruiker 299 (Els Heylen) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-15T19:00:00.000Z_2026-01-16T07:00:00.000Z_night: 1. Jens Vanhoof (rijbewijs C: JA), 2. Rose Smeyers (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-15T19:00:00.000Z_2026-01-16T07:00:00.000Z_night: Error: Gebruiker 295 (Rose Smeyers) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-16T19:00:00.000Z_2026-01-17T07:00:00.000Z_night: 1. Joris  Droogmans  (rijbewijs C: JA), 2. Laura Smets (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-16T19:00:00.000Z_2026-01-17T07:00:00.000Z_night: Error: Gebruiker 311 (Joris  Droogmans ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-19T19:00:00.000Z_2026-01-20T07:00:00.000Z_night: 1. Tom Gebruers (rijbewijs C: JA), 2. Celine Vanhoof (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-19T19:00:00.000Z_2026-01-20T07:00:00.000Z_night: Error: Gebruiker 292 (Celine Vanhoof) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-20T19:00:00.000Z_2026-01-21T07:00:00.000Z_night: 1. Frederik Claes (rijbewijs C: JA), 2. Sidney Michiels (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-20T19:00:00.000Z_2026-01-21T07:00:00.000Z_night: Error: Gebruiker 304 (Sidney Michiels) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-21T19:00:00.000Z_2026-01-22T07:00:00.000Z_night: 1. Dries Smeyers (rijbewijs C: JA), 2. Rose Smeyers (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-21T19:00:00.000Z_2026-01-22T07:00:00.000Z_night: Error: Gebruiker 300 (Dries Smeyers) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-22T19:00:00.000Z_2026-01-23T07:00:00.000Z_night: 1. Tom Gebruers (rijbewijs C: JA), 2. Laura Smets (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-22T19:00:00.000Z_2026-01-23T07:00:00.000Z_night: Error: Gebruiker 303 (Laura Smets) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-23T19:00:00.000Z_2026-01-24T07:00:00.000Z_night: 1. Simon  Mouri (rijbewijs C: JA), 2. Nanne Heesters (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-23T19:00:00.000Z_2026-01-24T07:00:00.000Z_night: Error: Gebruiker 301 (Nanne Heesters) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-26T19:00:00.000Z_2026-01-27T07:00:00.000Z_night: 1. Damiën Willems (rijbewijs C: JA), 2. Mie Heymans (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-26T19:00:00.000Z_2026-01-27T07:00:00.000Z_night: Error: Gebruiker 294 (Damiën Willems) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-27T19:00:00.000Z_2026-01-28T07:00:00.000Z_night: 1. Guy Vannuten (rijbewijs C: JA), 2. Suzanne Kuppens (rijbewijs C: JA)
+0|ambulance-planning  | ✓ Found PERSISTENT Verdi GUID from registry for 2026-01-27T19:00:00.000Z_2026-01-28T07:00:00.000Z_night: d3618bff-8621-4131-aae7-b3b1013b7fcf
+0|ambulance-planning  | Sending shift to Verdi: https://kempen.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11182,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-01-27T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-28T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-27T19:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-28T07:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shift: 'd3618bff-8621-4131-aae7-b3b1013b7fcf',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | ✓ Saved GUID d3618bff-8621-4131-aae7-b3b1013b7fcf to registry for future use
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-28T19:00:00.000Z_2026-01-29T07:00:00.000Z_night: 1. Guy Vannuten (rijbewijs C: JA), 2. Els Heylen (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-28T19:00:00.000Z_2026-01-29T07:00:00.000Z_night: Error: Gebruiker 299 (Els Heylen) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-29T19:00:00.000Z_2026-01-30T07:00:00.000Z_night: 1. Jordy Nijs (rijbewijs C: JA), 2. Nanne Heesters (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-29T19:00:00.000Z_2026-01-30T07:00:00.000Z_night: Error: Gebruiker 301 (Nanne Heesters) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-30T19:00:00.000Z_2026-01-31T07:00:00.000Z_night: 1. Jordy Nijs (rijbewijs C: JA), 2. Brent Hesemans (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-30T19:00:00.000Z_2026-01-31T07:00:00.000Z_night: Error: Gebruiker 320 (Brent Hesemans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-09T19:00:00.000Z_2026-01-10T07:00:00.000Z_night: 1. Dylan Granville Smith (rijbewijs C: JA), 2. Nanne Heesters (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-09T19:00:00.000Z_2026-01-10T07:00:00.000Z_night: Error: Gebruiker 301 (Nanne Heesters) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-12T19:00:00.000Z_2026-01-13T07:00:00.000Z_night: 1. Frederik Claes (rijbewijs C: JA), 2. Mie Heymans (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-12T19:00:00.000Z_2026-01-13T07:00:00.000Z_night: Error: Gebruiker 293 (Mie Heymans) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-13T19:00:00.000Z_2026-01-14T07:00:00.000Z_night: 1. Pieter Berghmans (rijbewijs C: JA), 2. Lander Leysen  (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-13T19:00:00.000Z_2026-01-14T07:00:00.000Z_night: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-03T07:00:00.000Z_2026-01-03T13:00:00.000Z_day: 1. Siebe Lembrechts (rijbewijs C: JA), 2. Rob Staes (rijbewijs C: JA)
+0|ambulance-planning  | ✓ Found PERSISTENT Verdi GUID from registry for 2026-01-03T07:00:00.000Z_2026-01-03T13:00:00.000Z_day: 0e58d997-cde5-4f15-9f98-b3b1013b7ffd
+0|ambulance-planning  | Sending shift to Verdi: https://kempen.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11170,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-01-03T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-03T13:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-03T07:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-03T13:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shift: '0e58d997-cde5-4f15-9f98-b3b1013b7ffd',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | ✓ Saved GUID 0e58d997-cde5-4f15-9f98-b3b1013b7ffd to registry for future use
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-06T19:00:00.000Z_2026-01-07T07:00:00.000Z_night: 1. Daan Caeyers (rijbewijs C: JA), 2. Suzanne Kuppens (rijbewijs C: JA)
+0|ambulance-planning  | ✓ Found PERSISTENT Verdi GUID from registry for 2026-01-06T19:00:00.000Z_2026-01-07T07:00:00.000Z_night: 6acb81c2-70f7-4844-bf1b-b3b1013b8024
+0|ambulance-planning  | Sending shift to Verdi: https://kempen.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11212,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-01-06T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-07T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-06T19:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-07T07:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shift: '6acb81c2-70f7-4844-bf1b-b3b1013b8024',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | ✓ Saved GUID 6acb81c2-70f7-4844-bf1b-b3b1013b8024 to registry for future use
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-07T19:00:00.000Z_2026-01-08T07:00:00.000Z_night: 1. Joris  Droogmans  (rijbewijs C: JA), 2. Dries Smeyers (rijbewijs C: JA)
+0|ambulance-planning  | Error syncing shift group 2026-01-07T19:00:00.000Z_2026-01-08T07:00:00.000Z_night: Error: Gebruiker 311 (Joris  Droogmans ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-08T19:00:00.000Z_2026-01-09T07:00:00.000Z_night: 1. Jordy Nijs (rijbewijs C: JA), 2. Laura Smets (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-08T19:00:00.000Z_2026-01-09T07:00:00.000Z_night: Error: Gebruiker 303 (Laura Smets) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-01T07:00:00.000Z_2026-01-01T19:00:00.000Z_day: 1. Lisa Roels (rijbewijs C: JA), 2. Daan Caeyers (rijbewijs C: JA)
+0|ambulance-planning  | ✓ Found PERSISTENT Verdi GUID from registry for 2026-01-01T07:00:00.000Z_2026-01-01T19:00:00.000Z_day: 9bb23410-6178-48a0-bdd2-b3b1013b804b
+0|ambulance-planning  | Sending shift to Verdi: https://kempen.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11471,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-01-01T07:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-01T19:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-01T07:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-01T19:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shift: '9bb23410-6178-48a0-bdd2-b3b1013b804b',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | ✓ Saved GUID 9bb23410-6178-48a0-bdd2-b3b1013b804b to registry for future use
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-05T19:00:00.000Z_2026-01-06T07:00:00.000Z_night: 1. Jens Vanhoof (rijbewijs C: JA), 2. Celine Vanhoof (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-05T19:00:00.000Z_2026-01-06T07:00:00.000Z_night: Error: Gebruiker 292 (Celine Vanhoof) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-01T19:00:00.000Z_2026-01-02T07:00:00.000Z_night: 1. Simon  Mouri (rijbewijs C: JA), 2. Lander Leysen  (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-01T19:00:00.000Z_2026-01-02T07:00:00.000Z_night: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-02T19:00:00.000Z_2026-01-03T07:00:00.000Z_night: 1. Joost Lievens  (rijbewijs C: JA), 2. Tom Gebruers (rijbewijs C: JA)
+0|ambulance-planning  | ✓ Found PERSISTENT Verdi GUID from registry for 2026-01-02T19:00:00.000Z_2026-01-03T07:00:00.000Z_night: 3e29de7d-3111-4c96-87f0-b3b1013b8076
+0|ambulance-planning  | Sending shift to Verdi: https://kempen.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11216,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-01-02T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-03T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-02T19:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-03T07:00:00+01:00'
+0|ambulance-planning  | }
+0|ambulance-planning  | Verdi response: {
+0|ambulance-planning  |   result: 'Success',
+0|ambulance-planning  |   shift: '3e29de7d-3111-4c96-87f0-b3b1013b8076',
+0|ambulance-planning  |   warnings: 0,
+0|ambulance-planning  |   errors: 0
+0|ambulance-planning  | }
+0|ambulance-planning  | ✓ Saved GUID 3e29de7d-3111-4c96-87f0-b3b1013b8076 to registry for future use
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-10T07:00:00.000Z_2026-01-10T13:00:00.000Z_day: 1. Pieter Berghmans (rijbewijs C: JA), 2. Els Heylen (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-10T07:00:00.000Z_2026-01-10T13:00:00.000Z_day: Error: Gebruiker 299 (Els Heylen) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-10T13:00:00.000Z_2026-01-10T19:00:00.000Z_day: 1. Pieter Berghmans (rijbewijs C: JA), 2. Els Heylen (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-10T13:00:00.000Z_2026-01-10T19:00:00.000Z_day: Error: Gebruiker 299 (Els Heylen) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-10T19:00:00.000Z_2026-01-11T07:00:00.000Z_night: 1. Stijn  Testelmans (rijbewijs C: JA), 2. Sidney Michiels (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-10T19:00:00.000Z_2026-01-11T07:00:00.000Z_night: Error: Gebruiker 304 (Sidney Michiels) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)

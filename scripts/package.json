@@ -1,0 +1,15 @@
+{
+  "name": "simulate-preferences",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Script to simulate preferences for testing",
+  "main": "simulate-preferences.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-fetch": "^3.2.10"
+  }
+}

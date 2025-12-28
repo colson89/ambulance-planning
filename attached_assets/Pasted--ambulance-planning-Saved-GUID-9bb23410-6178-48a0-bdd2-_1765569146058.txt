@@ -1,0 +1,22 @@
+|ambulance-planning  | ✓ Saved GUID 9bb23410-6178-48a0-bdd2-b3b1013b804b to registry for future use
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-05T19:00:00.000Z_2026-01-06T07:00:00.000Z_night: 1. Jens Vanhoof (rijbewijs C: JA), 2. Celine Vanhoof (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-05T19:00:00.000Z_2026-01-06T07:00:00.000Z_night: Error: Gebruiker 292 (Celine Vanhoof) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-01T19:00:00.000Z_2026-01-02T07:00:00.000Z_night: 1. Simon  Mouri (rijbewijs C: JA), 2. Lander Leysen  (rijbewijs C: NEE)
+0|ambulance-planning  | Error syncing shift group 2026-01-01T19:00:00.000Z_2026-01-02T07:00:00.000Z_night: Error: Gebruiker 302 (Lander Leysen ) heeft geen Verdi person GUID mapping
+0|ambulance-planning  |     at VerdiClient.sendShiftToVerdi (file:///C:/ambulance-planning/dist/index.js:771:19)
+0|ambulance-planning  |     at file:///C:/ambulance-planning/dist/index.js:10420:47
+0|ambulance-planning  |     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+0|ambulance-planning  | 🚗 Verdi positie volgorde voor 2026-01-02T19:00:00.000Z_2026-01-03T07:00:00.000Z_night: 1. Joost Lievens  (rijbewijs C: JA), 2. Tom Gebruers (rijbewijs C: JA)
+0|ambulance-planning  | ✓ Found PERSISTENT Verdi GUID from registry for 2026-01-02T19:00:00.000Z_2026-01-03T07:00:00.000Z_night: 3e29de7d-3111-4c96-87f0-b3b1013b8076
+0|ambulance-planning  | Sending shift to Verdi: https://kempen.verdi.cloud/comm-api/hooks/v1/ShiftPlanning {
+0|ambulance-planning  |   shiftId: 11216,
+0|ambulance-planning  |   stationId: 4,
+0|ambulance-planning  |   assignments: 2,
+0|ambulance-planning  |   isUpdate: true,
+0|ambulance-planning  |   rawStartTime: 2026-01-02T19:00:00.000Z,
+0|ambulance-planning  |   rawEndTime: 2026-01-03T07:00:00.000Z,
+0|ambulance-planning  |   formattedStart: '2026-01-02T19:00:00+01:00',
+0|ambulance-planning  |   formattedEnd: '2026-01-03T07:00:00+01:00'

@@ -1,0 +1,76 @@
+ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | 1:39:02 PM [express] GET /api/user 200 in 79ms
+0|ambulance-planning  | 1:39:02 PM [express] GET /api/reportage/email-status 200 in 79ms
+0|ambulance-planning  | 1:39:02 PM [express] GET /api/reportage/scheduler-status 200 in 76ms
+0|ambulance-planning  | 1:39:02 PM [express] GET /api/reportage/smtp-config 200 in 77ms
+0|ambulance-planning  | 1:39:02 PM [express] GET /api/reportage/config 200 in 80ms
+0|ambulance-planning  | 1:39:02 PM [express] GET /api/reportage/recipients 200 in 80ms
+0|ambulance-planning  | 1:39:02 PM [express] GET /api/reportage/logs 200 in 80ms
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | SMTP verification failed: Error: Invalid login: 535 5.7.139 Authentication unsuccessful, account has an issue. Contact your administrator. [PR1P264CA0129.FRAP264.PROD.OUTLOOK.COM 2025-11-26T12:39:07.726Z 08DE2C9A5B31572C]
+0|ambulance-planning  |     at SMTPConnection._formatError (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:809:19)
+0|ambulance-planning  |     at SMTPConnection._actionAUTHComplete (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:1595:34)
+0|ambulance-planning  |     at SMTPConnection.<anonymous> (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:1549:18)
+0|ambulance-planning  |     at SMTPConnection._processResponse (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:993:20)
+0|ambulance-planning  |     at SMTPConnection._onData (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:774:14)
+0|ambulance-planning  |     at SMTPConnection._onSocketData (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:195:44)
+0|ambulance-planning  |     at TLSSocket.emit (node:events:518:28)
+0|ambulance-planning  |     at addChunk (node:internal/streams/readable:561:12)
+0|ambulance-planning  |     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+0|ambulance-planning  |     at Readable.push (node:internal/streams/readable:392:5)
+0|ambulance-planning  |     at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23) {
+0|ambulance-planning  |   code: 'EAUTH',
+0|ambulance-planning  |   response: '535 5.7.139 Authentication unsuccessful, account has an issue. Contact your administrator. [PR1P264CA0129.FRAP264.PROD.OUTLOOK.COM 2025-11-26T12:39:07.726Z 08DE2C9A5B31572C]',
+0|ambulance-planning  |   responseCode: 535,
+0|ambulance-planning  |   command: 'AUTH LOGIN'
+0|ambulance-planning  | }
+0|ambulance-planning  | 1:39:08 PM [express] POST /api/reportage/test-connection 200 in 5493ms
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

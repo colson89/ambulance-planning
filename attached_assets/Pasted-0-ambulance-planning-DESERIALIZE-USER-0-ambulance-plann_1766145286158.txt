@@ -1,0 +1,22 @@
+0|ambulance-planning  | === DESERIALIZE USER ===
+0|ambulance-planning  | Deserializing user: { id: 87, sessionStationId: 8 }
+0|ambulance-planning  | Using session stationId: 8
+0|ambulance-planning  | Retrieved user: { id: 87, username: 'jeva400', stationId: 8, role: 'supervisor' }
+0|ambulance-planning  | SMTP verification failed: Error: Invalid login: 535 5.7.139 Authentication unsuccessful, account has an issue. Contact your administrator. [AM8P189CA0003.EURP189.PROD.OUTLOOK.COM 2025-12-19T11:54:11.850Z 08DE3ECAED42EA47]
+0|ambulance-planning  |     at SMTPConnection._formatError (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:809:19)
+0|ambulance-planning  |     at SMTPConnection._actionAUTHComplete (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:1595:34)
+0|ambulance-planning  |     at SMTPConnection.<anonymous> (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:1549:18)
+0|ambulance-planning  |     at SMTPConnection._processResponse (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:993:20)
+0|ambulance-planning  |     at SMTPConnection._onData (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:774:14)
+0|ambulance-planning  |     at SMTPConnection._onSocketData (C:\ambulance-planning\node_modules\nodemailer\lib\smtp-connection\index.js:195:44)
+0|ambulance-planning  |     at TLSSocket.emit (node:events:518:28)
+0|ambulance-planning  |     at addChunk (node:internal/streams/readable:561:12)
+0|ambulance-planning  |     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+0|ambulance-planning  |     at Readable.push (node:internal/streams/readable:392:5)
+0|ambulance-planning  |     at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23) {
+0|ambulance-planning  |   code: 'EAUTH',
+0|ambulance-planning  |   response: '535 5.7.139 Authentication unsuccessful, account has an issue. Contact your administrator. [AM8P189CA0003.EURP189.PROD.OUTLOOK.COM 2025-12-19T11:54:11.850Z 08DE3ECAED42EA47]',
+0|ambulance-planning  |   responseCode: 535,
+0|ambulance-planning  |   command: 'AUTH LOGIN'
+0|ambulance-planning  | }
+0|ambulance-planning  | 12:54:12 PM [express] POST /api/reportage/test-connection 200 in 5451ms
