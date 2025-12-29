@@ -2411,7 +2411,10 @@ export class DatabaseStorage implements IStorage {
     
     // Bereken kandidaten en moeilijkheid voor elke dag
     for (let day = 1; day <= daysInMonth; day++) {
-      const currentDate = new Date(year, month - 1, day);
+      // TIMEZONE FIX: Gebruik 12:00 lokale tijd om UTC conversie problemen te voorkomen
+      // new Date(2026, 1, 7, 12, 0, 0) = 7 feb 12:00 CET → opgeslagen als 7 feb 11:00 UTC
+      // Dit voorkomt dat middernacht CET wordt geconverteerd naar 23:00 UTC de vorige dag
+      const currentDate = new Date(year, month - 1, day, 12, 0, 0);
       const dayOfWeek = currentDate.getDay();
       
       // 🎉 FEESTDAG FIX: Check of deze dag een feestdag is (gebruik preloaded data)

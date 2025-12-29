@@ -54,14 +54,28 @@ interface Station {
   updatedAt: string;
 }
 
-// TIMEZONE FIX: Helper functie om YYYY-MM-DD te extraheren voor VOORKEUREN
-// Voorkeuren worden opgeslagen met de kalenderdatum in de timestamp (bijv. "2026-02-05 23:00:00" = 5 feb)
+// TIMEZONE FIX: Helper functie om YYYY-MM-DD te extraheren
+// Ondersteunt zowel oude data (23:00 UTC) als nieuwe data (11:00/12:00 lokaal)
+// Na migratie van bestaande 23:00 shifts kan dit vereenvoudigd worden naar alleen substring
 function toCalendarDate(value: string | Date | null | undefined): string {
   if (!value) return "";
   
   if (typeof value === "string") {
-    // Database timestamps: "2026-02-05 23:00:00" of "2026-02-05T00:00:00.000Z"
-    // Neem alleen YYYY-MM-DD deel, geen timezone conversie
+    // BACKWARDS COMPATIBLE: Check of de timestamp 23:00:00 bevat (oude data)
+    // Deze zijn opgeslagen als UTC en moeten geconverteerd worden naar lokale tijd
+    // "2026-02-06 23:00:00" UTC = "2026-02-07 00:00:00" CET → moet 2026-02-07 worden
+    if (value.includes("23:00:00") && !value.includes("Z") && !value.includes("+")) {
+      // Parse als UTC door de string te normaliseren
+      const normalizedStr = value.replace(' ', 'T') + 'Z';
+      const date = new Date(normalizedStr);
+      // Gebruik lokale methodes om de kalenderdatum te krijgen
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    // Nieuwe data (11:00/12:00) of voorkeuren: neem alleen YYYY-MM-DD deel
     return value.substring(0, 10);
   }
   
@@ -69,37 +83,6 @@ function toCalendarDate(value: string | Date | null | undefined): string {
   const year = value.getFullYear();
   const month = String(value.getMonth() + 1).padStart(2, '0');
   const day = String(value.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-// TIMEZONE FIX: Helper functie om YYYY-MM-DD te extraheren voor SHIFTS
-// Shifts worden opgeslagen als UTC timestamps (bijv. "2026-02-06 23:00:00" = 7 feb 00:00 CET)
-// Dit geldt voor gegenereerde shifts die om 23:00 UTC worden opgeslagen
-function shiftToCalendarDate(value: string | Date | null | undefined): string {
-  if (!value) return "";
-  
-  let date: Date;
-  
-  if (typeof value === "string") {
-    // Check of de timestamp 23:00:00 bevat (gegenereerde shifts)
-    // Deze zijn opgeslagen als UTC en moeten geconverteerd worden naar lokale tijd
-    if (value.includes("23:00:00")) {
-      // Parse als UTC door de string te normaliseren
-      const normalizedStr = value.replace(' ', 'T') + (value.includes('Z') ? '' : 'Z');
-      date = new Date(normalizedStr);
-    } else {
-      // Andere shifts: neem de datum direct
-      return value.substring(0, 10);
-    }
-  } else {
-    // Date object: gebruik direct
-    date = value;
-  }
-  
-  // Gebruik lokale methodes om de kalenderdatum te krijgen
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
@@ -721,8 +704,8 @@ function ScheduleGenerator() {
       const matchingShifts = shifts.filter(shift => {
         if (!shift.date) return false;
         
-        // TIMEZONE FIX: Gebruik shiftToCalendarDate voor shifts (23:00 UTC → volgende dag)
-        const shiftYMD = shiftToCalendarDate(shift.date);
+        // TIMEZONE FIX: Gebruik toCalendarDate voor shifts (23:00 UTC → volgende dag)
+        const shiftYMD = toCalendarDate(shift.date);
         const matchesDate = shiftYMD === gezochteYMD;
         
         // Controleer het shift type (dag of nacht)
@@ -743,8 +726,8 @@ function ScheduleGenerator() {
       // NIEUW: Check cross-team shifts - wie is ingepland op een ANDER station vandaag?
       const usersScheduledElsewhere = new Set<number>();
       crossTeamShifts.forEach(ctShift => {
-        // TIMEZONE FIX: Gebruik shiftToCalendarDate voor shifts (23:00 UTC → volgende dag)
-        const ctShiftYMD = shiftToCalendarDate(ctShift.date);
+        // TIMEZONE FIX: Gebruik toCalendarDate voor shifts (23:00 UTC → volgende dag)
+        const ctShiftYMD = toCalendarDate(ctShift.date);
         const ctMatchesDate = ctShiftYMD === gezochteYMD;
         
         // Controleer het shift type (dag of nacht) - beide shifts blokkeren elkaar
@@ -878,8 +861,8 @@ function ScheduleGenerator() {
     const userShifts = shifts.filter(s => {
       if (s.userId !== userId) return false;
       
-      // TIMEZONE FIX: Gebruik shiftToCalendarDate voor shifts (23:00 UTC → volgende dag)
-      const shiftYMD = shiftToCalendarDate(s.date);
+      // TIMEZONE FIX: Gebruik toCalendarDate voor shifts (23:00 UTC → volgende dag)
+      const shiftYMD = toCalendarDate(s.date);
       const shiftYear = parseInt(shiftYMD.substring(0, 4));
       const shiftMonth = parseInt(shiftYMD.substring(5, 7)) - 1; // 0-indexed
       return shiftMonth === selectedMonth && shiftYear === selectedYear;
@@ -912,8 +895,8 @@ function ScheduleGenerator() {
     const userShifts = shifts.filter(s => {
       if (s.userId !== userId) return false;
       
-      // TIMEZONE FIX: Gebruik shiftToCalendarDate voor shifts (23:00 UTC → volgende dag)
-      const shiftYMD = shiftToCalendarDate(s.date);
+      // TIMEZONE FIX: Gebruik toCalendarDate voor shifts (23:00 UTC → volgende dag)
+      const shiftYMD = toCalendarDate(s.date);
       const shiftYear = parseInt(shiftYMD.substring(0, 4));
       const shiftMonth = parseInt(shiftYMD.substring(5, 7)) - 1; // 0-indexed
       const shiftDay = parseInt(shiftYMD.substring(8, 10));
@@ -945,8 +928,8 @@ function ScheduleGenerator() {
     const userShifts = shifts.filter(s => {
       if (s.userId !== userId) return false;
       
-      // TIMEZONE FIX: Gebruik shiftToCalendarDate voor shifts (23:00 UTC → volgende dag)
-      const shiftYMD = shiftToCalendarDate(s.date);
+      // TIMEZONE FIX: Gebruik toCalendarDate voor shifts (23:00 UTC → volgende dag)
+      const shiftYMD = toCalendarDate(s.date);
       const shiftYear = parseInt(shiftYMD.substring(0, 4));
       const shiftMonth = parseInt(shiftYMD.substring(5, 7)) - 1; // 0-indexed
       const shiftDay = parseInt(shiftYMD.substring(8, 10));
@@ -2402,8 +2385,8 @@ function ScheduleGenerator() {
         </CardHeader>
         <CardContent>
           {shifts.filter(shift => {
-              // TIMEZONE FIX: Gebruik shiftToCalendarDate voor shifts (23:00 UTC → volgende dag)
-              const shiftYMD = shiftToCalendarDate(shift.date);
+              // TIMEZONE FIX: Gebruik toCalendarDate voor shifts (23:00 UTC → volgende dag)
+              const shiftYMD = toCalendarDate(shift.date);
               const shiftYear = parseInt(shiftYMD.substring(0, 4));
               const shiftMonth = parseInt(shiftYMD.substring(5, 7)) - 1;
               return shiftMonth === selectedMonth && shiftYear === selectedYear;
@@ -2423,8 +2406,8 @@ function ScheduleGenerator() {
                 <TableBody>
                   {shifts
                     .filter(shift => {
-                      // TIMEZONE FIX: Gebruik shiftToCalendarDate voor shifts (23:00 UTC → volgende dag)
-                      const shiftYMD = shiftToCalendarDate(shift.date);
+                      // TIMEZONE FIX: Gebruik toCalendarDate voor shifts (23:00 UTC → volgende dag)
+                      const shiftYMD = toCalendarDate(shift.date);
                       const shiftYear = parseInt(shiftYMD.substring(0, 4));
                       const shiftMonth = parseInt(shiftYMD.substring(5, 7)) - 1;
                       return shiftMonth === selectedMonth && shiftYear === selectedYear;
