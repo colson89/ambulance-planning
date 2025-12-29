@@ -1839,6 +1839,11 @@ export class DatabaseStorage implements IStorage {
     // Bijhouden hoeveel uren elke medewerker al is ingepland
     const userAssignedHours = new Map<number, number>();
     
+    // FAIRNESS FIX: Track hoeveel kandidaat-dagen elke gebruiker heeft
+    // Dit wordt later gevuld na allDayInfos berekening
+    // Gebruikers met minder kandidaat-dagen krijgen prioriteit bij toewijzing
+    const userCandidateDayCounts = new Map<number, number>();
+    
     // Initialiseer hours tracking voor elke actieve gebruiker
     activeUsers.forEach(user => {
       userAssignedHours.set(user.id, 0);
@@ -2363,11 +2368,23 @@ export class DatabaseStorage implements IStorage {
         return array;
       };
       
+      // FAIRNESS FIX: Sorteer zeroHoursUsers op kandidaat-dagen (minst eerst = hoogste prioriteit)
+      // Dit zorgt ervoor dat gebruikers met beperkte beschikbaarheid voorrang krijgen
+      const sortedZeroHoursUsers = [...zeroHoursUsers].sort((a, b) => {
+        const aCandidateDays = userCandidateDayCounts.get(a) || 999;
+        const bCandidateDays = userCandidateDayCounts.get(b) || 999;
+        // Minder kandidaat-dagen = hogere prioriteit
+        if (aCandidateDays !== bCandidateDays) {
+          return aCandidateDays - bCandidateDays;
+        }
+        // Bij gelijke kandidaat-dagen, sorteer op userId voor determinisme
+        return a - b;
+      });
+      
       // Combineer de groepen in volgorde van prioriteit
-      // FAIRNESS FIX: zeroHoursUsers komt EERST - GEEN shuffle voor deze groep!
-      // Dit garandeert dat 0-uur gebruikers altijd eerst worden geprobeerd
+      // FAIRNESS FIX: zeroHoursUsers komt EERST - gesorteerd op kandidaat-dagen
       return [
-        ...zeroHoursUsers, // GEEN shuffle - deterministische volgorde
+        ...sortedZeroHoursUsers, // Gesorteerd op kandidaat-dagen (minst eerst)
         ...shuffle([...urgentUsers]),
         ...shuffle([...normalUsers]),
         ...shuffle([...lowPriorityUsers])
@@ -2507,6 +2524,24 @@ export class DatabaseStorage implements IStorage {
       // Dan op dag (later in maand eerst)
       return b.day - a.day;
     });
+    
+    // FAIRNESS FIX: Vul de kandidaat-dagen Map (gedeclareerd eerder in de functie)
+    // Gebruikers met MINDER kandidaat-dagen krijgen voorrang in toewijzing
+    // Dit zorgt ervoor dat Jordy (met 7 dagen) voorrang krijgt op iemand met 20 dagen
+    for (const dayInfo of allDayInfos) {
+      for (const userId of dayInfo.candidatesForDay) {
+        userCandidateDayCounts.set(userId, (userCandidateDayCounts.get(userId) || 0) + 1);
+      }
+      for (const userId of dayInfo.candidatesForNight) {
+        userCandidateDayCounts.set(userId, (userCandidateDayCounts.get(userId) || 0) + 1);
+      }
+    }
+    
+    // Debug: log kandidaat-dagen voor debug user
+    if (DEBUG_USER_ID > 0) {
+      const debugUserCount = userCandidateDayCounts.get(DEBUG_USER_ID) || 0;
+      console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] Kandidaat-dagen in hele maand: ${debugUserCount}`);
+    }
     
     // Loop door alle dagen in SCARCITY-FIRST volgorde
     for (let i = 0; i < allDayInfos.length; i++) {
