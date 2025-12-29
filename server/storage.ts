@@ -2296,16 +2296,22 @@ export class DatabaseStorage implements IStorage {
       const usersWithHistory = filteredUsers.map(userId => ({
         userId,
         weekendShifts: getWeekendShiftHistory(userId),
-        currentHours: userAssignedHours.get(userId) || 0
+        currentHours: userAssignedHours.get(userId) || 0,
+        effectiveHours: getEffectiveHours(userId)
       }));
 
       return usersWithHistory
         .sort((a, b) => {
-          // Eerste prioriteit: minder weekend shiften in geschiedenis (jaarbasis)
+          // FAIRNESS FIX: Gebruikers met 0 uren krijgen ALTIJD voorrang
+          // Dit voorkomt dat iemand helemaal geen shifts krijgt terwijl anderen meerdere krijgen
+          if (a.currentHours === 0 && b.currentHours > 0) return -1;
+          if (b.currentHours === 0 && a.currentHours > 0) return 1;
+          
+          // Tweede prioriteit: minder weekend shiften in geschiedenis (jaarbasis)
           if (a.weekendShifts !== b.weekendShifts) {
             return a.weekendShifts - b.weekendShifts;
           }
-          // Tweede prioriteit: minder uren toegewezen deze maand
+          // Derde prioriteit: minder uren toegewezen deze maand
           return a.currentHours - b.currentHours;
         })
         .map(user => user.userId);
@@ -2313,6 +2319,7 @@ export class DatabaseStorage implements IStorage {
 
     // Functie om actieve gebruikers te sorteren op basis van werklast en voorkeuren
     // CROSS-TEAM FIX: Gebruik getEffectiveHours() voor station-specifieke uren
+    // FAIRNESS FIX: Gebruikers met 0 uren krijgen ALTIJD voorrang
     const getSortedUsersForAssignment = (availableUserIds: number[]): number[] => {
       // Eerst filteren op gebruikers die nog uren kunnen werken
       const filteredUsers = availableUserIds.filter(userId => {
@@ -2327,12 +2334,8 @@ export class DatabaseStorage implements IStorage {
         return currentHours < effectiveHrs;
       });
       
-      // Willekeurigheid toevoegen aan de sortering voor meer variatie
-      // We maken drie groepen op basis van uren:
-      // 1. Urgente groep: minder dan 33% van uren gewerkt
-      // 2. Normale groep: tussen 33-66% van uren gewerkt
-      // 3. Lage prioriteit groep: meer dan 66% van uren gewerkt
-      
+      // FAIRNESS FIX: Aparte groep voor gebruikers met 0 uren - deze krijgen ALTIJD voorrang
+      const zeroHoursUsers: number[] = [];
       const urgentUsers: number[] = [];
       const normalUsers: number[] = [];
       const lowPriorityUsers: number[] = [];
@@ -2343,6 +2346,14 @@ export class DatabaseStorage implements IStorage {
         
         const currentHours = userAssignedHours.get(userId) || 0;
         const effectiveHrs = getEffectiveHours(userId); // CROSS-TEAM FIX
+        
+        // FAIRNESS FIX: 0 uren krijgt hoogste prioriteit om te voorkomen dat iemand
+        // helemaal geen shifts krijgt terwijl anderen meerdere krijgen
+        if (currentHours === 0) {
+          zeroHoursUsers.push(userId);
+          return;
+        }
+        
         const percentage = effectiveHrs > 0 ? (currentHours / effectiveHrs) * 100 : 100;
         
         if (percentage < 33) {
@@ -2364,7 +2375,10 @@ export class DatabaseStorage implements IStorage {
       };
       
       // Combineer de groepen in volgorde van prioriteit
+      // FAIRNESS FIX: zeroHoursUsers komt EERST - GEEN shuffle voor deze groep!
+      // Dit garandeert dat 0-uur gebruikers altijd eerst worden geprobeerd
       return [
+        ...zeroHoursUsers, // GEEN shuffle - deterministische volgorde
         ...shuffle([...urgentUsers]),
         ...shuffle([...normalUsers]),
         ...shuffle([...lowPriorityUsers])
