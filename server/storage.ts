@@ -1740,6 +1740,15 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`generateMonthlySchedule: Invalid stationId ${stationId}. Planning generation requires a valid station ID.`);
     }
     
+    // === DEBUG LOGGING FOR SPECIFIC USER ===
+    // Set to a user ID to get detailed logging for that user, or 0 to disable
+    const DEBUG_USER_ID = 257; // Jordy Steegen
+    const debugLog = (userId: number, message: string) => {
+      if (userId === DEBUG_USER_ID) {
+        console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] ${message}`);
+      }
+    };
+    
     console.log(`generateMonthlySchedule called with stationId: ${stationId}`);
     
     // Verwijder bestaande shifts voor deze maand en station
@@ -2041,6 +2050,19 @@ export class DatabaseStorage implements IStorage {
         preferencesIndex.set(key, []);
       }
       preferencesIndex.get(key)!.push(pref);
+      
+      // Debug logging for specific user preferences
+      debugLog(pref.userId, `Preference loaded: day=${pref.date.getDate()}, type=${pref.type}, status=${pref.status}, stationId=${pref.stationId}`);
+    }
+    
+    // === DEBUG: Summary of preferences for debug user ===
+    const debugUserPrefs = allPreferences.filter(p => p.userId === DEBUG_USER_ID);
+    if (DEBUG_USER_ID > 0) {
+      console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] Total preferences loaded: ${debugUserPrefs.length}`);
+      console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] Preferences for this station (${stationId}): ${debugUserPrefs.filter(p => p.stationId === stationId).length}`);
+      const dayPrefs = debugUserPrefs.filter(p => p.type === 'day');
+      const nightPrefs = debugUserPrefs.filter(p => p.type === 'night');
+      console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] Day preferences: ${dayPrefs.length}, Night preferences: ${nightPrefs.length}`);
     }
     
     // PERFORMANCE FIX 2: Precompute weekend shift history for all active users ONCE 
@@ -2399,27 +2421,45 @@ export class DatabaseStorage implements IStorage {
         const key = `${user.id}_${day}`;
         const prefsForThisDay = preferencesIndex.get(key) || [];
         
+        // Debug logging for specific user
+        if (user.id === DEBUG_USER_ID) {
+          debugLog(user.id, `Day ${day}: Found ${prefsForThisDay.length} preferences for this day`);
+          prefsForThisDay.forEach(p => debugLog(user.id, `  - Preference: type=${p.type}, status=${p.status}, stationId=${p.stationId}`));
+        }
+        
         // Skip unavailable users (check both type='unavailable' AND notes='Niet beschikbaar')
         const isUnavailable = prefsForThisDay.some(pref => 
           pref.type === 'unavailable' || pref.notes === 'Niet beschikbaar'
         );
-        if (isUnavailable) continue;
+        if (isUnavailable) {
+          debugLog(user.id, `Day ${day}: SKIPPED - user is unavailable`);
+          continue;
+        }
         
         // Check hours capacity - CROSS-TEAM FIX: gebruik effectieve uren
         const currentHours = userAssignedHours.get(user.id) || 0;
         const effectiveHrs = getEffectiveHours(user.id);
-        if (currentHours >= effectiveHrs) continue;
+        if (currentHours >= effectiveHrs) {
+          debugLog(user.id, `Day ${day}: SKIPPED - hours full (${currentHours}/${effectiveHrs})`);
+          continue;
+        }
         
         // Check for day preferences
         const hasDayPreference = prefsForThisDay.some(pref => pref.type === 'day');
         if (hasDayPreference && targetDayShifts > 0) {
           candidatesForDay.push(user.id);
+          debugLog(user.id, `Day ${day}: Added as CANDIDATE for DAY shift`);
+        } else {
+          debugLog(user.id, `Day ${day}: NOT a candidate for day shift (hasPref=${hasDayPreference}, targetShifts=${targetDayShifts})`);
         }
         
         // Check for night preferences  
         const hasNightPreference = prefsForThisDay.some(pref => pref.type === 'night');
         if (hasNightPreference && targetNightShifts > 0) {
           candidatesForNight.push(user.id);
+          debugLog(user.id, `Day ${day}: Added as CANDIDATE for NIGHT shift`);
+        } else {
+          debugLog(user.id, `Day ${day}: NOT a candidate for night shift (hasPref=${hasNightPreference}, targetShifts=${targetNightShifts})`);
         }
       }
       
@@ -2587,10 +2627,16 @@ export class DatabaseStorage implements IStorage {
           
           if (hasExplicitSplitPreference) {
             console.log(`⚠️ Skipping user ${userId} for FULL day shift - has explicit split preference (voormiddag/namiddag only)`);
+            debugLog(userId, `Day ${day}: SKIPPED for FULL day shift - has explicit split preference`);
             continue;
           }
           
-          if (await canAssignHours(userId, dayShiftHours, currentDate)) {
+          const canAssign = await canAssignHours(userId, dayShiftHours, currentDate);
+          if (!canAssign) {
+            debugLog(userId, `Day ${day}: SKIPPED - canAssignHours returned false (hours full or professional limit)`);
+          }
+          
+          if (canAssign) {
             // KRITIEKE CROSS-TEAM VALIDATIE: Check for conflicting shifts in andere stations
             const shiftStartTime = new Date(Date.UTC(year, month - 1, day, 7, 0, 0));
             const shiftEndTime = new Date(Date.UTC(year, month - 1, day, 19, 0, 0));
@@ -2606,6 +2652,7 @@ export class DatabaseStorage implements IStorage {
             
             if (hasConflict) {
               console.log(`⚠️ Skipping VOLLEDIGE day shift voor cross-team user ${userId} - conflict gedetecteerd met andere station`);
+              debugLog(userId, `Day ${day}: SKIPPED - cross-team conflict with another station`);
               continue;
             }
 
@@ -2613,12 +2660,14 @@ export class DatabaseStorage implements IStorage {
             const consecutiveConflict = await hasConsecutiveShiftConflict(userId, currentDate, shiftStartTime, shiftEndTime);
             if (consecutiveConflict) {
               console.log(`🚨 SAFETY BLOCK: Skipping day shift voor user ${userId} - consecutive shift conflict`);
+              debugLog(userId, `Day ${day}: SKIPPED - consecutive shift conflict`);
               continue;
             }
 
             // 🚗 RIJBEWIJS C SAFETY CHECK
             if (needsDrivingLicenseC(assignedDayIds, targetDayShifts, userId)) {
               console.log(`🚗 SAFETY BLOCK: Skipping day shift voor user ${userId} - driving license C required`);
+              debugLog(userId, `Day ${day}: SKIPPED - driving license C required`);
               continue;
             }
 
@@ -2643,6 +2692,7 @@ export class DatabaseStorage implements IStorage {
             generatedShifts.push(savedDayShift);
             
             console.log(`Assigned FULL day shift (12h) to user ${userId} for day ${day}`);
+            debugLog(userId, `✅ ASSIGNED: FULL day shift (12h) for day ${day}`);
           }
         }
         
@@ -2915,7 +2965,17 @@ export class DatabaseStorage implements IStorage {
         for (const userId of sortedNightUsers) {
           if (assignedFullShifts >= targetNightShifts) break; // Dynamic target from weekday config
           
-          if (await canAssignHours(userId, nightShiftHours, currentDate) && !assignedNightIds.includes(userId)) {
+          const canAssignNight = await canAssignHours(userId, nightShiftHours, currentDate);
+          const alreadyAssigned = assignedNightIds.includes(userId);
+          
+          if (!canAssignNight) {
+            debugLog(userId, `Day ${day}: SKIPPED for NIGHT shift - canAssignHours returned false`);
+          }
+          if (alreadyAssigned) {
+            debugLog(userId, `Day ${day}: SKIPPED for NIGHT shift - already assigned`);
+          }
+          
+          if (canAssignNight && !alreadyAssigned) {
             // KRITIEKE CROSS-TEAM VALIDATIE: Check for conflicting shifts in andere stations
             const shiftStartTime = new Date(Date.UTC(year, month - 1, day, 19, 0, 0));
             const shiftEndTime = new Date(Date.UTC(year, month - 1, day + 1, 7, 0, 0));
@@ -2931,6 +2991,7 @@ export class DatabaseStorage implements IStorage {
             
             if (hasConflict) {
               console.log(`⚠️ Skipping VOLLEDIGE night shift voor cross-team user ${userId} - conflict gedetecteerd met andere station`);
+              debugLog(userId, `Day ${day}: SKIPPED for NIGHT shift - cross-team conflict`);
               continue;
             }
 
@@ -2938,12 +2999,14 @@ export class DatabaseStorage implements IStorage {
             const consecutiveConflict = await hasConsecutiveShiftConflict(userId, currentDate, shiftStartTime, shiftEndTime);
             if (consecutiveConflict) {
               console.log(`🚨 SAFETY BLOCK: Skipping night shift voor user ${userId} - consecutive shift conflict`);
+              debugLog(userId, `Day ${day}: SKIPPED for NIGHT shift - consecutive shift conflict`);
               continue;
             }
 
             // 🚗 RIJBEWIJS C SAFETY CHECK
             if (needsDrivingLicenseC(assignedNightIds, targetNightShifts, userId)) {
               console.log(`🚗 SAFETY BLOCK: Skipping night shift voor user ${userId} - driving license C required`);
+              debugLog(userId, `Day ${day}: SKIPPED for NIGHT shift - driving license C required`);
               continue;
             }
 
@@ -2968,6 +3031,7 @@ export class DatabaseStorage implements IStorage {
             generatedShifts.push(savedNightShift);
             
             console.log(`Assigned FULL night shift (12h) to user ${userId} for day ${day}`);
+            debugLog(userId, `✅ ASSIGNED: FULL night shift (12h) for day ${day}`);
           }
         }
         
@@ -3628,6 +3692,19 @@ export class DatabaseStorage implements IStorage {
       const assignedHours = userAssignedHours.get(user.id) || 0;
       const effectiveHrs = getEffectiveHours(user.id);
       console.log(`User ${user.username} (target: ${effectiveHrs}h): assigned ${assignedHours}h`);
+    }
+    
+    // === DEBUG USER FINAL SUMMARY ===
+    if (DEBUG_USER_ID > 0) {
+      const debugUserShifts = generatedShifts.filter(s => s.userId === DEBUG_USER_ID);
+      const debugUserHours = userAssignedHours.get(DEBUG_USER_ID) || 0;
+      const debugUserTarget = getEffectiveHours(DEBUG_USER_ID);
+      console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] === FINAL SUMMARY ===`);
+      console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] Total shifts assigned: ${debugUserShifts.length}`);
+      console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] Total hours assigned: ${debugUserHours}/${debugUserTarget}h`);
+      debugUserShifts.forEach(s => {
+        console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}]   - Day ${s.date.getDate()}: ${s.type} shift (${s.isSplitShift ? 'split' : 'full'})`);
+      });
     }
     
     return generatedShifts;
