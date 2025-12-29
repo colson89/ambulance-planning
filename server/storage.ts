@@ -2553,13 +2553,12 @@ export class DatabaseStorage implements IStorage {
         const key = `${user.id}_${day}`;
         const prefsForThisDay = preferencesIndex.get(key) || [];
         
-        // Skip unavailable users (check both type='unavailable' AND notes='Niet beschikbaar')
-        const isUnavailable = prefsForThisDay.some(pref => 
-          pref.type === 'unavailable' || pref.notes === 'Niet beschikbaar'
-        );
-        if (isUnavailable) {
+        // 🔧 BUG FIX: Check unavailable ALLEEN voor type='unavailable', NIET voor notes='Niet beschikbaar'
+        // notes='Niet beschikbaar' is nu TYPE-SPECIFIEK (alleen voor dat shift type, niet de hele dag)
+        const isFullyUnavailable = prefsForThisDay.some(pref => pref.type === 'unavailable');
+        if (isFullyUnavailable) {
           if (user.id === DEBUG_USER_ID) {
-            jordyDayResults.set(day, `Dag ${day}: NIET BESCHIKBAAR (expliciet onbeschikbaar)`);
+            jordyDayResults.set(day, `Dag ${day}: NIET BESCHIKBAAR (expliciet type=unavailable)`);
           }
           continue;
         }
@@ -2574,15 +2573,20 @@ export class DatabaseStorage implements IStorage {
           continue;
         }
         
-        // Check for day preferences
-        const hasDayPreference = prefsForThisDay.some(pref => pref.type === 'day');
-        if (hasDayPreference && targetDayShifts > 0) {
+        // 🔧 BUG FIX: Check unavailable per TYPE - notes='Niet beschikbaar' geldt nu alleen voor dat specifieke type
+        // Check for day preferences (alleen als geen "Niet beschikbaar" in notes voor DAG type)
+        const dayPrefs = prefsForThisDay.filter(pref => pref.type === 'day');
+        const hasDayPreference = dayPrefs.length > 0;
+        const isDayUnavailable = dayPrefs.some(pref => pref.notes === 'Niet beschikbaar');
+        if (hasDayPreference && !isDayUnavailable && targetDayShifts > 0) {
           candidatesForDay.push(user.id);
         }
         
-        // Check for night preferences  
-        const hasNightPreference = prefsForThisDay.some(pref => pref.type === 'night');
-        if (hasNightPreference && targetNightShifts > 0) {
+        // Check for night preferences (alleen als geen "Niet beschikbaar" in notes voor NACHT type)
+        const nightPrefs = prefsForThisDay.filter(pref => pref.type === 'night');
+        const hasNightPreference = nightPrefs.length > 0;
+        const isNightUnavailable = nightPrefs.some(pref => pref.notes === 'Niet beschikbaar');
+        if (hasNightPreference && !isNightUnavailable && targetNightShifts > 0) {
           candidatesForNight.push(user.id);
         }
         
