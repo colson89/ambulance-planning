@@ -6,8 +6,26 @@ import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shift
 import { z } from "zod";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
-import { toZonedTime, format as formatTz } from 'date-fns-tz';
+import { toZonedTime, format as formatTz, fromZonedTime } from 'date-fns-tz';
 import { db } from "./db";
+
+// Belgium/Brussels timezone constant for consistent date handling
+const STATION_TIMEZONE = 'Europe/Brussels';
+
+/**
+ * Parse a YYYY-MM-DD date string to a Date object in Belgium timezone.
+ * This ensures the date is correctly interpreted regardless of the server's timezone.
+ * The resulting Date object represents the given date at noon in Brussels timezone.
+ * 
+ * @param dateString - A date string in YYYY-MM-DD format
+ * @returns A Date object representing that date at noon in Brussels timezone
+ */
+function parseDateInStationTimezone(dateString: string): Date {
+  // Parse as "YYYY-MM-DD 12:00:00" in Brussels timezone
+  // Using noon (12:00) to avoid any edge cases with DST transitions
+  const dateTimeString = `${dateString}T12:00:00`;
+  return fromZonedTime(dateTimeString, STATION_TIMEZONE);
+}
 import { and, gte, lte, asc, ne, eq, inArray, isNull, or } from "drizzle-orm";
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
@@ -2497,15 +2515,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Received preference data with sync:', req.body);
 
+      // TIMEZONE FIX: Parse date string (YYYY-MM-DD) to a Date object at noon CET
+      // This ensures the date is correctly interpreted regardless of the user's timezone
+      let parsedDate: Date;
+      if (typeof req.body.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.body.date)) {
+        // New format: YYYY-MM-DD string - parse at noon to avoid timezone edge cases
+        const [year, month, day] = req.body.date.split('-').map(Number);
+        parsedDate = new Date(year, month - 1, day, 12, 0, 0); // Noon local time
+        console.log(`Parsed date string "${req.body.date}" to:`, parsedDate);
+      } else {
+        // Legacy format: Date object or ISO string
+        parsedDate = new Date(req.body.date);
+      }
+      
+      // Calculate startTime and endTime from hour values (if provided)
+      let startTime: Date | null = null;
+      let endTime: Date | null = null;
+      
+      if (req.body.startTimeHour !== null && req.body.startTimeHour !== undefined) {
+        // New format: hours provided separately
+        const startHour = req.body.startTimeHour;
+        const endHour = req.body.endTimeHour || 0;
+        const endDateOffset = req.body.endDateOffset || 0;
+        
+        startTime = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate(), startHour, 0, 0);
+        endTime = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate() + endDateOffset, endHour, 0, 0);
+      } else if (req.body.startTime) {
+        // Legacy format: full Date objects
+        startTime = new Date(req.body.startTime);
+        endTime = req.body.endTime ? new Date(req.body.endTime) : null;
+      }
+
       const preferenceData = {
         ...req.body,
         userId: req.user!.id,
         stationId: req.user!.stationId, 
-        date: new Date(req.body.date),
-        startTime: req.body.startTime ? new Date(req.body.startTime) : null,
-        endTime: req.body.endTime ? new Date(req.body.endTime) : null,
+        date: parsedDate,
+        startTime: startTime,
+        endTime: endTime,
         status: "pending"
       };
+      
+      // Remove the hour fields that we used for calculation (not part of schema)
+      delete preferenceData.startTimeHour;
+      delete preferenceData.endTimeHour;
+      delete preferenceData.endDateOffset;
 
       console.log('Processing preference with sync:', preferenceData);
 
@@ -3095,15 +3149,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Received preference data:', req.body);
 
+      // TIMEZONE FIX: Parse date string (YYYY-MM-DD) to a Date object at noon in Brussels timezone
+      // This ensures the date is correctly interpreted regardless of the user's timezone
+      // (e.g., military personnel filling in preferences from abroad)
+      if (typeof req.body.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(req.body.date)) {
+        return res.status(400).json({ message: "Datum moet in YYYY-MM-DD formaat zijn" });
+      }
+      
+      const parsedDate = parseDateInStationTimezone(req.body.date);
+      console.log(`Parsed date string "${req.body.date}" to:`, parsedDate);
+      
+      // Calculate startTime and endTime from hour values
+      let startTime: Date | null = null;
+      let endTime: Date | null = null;
+      
+      if (req.body.startTimeHour !== null && req.body.startTimeHour !== undefined) {
+        const startHour = req.body.startTimeHour;
+        const endHour = req.body.endTimeHour || 0;
+        const endDateOffset = req.body.endDateOffset || 0;
+        
+        // Build times in Brussels timezone
+        const startDateStr = `${req.body.date}T${String(startHour).padStart(2, '0')}:00:00`;
+        startTime = fromZonedTime(startDateStr, STATION_TIMEZONE);
+        
+        // Calculate end date (may be next day for night shifts)
+        const endDateParts = req.body.date.split('-').map(Number);
+        const endDate = new Date(endDateParts[0], endDateParts[1] - 1, endDateParts[2] + endDateOffset);
+        const endDateFormatted = format(endDate, 'yyyy-MM-dd');
+        const endDateStr = `${endDateFormatted}T${String(endHour).padStart(2, '0')}:00:00`;
+        endTime = fromZonedTime(endDateStr, STATION_TIMEZONE);
+      }
+
       const preferenceData = {
         ...req.body,
         userId: req.user!.id,
-        stationId: req.user!.stationId, // BUGFIX: Add missing stationId
-        date: new Date(req.body.date),
-        startTime: req.body.startTime ? new Date(req.body.startTime) : null,
-        endTime: req.body.endTime ? new Date(req.body.endTime) : null,
+        stationId: req.user!.stationId,
+        date: parsedDate,
+        startTime: startTime,
+        endTime: endTime,
         status: "pending"
       };
+      
+      // Remove the hour fields that we used for calculation (not part of schema)
+      delete preferenceData.startTimeHour;
+      delete preferenceData.endTimeHour;
+      delete preferenceData.endDateOffset;
 
       console.log('Processing preference with data:', preferenceData);
 

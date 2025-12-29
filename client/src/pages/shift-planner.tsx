@@ -423,15 +423,19 @@ export default function ShiftPlanner() {
         }
       }
       
+      // TIMEZONE FIX: Send date as YYYY-MM-DD string instead of Date object
+      // This ensures the server always receives the exact date the user selected,
+      // regardless of the user's timezone (e.g., military personnel abroad)
+      const dateString = format(selectedDate, "yyyy-MM-dd");
+      
       const testData = {
-        date: selectedDate,
+        date: dateString, // Send as string to avoid timezone issues
         type: shiftType, // Altijd day of night gebruiken, NOOIT "unavailable"
-        startTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(),
-          startTimeHour, 0, 0
-        ),
-        endTime: preferenceType === "unavailable" ? null : new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + endDateOffset,
-          endTimeHour, 0, 0
-        ),
+        // Let the server calculate startTime/endTime based on the date string and shift type
+        // This avoids timezone issues with time components
+        startTimeHour: preferenceType === "unavailable" ? null : startTimeHour,
+        endTimeHour: preferenceType === "unavailable" ? null : endTimeHour,
+        endDateOffset: endDateOffset,
         canSplit: canSplit,
         splitType: splitType,
         month: selectedMonth.getMonth() + 1,
