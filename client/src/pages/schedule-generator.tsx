@@ -61,13 +61,18 @@ function toCalendarDate(value: string | Date | null | undefined): string {
   if (!value) return "";
   
   if (typeof value === "string") {
-    // BACKWARDS COMPATIBLE: Check of de timestamp 23:00:00 bevat (oude data)
+    // BACKWARDS COMPATIBLE: Check of de timestamp 23:00 bevat (oude data)
+    // Ondersteunt zowel "2026-02-06 23:00:00" als "2025-12-31T23:00:00.000Z"
     // Deze zijn opgeslagen als UTC en moeten geconverteerd worden naar lokale tijd
-    // "2026-02-06 23:00:00" UTC = "2026-02-07 00:00:00" CET → moet 2026-02-07 worden
-    if (value.includes("23:00:00") && !value.includes("Z") && !value.includes("+")) {
-      // Parse als UTC door de string te normaliseren
-      const normalizedStr = value.replace(' ', 'T') + 'Z';
-      const date = new Date(normalizedStr);
+    // "2025-12-31T23:00:00.000Z" UTC = "2026-01-01 00:00:00" CET → moet 2026-01-01 worden
+    if (value.includes("T23:00:00") || value.includes(" 23:00:00")) {
+      // Parse de string - JavaScript Date() parsed ISO strings automatisch als UTC
+      // Voor space-delimited strings, normaliseer naar ISO formaat
+      let dateStr = value;
+      if (value.includes(" 23:00:00") && !value.includes("T")) {
+        dateStr = value.replace(' ', 'T') + 'Z';
+      }
+      const date = new Date(dateStr);
       // Gebruik lokale methodes om de kalenderdatum te krijgen
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
