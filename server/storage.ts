@@ -12,6 +12,114 @@ import { verdiClient } from "./verdi-client";
 const scryptAsync = promisify(scrypt);
 const PostgresSessionStore = connectPg(session);
 
+/**
+ * CET TIMEZONE HELPER - Deterministic date parsing for Belgian timezone
+ * 
+ * Legacy data was stored as midnight CET which becomes 23:00 UTC (or 22:00 during DST).
+ * This helper extracts the correct CET calendar date regardless of server timezone.
+ * 
+ * Examples:
+ * - "2026-02-05 23:00:00" → { year: 2026, month: 2, day: 6 } (Feb 6 CET)
+ * - "2026-02-06 12:00:00" → { year: 2026, month: 2, day: 6 } (Feb 6)
+ * - Date object → uses getDate/getMonth/getFullYear (local time)
+ */
+function parseCETDateComponents(value: string | Date | null | undefined): { year: number; month: number; day: number } | null {
+  if (!value) return null;
+
+  if (typeof value === "string") {
+    // Detect legacy 23:00 UTC timestamps (winter CET midnight = 23:00 UTC)
+    if (value.includes("T23:00:00") || value.includes(" 23:00:00")) {
+      // Extract YYYY-MM-DD from string using regex
+      const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (!match) return null;
+      
+      let year = parseInt(match[1], 10);
+      let month = parseInt(match[2], 10);
+      let day = parseInt(match[3], 10);
+      
+      // Add +1 day using pure arithmetic (CET is UTC+1)
+      const daysInMonth = [31, (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      day += 1;
+      if (day > daysInMonth[month - 1]) {
+        day = 1;
+        month += 1;
+        if (month > 12) {
+          month = 1;
+          year += 1;
+        }
+      }
+      return { year, month, day };
+    }
+    
+    // Detect legacy 22:00 UTC timestamps (summer CEST midnight = 22:00 UTC)
+    if (value.includes("T22:00:00") || value.includes(" 22:00:00")) {
+      const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (!match) return null;
+      
+      let year = parseInt(match[1], 10);
+      let month = parseInt(match[2], 10);
+      let day = parseInt(match[3], 10);
+      
+      // Add +1 day (CEST is UTC+2)
+      const daysInMonth = [31, (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      day += 1;
+      if (day > daysInMonth[month - 1]) {
+        day = 1;
+        month += 1;
+        if (month > 12) {
+          month = 1;
+          year += 1;
+        }
+      }
+      return { year, month, day };
+    }
+    
+    // Non-legacy timestamps: extract YYYY-MM-DD directly
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    return {
+      year: parseInt(match[1], 10),
+      month: parseInt(match[2], 10),
+      day: parseInt(match[3], 10)
+    };
+  }
+
+  // Date object: use local methods (server should be in CET, but this is fallback)
+  return {
+    year: value.getFullYear(),
+    month: value.getMonth() + 1,
+    day: value.getDate()
+  };
+}
+
+/**
+ * Get the CET calendar day from a date value (1-31)
+ */
+function getCETDay(value: string | Date | null | undefined): number {
+  const components = parseCETDateComponents(value);
+  return components?.day ?? 0;
+}
+
+/**
+ * Get the CET day of week from a date value (0=Sunday, 6=Saturday)
+ */
+function getCETDayOfWeek(value: string | Date | null | undefined): number {
+  const components = parseCETDateComponents(value);
+  if (!components) return 0;
+  // Use Date to calculate day of week from components
+  const date = new Date(components.year, components.month - 1, components.day);
+  return date.getDay();
+}
+
+/**
+ * Format a date value as YYYY-MM-DD in CET timezone
+ */
+function formatCETDateKey(value: string | Date | null | undefined): string {
+  const components = parseCETDateComponents(value);
+  if (!components) return "";
+  return `${components.year}-${String(components.month).padStart(2, '0')}-${String(components.day).padStart(2, '0')}`;
+}
+
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
@@ -2035,20 +2143,21 @@ export class DatabaseStorage implements IStorage {
       );
     
     // Build in-memory index by userId+date for O(1) lookups
-    // NOTE: We use getDate() (local time) consistently throughout the scheduler.
-    // Preferences are stored as local midnight dates (e.g., "2026-02-09" becomes 2026-02-08T23:00:00Z in UTC+1).
-    // The getDate() method correctly interprets this as day 9 in local time.
-    // All shift lookups also use getDate(), so both index and lookups match.
+    // CET TIMEZONE FIX: Use getCETDay() to correctly handle legacy 23:00 UTC timestamps
+    // Legacy preferences stored as "2026-02-05 23:00:00" should be indexed as day 6 (Feb 6 CET)
     const preferencesIndex = new Map<string, ShiftPreference[]>();
     for (const pref of allPreferences) {
-      const key = `${pref.userId}_${pref.date.getDate()}`;
+      // Convert Date to ISO string for CET parsing, or use string directly
+      const dateStr = pref.date instanceof Date ? pref.date.toISOString() : String(pref.date);
+      const cetDay = getCETDay(dateStr);
+      const key = `${pref.userId}_${cetDay}`;
       if (!preferencesIndex.has(key)) {
         preferencesIndex.set(key, []);
       }
       preferencesIndex.get(key)!.push(pref);
       
       // Debug logging for specific user preferences
-      debugLog(pref.userId, `Preference loaded: day=${pref.date.getDate()}, type=${pref.type}, status=${pref.status}, stationId=${pref.stationId}`);
+      debugLog(pref.userId, `Preference loaded: day=${cetDay} (raw=${pref.date}), type=${pref.type}, status=${pref.status}, stationId=${pref.stationId}`);
     }
     
     // === DEBUG: Summary of preferences for debug user ===
