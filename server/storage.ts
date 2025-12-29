@@ -2012,12 +2012,13 @@ export class DatabaseStorage implements IStorage {
       );
     
     // Build in-memory index by userId+date for O(1) lookups
-    // TIMEZONE FIX: Use getUTCDate() instead of getDate() to ensure consistent day matching
-    // regardless of server timezone. Preferences stored as 23:00 UTC would otherwise be 
-    // interpreted as next day on UTC+1 servers (Windows with Romance Standard Time)
+    // NOTE: We use getDate() (local time) consistently throughout the scheduler.
+    // Preferences are stored as local midnight dates (e.g., "2026-02-09" becomes 2026-02-08T23:00:00Z in UTC+1).
+    // The getDate() method correctly interprets this as day 9 in local time.
+    // All shift lookups also use getDate(), so both index and lookups match.
     const preferencesIndex = new Map<string, ShiftPreference[]>();
     for (const pref of allPreferences) {
-      const key = `${pref.userId}_${pref.date.getUTCDate()}`;
+      const key = `${pref.userId}_${pref.date.getDate()}`;
       if (!preferencesIndex.has(key)) {
         preferencesIndex.set(key, []);
       }
