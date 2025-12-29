@@ -88,13 +88,27 @@ function toShiftCalendarDate(value: string | Date | null | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
-// Helper voor VOORKEUREN - geen conversie, alleen substring
-// Voorkeuren zijn opgeslagen als lokale tijd, dus "2026-02-05 23:00:00" = 5 februari
+// Helper voor VOORKEUREN - converteert 23:00 UTC naar volgende dag (backwards compatible)
+// Oude voorkeuren: "2026-02-06 23:00:00" UTC = 7 februari CET
+// Nieuwe voorkeuren: "2026-02-07 12:00:00" = 7 februari (substring)
 function toPrefCalendarDate(value: string | Date | null | undefined): string {
   if (!value) return "";
   
   if (typeof value === "string") {
-    // Neem alleen YYYY-MM-DD deel, geen timezone conversie
+    // Oude voorkeuren met 23:00 zijn opgeslagen als UTC
+    // "2026-02-06 23:00:00" of "2026-02-06T23:00:00.000Z" → 7 februari in CET
+    if (value.includes("T23:00:00") || value.includes(" 23:00:00")) {
+      let dateStr = value;
+      if (value.includes(" 23:00:00") && !value.includes("T")) {
+        dateStr = value.replace(' ', 'T') + 'Z';
+      }
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    // Nieuwe voorkeuren (12:00): neem alleen YYYY-MM-DD deel
     return value.substring(0, 10);
   }
   

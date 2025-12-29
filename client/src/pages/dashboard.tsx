@@ -31,6 +31,74 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { StationSwitcher } from "@/components/station-switcher";
 
+// ==================== TIMEZONE HELPERS ====================
+// SHIFTS: Oude shifts zijn opgeslagen als UTC (23:00 UTC = 00:00 CET volgende dag)
+// VOORKEUREN: Ook opgeslagen als UTC (zelfde conversie nodig)
+
+// Helper voor SHIFTS - converteert 23:00 UTC naar volgende dag
+function toShiftCalendarDate(value: string | Date | null | undefined): string {
+  if (!value) return "";
+  
+  if (typeof value === "string") {
+    if (value.includes("T23:00:00") || value.includes(" 23:00:00")) {
+      let dateStr = value;
+      if (value.includes(" 23:00:00") && !value.includes("T")) {
+        dateStr = value.replace(' ', 'T') + 'Z';
+      }
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return value.substring(0, 10);
+  }
+  
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Helper voor VOORKEUREN - converteert 23:00 UTC naar volgende dag (backwards compatible)
+function toPrefCalendarDate(value: string | Date | null | undefined): string {
+  if (!value) return "";
+  
+  if (typeof value === "string") {
+    if (value.includes("T23:00:00") || value.includes(" 23:00:00")) {
+      let dateStr = value;
+      if (value.includes(" 23:00:00") && !value.includes("T")) {
+        dateStr = value.replace(' ', 'T') + 'Z';
+      }
+      const date = new Date(dateStr);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return value.substring(0, 10);
+  }
+  
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Algemene helper voor Date objecten (bijv. geselecteerde datum in UI)
+function toCalendarDate(value: string | Date | null | undefined): string {
+  if (!value) return "";
+  
+  if (typeof value === "string") {
+    return value.substring(0, 10);
+  }
+  
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export default function Dashboard() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
@@ -373,18 +441,15 @@ export default function Dashboard() {
         endTime?: string | null;
       }> = [];
       
-      // Gezochte datum in YMD formaat voor eenvoudigere vergelijking
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1; // JavaScript maanden zijn 0-11
-      const day = date.getDate();
-      const gezochteYMD = `${year}-${month}-${day}`;
+      // TIMEZONE FIX: Gebruik helper functie voor consistente datum extractie
+      const gezochteYMD = toCalendarDate(date);
       
       // Haal shifts op voor deze datum
       const matchingShifts = shifts.filter(shift => {
         if (!shift.date) return false;
         
-        const shiftDate = new Date(shift.date);
-        const shiftYMD = `${shiftDate.getFullYear()}-${shiftDate.getMonth() + 1}-${shiftDate.getDate()}`;
+        // TIMEZONE FIX: Gebruik toShiftCalendarDate voor shifts (23:00 UTC → volgende dag)
+        const shiftYMD = toShiftCalendarDate(shift.date);
         
         // Controleer het shift type (dag of nacht)
         const isTypeMatch = (shiftType === "day" && shift.type === "day") || 
@@ -413,11 +478,12 @@ export default function Dashboard() {
       const ambulanciers = colleagues.filter(u => u.role === "ambulancier" || u.role === "admin");
       
       // Zoek in voorkeuren voor deze datum
+      // TIMEZONE FIX: Gebruik toPrefCalendarDate helper
       const allPreferences = preferences.flatMap(userPrefs => userPrefs.preferences || []);
       const preferencesForDate = allPreferences.filter(pref => {
         if (!pref || !pref.date) return false;
-        const prefDate = new Date(pref.date);
-        const prefYMD = `${prefDate.getFullYear()}-${prefDate.getMonth() + 1}-${prefDate.getDate()}`;
+        // TIMEZONE FIX: Gebruik helper functie voor correcte 23:00 UTC conversie
+        const prefYMD = toPrefCalendarDate(pref.date);
         return prefYMD === gezochteYMD;
       });
       
