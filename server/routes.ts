@@ -5357,8 +5357,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get the station ID from the logged-in user
       const stationId = req.user?.stationId;
       
+      // Debug logging for production troubleshooting
+      console.log('Export XLSX debug - userId:', req.user?.id, 'stationId:', stationId, 'month:', targetMonth, 'year:', targetYear);
+      
       // Get shifts for the month (filtered by station)
       const shifts = await storage.getShiftsByMonth(targetMonth, targetYear, stationId);
+      console.log('Export XLSX debug - shifts found:', shifts.length);
       
       // Get users from the current station to map names
       const users = await storage.getUsersByStation(stationId!);
