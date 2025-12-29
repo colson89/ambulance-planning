@@ -827,15 +827,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUsersByStation(stationId: number): Promise<User[]> {
-    console.log(`DEBUG: getUsersByStation called with stationId: ${stationId}`);
-    
     // Get users whose primary station is this station
     const primaryUsers = await db
       .select()
       .from(users)
       .where(eq(users.stationId, stationId));
-
-    console.log(`DEBUG: Found ${primaryUsers.length} primary users for station ${stationId}:`, primaryUsers.map(u => `${u.username}:${u.id}`));
 
     // Get users who have additional access to this station (cross-team)
     const additionalUsers = await db
@@ -859,35 +855,25 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(users, eq(userStations.userId, users.id))
       .where(eq(userStations.stationId, stationId));
 
-    console.log(`DEBUG: Found ${additionalUsers.length} additional users for station ${stationId}:`, additionalUsers.map(u => `${u.username}:${u.id}`));
-
     // Combine and deduplicate - keep original user data intact
     const allUserIds = new Set(primaryUsers.map(u => u.id));
     const allUsers: User[] = [...primaryUsers];
     
     for (const user of additionalUsers) {
       if (!allUserIds.has(user.id)) {
-        console.log(`DEBUG: Adding additional cross-team user ${user.username}:${user.id} to results`);
         allUsers.push(user);
-      } else {
-        console.log(`DEBUG: Skipping duplicate user ${user.username}:${user.id}`);
       }
     }
 
-    console.log(`DEBUG: Total ${allUsers.length} users returned for station ${stationId}`);
     return allUsers.sort((a, b) => a.username.localeCompare(b.username));
   }
   
   async getUsersByStationWithCrossTeamInfo(stationId: number): Promise<Array<User & { isCrossTeam: boolean; effectiveHours: number; crossTeamMaxHours: number | null }>> {
-    console.log(`DEBUG: getUsersByStationWithCrossTeamInfo called with stationId: ${stationId}`);
-    
     // Get users whose primary station is this station
     const primaryUsers = await db
       .select()
       .from(users)
       .where(eq(users.stationId, stationId));
-
-    console.log(`DEBUG: Found ${primaryUsers.length} primary users for station ${stationId}`);
 
     // Get cross-team users for this station with their maxHours
     // IMPORTANT: Only include users whose PRIMARY station is NOT this station
@@ -917,8 +903,6 @@ export class DatabaseStorage implements IStorage {
         ne(users.stationId, stationId) // Exclude users whose primary station is this station
       ));
 
-    console.log(`DEBUG: Found ${crossTeamUsers.length} cross-team users for station ${stationId}`);
-
     // Combine and deduplicate with cross-team metadata
     const allUserIds = new Set(primaryUsers.map(u => u.id));
     const result: Array<User & { isCrossTeam: boolean; effectiveHours: number; crossTeamMaxHours: number | null }> = [];
@@ -936,7 +920,6 @@ export class DatabaseStorage implements IStorage {
     // Add cross-team users
     for (const user of crossTeamUsers) {
       if (!allUserIds.has(user.id)) {
-        console.log(`DEBUG: Adding cross-team user ${user.username}:${user.id} with maxHours ${user.crossTeamMaxHours}`);
         result.push({
           id: user.id,
           username: user.username,
@@ -959,7 +942,6 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    console.log(`DEBUG: Total ${result.length} users returned for station ${stationId} with cross-team info`);
     return result.sort((a, b) => a.username.localeCompare(b.username));
   }
 
@@ -1740,16 +1722,25 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`generateMonthlySchedule: Invalid stationId ${stationId}. Planning generation requires a valid station ID.`);
     }
     
-    // === DEBUG LOGGING FOR SPECIFIC USER ===
-    // Set to a user ID to get detailed logging for that user, or 0 to disable
-    const DEBUG_USER_ID = 257; // Jordy Steegen
+    // === JORDY STEEGEN (jost658) DAG-VOOR-DAG LOGGING ===
+    // Set to a username to get simplified day-by-day logging, or "" to disable
+    const DEBUG_USERNAME = "jost658"; // Jordy Steegen
+    const DEBUG_USER_ID = 257;
+    
+    // Store daily decisions for summary logging
+    const jordyDayResults: Map<number, string> = new Map();
+    
     const debugLog = (userId: number, message: string) => {
+      // Store reason if this is about candidate status or assignment
       if (userId === DEBUG_USER_ID) {
-        console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] ${message}`);
+        // Only log assignment results, not intermediate steps
+        if (message.includes("ASSIGNED") || message.includes("SKIPPED")) {
+          console.log(`[${DEBUG_USERNAME}] ${message}`);
+        }
       }
     };
     
-    console.log(`generateMonthlySchedule called with stationId: ${stationId}`);
+    console.log(`Generating schedule for station ${stationId}, ${month}/${year}`);
     
     // Verwijder bestaande shifts voor deze maand en station
     const deleteConditions = [
@@ -2234,8 +2225,6 @@ export class DatabaseStorage implements IStorage {
       // Nul doeluren betekent dat deze gebruiker niet ingedeeld moet worden
       if (stationLimit === 0) return false;
       
-      // Log voor debugging
-      console.log(`Checking user ${user.username} (ID: ${userId}): stationLimit=${stationLimit}, currentHours=${currentHours}, adding=${hoursToAdd}, isProfessional=${user.isProfessional}`);
       
       // Controleer of deze toewijzing binnen de station-specifieke uren valt
       return currentHours + hoursToAdd <= stationLimit;
@@ -2387,7 +2376,6 @@ export class DatabaseStorage implements IStorage {
     
     // === SCARCITY-FIRST OPTIMIZATION ===
     // Stap 1: Bereken kandidaten voor elke dag VOORDAT we beginnen met toewijzen
-    console.log("=== SCARCITY-FIRST ANALYSIS STARTING ===");
     
     type DayInfo = {
       day: number;
@@ -2435,18 +2423,14 @@ export class DatabaseStorage implements IStorage {
         const key = `${user.id}_${day}`;
         const prefsForThisDay = preferencesIndex.get(key) || [];
         
-        // Debug logging for specific user
-        if (user.id === DEBUG_USER_ID) {
-          debugLog(user.id, `Day ${day}: Found ${prefsForThisDay.length} preferences for this day`);
-          prefsForThisDay.forEach(p => debugLog(user.id, `  - Preference: type=${p.type}, status=${p.status}, stationId=${p.stationId}`));
-        }
-        
         // Skip unavailable users (check both type='unavailable' AND notes='Niet beschikbaar')
         const isUnavailable = prefsForThisDay.some(pref => 
           pref.type === 'unavailable' || pref.notes === 'Niet beschikbaar'
         );
         if (isUnavailable) {
-          debugLog(user.id, `Day ${day}: SKIPPED - user is unavailable`);
+          if (user.id === DEBUG_USER_ID) {
+            jordyDayResults.set(day, `Dag ${day}: NIET BESCHIKBAAR (expliciet onbeschikbaar)`);
+          }
           continue;
         }
         
@@ -2454,7 +2438,9 @@ export class DatabaseStorage implements IStorage {
         const currentHours = userAssignedHours.get(user.id) || 0;
         const effectiveHrs = getEffectiveHours(user.id);
         if (currentHours >= effectiveHrs) {
-          debugLog(user.id, `Day ${day}: SKIPPED - hours full (${currentHours}/${effectiveHrs})`);
+          if (user.id === DEBUG_USER_ID) {
+            jordyDayResults.set(day, `Dag ${day}: UREN VOL (${currentHours}/${effectiveHrs}h)`);
+          }
           continue;
         }
         
@@ -2462,18 +2448,26 @@ export class DatabaseStorage implements IStorage {
         const hasDayPreference = prefsForThisDay.some(pref => pref.type === 'day');
         if (hasDayPreference && targetDayShifts > 0) {
           candidatesForDay.push(user.id);
-          debugLog(user.id, `Day ${day}: Added as CANDIDATE for DAY shift`);
-        } else {
-          debugLog(user.id, `Day ${day}: NOT a candidate for day shift (hasPref=${hasDayPreference}, targetShifts=${targetDayShifts})`);
         }
         
         // Check for night preferences  
         const hasNightPreference = prefsForThisDay.some(pref => pref.type === 'night');
         if (hasNightPreference && targetNightShifts > 0) {
           candidatesForNight.push(user.id);
-          debugLog(user.id, `Day ${day}: Added as CANDIDATE for NIGHT shift`);
-        } else {
-          debugLog(user.id, `Day ${day}: NOT a candidate for night shift (hasPref=${hasNightPreference}, targetShifts=${targetNightShifts})`);
+        }
+        
+        // Jordy-specifieke logging: alleen als hij GEEN kandidaat is
+        if (user.id === DEBUG_USER_ID) {
+          const prefTypes = prefsForThisDay.map(p => p.type).join(", ") || "geen";
+          if (!hasDayPreference && !hasNightPreference) {
+            jordyDayResults.set(day, `Dag ${day}: GEEN VOORKEUR (ingevoerde voorkeuren: ${prefTypes})`);
+          } else if (hasDayPreference && !hasNightPreference) {
+            jordyDayResults.set(day, `Dag ${day}: KANDIDAAT voor DAG (geen nacht voorkeur)`);
+          } else if (!hasDayPreference && hasNightPreference) {
+            jordyDayResults.set(day, `Dag ${day}: KANDIDAAT voor NACHT (geen dag voorkeur)`);
+          } else {
+            jordyDayResults.set(day, `Dag ${day}: KANDIDAAT voor DAG + NACHT`);
+          }
         }
       }
       
@@ -2498,7 +2492,6 @@ export class DatabaseStorage implements IStorage {
         difficultyScore
       });
       
-      console.log(`Day ${day}: ${totalCandidates} candidates for ${totalShiftsNeeded} shifts (difficulty: ${difficultyScore.toFixed(2)})`);
     }
     
     // Sorteer dagen op moeilijkheid: MOEILIJKSTE EERST!
@@ -2515,25 +2508,16 @@ export class DatabaseStorage implements IStorage {
       return b.day - a.day;
     });
     
-    console.log("=== SCARCITY-FIRST ORDER ===");
-    allDayInfos.forEach(dayInfo => {
-      console.log(`Processing order: Day ${dayInfo.day} (difficulty: ${dayInfo.difficultyScore.toFixed(2)}, candidates: ${dayInfo.candidateCount})`);
-    });
-    
     // Loop door alle dagen in SCARCITY-FIRST volgorde
     for (let i = 0; i < allDayInfos.length; i++) {
       const dayInfo = allDayInfos[i];
       const { day, date: currentDate, dayOfWeek, targetDayShifts, targetNightShifts, allowSplitShifts } = dayInfo;
-      
-      console.log(`Processing day ${day}: ${currentDate.toDateString()} (${i + 1}/${allDayInfos.length})`);
       
       // Progress update
       if (progressCallback) {
         const progressPercent = Math.round((i / allDayInfos.length) * 90) + 5; // 5-95%
         progressCallback(progressPercent, `Verwerken dag ${day} van ${daysInMonth} (scarcity-first)`);
       }
-      
-      console.log(`Day ${day} (${['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'][dayOfWeek]}): target ${targetDayShifts} dag, ${targetNightShifts} nacht shifts`);
       
       // SCARCITY-FIRST: Gebruik pre-berekende kandidatenlijsten
       const availableForDay: number[] = [...dayInfo.candidatesForDay];
@@ -2598,15 +2582,11 @@ export class DatabaseStorage implements IStorage {
         return user && currentHours < getEffectiveHours(userId);
       });
       
-      console.log(`Day ${day} UPDATED availability: Day=${updatedAvailableForDay.length}, Night=${updatedAvailableForNight.length} (original: ${dayInfo.candidateCount})`);
-      
       // Gebruik de gefilterde lijsten voor verdere verwerking
       availableForDay.length = 0;
       availableForDay.push(...updatedAvailableForDay);
       availableForNight.length = 0; 
       availableForNight.push(...updatedAvailableForNight);
-      
-      console.log(`Day ${day} availability: Day=${availableForDay.length}, DayFirstHalf=${availableForDayFirstHalf.length}, DaySecondHalf=${availableForDaySecondHalf.length}, Night=${availableForNight.length}, NightFirstHalf=${availableForNightFirstHalf.length}, NightSecondHalf=${availableForNightSecondHalf.length}`);
       
       // Weekend check voor ervaren verdelings systeem
       const isWeekend = currentDate.getDay() === 0 || currentDate.getDay() === 6; // Sunday = 0, Saturday = 6
@@ -2705,7 +2685,6 @@ export class DatabaseStorage implements IStorage {
             const savedDayShift = await this.createShift(dayShift);
             generatedShifts.push(savedDayShift);
             
-            console.log(`Assigned FULL day shift (12h) to user ${userId} for day ${day}`);
             debugLog(userId, `✅ ASSIGNED: FULL day shift (12h) for day ${day}`);
           }
         }
@@ -2719,9 +2698,6 @@ export class DatabaseStorage implements IStorage {
         let assignedAfternoonShifts = assignedFullDayShifts;
         
         if (stillNeedDayShifts > 0 && allowSplitShifts) {
-          console.log(`Still need ${stillNeedDayShifts} day shifts for day ${day}, now trying split shifts (6h each)`);
-          console.log(`🎯 Voor coverage van ${targetDayShifts} personen, hebben we nodig: ${targetDayShifts}x voormiddag + ${targetDayShifts}x namiddag`);
-          console.log(`📊 Current coverage: ${assignedFullDayShifts} full shifts (count for both AM/PM), need ${stillNeedDayShifts} more`);
           
           // Eerste helft van de dag (7:00 - 13:00) - blijf proberen tot we targetDayShifts personen hebben!
           const sortedDayFirstHalfUsers = getSortedUsersForAssignment(
@@ -2734,7 +2710,6 @@ export class DatabaseStorage implements IStorage {
             for (const userId of sortedDayFirstHalfUsers) {
               // STOP als we genoeg voormiddag shifts hebben (volledige shifts tellen al mee!)
               if (assignedMorningShifts >= targetDayShifts) {
-                console.log(`✅ Genoeg voormiddag shifts toegewezen (${assignedMorningShifts}/${targetDayShifts})`);
                 break;
               }
               
@@ -3708,17 +3683,32 @@ export class DatabaseStorage implements IStorage {
       console.log(`User ${user.username} (target: ${effectiveHrs}h): assigned ${assignedHours}h`);
     }
     
-    // === DEBUG USER FINAL SUMMARY ===
+    // === JORDY STEEGEN DAG-VOOR-DAG SAMENVATTING ===
     if (DEBUG_USER_ID > 0) {
       const debugUserShifts = generatedShifts.filter(s => s.userId === DEBUG_USER_ID);
       const debugUserHours = userAssignedHours.get(DEBUG_USER_ID) || 0;
       const debugUserTarget = getEffectiveHours(DEBUG_USER_ID);
-      console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] === FINAL SUMMARY ===`);
-      console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] Total shifts assigned: ${debugUserShifts.length}`);
-      console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}] Total hours assigned: ${debugUserHours}/${debugUserTarget}h`);
-      debugUserShifts.forEach(s => {
-        console.log(`🔍 [DEBUG USER ${DEBUG_USER_ID}]   - Day ${s.date.getDate()}: ${s.type} shift (${s.isSplitShift ? 'split' : 'full'})`);
-      });
+      
+      console.log(`\n========================================`);
+      console.log(`[${DEBUG_USERNAME}] DAG-VOOR-DAG ANALYSE`);
+      console.log(`========================================`);
+      console.log(`[${DEBUG_USERNAME}] Target: ${debugUserTarget}h | Toegewezen: ${debugUserHours}h | Shifts: ${debugUserShifts.length}`);
+      console.log(`----------------------------------------`);
+      
+      // Log alle dagen (gesorteerd op dag nummer)
+      const sortedDays = Array.from(jordyDayResults.keys()).sort((a, b) => a - b);
+      for (const day of sortedDays) {
+        const result = jordyDayResults.get(day);
+        // Check of er een shift is toegewezen op deze dag
+        const assignedShift = debugUserShifts.find(s => s.date.getDate() === day);
+        if (assignedShift) {
+          console.log(`[${DEBUG_USERNAME}] Dag ${day}: ✅ TOEGEWEZEN ${assignedShift.type} (${assignedShift.isSplitShift ? 'split' : 'vol'})`);
+        } else {
+          console.log(`[${DEBUG_USERNAME}] ${result}`);
+        }
+      }
+      
+      console.log(`========================================\n`);
     }
     
     return generatedShifts;
