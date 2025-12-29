@@ -6,7 +6,7 @@ import { insertShiftSchema, insertUserSchema, insertShiftPreferenceSchema, shift
 import { z } from "zod";
 import { addMonths } from 'date-fns';
 import {format} from 'date-fns';
-import { toZonedTime, format as formatTz, fromZonedTime } from 'date-fns-tz';
+import { toZonedTime, format as formatTz, fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { db } from "./db";
 
 // Belgium/Brussels timezone constant for consistent date handling
@@ -11561,6 +11561,297 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     } catch (error: any) {
       console.error("Error handling Azure AD callback:", error);
       res.redirect('/login?error=azure_error&message=Er%20is%20een%20fout%20opgetreden');
+    }
+  });
+
+  // ============================================================================
+  // DATABASE EXPORT ENDPOINTS (voor supervisors - debugging/vergelijking)
+  // ============================================================================
+
+  // Export shift preferences met volledige timestamps (voor database vergelijking)
+  app.get("/api/database-export/preferences", requireAdmin, async (req, res) => {
+    try {
+      const { month, year, stationId } = req.query;
+      
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+
+      const targetMonth = parseInt(month as string);
+      const targetYear = parseInt(year as string);
+      const targetStationId = stationId ? parseInt(stationId as string) : null;
+
+      // Validate parsed values
+      if (isNaN(targetMonth) || isNaN(targetYear) || targetMonth < 1 || targetMonth > 12) {
+        return res.status(400).json({ message: "Ongeldige maand of jaar waarde" });
+      }
+
+      // Build where conditions - filter out undefined values
+      const whereConditions = [
+        eq(shiftPreferences.month, targetMonth),
+        eq(shiftPreferences.year, targetYear),
+      ];
+      if (targetStationId) {
+        whereConditions.push(eq(shiftPreferences.stationId, targetStationId));
+      }
+
+      // Get all preferences for the month (with optional station filter)
+      const preferences = await db
+        .select({
+          id: shiftPreferences.id,
+          userId: shiftPreferences.userId,
+          stationId: shiftPreferences.stationId,
+          date: shiftPreferences.date,
+          type: shiftPreferences.type,
+          startTime: shiftPreferences.startTime,
+          endTime: shiftPreferences.endTime,
+          status: shiftPreferences.status,
+          month: shiftPreferences.month,
+          year: shiftPreferences.year,
+          canSplit: shiftPreferences.canSplit,
+          splitType: shiftPreferences.splitType,
+          notes: shiftPreferences.notes,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          username: users.username
+        })
+        .from(shiftPreferences)
+        .leftJoin(users, eq(shiftPreferences.userId, users.id))
+        .where(and(...whereConditions))
+        .orderBy(asc(users.lastName), asc(shiftPreferences.date));
+
+      // Create Excel workbook
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'Planning BWZK - Database Export';
+      workbook.created = new Date();
+
+      const worksheet = workbook.addWorksheet('Voorkeuren Database');
+
+      // Month names
+      const monthNames = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 
+                          'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+
+      // Title
+      worksheet.mergeCells('A1:O1');
+      const titleCell = worksheet.getCell('A1');
+      titleCell.value = `Database Export: Voorkeuren - ${monthNames[targetMonth - 1]} ${targetYear}`;
+      titleCell.font = { bold: true, size: 14 };
+
+      // Info row
+      worksheet.mergeCells('A2:O2');
+      const infoCell = worksheet.getCell('A2');
+      infoCell.value = `Geëxporteerd op: ${format(new Date(), 'dd-MM-yyyy HH:mm:ss')} | Totaal: ${preferences.length} records`;
+      infoCell.font = { italic: true, size: 10 };
+
+      // Headers with full timestamp info - ruwe database waarden
+      const headers = [
+        'ID', 'User ID', 'Naam', 'Username', 'Station ID', 
+        'date (DB raw)', 'date (ISO string)', 'date (UTC)', 'date (getTime ms)', 'date (Brussels local)',
+        'Type', 'Status', 'Month (DB)', 'Year (DB)', 'Can Split', 'Notes'
+      ];
+      
+      const headerRow = worksheet.addRow(headers);
+      headerRow.font = { bold: true };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF2563EB' }
+      };
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+
+      // Data rows with full timestamp details - ruwe database waarden
+      preferences.forEach((pref) => {
+        const rawDate = pref.date;
+        
+        worksheet.addRow([
+          pref.id,
+          pref.userId,
+          `${pref.firstName || ''} ${pref.lastName || ''}`.trim(),
+          pref.username || '',
+          pref.stationId,
+          rawDate ? rawDate.toString() : '',  // Raw JS Date.toString() - shows server timezone interpretation
+          rawDate ? rawDate.toISOString() : '',  // ISO 8601 format - always UTC
+          rawDate ? formatInTimeZone(rawDate, 'UTC', 'yyyy-MM-dd HH:mm:ss') : '',  // Explicit UTC format using timezone utility
+          rawDate ? rawDate.getTime() : '',  // Milliseconds since epoch - absolute value
+          rawDate ? formatInTimeZone(rawDate, STATION_TIMEZONE, 'yyyy-MM-dd HH:mm:ss') : '',  // Brussels local time
+          pref.type,
+          pref.status,
+          pref.month,  // Raw month value from DB
+          pref.year,   // Raw year value from DB
+          pref.canSplit ? 'Ja' : 'Nee',
+          pref.notes || ''
+        ]);
+      });
+
+      // Auto-fit columns
+      worksheet.columns.forEach((column) => {
+        column.width = 18;
+      });
+
+      // Generate buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=db-preferences-${targetYear}-${String(targetMonth).padStart(2, '0')}.xlsx`);
+      res.send(buffer);
+
+    } catch (error: any) {
+      console.error("Error exporting preferences:", error);
+      res.status(500).json({ message: "Export mislukt", error: error.message });
+    }
+  });
+
+  // Export shifts met volledige timestamps (voor database vergelijking)
+  app.get("/api/database-export/shifts", requireAdmin, async (req, res) => {
+    try {
+      const { month, year, stationId } = req.query;
+      
+      if (!month || !year) {
+        return res.status(400).json({ message: "Month and year are required" });
+      }
+
+      const targetMonth = parseInt(month as string);
+      const targetYear = parseInt(year as string);
+      const targetStationId = stationId ? parseInt(stationId as string) : null;
+
+      // Validate parsed values
+      if (isNaN(targetMonth) || isNaN(targetYear) || targetMonth < 1 || targetMonth > 12) {
+        return res.status(400).json({ message: "Ongeldige maand of jaar waarde" });
+      }
+
+      // Build date range for the month
+      const startOfMonth = new Date(Date.UTC(targetYear, targetMonth - 1, 1));
+      const endOfMonth = new Date(Date.UTC(targetYear, targetMonth, 0, 23, 59, 59, 999));
+
+      // Build where conditions - filter out undefined values
+      const shiftsWhereConditions = [
+        gte(shifts.date, startOfMonth),
+        lte(shifts.date, endOfMonth),
+      ];
+      if (targetStationId) {
+        shiftsWhereConditions.push(eq(shifts.stationId, targetStationId));
+      }
+
+      // Get all shifts for the month
+      const shiftsData = await db
+        .select({
+          id: shifts.id,
+          date: shifts.date,
+          type: shifts.type,
+          startTime: shifts.startTime,
+          endTime: shifts.endTime,
+          userId: shifts.userId,
+          stationId: shifts.stationId,
+          isPublished: shifts.isPublished,
+          isNoodInplanning: shifts.isNoodInplanning,
+          originalStationId: shifts.originalStationId,
+          notes: shifts.notes,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          username: users.username
+        })
+        .from(shifts)
+        .leftJoin(users, eq(shifts.userId, users.id))
+        .where(and(...shiftsWhereConditions))
+        .orderBy(asc(shifts.date), asc(users.lastName));
+
+      // Create Excel workbook
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'Planning BWZK - Database Export';
+      workbook.created = new Date();
+
+      const worksheet = workbook.addWorksheet('Shifts Database');
+
+      // Month names
+      const monthNames = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 
+                          'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+
+      // Title
+      worksheet.mergeCells('A1:P1');
+      const titleCell = worksheet.getCell('A1');
+      titleCell.value = `Database Export: Shifts - ${monthNames[targetMonth - 1]} ${targetYear}`;
+      titleCell.font = { bold: true, size: 14 };
+
+      // Info row
+      worksheet.mergeCells('A2:P2');
+      const infoCell = worksheet.getCell('A2');
+      infoCell.value = `Geëxporteerd op: ${format(new Date(), 'dd-MM-yyyy HH:mm:ss')} | Totaal: ${shiftsData.length} records`;
+      infoCell.font = { italic: true, size: 10 };
+
+      // Headers with full timestamp info - ruwe database waarden
+      const headers = [
+        'ID', 'User ID', 'Naam', 'Username', 'Station ID',
+        'date (DB raw)', 'date (ISO string)', 'date (UTC)', 'date (getTime ms)', 'date (Brussels local)',
+        'Type', 'startTime (ISO)', 'endTime (ISO)', 'Published', 'Nood Inplanning', 'Original Station', 'Notes'
+      ];
+      
+      const headerRow = worksheet.addRow(headers);
+      headerRow.font = { bold: true };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF059669' }
+      };
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+
+      // Data rows with full timestamp details - ruwe database waarden
+      shiftsData.forEach((shift) => {
+        const rawDate = shift.date;
+        const startTime = shift.startTime;
+        const endTime = shift.endTime;
+
+        worksheet.addRow([
+          shift.id,
+          shift.userId,
+          `${shift.firstName || ''} ${shift.lastName || ''}`.trim(),
+          shift.username || '',
+          shift.stationId,
+          rawDate ? rawDate.toString() : '',  // Raw JS Date.toString() - shows server timezone interpretation
+          rawDate ? rawDate.toISOString() : '',  // ISO 8601 format - always UTC
+          rawDate ? formatInTimeZone(rawDate, 'UTC', 'yyyy-MM-dd HH:mm:ss') : '',  // Explicit UTC format using timezone utility
+          rawDate ? rawDate.getTime() : '',  // Milliseconds since epoch - absolute value
+          rawDate ? formatInTimeZone(rawDate, STATION_TIMEZONE, 'yyyy-MM-dd HH:mm:ss') : '',  // Brussels local time
+          shift.type,
+          startTime ? startTime.toISOString() : '',
+          endTime ? endTime.toISOString() : '',
+          shift.isPublished ? 'Ja' : 'Nee',
+          shift.isNoodInplanning ? 'Ja' : 'Nee',
+          shift.originalStationId || '',
+          shift.notes || ''
+        ]);
+      });
+
+      // Auto-fit columns
+      worksheet.columns.forEach((column) => {
+        column.width = 18;
+      });
+
+      // Generate buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename=db-shifts-${targetYear}-${String(targetMonth).padStart(2, '0')}.xlsx`);
+      res.send(buffer);
+
+    } catch (error: any) {
+      console.error("Error exporting shifts:", error);
+      res.status(500).json({ message: "Export mislukt", error: error.message });
     }
   });
 

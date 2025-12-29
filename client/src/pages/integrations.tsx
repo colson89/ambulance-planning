@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText, KeyRound, Building2, UserPlus, Send, Eye, Monitor, Copy, RefreshCw, Trash2, ShieldCheck } from "lucide-react";
+import { Link as LinkIcon, ArrowLeft, Settings, Mail, FileText, KeyRound, Building2, UserPlus, Send, Eye, Monitor, Copy, RefreshCw, Trash2, ShieldCheck, Database } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -431,6 +431,36 @@ export default function Integrations() {
                 }}
               >
                 Configureren
+                <Settings className="ml-2 h-4 w-4 group-hover:rotate-90 transition-transform" />
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Database Export Card */}
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+            onClick={() => setLocation("/database-export")}
+          >
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 p-3 bg-amber-100 rounded-full w-fit">
+                <Database className="h-8 w-8 text-amber-600" />
+              </div>
+              <CardTitle className="text-xl">Database Export</CardTitle>
+              <CardDescription className="mb-2">
+                Exporteer data met volledige timestamps voor vergelijking
+              </CardDescription>
+              <Badge variant="default" className="mx-auto bg-amber-600">Beschikbaar</Badge>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Button 
+                variant="outline" 
+                className="w-full group"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLocation("/database-export");
+                }}
+              >
+                Openen
                 <Settings className="ml-2 h-4 w-4 group-hover:rotate-90 transition-transform" />
               </Button>
             </CardContent>
