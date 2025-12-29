@@ -2662,6 +2662,10 @@ export class DatabaseStorage implements IStorage {
           
           const canAssign = await canAssignHours(userId, dayShiftHours, currentDate);
           if (!canAssign) {
+            const user = eligibleUsers.find(u => u.id === userId);
+            const currentHours = userAssignedHours.get(userId) || 0;
+            const effectiveHrs = getEffectiveHours(userId);
+            console.log(`⏭️ Day ${day}: User ${userId} (${user?.firstName} ${user?.lastName}) SKIPPED - canAssignHours=false (${currentHours}/${effectiveHrs}h, adding ${dayShiftHours}h)`);
             debugLog(userId, `Day ${day}: SKIPPED - canAssignHours returned false (hours full or professional limit)`);
           }
           
@@ -2722,6 +2726,17 @@ export class DatabaseStorage implements IStorage {
             
             debugLog(userId, `✅ ASSIGNED: FULL day shift (12h) for day ${day}`);
           }
+        }
+        
+        // 🔍 DIAGNOSIS: Log als er kandidaten waren maar geen toewijzingen
+        if (assignedFullDayShifts === 0 && dayUsersToUse.length > 0) {
+          console.log(`🔴 WARNING: Day ${day} has ${dayUsersToUse.length} candidates but 0 assignments!`);
+          console.log(`   Candidates (sorted): ${dayUsersToUse.slice(0, 10).map(id => {
+            const u = eligibleUsers.find(x => x.id === id);
+            const hrs = userAssignedHours.get(id) || 0;
+            const eff = getEffectiveHours(id);
+            return `${id}:${u?.firstName}(${hrs}/${eff}h)`;
+          }).join(', ')}`);
         }
         
         // ALLEEN als we nog steeds shifts nodig hebben, probeer split shifts
