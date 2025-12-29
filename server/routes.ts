@@ -5353,12 +5353,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const targetMonth = parseInt(month as string);
       const targetYear = parseInt(year as string);
+      const { stationId: queryStationId } = req.query;
       
-      // Get the station ID from the logged-in user
-      const stationId = req.user?.stationId;
+      // Use the existing authorization helper to validate station access
+      const requestedStationId = queryStationId ? parseInt(queryStationId as string) : undefined;
+      const { stationId, error } = await getAuthorizedStationId(req, requestedStationId);
+      
+      if (error || !stationId) {
+        return res.status(403).json({ message: error || "Unauthorized station access" });
+      }
       
       // Debug logging for production troubleshooting
-      console.log('Export XLSX debug - userId:', req.user?.id, 'stationId:', stationId, 'month:', targetMonth, 'year:', targetYear);
+      console.log('Export XLSX debug - userId:', req.user?.id, 'requestedStationId:', queryStationId, 'authorizedStationId:', stationId, 'month:', targetMonth, 'year:', targetYear);
       
       // Get shifts for the month (filtered by station)
       const shifts = await storage.getShiftsByMonth(targetMonth, targetYear, stationId);

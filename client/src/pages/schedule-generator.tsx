@@ -2230,7 +2230,8 @@ function ScheduleGenerator() {
                   size="sm"
                   onClick={() => {
                     const timestamp = Date.now();
-                    const url = `/api/schedule/export-xlsx?month=${selectedMonth + 1}&year=${selectedYear}&t=${timestamp}`;
+                    const stationParam = effectiveStationId ? `&stationId=${effectiveStationId}` : '';
+                    const url = `/api/schedule/export-xlsx?month=${selectedMonth + 1}&year=${selectedYear}${stationParam}&t=${timestamp}`;
                     window.location.href = url;
                   }}
                   disabled={!shifts || shifts.length === 0}
