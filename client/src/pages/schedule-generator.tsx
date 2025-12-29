@@ -55,82 +55,23 @@ interface Station {
 }
 
 // ==================== TIMEZONE HELPERS ====================
-// SHIFTS: Oude shifts zijn opgeslagen als UTC (23:00 UTC = 00:00 CET volgende dag)
-// VOORKEUREN: Zijn opgeslagen als lokale tijd (23:00 CET = 23:00 CET dezelfde dag)
-// We moeten deze APART behandelen!
+// Uses the canonical parseCETCalendarDate from utils.ts for deterministic CET date handling.
+// This ensures consistent date display regardless of viewer's browser timezone.
+import { parseCETCalendarDate } from "@/lib/utils";
 
-// Helper voor SHIFTS - converteert 23:00 UTC naar volgende dag
+// Helper voor SHIFTS - uses canonical CET parser
 function toShiftCalendarDate(value: string | Date | null | undefined): string {
-  if (!value) return "";
-  
-  if (typeof value === "string") {
-    // Oude shifts met 23:00 zijn opgeslagen als UTC
-    // "2025-12-31T23:00:00.000Z" of "2026-02-06 23:00:00" → volgende dag in CET
-    if (value.includes("T23:00:00") || value.includes(" 23:00:00")) {
-      let dateStr = value;
-      if (value.includes(" 23:00:00") && !value.includes("T")) {
-        dateStr = value.replace(' ', 'T') + 'Z';
-      }
-      const date = new Date(dateStr);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-    // Nieuwe shifts (11:00/12:00): neem alleen YYYY-MM-DD deel
-    return value.substring(0, 10);
-  }
-  
-  // Date object: gebruik lokale methodes
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return parseCETCalendarDate(value);
 }
 
-// Helper voor VOORKEUREN - converteert 23:00 UTC naar volgende dag (backwards compatible)
-// Oude voorkeuren: "2026-02-06 23:00:00" UTC = 7 februari CET
-// Nieuwe voorkeuren: "2026-02-07 12:00:00" = 7 februari (substring)
+// Helper voor VOORKEUREN - uses canonical CET parser
 function toPrefCalendarDate(value: string | Date | null | undefined): string {
-  if (!value) return "";
-  
-  if (typeof value === "string") {
-    // Oude voorkeuren met 23:00 zijn opgeslagen als UTC
-    // "2026-02-06 23:00:00" of "2026-02-06T23:00:00.000Z" → 7 februari in CET
-    if (value.includes("T23:00:00") || value.includes(" 23:00:00")) {
-      let dateStr = value;
-      if (value.includes(" 23:00:00") && !value.includes("T")) {
-        dateStr = value.replace(' ', 'T') + 'Z';
-      }
-      const date = new Date(dateStr);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-    // Nieuwe voorkeuren (12:00): neem alleen YYYY-MM-DD deel
-    return value.substring(0, 10);
-  }
-  
-  // Date object: gebruik lokale methodes
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return parseCETCalendarDate(value);
 }
 
 // Algemene helper voor Date objecten (bijv. geselecteerde datum in UI)
 function toCalendarDate(value: string | Date | null | undefined): string {
-  if (!value) return "";
-  
-  if (typeof value === "string") {
-    return value.substring(0, 10);
-  }
-  
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return parseCETCalendarDate(value);
 }
 
 function ScheduleGenerator() {

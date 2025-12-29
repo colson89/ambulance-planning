@@ -32,71 +32,22 @@ import { Label } from "@/components/ui/label";
 import { StationSwitcher } from "@/components/station-switcher";
 
 // ==================== TIMEZONE HELPERS ====================
-// SHIFTS: Oude shifts zijn opgeslagen als UTC (23:00 UTC = 00:00 CET volgende dag)
-// VOORKEUREN: Ook opgeslagen als UTC (zelfde conversie nodig)
+// Uses the canonical parseCETCalendarDate from utils.ts for deterministic CET date handling.
+import { parseCETCalendarDate } from "@/lib/utils";
 
-// Helper voor SHIFTS - converteert 23:00 UTC naar volgende dag
+// Helper voor SHIFTS - uses canonical CET parser
 function toShiftCalendarDate(value: string | Date | null | undefined): string {
-  if (!value) return "";
-  
-  if (typeof value === "string") {
-    if (value.includes("T23:00:00") || value.includes(" 23:00:00")) {
-      let dateStr = value;
-      if (value.includes(" 23:00:00") && !value.includes("T")) {
-        dateStr = value.replace(' ', 'T') + 'Z';
-      }
-      const date = new Date(dateStr);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-    return value.substring(0, 10);
-  }
-  
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return parseCETCalendarDate(value);
 }
 
-// Helper voor VOORKEUREN - converteert 23:00 UTC naar volgende dag (backwards compatible)
+// Helper voor VOORKEUREN - uses canonical CET parser
 function toPrefCalendarDate(value: string | Date | null | undefined): string {
-  if (!value) return "";
-  
-  if (typeof value === "string") {
-    if (value.includes("T23:00:00") || value.includes(" 23:00:00")) {
-      let dateStr = value;
-      if (value.includes(" 23:00:00") && !value.includes("T")) {
-        dateStr = value.replace(' ', 'T') + 'Z';
-      }
-      const date = new Date(dateStr);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-    return value.substring(0, 10);
-  }
-  
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return parseCETCalendarDate(value);
 }
 
 // Algemene helper voor Date objecten (bijv. geselecteerde datum in UI)
 function toCalendarDate(value: string | Date | null | undefined): string {
-  if (!value) return "";
-  
-  if (typeof value === "string") {
-    return value.substring(0, 10);
-  }
-  
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return parseCETCalendarDate(value);
 }
 
 export default function Dashboard() {
