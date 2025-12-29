@@ -1830,10 +1830,11 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`generateMonthlySchedule: Invalid stationId ${stationId}. Planning generation requires a valid station ID.`);
     }
     
-    // === JORDY STEEGEN (jost658) DAG-VOOR-DAG LOGGING ===
+    // === NAOMI VERSMISSEN (nave654) DAG-VOOR-DAG LOGGING ===
     // Set to a username to get simplified day-by-day logging, or "" to disable
-    const DEBUG_USERNAME = "jost658"; // Jordy Steegen
-    const DEBUG_USER_ID = 257;
+    const DEBUG_USERNAME = "nave654"; // Naomi Versmissen
+    const DEBUG_USER_ID = 254;
+    const DEBUG_DAY = 6; // Specifiek dag 6 februari debugging
     
     // Store daily decisions for summary logging
     const jordyDayResults: Map<number, string> = new Map();
@@ -2603,6 +2604,41 @@ export class DatabaseStorage implements IStorage {
       const totalCandidates = candidatesForDay.length + candidatesForNight.length;
       const totalShiftsNeeded = targetDayShifts + targetNightShifts;
       
+      // 🔍 DEBUG DAG 6: Uitgebreide logging voor debugging
+      if (day === DEBUG_DAY) {
+        console.log(`\n${'='.repeat(80)}`);
+        console.log(`🔍 DEBUG DAG ${DEBUG_DAY} - KANDIDATEN ANALYSE`);
+        console.log(`${'='.repeat(80)}`);
+        console.log(`📅 Datum: ${currentDate.toISOString()}`);
+        console.log(`📊 Target shifts: ${targetDayShifts} dag, ${targetNightShifts} nacht`);
+        console.log(`👥 Kandidaten voor DAG shift: ${candidatesForDay.length}`);
+        console.log(`👥 Kandidaten voor NACHT shift: ${candidatesForNight.length}`);
+        
+        // Log alle DAG kandidaten met hun details
+        console.log(`\n📋 DAG kandidaten voor dag ${DEBUG_DAY}:`);
+        for (const userId of candidatesForDay) {
+          const user = eligibleUsers.find(u => u.id === userId);
+          const hours = userAssignedHours.get(userId) || 0;
+          const effectiveHrs = getEffectiveHours(userId);
+          console.log(`   - ${user?.firstName} ${user?.lastName} (ID: ${userId}) - ${hours}/${effectiveHrs}h`);
+        }
+        
+        // Check specifiek of DEBUG_USER_ID een kandidaat is
+        if (candidatesForDay.includes(DEBUG_USER_ID)) {
+          console.log(`✅ ${DEBUG_USERNAME} (ID: ${DEBUG_USER_ID}) IS KANDIDAAT voor dag ${DEBUG_DAY} DAG shift`);
+        } else {
+          console.log(`❌ ${DEBUG_USERNAME} (ID: ${DEBUG_USER_ID}) IS GEEN KANDIDAAT voor dag ${DEBUG_DAY} DAG shift`);
+          // Check waarom niet
+          const key = `${DEBUG_USER_ID}_${day}`;
+          const prefsForDebugUser = preferencesIndex.get(key) || [];
+          console.log(`   Preferences gevonden voor key "${key}": ${prefsForDebugUser.length}`);
+          for (const pref of prefsForDebugUser) {
+            console.log(`   - type: ${pref.type}, notes: ${pref.notes || '(geen)'}, splitType: ${pref.splitType || '(geen)'}`);
+          }
+        }
+        console.log(`${'='.repeat(80)}\n`);
+      }
+      
       // Bereken moeilijkheidscore: weinig kandidaten = hoge score, weekend/feestdag = extra moeilijk
       const isWeekend = isWeekendOrHoliday;
       const candidateRatio = totalCandidates > 0 ? totalShiftsNeeded / totalCandidates : 999;
@@ -2748,12 +2784,54 @@ export class DatabaseStorage implements IStorage {
           ? getSortedUsersForWeekendAssignment(availableForDay)
           : getSortedUsersForAssignment(availableForDay);
         
+        // 🔍 DEBUG DAG 6: Log assignment fase
+        if (day === DEBUG_DAY) {
+          console.log(`\n${'='.repeat(80)}`);
+          console.log(`🔍 DEBUG DAG ${DEBUG_DAY} - SHIFT ASSIGNMENT FASE`);
+          console.log(`${'='.repeat(80)}`);
+          console.log(`👥 availableForDay na filtering: ${availableForDay.length}`);
+          console.log(`📋 dayUsersToUse (gesorteerd): ${dayUsersToUse.length}`);
+          
+          // Check specifiek Naomi
+          if (availableForDay.includes(DEBUG_USER_ID)) {
+            console.log(`✅ ${DEBUG_USERNAME} (ID: ${DEBUG_USER_ID}) ZIT IN availableForDay`);
+          } else {
+            console.log(`❌ ${DEBUG_USERNAME} (ID: ${DEBUG_USER_ID}) ZIT NIET IN availableForDay`);
+          }
+          if (dayUsersToUse.includes(DEBUG_USER_ID)) {
+            const position = dayUsersToUse.indexOf(DEBUG_USER_ID);
+            console.log(`✅ ${DEBUG_USERNAME} (ID: ${DEBUG_USER_ID}) ZIT IN dayUsersToUse op positie ${position}`);
+          } else {
+            console.log(`❌ ${DEBUG_USERNAME} (ID: ${DEBUG_USER_ID}) ZIT NIET IN dayUsersToUse`);
+          }
+          
+          console.log(`\n📋 dayUsersToUse details:`);
+          for (let i = 0; i < dayUsersToUse.length; i++) {
+            const uid = dayUsersToUse[i];
+            const u = eligibleUsers.find(x => x.id === uid);
+            const hrs = userAssignedHours.get(uid) || 0;
+            const eff = getEffectiveHours(uid);
+            console.log(`   ${i+1}. ${u?.firstName} ${u?.lastName} (ID: ${uid}) - ${hrs}/${eff}h`);
+          }
+          console.log(`${'='.repeat(80)}\n`);
+        }
+        
         const dayShiftHours = 12; // 12 uur per dagshift
         let assignedFullDayShifts = 0;
         
         // Probeer EERST volledige dagshifts toe te wijzen - MAX PRIORITEIT AAN 12-UURS SHIFTS!
         for (const userId of dayUsersToUse) {
-          if (assignedFullDayShifts >= targetDayShifts) break; // Dynamic target from weekday config
+          // 🔍 DEBUG DAG 6: Log elke kandidaat in de loop
+          if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+            console.log(`\n🔍 DEBUG: Processing ${DEBUG_USERNAME} (ID: ${DEBUG_USER_ID}) voor dag ${DEBUG_DAY} assignment...`);
+          }
+          
+          if (assignedFullDayShifts >= targetDayShifts) {
+            if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+              console.log(`❌ ${DEBUG_USERNAME}: SKIPPED - target al bereikt (${assignedFullDayShifts}/${targetDayShifts})`);
+            }
+            break; // Dynamic target from weekday config
+          }
           
           // 🔧 SPLIT SHIFT FIX: Skip gebruikers die expliciet ALLEEN voormiddag of namiddag willen
           const key = `${userId}_${day}`;
@@ -2769,6 +2847,9 @@ export class DatabaseStorage implements IStorage {
           if (hasExplicitSplitPreference) {
             console.log(`⚠️ Skipping user ${userId} for FULL day shift - has explicit split preference (voormiddag/namiddag only)`);
             debugLog(userId, `Day ${day}: SKIPPED for FULL day shift - has explicit split preference`);
+            if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+              console.log(`❌ ${DEBUG_USERNAME}: SKIPPED - has explicit split preference`);
+            }
             continue;
           }
           
@@ -2779,9 +2860,17 @@ export class DatabaseStorage implements IStorage {
             const effectiveHrs = getEffectiveHours(userId);
             console.log(`⏭️ Day ${day}: User ${userId} (${user?.firstName} ${user?.lastName}) SKIPPED - canAssignHours=false (${currentHours}/${effectiveHrs}h, adding ${dayShiftHours}h)`);
             debugLog(userId, `Day ${day}: SKIPPED - canAssignHours returned false (hours full or professional limit)`);
+            if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+              console.log(`❌ ${DEBUG_USERNAME}: SKIPPED - canAssignHours=false (${currentHours}/${effectiveHrs}h)`);
+            }
           }
           
           if (canAssign) {
+            // 🔍 DEBUG DAG 6: canAssign passed
+            if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+              console.log(`✅ ${DEBUG_USERNAME}: canAssignHours=true, checking cross-team conflict...`);
+            }
+            
             // KRITIEKE CROSS-TEAM VALIDATIE: Check for conflicting shifts in andere stations
             const shiftStartTime = new Date(Date.UTC(year, month - 1, day, 7, 0, 0));
             const shiftEndTime = new Date(Date.UTC(year, month - 1, day, 19, 0, 0));
@@ -2798,7 +2887,15 @@ export class DatabaseStorage implements IStorage {
             if (hasConflict) {
               console.log(`⚠️ Skipping VOLLEDIGE day shift voor cross-team user ${userId} - conflict gedetecteerd met andere station`);
               debugLog(userId, `Day ${day}: SKIPPED - cross-team conflict with another station`);
+              if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+                console.log(`❌ ${DEBUG_USERNAME}: SKIPPED - cross-team conflict`);
+              }
               continue;
+            }
+            
+            // 🔍 DEBUG DAG 6: cross-team passed
+            if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+              console.log(`✅ ${DEBUG_USERNAME}: no cross-team conflict, checking consecutive...`);
             }
 
             // 🚨 CONSECUTIVE SHIFT SAFETY CHECK
@@ -2806,14 +2903,30 @@ export class DatabaseStorage implements IStorage {
             if (consecutiveConflict) {
               console.log(`🚨 SAFETY BLOCK: Skipping day shift voor user ${userId} - consecutive shift conflict`);
               debugLog(userId, `Day ${day}: SKIPPED - consecutive shift conflict`);
+              if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+                console.log(`❌ ${DEBUG_USERNAME}: SKIPPED - consecutive shift conflict`);
+              }
               continue;
+            }
+            
+            // 🔍 DEBUG DAG 6: consecutive passed
+            if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+              console.log(`✅ ${DEBUG_USERNAME}: no consecutive conflict, checking driving license...`);
             }
 
             // 🚗 RIJBEWIJS C SAFETY CHECK
             if (needsDrivingLicenseC(assignedDayIds, targetDayShifts, userId)) {
               console.log(`🚗 SAFETY BLOCK: Skipping day shift voor user ${userId} - driving license C required`);
               debugLog(userId, `Day ${day}: SKIPPED - driving license C required`);
+              if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+                console.log(`❌ ${DEBUG_USERNAME}: SKIPPED - driving license C required`);
+              }
               continue;
+            }
+            
+            // 🔍 DEBUG DAG 6: all checks passed!
+            if (day === DEBUG_DAY && userId === DEBUG_USER_ID) {
+              console.log(`✅✅ ${DEBUG_USERNAME}: ALL CHECKS PASSED - ASSIGNING SHIFT!`);
             }
 
             const dayShift = {
