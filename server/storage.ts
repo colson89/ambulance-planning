@@ -1901,33 +1901,51 @@ export class DatabaseStorage implements IStorage {
       // Controleer bestaande shifts voor deze gebruiker in deze maand
       const existingUserShifts = generatedShifts.filter(shift => shift.userId === userId && shift.status === 'planned');
       
-      // REGEL 1: Check vorige dag (geen shift die eindigt binnen 12 uur van deze shift)
+      // Helper: bereken shift duur in uren
+      const getShiftDurationHours = (startTime: Date, endTime: Date): number => {
+        return (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+      };
+      
+      // Bereken duur van de voorgestelde shift
+      const proposedDurationHours = getShiftDurationHours(proposedStartTime, proposedEndTime);
+      
+      // === MAX 12H AANEENSLUITEND WERKEN REGEL ===
+      // Als gecombineerde werktijd > 12h zou zijn, vereis minimaal 11h rust.
+      // 6h + 6h = 12h is toegestaan (precies 12h max)
+      
+      // REGEL 1: Check vorige shifts - zou gecombineerde werktijd > 12h zijn?
       const previousDay = proposedDay - 1;
       if (previousDay >= 1) {
         const previousDayShifts = existingUserShifts.filter(shift => shift.date.getDate() === previousDay);
         
         for (const prevShift of previousDayShifts) {
           const prevEndTime = prevShift.endTime;
+          const prevDurationHours = getShiftDurationHours(prevShift.startTime, prevShift.endTime);
           const timeDiffHours = (proposedStartTime.getTime() - prevEndTime.getTime()) / (1000 * 60 * 60);
+          const combinedWorkHours = prevDurationHours + proposedDurationHours;
           
-          if (timeDiffHours < 12) {
-            console.log(`🚨 CONSECUTIVE SHIFT BLOCKED: User ${userId} has shift ending ${prevEndTime.toLocaleTimeString()} on day ${previousDay}, too close to proposed shift starting ${proposedStartTime.toLocaleTimeString()} on day ${proposedDay} (${timeDiffHours.toFixed(1)}h gap)`);
+          // Als gecombineerde werktijd > 12h zou zijn, vereis minimaal 11h rust
+          if (combinedWorkHours > 12 && timeDiffHours < 11) {
+            console.log(`🚨 MAX 12H WORK BLOCKED: User ${userId} has ${prevDurationHours.toFixed(1)}h shift ending ${prevEndTime.toLocaleTimeString()} on day ${previousDay}. Adding ${proposedDurationHours.toFixed(1)}h shift would be ${combinedWorkHours.toFixed(1)}h total (>12h max). Gap is only ${timeDiffHours.toFixed(1)}h (need 11h rest).`);
             return true;
           }
         }
       }
       
-      // REGEL 2: Check volgende dag (deze shift mag niet eindigen binnen 12 uur van volgende shift)
+      // REGEL 2: Check volgende shifts - zou gecombineerde werktijd > 12h zijn?
       const nextDay = proposedDay + 1;
       if (nextDay <= daysInMonth) {
         const nextDayShifts = existingUserShifts.filter(shift => shift.date.getDate() === nextDay);
         
         for (const nextShift of nextDayShifts) {
           const nextStartTime = nextShift.startTime;
+          const nextDurationHours = getShiftDurationHours(nextShift.startTime, nextShift.endTime);
           const timeDiffHours = (nextStartTime.getTime() - proposedEndTime.getTime()) / (1000 * 60 * 60);
+          const combinedWorkHours = proposedDurationHours + nextDurationHours;
           
-          if (timeDiffHours < 12) {
-            console.log(`🚨 CONSECUTIVE SHIFT BLOCKED: User ${userId} proposed shift ending ${proposedEndTime.toLocaleTimeString()} on day ${proposedDay}, too close to existing shift starting ${nextStartTime.toLocaleTimeString()} on day ${nextDay} (${timeDiffHours.toFixed(1)}h gap)`);
+          // Als gecombineerde werktijd > 12h zou zijn, vereis minimaal 11h rust
+          if (combinedWorkHours > 12 && timeDiffHours < 11) {
+            console.log(`🚨 MAX 12H WORK BLOCKED: User ${userId} proposed ${proposedDurationHours.toFixed(1)}h shift ending ${proposedEndTime.toLocaleTimeString()} on day ${proposedDay}. Existing ${nextDurationHours.toFixed(1)}h shift would make ${combinedWorkHours.toFixed(1)}h total (>12h max). Gap is only ${timeDiffHours.toFixed(1)}h (need 11h rest).`);
             return true;
           }
         }
