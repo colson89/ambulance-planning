@@ -5459,7 +5459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log export activity
       await logActivity({
         userId: req.user!.id,
-        stationId: targetStationId,
+        stationId: stationId,
         action: ActivityActions.EXPORT.PLANNING_EXPORTED,
         category: 'EXPORT',
         details: `Planning geëxporteerd voor ${targetMonth}/${targetYear}`,
