@@ -54,6 +54,26 @@ interface Station {
   updatedAt: string;
 }
 
+// TIMEZONE FIX: Helper functie om YYYY-MM-DD te extraheren zonder timezone conversie
+// - Voor strings (uit database): neem de eerste 10 karakters direct
+// - Voor Date objecten (lokaal geconstrueerd): gebruik lokale methodes
+function toCalendarDate(value: string | Date | null | undefined): string {
+  if (!value) return "";
+  
+  if (typeof value === "string") {
+    // Database timestamps: "2026-02-05 23:00:00" of "2026-02-05T00:00:00.000Z"
+    // Neem alleen YYYY-MM-DD deel, geen timezone conversie
+    return value.substring(0, 10);
+  }
+  
+  // Date object (lokaal geconstrueerd): gebruik lokale methodes
+  // new Date(2026, 1, 6) = 6 februari lokaal
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function ScheduleGenerator() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -662,22 +682,19 @@ function ScheduleGenerator() {
         scheduledHours: number;
       }> = [];
       
-      // Gezochte datum als dag-nummer voor eenvoudige vergelijking
-      // TIMEZONE FIX: Gebruik lokale methodes voor alles - de browser toont de correcte lokale dag
-      const gezochteDay = date.getDate();
-      const gezochteMonth = date.getMonth();
-      const gezochteYear = date.getFullYear();
+      // TIMEZONE FIX: Gebruik helper functie voor consistente datum extractie
+      // - Strings (uit database): substring(0, 10)
+      // - Date objecten: lokale getFullYear/getMonth/getDate
+      const gezochteYMD = toCalendarDate(date);
       
       // In plaats van te zoeken in voorkeuren, kijken we direct naar de shifts
       // om te zien wie er gepland staat voor deze datum
       const matchingShifts = shifts.filter(shift => {
         if (!shift.date) return false;
         
-        // TIMEZONE FIX: Gebruik lokale methodes voor consistentie
-        const shiftDate = new Date(shift.date);
-        const matchesDate = shiftDate.getDate() === gezochteDay && 
-                           shiftDate.getMonth() === gezochteMonth && 
-                           shiftDate.getFullYear() === gezochteYear;
+        // TIMEZONE FIX: Gebruik helper functie
+        const shiftYMD = toCalendarDate(shift.date);
+        const matchesDate = shiftYMD === gezochteYMD;
         
         // Controleer het shift type (dag of nacht)
         const isTypeMatch = (shiftType === "day" && shift.type === "day") || 
@@ -697,11 +714,9 @@ function ScheduleGenerator() {
       // NIEUW: Check cross-team shifts - wie is ingepland op een ANDER station vandaag?
       const usersScheduledElsewhere = new Set<number>();
       crossTeamShifts.forEach(ctShift => {
-        // TIMEZONE FIX: Gebruik lokale methodes voor consistentie
-        const ctShiftDate = new Date(ctShift.date);
-        const ctMatchesDate = ctShiftDate.getDate() === gezochteDay && 
-                              ctShiftDate.getMonth() === gezochteMonth && 
-                              ctShiftDate.getFullYear() === gezochteYear;
+        // TIMEZONE FIX: Gebruik helper functie
+        const ctShiftYMD = toCalendarDate(ctShift.date);
+        const ctMatchesDate = ctShiftYMD === gezochteYMD;
         
         // Controleer het shift type (dag of nacht) - beide shifts blokkeren elkaar
         const isTypeMatch = (shiftType === "day" && ctShift.type === "day") || 
@@ -719,11 +734,10 @@ function ScheduleGenerator() {
       // BELANGRIJK: We zoeken voorkeuren van ALLE stations voor cross-team users
       const preferencesForDate = preferences.filter(pref => {
         if (!pref || !pref.date) return false;
-        // TIMEZONE FIX: Gebruik lokale methodes voor consistentie
-        const prefDate = new Date(pref.date);
-        return prefDate.getDate() === gezochteDay && 
-               prefDate.getMonth() === gezochteMonth && 
-               prefDate.getFullYear() === gezochteYear;
+        // TIMEZONE FIX: Gebruik helper functie
+        // Voorkeuren zijn opgeslagen als "2026-02-05 23:00:00" - helper neemt alleen de datum
+        const prefYMD = toCalendarDate(pref.date);
+        return prefYMD === gezochteYMD;
       });
       
       // Maak Sets voor gebruikers die beschikbaar zijn en die expliciet niet beschikbaar zijn
@@ -835,11 +849,11 @@ function ScheduleGenerator() {
     const userShifts = shifts.filter(s => {
       if (s.userId !== userId) return false;
       
-      // Controleer of de shift in de geselecteerde maand/jaar valt
-      // Gebruik lokale methodes voor consistentie met de rest van de UI
-      const shiftDate = new Date(s.date);
-      return shiftDate.getMonth() === selectedMonth && 
-             shiftDate.getFullYear() === selectedYear;
+      // TIMEZONE FIX: Gebruik helper functie
+      const shiftYMD = toCalendarDate(s.date);
+      const shiftYear = parseInt(shiftYMD.substring(0, 4));
+      const shiftMonth = parseInt(shiftYMD.substring(5, 7)) - 1; // 0-indexed
+      return shiftMonth === selectedMonth && shiftYear === selectedYear;
     });
     
     // Tel de uren voor elke shift gebaseerd op daadwerkelijke tijden
@@ -869,13 +883,16 @@ function ScheduleGenerator() {
     const userShifts = shifts.filter(s => {
       if (s.userId !== userId) return false;
       
-      // Controleer of de shift in de geselecteerde maand/jaar valt
-      // Gebruik lokale methodes voor consistentie met de rest van de UI
-      const shiftDate = new Date(s.date);
+      // TIMEZONE FIX: Gebruik helper functie
+      const shiftYMD = toCalendarDate(s.date);
+      const shiftYear = parseInt(shiftYMD.substring(0, 4));
+      const shiftMonth = parseInt(shiftYMD.substring(5, 7)) - 1; // 0-indexed
+      const shiftDay = parseInt(shiftYMD.substring(8, 10));
+      const checkDate = new Date(shiftYear, shiftMonth, shiftDay);
       // Controleer of het een weekdag is (niet weekend)
-      return shiftDate.getMonth() === selectedMonth && 
-             shiftDate.getFullYear() === selectedYear &&
-             !isWeekend(shiftDate);
+      return shiftMonth === selectedMonth && 
+             shiftYear === selectedYear &&
+             !isWeekend(checkDate);
     });
     
     // Tel de uren voor elke shift gebaseerd op daadwerkelijke tijden
@@ -899,13 +916,16 @@ function ScheduleGenerator() {
     const userShifts = shifts.filter(s => {
       if (s.userId !== userId) return false;
       
-      // Controleer of de shift in de geselecteerde maand/jaar valt
-      // Gebruik lokale methodes voor consistentie met de rest van de UI
-      const shiftDate = new Date(s.date);
+      // TIMEZONE FIX: Gebruik helper functie
+      const shiftYMD = toCalendarDate(s.date);
+      const shiftYear = parseInt(shiftYMD.substring(0, 4));
+      const shiftMonth = parseInt(shiftYMD.substring(5, 7)) - 1; // 0-indexed
+      const shiftDay = parseInt(shiftYMD.substring(8, 10));
+      const checkDate = new Date(shiftYear, shiftMonth, shiftDay);
       // Controleer of het weekend is
-      return shiftDate.getMonth() === selectedMonth && 
-             shiftDate.getFullYear() === selectedYear &&
-             isWeekend(shiftDate);
+      return shiftMonth === selectedMonth && 
+             shiftYear === selectedYear &&
+             isWeekend(checkDate);
     });
     
     // Tel de uren voor elke shift gebaseerd op daadwerkelijke tijden
@@ -2353,9 +2373,11 @@ function ScheduleGenerator() {
         </CardHeader>
         <CardContent>
           {shifts.filter(shift => {
-              // Gebruik lokale methodes voor consistentie met de rest van de UI
-              const shiftDate = new Date(shift.date);
-              return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
+              // TIMEZONE FIX: Gebruik helper functie
+              const shiftYMD = toCalendarDate(shift.date);
+              const shiftYear = parseInt(shiftYMD.substring(0, 4));
+              const shiftMonth = parseInt(shiftYMD.substring(5, 7)) - 1;
+              return shiftMonth === selectedMonth && shiftYear === selectedYear;
             }).length > 0 ? (
             <div className="max-h-[500px] overflow-y-auto pr-2">
               <Table>
@@ -2372,9 +2394,11 @@ function ScheduleGenerator() {
                 <TableBody>
                   {shifts
                     .filter(shift => {
-                      // Gebruik lokale methodes voor consistentie met de rest van de UI
-                      const shiftDate = new Date(shift.date);
-                      return shiftDate.getMonth() === selectedMonth && shiftDate.getFullYear() === selectedYear;
+                      // TIMEZONE FIX: Gebruik helper functie
+                      const shiftYMD = toCalendarDate(shift.date);
+                      const shiftYear = parseInt(shiftYMD.substring(0, 4));
+                      const shiftMonth = parseInt(shiftYMD.substring(5, 7)) - 1;
+                      return shiftMonth === selectedMonth && shiftYear === selectedYear;
                     })
                     .sort((a, b) => {
                       const dateComparison = new Date(a.date).getTime() - new Date(b.date).getTime();
