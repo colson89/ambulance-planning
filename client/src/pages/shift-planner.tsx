@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { formatUTCDate } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
@@ -452,8 +453,11 @@ export default function ShiftPlanner() {
   };
 
   const getDayPreferences = (date: Date) => {
+    // TIMEZONE FIX: Use UTC formatting for database dates (stored at noon UTC)
+    // and local formatting for the selected date
+    const targetDate = format(date, "yyyy-MM-dd");
     return preferences.filter(p =>
-      format(new Date(p.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
+      formatUTCDate(p.date) === targetDate
     );
   };
 

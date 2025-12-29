@@ -7,6 +7,7 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { apiRequest } from "@/lib/queryClient";
+import { getUTCDay } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { insertUserSchema, type User, type ShiftPreference, type Station } from "@shared/schema";
 import { z } from "zod";
@@ -1016,8 +1017,10 @@ export default function UserManagement() {
                               <div className="grid grid-cols-7 gap-2">
                                 {Array.from({ length: new Date(selectedYear, selectedMonth, 0).getDate() }).map((_, day) => {
                                   const date = new Date(selectedYear, selectedMonth - 1, day + 1);
+                                  // TIMEZONE FIX: Use UTC day extraction to avoid timezone drift
+                                  // Database stores dates at noon UTC
                                   const datePrefs = userPreferences?.filter((p: ShiftPreference) => 
-                                    new Date(p.date).getDate() === day + 1
+                                    getUTCDay(p.date) === day + 1
                                   );
                                   
                                   // Bepaal of het een weekenddag is
