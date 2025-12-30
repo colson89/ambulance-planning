@@ -3215,6 +3215,17 @@ A: Volgens de Verdi API specificaties kunnen shifts NIET volledig worden verwijd
 **Q: Hoe werk ik shifts bij die al in Verdi staan?**
 A: Wijzig gewoon de shift in het planningssysteem en klik op "Sync naar Verdi" → "Alleen wijzigingen". Het systeem detecteert automatisch dat de shift al bestaat en stuurt een UPDATE in plaats van een nieuwe shift aan te maken.
 
+**Q: Wat als ik een mix heb van volle en halve dagshifts op dezelfde dag?**
+A: Het systeem handelt dit automatisch af via "normalisatie":
+- **Detectie**: Als er op een dag zowel volle dagshifts (12 uur) als halve shifts (6 uur) zijn, detecteert het systeem dit automatisch
+- **Normalisatie**: Volle dagshifts worden gesplitst in 2 virtuele helften (ochtend + middag)
+- **Resultaat**: Verdi ontvangt consistente entries waarbij alle ambulanciers op dezelfde tijdslots verschijnen
+- **Voorbeeld**: 
+  - Gebruiker A: volle dag 07:00-19:00
+  - Gebruiker B: ochtend 07:00-13:00, middag 13:00-19:00
+  - Verdi ontvangt: ochtendslot met A+B, middagslot met A+B
+- **Voordeel**: Geen handmatige aanpassingen nodig, het systeem zorgt automatisch voor correcte Verdi entries
+
 #### 🚀 Aan de Slag Met Verdi
 
 **Checklist Voor Eerste Gebruik:**

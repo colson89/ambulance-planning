@@ -7493,9 +7493,132 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         });
       }
       
+      // === VERDI SPLIT NORMALISATIE ===
+      // Als er op een dag een mix is van volledige en gesplitste shifts, moeten ALLE shifts
+      // als 2 helften worden verzonden voor consistentie (voormiddag 07:00-13:00 + namiddag 13:00-19:00)
+      
+      // Stap 1: Groepeer shifts per dag en type (dag/nacht) om te detecteren of er splits zijn
+      const shiftsByDayType = new Map<string, Shift[]>();
+      for (const shift of shiftsToSync) {
+        // Gebruik date string voor groepering (bijv. "2026-02-01_day")
+        const dateKey = `${shift.date.toISOString().split('T')[0]}_${shift.type}`;
+        if (!shiftsByDayType.has(dateKey)) {
+          shiftsByDayType.set(dateKey, []);
+        }
+        shiftsByDayType.get(dateKey)!.push(shift);
+      }
+      
+      // Stap 2: Voor elke dag/type: check of er gesplitste shifts zijn en normaliseer indien nodig
+      const normalizedShifts: Shift[] = [];
+      
+      for (const [dayTypeKey, dayShifts] of shiftsByDayType.entries()) {
+        // Alleen voor dagshifts normaliseren (nachtshifts zijn altijd 12h)
+        const shiftType = dayTypeKey.split('_')[1];
+        if (shiftType !== 'day') {
+          // Nachtshifts: direct toevoegen zonder normalisatie
+          normalizedShifts.push(...dayShifts);
+          continue;
+        }
+        
+        // Check of er gesplitste shifts zijn op deze dag
+        // Een shift is gesplitst als: isSplitShift=true OF duur < 10 uur (veilige marge voor 6h shifts)
+        const hasSplitShifts = dayShifts.some(shift => {
+          const durationHours = (shift.endTime.getTime() - shift.startTime.getTime()) / (1000 * 60 * 60);
+          return shift.isSplitShift === true || durationHours < 10;
+        });
+        
+        if (!hasSplitShifts) {
+          // Geen gesplitste shifts: direct toevoegen
+          normalizedShifts.push(...dayShifts);
+          continue;
+        }
+        
+        // Er zijn gesplitste shifts: normaliseer ALLE dagshifts naar 2 helften
+        console.log(`🔄 Verdi normalisatie: dag ${dayTypeKey} heeft gemengde shifts, alle dagshifts worden gesplitst`);
+        
+        // Zoek een echte gesplitste shift om de tijden te kopiëren (voorkomt timezone drift)
+        const realMorningShift = dayShifts.find(s => {
+          const dur = (s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60 * 60);
+          const hour = s.startTime.getUTCHours();
+          return dur < 10 && hour < 12; // Halve shift die in de ochtend begint
+        });
+        const realAfternoonShift = dayShifts.find(s => {
+          const dur = (s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60 * 60);
+          const hour = s.startTime.getUTCHours();
+          return dur < 10 && hour >= 12; // Halve shift die in de middag begint
+        });
+        
+        for (const shift of dayShifts) {
+          const durationHours = (shift.endTime.getTime() - shift.startTime.getTime()) / (1000 * 60 * 60);
+          
+          if (durationHours >= 10) {
+            // Dit is een volledige dagshift (12h) - splitsen in 2 virtuele helften
+            // Kopieer tijden van echte halve shifts indien beschikbaar, anders bereken
+            
+            // Ochtend tijden
+            let morningStart: Date, morningEnd: Date;
+            if (realMorningShift) {
+              morningStart = new Date(realMorningShift.startTime);
+              morningEnd = new Date(realMorningShift.endTime);
+            } else {
+              // Fallback: gebruik het begin van de volle shift tot middag
+              morningStart = new Date(shift.startTime);
+              morningEnd = new Date(shift.startTime.getTime() + (6 * 60 * 60 * 1000)); // +6 uur
+            }
+            
+            // Middag tijden
+            let afternoonStart: Date, afternoonEnd: Date;
+            if (realAfternoonShift) {
+              afternoonStart = new Date(realAfternoonShift.startTime);
+              afternoonEnd = new Date(realAfternoonShift.endTime);
+            } else {
+              // Fallback: gebruik middag tot einde van de volle shift
+              afternoonStart = new Date(shift.endTime.getTime() - (6 * 60 * 60 * 1000)); // -6 uur
+              afternoonEnd = new Date(shift.endTime);
+            }
+            
+            // Virtuele ochtendshift met uniek virtueel ID
+            const morningShift = {
+              ...shift,
+              id: -shift.id * 10 - 1, // Negatief virtueel ID: -123 wordt -1231 voor AM
+              startTime: morningStart,
+              endTime: morningEnd,
+              isSplitShift: true,
+              splitStartTime: morningStart,
+              splitEndTime: morningEnd,
+              _isVirtualSplit: true,
+              _originalShiftId: shift.id // Bewaar originele ID voor logging
+            };
+            
+            // Virtuele middagshift met uniek virtueel ID
+            const afternoonShift = {
+              ...shift,
+              id: -shift.id * 10 - 2, // Negatief virtueel ID: -123 wordt -1232 voor PM
+              startTime: afternoonStart,
+              endTime: afternoonEnd,
+              isSplitShift: true,
+              splitStartTime: afternoonStart,
+              splitEndTime: afternoonEnd,
+              _isVirtualSplit: true,
+              _originalShiftId: shift.id
+            };
+            
+            normalizedShifts.push(morningShift as Shift);
+            normalizedShifts.push(afternoonShift as Shift);
+            
+            console.log(`  → Gebruiker ${shift.userId}: volle shift ${shift.startTime.toISOString()} gesplitst naar 2 helften (virtuele IDs: ${morningShift.id}, ${afternoonShift.id})`);
+          } else {
+            // Dit is al een gesplitste shift - direct toevoegen
+            normalizedShifts.push(shift);
+          }
+        }
+      }
+      
+      console.log(`Verdi normalisatie: ${shiftsToSync.length} originele shifts → ${normalizedShifts.length} genormaliseerde shifts`);
+      
       // Groepeer shifts op basis van startTime, endTime, type (meerdere users kunnen dezelfde shift hebben)
       const shiftGroups = new Map<string, Shift[]>();
-      for (const shift of shiftsToSync) {
+      for (const shift of normalizedShifts) {
         const key = `${shift.startTime.toISOString()}_${shift.endTime.toISOString()}_${shift.type}`;
         if (!shiftGroups.has(key)) {
           shiftGroups.set(key, []);
@@ -7519,13 +7642,18 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             console.log(`Skipping shift group ${groupKey}: geen gebruikers toegewezen`);
             skipped++;
             
-            // Log als skipped voor alle shifts in deze groep
+            // Log als skipped voor alle shifts in deze groep (inclusief virtuele met negatieve IDs)
+            const loggedIds1 = new Set<number>();
             for (const shift of groupShifts) {
-              const existingLog = await storage.getVerdiSyncLog(shift.id);
+              const actualShiftId = shift.id;
+              if (loggedIds1.has(actualShiftId)) continue;
+              loggedIds1.add(actualShiftId);
+              
+              const existingLog = await storage.getVerdiSyncLog(actualShiftId);
               if (existingLog) {
-                await storage.updateVerdiSyncLog(shift.id, 'error', undefined, 'Shift heeft geen toegewezen gebruikers', undefined, shift.startTime, shift.endTime, shift.type);
+                await storage.updateVerdiSyncLog(actualShiftId, 'error', undefined, 'Shift heeft geen toegewezen gebruikers', undefined, shift.startTime, shift.endTime, shift.type);
               } else {
-                await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, 'Shift heeft geen toegewezen gebruikers', undefined, shift.startTime, shift.endTime, shift.type);
+                await storage.createVerdiSyncLog(actualShiftId, shift.stationId, 'error', undefined, 'Shift heeft geen toegewezen gebruikers', undefined, shift.startTime, shift.endTime, shift.type);
               }
             }
             continue;
@@ -7560,13 +7688,18 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             console.log(`Skipping shift group ${groupKey}: geen geldige gebruikers gevonden`);
             skipped++;
             
-            // Log als error voor alle shifts in deze groep
+            // Log als error voor alle shifts in deze groep (inclusief virtuele met negatieve IDs)
+            const loggedIds2 = new Set<number>();
             for (const shift of groupShifts) {
-              const existingLog = await storage.getVerdiSyncLog(shift.id);
+              const actualShiftId = shift.id;
+              if (loggedIds2.has(actualShiftId)) continue;
+              loggedIds2.add(actualShiftId);
+              
+              const existingLog = await storage.getVerdiSyncLog(actualShiftId);
               if (existingLog) {
-                await storage.updateVerdiSyncLog(shift.id, 'error', undefined, 'Geen geldige gebruikers gevonden', undefined, shift.startTime, shift.endTime, shift.type);
+                await storage.updateVerdiSyncLog(actualShiftId, 'error', undefined, 'Geen geldige gebruikers gevonden', undefined, shift.startTime, shift.endTime, shift.type);
               } else {
-                await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, 'Geen geldige gebruikers gevonden', undefined, shift.startTime, shift.endTime, shift.type);
+                await storage.createVerdiSyncLog(actualShiftId, shift.stationId, 'error', undefined, 'Geen geldige gebruikers gevonden', undefined, shift.startTime, shift.endTime, shift.type);
               }
             }
             continue;
@@ -7631,11 +7764,26 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           // Extract user IDs voor assignment tracking
           const assignedUserIds = groupShifts.map(s => s.userId);
           
+          // Log elke shift (inclusief virtuele splits) met hun eigen ID
+          // Virtuele splits gebruiken negatieve IDs die niet botsen met echte database IDs
+          // Dit zorgt ervoor dat elke GUID (AM en PM) apart wordt bijgehouden
+          const loggedShiftIds = new Set<number>();
+          
           for (const shift of groupShifts) {
-            const shiftLog = await storage.getVerdiSyncLog(shift.id);
+            // Gebruik het shift ID direct (inclusief negatieve virtuele IDs)
+            // Dit zorgt ervoor dat AM en PM helften elk hun eigen GUID/log krijgen
+            const actualShiftId = shift.id;
+            
+            // Skip duplicaten binnen dezelfde groep
+            if (loggedShiftIds.has(actualShiftId)) {
+              continue;
+            }
+            loggedShiftIds.add(actualShiftId);
+            
+            const shiftLog = await storage.getVerdiSyncLog(actualShiftId);
             if (shiftLog) {
               await storage.updateVerdiSyncLog(
-                shift.id,
+                actualShiftId,
                 syncStatus,
                 response.shift,
                 errorMessage || undefined,
@@ -7646,7 +7794,7 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
               );
             } else {
               await storage.createVerdiSyncLog(
-                shift.id,
+                actualShiftId,
                 shift.stationId,
                 syncStatus,
                 response.shift,
