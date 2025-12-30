@@ -9,7 +9,7 @@ import { formatUTCDate } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, Moon, Sun, Download } from "lucide-react";
+import { Home, Loader2, Moon, Sun, Download, AlertTriangle } from "lucide-react";
 import { useLocation } from "wouter";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -79,7 +79,7 @@ export default function ShiftPlanner() {
   });
 
   // Haal user's stations op om multi-station detectie mogelijk te maken
-  const { data: userStations = [] } = useQuery<any[]>({
+  const { data: userStations = [], isSuccess: userStationsLoaded } = useQuery<any[]>({
     queryKey: ["/api/user/stations"],
     queryFn: async () => {
       const res = await apiRequest("GET", "/api/user/stations");
@@ -110,6 +110,24 @@ export default function ShiftPlanner() {
       return res.json();
     },
     enabled: !!user,
+  });
+
+  // Haal deadline status op voor alle toegewezen stations (cross-team waarschuwing)
+  // Enabled wanneer userStations geladen is EN user meerdere stations heeft
+  const { data: deadlineStatus } = useQuery<{
+    expiredStations: Array<{ stationId: number; displayName: string; deadline: string }>;
+    activeStations: Array<{ stationId: number; displayName: string; deadline: string }>;
+    allExpired: boolean;
+    hasExpiredStations: boolean;
+  }>({
+    queryKey: ["/api/preferences/deadline-status", selectedMonth.getMonth() + 1, selectedMonth.getFullYear()],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/preferences/deadline-status?month=${selectedMonth.getMonth() + 1}&year=${selectedMonth.getFullYear()}`);
+      if (!res.ok) throw new Error("Kon deadline status niet ophalen");
+      return res.json();
+    },
+    enabled: !!user && userStationsLoaded && isMultiStation,
+    staleTime: 60 * 1000, // 1 minuut
   });
 
   // Helper functie om te checken of een datum een weekend of feestdag is
@@ -515,6 +533,33 @@ export default function ShiftPlanner() {
           </span>
         </AlertDescription>
       </Alert>
+
+      {/* Waarschuwingsbanner voor cross-team medewerkers met verstreken deadlines */}
+      {deadlineStatus?.hasExpiredStations && !deadlineStatus?.allExpired && (
+        <Alert className="mb-4 md:mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950/30">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-sm text-amber-800 dark:text-amber-200 ml-2">
+            <span className="font-semibold">Let op:</span> De deadline is verstreken voor{" "}
+            {deadlineStatus.expiredStations.map((s, idx) => (
+              <span key={s.stationId}>
+                <strong>{s.displayName}</strong> (deadline: {s.deadline})
+                {idx < deadlineStatus.expiredStations.length - 1 ? ", " : ""}
+              </span>
+            ))}
+            . Wijzigingen hebben geen invloed meer op de planning van deze station(s).
+            <br />
+            <span className="text-xs text-amber-600 dark:text-amber-400">
+              U kunt nog wel voorkeuren invoeren voor:{" "}
+              {deadlineStatus.activeStations.map((s, idx) => (
+                <span key={s.stationId}>
+                  {s.displayName}
+                  {idx < deadlineStatus.activeStations.length - 1 ? ", " : ""}
+                </span>
+              ))}
+            </span>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
         <div className="space-y-6">

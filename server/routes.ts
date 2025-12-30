@@ -3495,6 +3495,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get deadline status for all assigned stations (for cross-team warning banner)
+  app.get("/api/preferences/deadline-status", requireAuth, async (req, res) => {
+    try {
+      const { month, year } = req.query;
+      if (!month || !year) {
+        return res.status(400).json({ message: "Maand en jaar zijn verplicht" });
+      }
+
+      const targetMonth = parseInt(month as string);
+      const targetYear = parseInt(year as string);
+      const user = req.user!;
+
+      // Get all stations the user is assigned to
+      const userStationAssignments = await storage.getUserStationAssignments(user.id);
+      const allStationIds = [user.stationId, ...userStationAssignments.map(a => a.stationId)];
+      const uniqueStationIds = [...new Set(allStationIds)];
+
+      // Get all stations info for display names
+      const allStations = await storage.getStations();
+      
+      const expiredStations: Array<{ stationId: number; displayName: string; deadline: string }> = [];
+      const activeStations: Array<{ stationId: number; displayName: string; deadline: string }> = [];
+
+      for (const stationId of uniqueStationIds) {
+        const deadlineCheck = await checkPreferenceDeadline(stationId, targetMonth, targetYear);
+        const station = allStations.find(s => s.id === stationId);
+        const displayName = station?.displayName || station?.name || `Station ${stationId}`;
+        
+        const stationInfo = {
+          stationId,
+          displayName,
+          deadline: deadlineCheck.deadlineString
+        };
+
+        if (deadlineCheck.isPastDeadline) {
+          expiredStations.push(stationInfo);
+        } else {
+          activeStations.push(stationInfo);
+        }
+      }
+
+      res.json({
+        month: targetMonth,
+        year: targetYear,
+        expiredStations,
+        activeStations,
+        allExpired: expiredStations.length === uniqueStationIds.length,
+        hasExpiredStations: expiredStations.length > 0
+      });
+    } catch (error) {
+      console.error('Error getting deadline status:', error);
+      res.status(500).json({ message: "Kon deadline status niet ophalen" });
+    }
+  });
+
   // Export user's own preferences to Excel
   app.get("/api/preferences/export", requireAuth, async (req, res) => {
     try {
