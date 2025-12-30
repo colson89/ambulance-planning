@@ -3475,15 +3475,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const month = parseInt(req.query.month as string);
         const year = parseInt(req.query.year as string);
         
-        // For ambulanciers: check if planning is published
+        // Check if planning is published - applies to ALL users (including admins/supervisors)
         // NOTE: If no planning period record exists, treat as published (backwards compatibility)
-        if (!isAdminOrSupervisor) {
-          const planningPeriod = await storage.getPlanningPeriod(effectiveStationId!, month, year);
-          // Only hide if explicitly marked as unpublished (isPublished === false)
-          if (planningPeriod && planningPeriod.isPublished === false) {
-            // Return empty array if planning is explicitly unpublished
-            return res.status(200).json([]);
-          }
+        const planningPeriod = await storage.getPlanningPeriod(effectiveStationId!, month, year);
+        // Only hide if explicitly marked as unpublished (isPublished === false)
+        if (planningPeriod && planningPeriod.isPublished === false) {
+          // Return empty array if planning is explicitly unpublished
+          return res.status(200).json([]);
         }
         
         shifts = await storage.getShiftsByMonth(month, year, effectiveStationId!);
@@ -3492,9 +3490,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // This is typically used for dashboard/calendar views
         shifts = await storage.getAllShifts(effectiveStationId!);
         
-        // For ambulanciers: filter out shifts from explicitly unpublished planning periods
+        // Filter out shifts from explicitly unpublished planning periods - applies to ALL users
         // NOTE: If no planning period record exists, treat as published (backwards compatibility)
-        if (!isAdminOrSupervisor && shifts.length > 0) {
+        if (shifts.length > 0) {
           const shiftsWithPublishCheck: typeof shifts = [];
           const checkedPeriods = new Map<string, boolean>();
           
@@ -6018,11 +6016,14 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       
       // Haal alle shifts van de gebruiker op (huidige maand + 2 maanden vooruit)
       // BELANGRIJK: Cross-station support - haal shifts van ALLE stations op
+      // BELANGRIJK: Alleen shifts van GEPUBLICEERDE planningsperiodes tonen
       const now = new Date();
       const currentMonth = now.getMonth() + 1; // 1-12
       const currentYear = now.getFullYear();
       
       const allShifts = [];
+      const publishedPeriodsCache = new Map<string, boolean>();
+      
       for (let i = 0; i < 3; i++) {
         const date = addMonths(now, i);
         const month = date.getMonth() + 1;
@@ -6032,8 +6033,25 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         allShifts.push(...monthShifts);
       }
       
-      // Filter alleen shifts van deze gebruiker
-      const userShifts = allShifts.filter(shift => shift.userId === user.id);
+      // Filter alleen shifts van deze gebruiker EN alleen van gepubliceerde planningsperiodes
+      const userShifts: typeof allShifts = [];
+      for (const shift of allShifts) {
+        if (shift.userId !== user.id) continue;
+        
+        // Check publicatie status per station/maand/jaar
+        const periodKey = `${shift.stationId}-${shift.month}-${shift.year}`;
+        if (!publishedPeriodsCache.has(periodKey)) {
+          const planningPeriod = await storage.getPlanningPeriod(shift.stationId, shift.month, shift.year);
+          // Treat as published if no record exists OR if explicitly published
+          const isPublished = !planningPeriod || planningPeriod.isPublished !== false;
+          publishedPeriodsCache.set(periodKey, isPublished);
+        }
+        
+        // Alleen toevoegen als gepubliceerd
+        if (publishedPeriodsCache.get(periodKey)) {
+          userShifts.push(shift);
+        }
+      }
       
       // Haal alle stations op voor station namen en adressen in events
       const allStations = await storage.getAllStations();
