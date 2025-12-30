@@ -3518,15 +3518,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expiredStations: Array<{ stationId: number; displayName: string; deadline: string }> = [];
       const activeStations: Array<{ stationId: number; displayName: string; deadline: string }> = [];
 
+      console.log('Deadline-status: uniqueStationIds:', uniqueStationIds);
+      console.log('Deadline-status: allStations:', allStations.map(s => ({ id: s.id, displayName: s.displayName })));
+      
       for (const stationId of uniqueStationIds) {
         const deadlineCheck = await checkPreferenceDeadline(stationId, targetMonth, targetYear);
         const station = allStations.find(s => s.id === stationId);
         const displayName = station?.displayName || station?.name || `Station ${stationId}`;
         
+        console.log(`Deadline-status: stationId=${stationId}, found station=${!!station}, displayName=${displayName}, deadline=${deadlineCheck.deadlineString}`);
+        
         const stationInfo = {
           stationId,
           displayName,
-          deadline: deadlineCheck.deadlineString
+          deadline: deadlineCheck.deadlineString || 'Onbekend'
         };
 
         if (deadlineCheck.isPastDeadline) {
@@ -3535,6 +3540,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           activeStations.push(stationInfo);
         }
       }
+      
+      console.log('Deadline-status response:', { expiredStations, activeStations });
 
       res.json({
         month: targetMonth,

@@ -551,8 +551,8 @@ export default function ShiftPlanner() {
             <span className="text-xs text-amber-600 dark:text-amber-400">
               U kunt nog wel voorkeuren invoeren voor:{" "}
               {deadlineStatus.activeStations.map((s, idx) => (
-                <span key={s.stationId}>
-                  {s.displayName}
+                <span key={s.stationId || idx}>
+                  {s.displayName || `Station ${s.stationId}`}
                   {idx < deadlineStatus.activeStations.length - 1 ? ", " : ""}
                 </span>
               ))}
