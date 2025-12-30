@@ -2042,6 +2042,43 @@ export class DatabaseStorage implements IStorage {
         return true;
       }
       
+      // REGEL 4: KRITIEKE DIRECTE TIMESTAMP CHECK - Loop door ALLE shifts van de gebruiker
+      // Dit vangt edge cases op die de dag-gebaseerde checks missen (bijv. nacht→dag opeenvolging)
+      // Vereist minimaal 11 uur rust tussen shifts wanneer gecombineerde werktijd > 12 uur zou zijn
+      for (const existingShift of existingUserShifts) {
+        const existingStart = existingShift.startTime.getTime();
+        const existingEnd = existingShift.endTime.getTime();
+        const proposedStart = proposedStartTime.getTime();
+        const proposedEnd = proposedEndTime.getTime();
+        
+        const existingDurationHours = (existingEnd - existingStart) / (1000 * 60 * 60);
+        const combinedWorkHours = existingDurationHours + proposedDurationHours;
+        
+        // Check 1: Voorgestelde shift begint voordat bestaande eindigt + 11h rust (als combined > 12h)
+        if (proposedStart < existingEnd + (11 * 60 * 60 * 1000) && proposedStart >= existingStart) {
+          if (combinedWorkHours > 12) {
+            const gapHours = (proposedStart - existingEnd) / (1000 * 60 * 60);
+            console.log(`🚨 TIMESTAMP CHECK BLOCKED: User ${userId} - proposed shift starts ${gapHours.toFixed(1)}h after existing shift ends (need 11h rest for ${combinedWorkHours.toFixed(1)}h combined work)`);
+            return true;
+          }
+        }
+        
+        // Check 2: Bestaande shift begint voordat voorgestelde eindigt + 11h rust (als combined > 12h)
+        if (existingStart < proposedEnd + (11 * 60 * 60 * 1000) && existingStart >= proposedStart) {
+          if (combinedWorkHours > 12) {
+            const gapHours = (existingStart - proposedEnd) / (1000 * 60 * 60);
+            console.log(`🚨 TIMESTAMP CHECK BLOCKED: User ${userId} - existing shift starts ${gapHours.toFixed(1)}h after proposed shift ends (need 11h rest for ${combinedWorkHours.toFixed(1)}h combined work)`);
+            return true;
+          }
+        }
+        
+        // Check 3: Directe overlap (shifts overlappen in tijd)
+        if (proposedStart < existingEnd && proposedEnd > existingStart) {
+          console.log(`🚨 OVERLAP BLOCKED: User ${userId} - shifts would overlap in time`);
+          return true;
+        }
+      }
+      
       return false; // Geen conflict gevonden
     };
 
