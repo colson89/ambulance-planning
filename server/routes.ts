@@ -3509,8 +3509,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get all stations the user is assigned to
       const userStationAssignments = await storage.getUserStationAssignments(user.id);
-      const allStationIds = [user.stationId, ...userStationAssignments.map(a => a.stationId)];
-      const uniqueStationIds = [...new Set(allStationIds)];
+      // Note: getUserStationAssignments returns {station: Station, maxHours: number} - use a.station.id
+      const allStationIds = [user.stationId, ...userStationAssignments.map(a => a.station.id)];
+      // Filter out undefined/null values to prevent "Station undefined" errors
+      const uniqueStationIds = [...new Set(allStationIds)].filter((id): id is number => id !== undefined && id !== null);
 
       // Get all stations info for display names
       const allStations = await storage.getAllStations();
