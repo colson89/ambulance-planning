@@ -217,7 +217,7 @@ export default function ShiftPlanner() {
       console.log("API Response data:", json);
       return json;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       console.log("Voorkeur succesvol opgeslagen");
       queryClient.invalidateQueries({ queryKey: ["/api/unified-preferences"] });
       
@@ -231,10 +231,20 @@ export default function ShiftPlanner() {
         }
       }, 100); // Kleine delay om cache invalidation te laten settelen
       
-      toast({
-        title: "Succes",
-        description: "Voorkeur opgeslagen",
-      });
+      // Check for deadline warning for cross-team stations
+      if (data.warning && data.warningMessage) {
+        toast({
+          title: "Voorkeur opgeslagen",
+          description: data.warningMessage,
+          variant: "default",
+          duration: 8000, // Langere duration voor belangrijke waarschuwing
+        });
+      } else {
+        toast({
+          title: "Succes",
+          description: "Voorkeur opgeslagen",
+        });
+      }
     },
     onError: (error: Error) => {
       console.error("Error bij opslaan voorkeur:", error);

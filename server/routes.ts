@@ -2473,23 +2473,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = schema.parse({ month, year });
 
-      // DEADLINE CHECK: Verify deadline hasn't passed for ALL assigned stations (cross-team fix)
+      // DEADLINE CHECK: Only block if ALL station deadlines have passed
       // Get all stations the user is assigned to
       const userStationAssignments = await storage.getUserStationAssignments(userId);
       const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
       const uniqueStationIds = [...new Set(allStationIds)];
       
+      // Check all stations and collect expired ones
+      const expiredStations: { stationId: number; displayName: string; deadline: string }[] = [];
+      const activeStations: { stationId: number; displayName: string }[] = [];
+      
       for (const stationId of uniqueStationIds) {
         const deadlineCheck = await checkPreferenceDeadline(stationId, validatedData.month, validatedData.year);
+        const station = await storage.getStation(stationId);
+        const displayName = station?.displayName || `Station ${stationId}`;
+        
         if (deadlineCheck.isPastDeadline) {
-          const station = await storage.getStation(stationId);
-          return res.status(403).json({ 
-            message: `De deadline voor het indienen van voorkeuren is verstreken voor ${station?.displayName || 'station'}. De deadline was ${deadlineCheck.deadlineString}.`,
-            deadlinePassed: true,
-            deadline: deadlineCheck.deadlineString,
-            stationId: stationId
-          });
+          expiredStations.push({ stationId, displayName, deadline: deadlineCheck.deadlineString });
+        } else {
+          activeStations.push({ stationId, displayName });
         }
+      }
+      
+      // Only block if ALL stations have expired deadlines
+      if (expiredStations.length > 0 && activeStations.length === 0) {
+        return res.status(403).json({ 
+          message: `De deadline voor het indienen van voorkeuren is verstreken voor alle stations.`,
+          deadlinePassed: true,
+          expiredStations: expiredStations
+        });
       }
 
       // Sync preferences from primary station to all assigned stations
@@ -2510,9 +2522,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userAgent: req.headers['user-agent'] || 'unknown'
       });
 
-      res.json({ 
+      // Include warning about expired stations if any
+      const response: any = { 
         message: `Voorkeuren gesynchroniseerd voor ${validatedData.month}/${validatedData.year} naar alle toegewezen stations`
-      });
+      };
+      
+      if (expiredStations.length > 0) {
+        response.warning = true;
+        response.expiredStations = expiredStations;
+        response.warningMessage = `Let op: de deadline is al verstreken voor ${expiredStations.map(s => s.displayName).join(', ')}. Wijzigingen hebben geen invloed meer op de planning van deze station(s).`;
+      }
+      
+      res.json(response);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Ongeldige gegevens", errors: error.errors });
@@ -2541,23 +2562,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Ongeldig jaar" });
       }
 
-      // DEADLINE CHECK: Verify deadline hasn't passed for ALL assigned stations (cross-team fix)
+      // DEADLINE CHECK: Only block if ALL station deadlines have passed
       // Get all stations the user is assigned to
       const userStationAssignments = await storage.getUserStationAssignments(userId);
       const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
       const uniqueStationIds = [...new Set(allStationIds)];
       
+      // Check all stations and collect expired ones
+      const expiredStations: { stationId: number; displayName: string; deadline: string }[] = [];
+      const activeStations: { stationId: number; displayName: string }[] = [];
+      
       for (const stationId of uniqueStationIds) {
         const deadlineCheck = await checkPreferenceDeadline(stationId, month, year);
+        const station = await storage.getStation(stationId);
+        const displayName = station?.displayName || `Station ${stationId}`;
+        
         if (deadlineCheck.isPastDeadline) {
-          const station = await storage.getStation(stationId);
-          return res.status(403).json({ 
-            message: `De deadline voor het wijzigen van voorkeuren is verstreken voor ${station?.displayName || 'station'}. De deadline was ${deadlineCheck.deadlineString}.`,
-            deadlinePassed: true,
-            deadline: deadlineCheck.deadlineString,
-            stationId: stationId
-          });
+          expiredStations.push({ stationId, displayName, deadline: deadlineCheck.deadlineString });
+        } else {
+          activeStations.push({ stationId, displayName });
         }
+      }
+      
+      // Only block if ALL stations have expired deadlines
+      if (expiredStations.length > 0 && activeStations.length === 0) {
+        return res.status(403).json({ 
+          message: `De deadline voor het wijzigen van voorkeuren is verstreken voor alle stations.`,
+          deadlinePassed: true,
+          expiredStations: expiredStations
+        });
       }
 
       await storage.deleteUnifiedPreferencesForUser(userId, month, year);
@@ -2581,7 +2614,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Failed to log unified preferences deletion:", logError);
       }
 
-      res.json({ message: `Alle voorkeuren voor ${month}/${year} zijn verwijderd van alle stations` });
+      // Include warning about expired stations if any
+      const response: any = { 
+        message: `Alle voorkeuren voor ${month}/${year} zijn verwijderd van alle stations`
+      };
+      
+      if (expiredStations.length > 0) {
+        response.warning = true;
+        response.expiredStations = expiredStations;
+        response.warningMessage = `Let op: de deadline is al verstreken voor ${expiredStations.map(s => s.displayName).join(', ')}. Wijzigingen hebben geen invloed meer op de planning van deze station(s).`;
+      }
+      
+      res.json(response);
     } catch (error) {
       console.error("Error deleting unified preferences:", error);
       res.status(500).json({ message: "Failed to delete unified preferences" });
@@ -2593,25 +2637,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Received preference data with sync:', req.body);
 
-      // DEADLINE CHECK: Verify deadline hasn't passed for ALL assigned stations (cross-team fix)
+      // DEADLINE CHECK: Only block if ALL station deadlines have passed
       const { month, year } = req.body;
+      let expiredStations: { stationId: number; displayName: string; deadline: string }[] = [];
+      
       if (month && year) {
         // Get all stations the user is assigned to
         const userStationAssignments = await storage.getUserStationAssignments(req.user!.id);
         const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
         const uniqueStationIds = [...new Set(allStationIds)];
         
+        // Check all stations and collect expired ones
+        const activeStations: { stationId: number; displayName: string }[] = [];
+        
         for (const stationId of uniqueStationIds) {
           const deadlineCheck = await checkPreferenceDeadline(stationId, month, year);
+          const station = await storage.getStation(stationId);
+          const displayName = station?.displayName || `Station ${stationId}`;
+          
           if (deadlineCheck.isPastDeadline) {
-            const station = await storage.getStation(stationId);
-            return res.status(403).json({ 
-              message: `De deadline voor het indienen van voorkeuren is verstreken voor ${station?.displayName || 'station'}. De deadline was ${deadlineCheck.deadlineString}.`,
-              deadlinePassed: true,
-              deadline: deadlineCheck.deadlineString,
-              stationId: stationId
-            });
+            expiredStations.push({ stationId, displayName, deadline: deadlineCheck.deadlineString });
+          } else {
+            activeStations.push({ stationId, displayName });
           }
+        }
+        
+        // Only block if ALL stations have expired deadlines
+        if (expiredStations.length > 0 && activeStations.length === 0) {
+          return res.status(403).json({ 
+            message: `De deadline voor het indienen van voorkeuren is verstreken voor alle stations.`,
+            deadlinePassed: true,
+            expiredStations: expiredStations
+          });
         }
       }
 
@@ -2704,7 +2761,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ipAddress: getClientInfo(req).ipAddress
       });
 
-      res.status(201).json(preference);
+      // Include warning about expired stations if any
+      const response: any = { ...preference };
+      
+      if (expiredStations.length > 0) {
+        response.warning = true;
+        response.expiredStations = expiredStations;
+        response.warningMessage = `Let op: de deadline is al verstreken voor ${expiredStations.map(s => s.displayName).join(', ')}. Wijzigingen hebben geen invloed meer op de planning van deze station(s).`;
+      }
+      
+      res.status(201).json(response);
     } catch (error) {
       console.error('Error processing preference with sync:', error);
       res.status(500).json({
@@ -3256,15 +3322,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Datum moet in YYYY-MM-DD formaat zijn" });
       }
       
-      // DEADLINE CHECK: Verify deadline hasn't passed (applies to ALL users including admins)
+      // DEADLINE CHECK: Only block if ALL station deadlines have passed
       const { month, year } = req.body;
+      let expiredStations: { stationId: number; displayName: string; deadline: string }[] = [];
+      
       if (month && year) {
-        const deadlineCheck = await checkPreferenceDeadline(req.user!.stationId, month, year);
-        if (deadlineCheck.isPastDeadline) {
+        // Get all stations the user is assigned to
+        const userStationAssignments = await storage.getUserStationAssignments(req.user!.id);
+        const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
+        const uniqueStationIds = [...new Set(allStationIds)];
+        
+        // Check all stations and collect expired ones
+        const activeStations: { stationId: number; displayName: string }[] = [];
+        
+        for (const stationId of uniqueStationIds) {
+          const deadlineCheck = await checkPreferenceDeadline(stationId, month, year);
+          const station = await storage.getStation(stationId);
+          const displayName = station?.displayName || `Station ${stationId}`;
+          
+          if (deadlineCheck.isPastDeadline) {
+            expiredStations.push({ stationId, displayName, deadline: deadlineCheck.deadlineString });
+          } else {
+            activeStations.push({ stationId, displayName });
+          }
+        }
+        
+        // Only block if ALL stations have expired deadlines
+        if (expiredStations.length > 0 && activeStations.length === 0) {
           return res.status(403).json({ 
-            message: `De deadline voor het indienen van voorkeuren is verstreken. De deadline was ${deadlineCheck.deadlineString}.`,
+            message: `De deadline voor het indienen van voorkeuren is verstreken voor alle stations.`,
             deadlinePassed: true,
-            deadline: deadlineCheck.deadlineString
+            expiredStations: expiredStations
           });
         }
       }
@@ -3333,7 +3421,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log('Created new preference:', preference);
       }
 
-      res.status(201).json(preference);
+      // Include warning about expired stations if any
+      const response: any = { ...preference };
+      
+      if (expiredStations.length > 0) {
+        response.warning = true;
+        response.expiredStations = expiredStations;
+        response.warningMessage = `Let op: de deadline is al verstreken voor ${expiredStations.map(s => s.displayName).join(', ')}. Wijzigingen hebben geen invloed meer op de planning van deze station(s).`;
+      }
+
+      res.status(201).json(response);
     } catch (error) {
       console.error('Error processing preference:', error);
       res.status(500).json({
