@@ -3507,12 +3507,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const targetYear = parseInt(year as string);
       const user = req.user!;
 
-      // Get all stations the user is assigned to
-      const userStationAssignments = await storage.getUserStationAssignments(user.id);
-      // Note: getUserStationAssignments returns {station: Station, maxHours: number} - use a.station.id
-      const allStationIds = [user.stationId, ...userStationAssignments.map(a => a.station.id)];
-      // Filter out undefined/null values to prevent "Station undefined" errors
-      const uniqueStationIds = [...new Set(allStationIds)].filter((id): id is number => id !== undefined && id !== null);
+      // Get all stations the user has access to (primary + cross-team)
+      // Use getUserAccessibleStations which returns the user's original primary station
+      // plus all cross-team assignments, regardless of which station is currently selected
+      const accessibleStations = await storage.getUserAccessibleStations(user.id);
+      const uniqueStationIds = accessibleStations.map(s => s.id);
 
       // Get all stations info for display names
       const allStations = await storage.getAllStations();
@@ -3520,8 +3519,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const expiredStations: Array<{ stationId: number; displayName: string; deadline: string }> = [];
       const activeStations: Array<{ stationId: number; displayName: string; deadline: string }> = [];
 
+      console.log('Deadline-status: accessibleStations:', accessibleStations.map(s => ({ id: s.id, displayName: s.displayName })));
       console.log('Deadline-status: uniqueStationIds:', uniqueStationIds);
-      console.log('Deadline-status: allStations:', allStations.map(s => ({ id: s.id, displayName: s.displayName })));
       
       for (const stationId of uniqueStationIds) {
         const deadlineCheck = await checkPreferenceDeadline(stationId, targetMonth, targetYear);
