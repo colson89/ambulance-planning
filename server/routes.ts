@@ -7664,10 +7664,14 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             console.log(`Skipping shift group ${groupKey}: geen gebruikers toegewezen`);
             skipped++;
             
-            // Log als skipped voor alle shifts in deze groep (inclusief virtuele met negatieve IDs)
+            // Log als skipped voor alle shifts in deze groep
             const loggedIds1 = new Set<number>();
             for (const shift of groupShifts) {
-              const actualShiftId = shift.id;
+              // Bij virtuele shifts, bereken het originele database ID
+              let actualShiftId = shift.id;
+              if (shift.id < 0) {
+                actualShiftId = Math.floor(Math.abs(shift.id) / 10);
+              }
               if (loggedIds1.has(actualShiftId)) continue;
               loggedIds1.add(actualShiftId);
               
@@ -7710,10 +7714,14 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             console.log(`Skipping shift group ${groupKey}: geen geldige gebruikers gevonden`);
             skipped++;
             
-            // Log als error voor alle shifts in deze groep (inclusief virtuele met negatieve IDs)
+            // Log als error voor alle shifts in deze groep
             const loggedIds2 = new Set<number>();
             for (const shift of groupShifts) {
-              const actualShiftId = shift.id;
+              // Bij virtuele shifts, bereken het originele database ID
+              let actualShiftId = shift.id;
+              if (shift.id < 0) {
+                actualShiftId = Math.floor(Math.abs(shift.id) / 10);
+              }
               if (loggedIds2.has(actualShiftId)) continue;
               loggedIds2.add(actualShiftId);
               
@@ -7786,15 +7794,21 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           // Extract user IDs voor assignment tracking
           const assignedUserIds = groupShifts.map(s => s.userId);
           
-          // Log elke shift (inclusief virtuele splits) met hun eigen ID
-          // Virtuele splits gebruiken negatieve IDs die niet botsen met echte database IDs
-          // Dit zorgt ervoor dat elke GUID (AM en PM) apart wordt bijgehouden
+          // Log elke shift met het ECHTE database shift ID (niet virtuele negatieve IDs)
+          // Virtuele IDs worden teruggerekend naar het originele shift ID
+          // Formula: virtueel ID = -originalId * 10 - 1 (AM) of -2 (PM)
+          // Terugrekenen: originalId = Math.floor(Math.abs(virtualId) / 10)
           const loggedShiftIds = new Set<number>();
           
           for (const shift of groupShifts) {
-            // Gebruik het shift ID direct (inclusief negatieve virtuele IDs)
-            // Dit zorgt ervoor dat AM en PM helften elk hun eigen GUID/log krijgen
-            const actualShiftId = shift.id;
+            // Bij virtuele shifts (negatieve IDs), bereken het originele database ID
+            // Dit voorkomt foreign key constraint errors
+            let actualShiftId = shift.id;
+            if (shift.id < 0) {
+              // Virtuele shift - bereken originele ID
+              actualShiftId = Math.floor(Math.abs(shift.id) / 10);
+              console.log(`Verdi sync log: virtueel ID ${shift.id} → origineel ID ${actualShiftId}`);
+            }
             
             // Skip duplicaten binnen dezelfde groep
             if (loggedShiftIds.has(actualShiftId)) {
@@ -7875,11 +7889,16 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
           
           // Log error voor alle shifts in deze groep
           for (const shift of groupShifts) {
-            const existingLog = await storage.getVerdiSyncLog(shift.id);
+            // Bij virtuele shifts, bereken het originele database ID
+            let logShiftId = shift.id;
+            if (shift.id < 0) {
+              logShiftId = Math.floor(Math.abs(shift.id) / 10);
+            }
+            const existingLog = await storage.getVerdiSyncLog(logShiftId);
             if (existingLog) {
-              await storage.updateVerdiSyncLog(shift.id, 'error', undefined, error.message, undefined, shift.startTime, shift.endTime, shift.type);
+              await storage.updateVerdiSyncLog(logShiftId, 'error', undefined, error.message, undefined, shift.startTime, shift.endTime, shift.type);
             } else {
-              await storage.createVerdiSyncLog(shift.id, shift.stationId, 'error', undefined, error.message, undefined, shift.startTime, shift.endTime, shift.type);
+              await storage.createVerdiSyncLog(logShiftId, shift.stationId, 'error', undefined, error.message, undefined, shift.startTime, shift.endTime, shift.type);
             }
           }
           
