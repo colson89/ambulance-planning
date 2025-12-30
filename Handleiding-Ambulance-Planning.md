@@ -1444,6 +1444,121 @@ Om een display scherm (Lumaps) te koppelen aan het planningsysteem, maakt u een 
 - Klik op shift om handmatig toe te wijzen
 - Selecteer beschikbare medewerker
 
+#### 🧠 Hoe het Planning Algoritme Werkt
+
+Het planning systeem gebruikt een geavanceerd algoritme dat rekening houdt met vele factoren om een eerlijke en optimale planning te genereren. Hieronder volgt een gedetailleerd overzicht.
+
+##### Fase 1: Voorbereiding & Data Laden
+
+Het systeem laadt eerst alle benodigde gegevens:
+- ✅ Alle actieve gebruikers van het station (inclusief cross-team medewerkers)
+- ✅ Weekdag configuraties (hoeveel shifts per dag nodig zijn)
+- ✅ Bestaande shifts voor de maand
+- ✅ Feestdagen
+- ✅ Alle voorkeuren van gebruikers (per station)
+- ✅ Weekend shift historie (voor eerlijke verdeling)
+
+##### Fase 2: Scarcity-First Analyse (Moeilijkste Dagen Eerst)
+
+Het algoritme analyseert elke dag en berekent een "moeilijkheidsscore":
+
+| Factor | Score Impact |
+|--------|-------------|
+| Minder beschikbare kandidaten | Hogere prioriteit |
+| Weekenddagen (zaterdag/zondag) | +100 punten |
+| Einde van de maand (dag >25) | +1000 punten |
+| Nachtshifts | +50 punten |
+
+**Dagen worden gesorteerd op moeilijkheid** - de moeilijkste dagen worden EERST ingevuld om te voorkomen dat er aan het einde niemand meer over is.
+
+##### Fase 3: Eerste Toewijzingsronde
+
+Voor elke dag (gesorteerd op moeilijkheid) worden shifts toegewezen:
+
+**A. Dagshifts toewijzen**
+1. Volledige 12-uurs shifts eerst (7:00-19:00)
+2. Daarna split shifts indien toegestaan:
+   - Eerste helft (7:00-13:00) 
+   - Tweede helft (13:00-19:00)
+
+**B. Nachtshifts toewijzen**
+- Alleen volledige 12-uurs shifts (19:00-7:00)
+- Geen split shifts voor nachtdiensten
+
+**C. Open shifts aanmaken**
+- Als niemand beschikbaar is → shift wordt "open" (voor bidding systeem)
+
+##### Fase 4: Business Rules - Automatische Controles
+
+Bij ELKE toewijzing controleert het systeem de volgende regels:
+
+| Regel | Beschrijving |
+|-------|-------------|
+| **Gebruikersvoorkeur** | Heeft de persoon zich beschikbaar gemeld voor dag/nacht? |
+| **Uren limiet** | Overschrijdt dit de max uren van de gebruiker (per station)? |
+| **12-uur rustperiode** | Minimum 12 uur tussen shifts (veiligheidsregel) |
+| **1 shift per dag** | Niemand krijgt dag én nacht op dezelfde dag |
+| **Cross-team conflict** | Werkt de persoon al bij een ander station op dit moment? |
+| **Professionele gebruikers** | Max 1 shift per week over alle stations |
+| **Split shift rechten** | Mag cross-team gebruiker split shifts krijgen in dit systeem? |
+
+##### Fase 5: Eerlijke Verdeling (Prioriteit Systeem)
+
+Gebruikers worden gesorteerd in 3 groepen op basis van hoeveel ze al zijn ingepland:
+
+| Groep | % van doeluren | Prioriteit |
+|-------|----------------|-----------|
+| **Urgent** | < 33% gewerkt | Hoogste prioriteit |
+| **Normaal** | 33-66% gewerkt | Gemiddeld |
+| **Lage prioriteit** | > 66% gewerkt | Laagste |
+
+**Binnen elke groep wordt willekeurig gesorteerd** → dit zorgt voor variatie in de planning en voorkomt dat dezelfde personen altijd eerst worden gekozen.
+
+##### Fase 6: Gap-Filling Optimalisatie (3 Rondes)
+
+Na de eerste ronde volgen 3 optimalisatie-passes om resterende open shifts in te vullen:
+
+**Ronde 1: Reserve Capaciteit**
+- Vul open shifts met gebruikers die < 80% van hun uren hebben
+- Alleen als ze expliciete voorkeur hebben voor die shift
+
+**Ronde 2: Intelligente Ruiling**
+- Ruil toegewezen shifts met open shifts als:
+  - Gebruiker prefereert de open shift
+  - Oorspronkelijke shift kan door iemand anders worden gedaan
+
+**Ronde 3: Last Resort (Einde Maand)**
+- Kritieke open shifts (dag > 25) krijgen extra aandacht
+- Maximaal 5 shifts, alleen met expliciete voorkeur
+
+##### Fase 7: Cross-Team Specifieke Regels
+
+| Situatie | Actie |
+|----------|-------|
+| Overlap met ander station | ❌ Geblokkeerd |
+| < 1 uur pauze tussen stations | ❌ Geblokkeerd |
+| Maandgrens conflict | ✅ Gecontroleerd (24 uur buffer) |
+| Split shift in eenvoudig systeem | ❌ Niet toegestaan voor cross-team |
+
+##### Samenvatting: De Prioriteitsvolgorde
+
+1. 🔴 **Moeilijkste dagen eerst** (scarcity-first)
+2. 🟠 **Gebruikers met minste uren** (eerlijkheid)
+3. 🟡 **Expliciete voorkeuren** (dag/nacht keuze)
+4. 🟢 **Veiligheidsregels** (12 uur rust, geen dubbele shifts)
+5. 🔵 **Cross-team conflicten** (geen overlapping)
+6. ⚪ **Gap-filling** (resterende open shifts)
+
+##### Tips voor een Optimale Planning
+
+| Tip | Uitleg |
+|-----|--------|
+| **Motiveer ruime voorkeur opgave** | Meer beschikbaarheid van medewerkers = betere planning mogelijkheden |
+| **Controleer uren instellingen** | Zorg dat de max uren per medewerker correct zijn ingesteld |
+| **Gebruik weekdag configuratie** | Stel het juiste aantal shifts per dag in |
+| **Controleer feestdagen** | Markeer feestdagen correct zodat het algoritme hier rekening mee houdt |
+| **Bekijk open shifts** | Na generatie, controleer welke shifts niet ingevuld konden worden |
+
 #### 📢 Planning Publiceren
 
 Na het genereren van een planning is deze **nog niet zichtbaar** voor medewerkers. Dit geeft u de mogelijkheid om eerst handmatige aanpassingen te maken voordat de planning wordt gedeeld.
