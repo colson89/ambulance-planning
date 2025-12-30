@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { nl } from "date-fns/locale";
 import {
   Users,
@@ -619,7 +620,7 @@ export function OpenSwapRequests({ users, stations, currentUserId, userRole }: O
                     )}
                     
                     <p className="text-xs text-muted-foreground">
-                      Ingediend: {format(new Date(bid.createdAt), "d MMM yyyy HH:mm", { locale: nl })}
+                      Ingediend: {formatInTimeZone(new Date(bid.createdAt), 'Europe/Brussels', "d MMM yyyy HH:mm", { locale: nl })}
                     </p>
                   </div>
                 ))}

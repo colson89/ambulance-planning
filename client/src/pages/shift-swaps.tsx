@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { nl } from "date-fns/locale";
 import {
   RefreshCw,
@@ -733,10 +734,10 @@ export default function ShiftSwapsPage() {
                           <TableCell>{getStatusBadge(request.status)}</TableCell>
                           <TableCell>
                             <div className="text-sm">
-                              {format(new Date(request.createdAt), "d MMM yyyy", { locale: nl })}
+                              {formatInTimeZone(new Date(request.createdAt), 'Europe/Brussels', "d MMM yyyy", { locale: nl })}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {format(new Date(request.createdAt), "HH:mm", { locale: nl })}
+                              {formatInTimeZone(new Date(request.createdAt), 'Europe/Brussels', "HH:mm", { locale: nl })}
                             </div>
                           </TableCell>
                           {statusFilter === "pending" && (

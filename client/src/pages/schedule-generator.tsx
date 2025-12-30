@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO, addDays } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { nl } from "date-fns/locale";
 import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, UserMinus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X, CheckCircle, XCircle } from "lucide-react";
 import { UndoHistoryPanel } from "@/components/undo-history-panel";
@@ -3392,7 +3393,7 @@ function ScheduleGenerator() {
                       {bid.user.firstName} {bid.user.lastName}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {format(new Date(bid.createdAt), "dd MMM yyyy HH:mm", { locale: nl })}
+                      {formatInTimeZone(new Date(bid.createdAt), 'Europe/Brussels', "dd MMM yyyy HH:mm", { locale: nl })}
                     </div>
                   </div>
                   <div className="flex gap-2">

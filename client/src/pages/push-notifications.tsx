@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { nl } from "date-fns/locale";
 import {
   Select,
@@ -359,7 +360,7 @@ export default function PushNotificationsPage() {
                       <div className="flex flex-col items-start text-left flex-1 mr-4">
                         <div className="font-medium">{notification.title}</div>
                         <div className="text-sm text-muted-foreground flex items-center gap-2">
-                          <span>{format(new Date(notification.createdAt), "d MMM yyyy HH:mm", { locale: nl })}</span>
+                          <span>{formatInTimeZone(new Date(notification.createdAt), 'Europe/Brussels', "d MMM yyyy HH:mm", { locale: nl })}</span>
                           <span>•</span>
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
