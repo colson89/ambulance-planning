@@ -7494,13 +7494,12 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       }
       
       // === VERDI SPLIT NORMALISATIE ===
-      // Als er op een dag een mix is van volledige en gesplitste shifts, moeten ALLE shifts
-      // als 2 helften worden verzonden voor consistentie (voormiddag 07:00-13:00 + namiddag 13:00-19:00)
+      // ALTIJD dagshifts splitsen naar 2 helften (07:00-13:00 + 13:00-19:00) voor consistentie
+      // Nachtshifts blijven altijd volledig (19:00-07:00)
       
-      // Stap 1: Groepeer shifts per dag en type (dag/nacht) om te detecteren of er splits zijn
+      // Stap 1: Groepeer shifts per dag en type (dag/nacht)
       const shiftsByDayType = new Map<string, Shift[]>();
       for (const shift of shiftsToSync) {
-        // Gebruik date string voor groepering (bijv. "2026-02-01_day")
         const dateKey = `${shift.date.toISOString().split('T')[0]}_${shift.type}`;
         if (!shiftsByDayType.has(dateKey)) {
           shiftsByDayType.set(dateKey, []);
@@ -7508,92 +7507,76 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         shiftsByDayType.get(dateKey)!.push(shift);
       }
       
-      // Stap 2: Voor elke dag/type: check of er gesplitste shifts zijn en normaliseer indien nodig
+      // Stap 2: Normaliseer alle dagshifts naar 2 helften, nachtshifts blijven volledig
       const normalizedShifts: Shift[] = [];
       
       for (const [dayTypeKey, dayShifts] of shiftsByDayType.entries()) {
-        // Alleen voor dagshifts normaliseren (nachtshifts zijn altijd 12h)
         const shiftType = dayTypeKey.split('_')[1];
+        
+        // Nachtshifts: direct toevoegen zonder normalisatie
         if (shiftType !== 'day') {
-          // Nachtshifts: direct toevoegen zonder normalisatie
           normalizedShifts.push(...dayShifts);
           continue;
         }
         
-        // Check of er gesplitste shifts zijn op deze dag
-        // Een shift is gesplitst als: isSplitShift=true OF duur < 10 uur (veilige marge voor 6h shifts)
-        const hasSplitShifts = dayShifts.some(shift => {
-          const durationHours = (shift.endTime.getTime() - shift.startTime.getTime()) / (1000 * 60 * 60);
-          return shift.isSplitShift === true || durationHours < 10;
-        });
+        // DAGSHIFTS: ALTIJD normaliseren naar 2 helften (07:00-13:00 + 13:00-19:00)
+        console.log(`🔄 Verdi normalisatie: dag ${dayTypeKey} → alle dagshifts worden gesplitst`);
         
-        if (!hasSplitShifts) {
-          // Geen gesplitste shifts: direct toevoegen
-          normalizedShifts.push(...dayShifts);
-          continue;
-        }
-        
-        // Er zijn gesplitste shifts: normaliseer ALLE dagshifts naar 2 helften
-        console.log(`🔄 Verdi normalisatie: dag ${dayTypeKey} heeft gemengde shifts, alle dagshifts worden gesplitst`);
-        
-        // Zoek een echte gesplitste shift om de tijden te kopiëren (voorkomt timezone drift)
+        // Zoek een echte halve shift om de tijden te kopiëren (voorkomt timezone drift)
         const realMorningShift = dayShifts.find(s => {
           const dur = (s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60 * 60);
           const hour = s.startTime.getUTCHours();
-          return dur < 10 && hour < 12; // Halve shift die in de ochtend begint
+          return dur < 10 && hour < 12;
         });
         const realAfternoonShift = dayShifts.find(s => {
           const dur = (s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60 * 60);
           const hour = s.startTime.getUTCHours();
-          return dur < 10 && hour >= 12; // Halve shift die in de middag begint
+          return dur < 10 && hour >= 12;
         });
         
         for (const shift of dayShifts) {
           const durationHours = (shift.endTime.getTime() - shift.startTime.getTime()) / (1000 * 60 * 60);
           
           if (durationHours >= 10) {
-            // Dit is een volledige dagshift (12h) - splitsen in 2 virtuele helften
-            // Kopieer tijden van echte halve shifts indien beschikbaar, anders bereken
+            // Volledige dagshift (12h) - splitsen in 2 virtuele helften
             
-            // Ochtend tijden
+            // Ochtend tijden: kopieer van echte halve shift OF bereken
             let morningStart: Date, morningEnd: Date;
             if (realMorningShift) {
               morningStart = new Date(realMorningShift.startTime);
               morningEnd = new Date(realMorningShift.endTime);
             } else {
-              // Fallback: gebruik het begin van de volle shift tot middag
               morningStart = new Date(shift.startTime);
-              morningEnd = new Date(shift.startTime.getTime() + (6 * 60 * 60 * 1000)); // +6 uur
+              morningEnd = new Date(shift.startTime.getTime() + (6 * 60 * 60 * 1000));
             }
             
-            // Middag tijden
+            // Middag tijden: kopieer van echte halve shift OF bereken
             let afternoonStart: Date, afternoonEnd: Date;
             if (realAfternoonShift) {
               afternoonStart = new Date(realAfternoonShift.startTime);
               afternoonEnd = new Date(realAfternoonShift.endTime);
             } else {
-              // Fallback: gebruik middag tot einde van de volle shift
-              afternoonStart = new Date(shift.endTime.getTime() - (6 * 60 * 60 * 1000)); // -6 uur
+              afternoonStart = new Date(shift.endTime.getTime() - (6 * 60 * 60 * 1000));
               afternoonEnd = new Date(shift.endTime);
             }
             
-            // Virtuele ochtendshift met uniek virtueel ID
+            // Virtuele ochtendshift
             const morningShift = {
               ...shift,
-              id: -shift.id * 10 - 1, // Negatief virtueel ID: -123 wordt -1231 voor AM
+              id: -shift.id * 10 - 1,
               startTime: morningStart,
               endTime: morningEnd,
               isSplitShift: true,
               splitStartTime: morningStart,
               splitEndTime: morningEnd,
               _isVirtualSplit: true,
-              _originalShiftId: shift.id // Bewaar originele ID voor logging
+              _originalShiftId: shift.id
             };
             
-            // Virtuele middagshift met uniek virtueel ID
+            // Virtuele middagshift
             const afternoonShift = {
               ...shift,
-              id: -shift.id * 10 - 2, // Negatief virtueel ID: -123 wordt -1232 voor PM
+              id: -shift.id * 10 - 2,
               startTime: afternoonStart,
               endTime: afternoonEnd,
               isSplitShift: true,
@@ -7606,15 +7589,15 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
             normalizedShifts.push(morningShift as Shift);
             normalizedShifts.push(afternoonShift as Shift);
             
-            console.log(`  → Gebruiker ${shift.userId}: volle shift ${shift.startTime.toISOString()} gesplitst naar 2 helften (virtuele IDs: ${morningShift.id}, ${afternoonShift.id})`);
+            console.log(`  → Gebruiker ${shift.userId}: volle shift gesplitst (IDs: ${morningShift.id}, ${afternoonShift.id})`);
           } else {
-            // Dit is al een gesplitste shift - direct toevoegen
+            // Al een halve shift - direct toevoegen
             normalizedShifts.push(shift);
           }
         }
       }
       
-      console.log(`Verdi normalisatie: ${shiftsToSync.length} originele shifts → ${normalizedShifts.length} genormaliseerde shifts`);
+      console.log(`Verdi normalisatie: ${shiftsToSync.length} shifts → ${normalizedShifts.length} entries`);
       
       // Groepeer shifts op basis van startTime, endTime, type (meerdere users kunnen dezelfde shift hebben)
       const shiftGroups = new Map<string, Shift[]>();

@@ -3215,16 +3215,22 @@ A: Volgens de Verdi API specificaties kunnen shifts NIET volledig worden verwijd
 **Q: Hoe werk ik shifts bij die al in Verdi staan?**
 A: Wijzig gewoon de shift in het planningssysteem en klik op "Sync naar Verdi" → "Alleen wijzigingen". Het systeem detecteert automatisch dat de shift al bestaat en stuurt een UPDATE in plaats van een nieuwe shift aan te maken.
 
-**Q: Wat als ik een mix heb van volle en halve dagshifts op dezelfde dag?**
-A: Het systeem handelt dit automatisch af via "normalisatie":
-- **Detectie**: Als er op een dag zowel volle dagshifts (12 uur) als halve shifts (6 uur) zijn, detecteert het systeem dit automatisch
-- **Normalisatie**: Volle dagshifts worden gesplitst in 2 virtuele helften (ochtend + middag)
-- **Resultaat**: Verdi ontvangt consistente entries waarbij alle ambulanciers op dezelfde tijdslots verschijnen
-- **Voorbeeld**: 
-  - Gebruiker A: volle dag 07:00-19:00
-  - Gebruiker B: ochtend 07:00-13:00, middag 13:00-19:00
-  - Verdi ontvangt: ochtendslot met A+B, middagslot met A+B
-- **Voordeel**: Geen handmatige aanpassingen nodig, het systeem zorgt automatisch voor correcte Verdi entries
+**Q: Hoe worden dagshifts naar Verdi gestuurd?**
+A: **Dagshifts worden ALTIJD als 2 entries** naar Verdi gestuurd:
+- **Ochtend**: 07:00 - 13:00
+- **Middag**: 13:00 - 19:00
+
+Ongeacht of een ambulancier een volle dagshift (12 uur) of 2 halve shifts heeft in de planning, Verdi ontvangt altijd 2 aparte entries. Dit zorgt voor:
+- **Consistentie**: Alle dagshifts hebben dezelfde structuur in Verdi
+- **Eenvoud**: Geen problemen bij het samenvoegen of splitsen van shifts
+- **Betrouwbaarheid**: Updates en wijzigingen werken altijd correct
+
+**Voorbeeld:**
+- Gebruiker A: volle dag 07:00-19:00 in planning
+- Verdi ontvangt: A in ochtendslot (07:00-13:00) + A in middagslot (13:00-19:00)
+
+**Q: Hoe worden nachtshifts naar Verdi gestuurd?**
+A: Nachtshifts blijven **altijd volledig** (19:00-07:00) en worden als 1 entry naar Verdi gestuurd. Er is geen opsplitsing voor nachtdiensten
 
 #### 🚀 Aan de Slag Met Verdi
 
