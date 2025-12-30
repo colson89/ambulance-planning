@@ -3513,7 +3513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const uniqueStationIds = [...new Set(allStationIds)];
 
       // Get all stations info for display names
-      const allStations = await storage.getStations();
+      const allStations = await storage.getAllStations();
       
       const expiredStations: Array<{ stationId: number; displayName: string; deadline: string }> = [];
       const activeStations: Array<{ stationId: number; displayName: string; deadline: string }> = [];
