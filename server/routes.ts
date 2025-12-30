@@ -26,6 +26,46 @@ function parseDateInStationTimezone(dateString: string): Date {
   const dateTimeString = `${dateString}T12:00:00`;
   return fromZonedTime(dateTimeString, STATION_TIMEZONE);
 }
+
+/**
+ * Check if the deadline for submitting preferences has passed.
+ * The deadline is X days before the 1st of the target month at 23:00 Brussels time.
+ * 
+ * @param stationId - The station ID to get deadline settings for
+ * @param targetMonth - The month (1-12) for which preferences are being submitted
+ * @param targetYear - The year for which preferences are being submitted
+ * @returns Promise<{ isPastDeadline: boolean, deadlineDate: Date }>
+ */
+async function checkPreferenceDeadline(stationId: number, targetMonth: number, targetYear: number): Promise<{ isPastDeadline: boolean, deadlineDate: Date, deadlineString: string }> {
+  // Get deadline days setting for this station
+  const settingKey = `preference_deadline_days_station_${stationId}`;
+  const setting = await storage.getSystemSetting(settingKey);
+  const deadlineDays = setting ? parseInt(setting) : 1; // Default to 1 day if not set
+  
+  // Calculate deadline: X days before the 1st of the target month at 23:00 Brussels time
+  // Create date for 1st of target month
+  const firstOfMonth = new Date(targetYear, targetMonth - 1, 1);
+  
+  // Subtract deadline days
+  const deadlineDate = new Date(firstOfMonth);
+  deadlineDate.setDate(deadlineDate.getDate() - deadlineDays);
+  
+  // Set to 23:00 Brussels time
+  const deadlineDateStr = format(deadlineDate, 'yyyy-MM-dd');
+  const deadlineDateTime = fromZonedTime(`${deadlineDateStr}T23:00:00`, STATION_TIMEZONE);
+  
+  // Get current time
+  const now = new Date();
+  
+  // Format deadline for display
+  const deadlineString = formatInTimeZone(deadlineDateTime, STATION_TIMEZONE, "d MMMM yyyy 'om' HH:mm");
+  
+  return {
+    isPastDeadline: now > deadlineDateTime,
+    deadlineDate: deadlineDateTime,
+    deadlineString
+  };
+}
 import { and, gte, lte, asc, ne, eq, inArray, isNull, or } from "drizzle-orm";
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
@@ -2433,6 +2473,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = schema.parse({ month, year });
 
+      // DEADLINE CHECK: Verify deadline hasn't passed for ALL assigned stations (cross-team fix)
+      // Get all stations the user is assigned to
+      const userStationAssignments = await storage.getUserStationAssignments(userId);
+      const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
+      const uniqueStationIds = [...new Set(allStationIds)];
+      
+      for (const stationId of uniqueStationIds) {
+        const deadlineCheck = await checkPreferenceDeadline(stationId, validatedData.month, validatedData.year);
+        if (deadlineCheck.isPastDeadline) {
+          const station = await storage.getStation(stationId);
+          return res.status(403).json({ 
+            message: `De deadline voor het indienen van voorkeuren is verstreken voor ${station?.displayName || 'station'}. De deadline was ${deadlineCheck.deadlineString}.`,
+            deadlinePassed: true,
+            deadline: deadlineCheck.deadlineString,
+            stationId: stationId
+          });
+        }
+      }
+
       // Sync preferences from primary station to all assigned stations
       await storage.syncUserPreferencesToAllStations(userId, validatedData.month, validatedData.year);
 
@@ -2482,6 +2541,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Ongeldig jaar" });
       }
 
+      // DEADLINE CHECK: Verify deadline hasn't passed for ALL assigned stations (cross-team fix)
+      // Get all stations the user is assigned to
+      const userStationAssignments = await storage.getUserStationAssignments(userId);
+      const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
+      const uniqueStationIds = [...new Set(allStationIds)];
+      
+      for (const stationId of uniqueStationIds) {
+        const deadlineCheck = await checkPreferenceDeadline(stationId, month, year);
+        if (deadlineCheck.isPastDeadline) {
+          const station = await storage.getStation(stationId);
+          return res.status(403).json({ 
+            message: `De deadline voor het wijzigen van voorkeuren is verstreken voor ${station?.displayName || 'station'}. De deadline was ${deadlineCheck.deadlineString}.`,
+            deadlinePassed: true,
+            deadline: deadlineCheck.deadlineString,
+            stationId: stationId
+          });
+        }
+      }
+
       await storage.deleteUnifiedPreferencesForUser(userId, month, year);
 
       // Log activity for deleting unified preferences
@@ -2514,6 +2592,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/preferences-with-sync", requireAuth, requireNonViewer, async (req, res) => {
     try {
       console.log('Received preference data with sync:', req.body);
+
+      // DEADLINE CHECK: Verify deadline hasn't passed for ALL assigned stations (cross-team fix)
+      const { month, year } = req.body;
+      if (month && year) {
+        // Get all stations the user is assigned to
+        const userStationAssignments = await storage.getUserStationAssignments(req.user!.id);
+        const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
+        const uniqueStationIds = [...new Set(allStationIds)];
+        
+        for (const stationId of uniqueStationIds) {
+          const deadlineCheck = await checkPreferenceDeadline(stationId, month, year);
+          if (deadlineCheck.isPastDeadline) {
+            const station = await storage.getStation(stationId);
+            return res.status(403).json({ 
+              message: `De deadline voor het indienen van voorkeuren is verstreken voor ${station?.displayName || 'station'}. De deadline was ${deadlineCheck.deadlineString}.`,
+              deadlinePassed: true,
+              deadline: deadlineCheck.deadlineString,
+              stationId: stationId
+            });
+          }
+        }
+      }
 
       // TIMEZONE FIX: Parse date string (YYYY-MM-DD) to a Date object at noon CET
       // This ensures the date is correctly interpreted regardless of the user's timezone
@@ -3156,6 +3256,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Datum moet in YYYY-MM-DD formaat zijn" });
       }
       
+      // DEADLINE CHECK: Verify deadline hasn't passed (applies to ALL users including admins)
+      const { month, year } = req.body;
+      if (month && year) {
+        const deadlineCheck = await checkPreferenceDeadline(req.user!.stationId, month, year);
+        if (deadlineCheck.isPastDeadline) {
+          return res.status(403).json({ 
+            message: `De deadline voor het indienen van voorkeuren is verstreken. De deadline was ${deadlineCheck.deadlineString}.`,
+            deadlinePassed: true,
+            deadline: deadlineCheck.deadlineString
+          });
+        }
+      }
+      
       const parsedDate = parseDateInStationTimezone(req.body.date);
       console.log(`Parsed date string "${req.body.date}" to:`, parsedDate);
       
@@ -3240,6 +3353,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (preference.userId !== req.user!.id) {
         return res.status(403).json({ message: "U heeft geen toegang tot deze voorkeur" });
+      }
+
+      // DEADLINE CHECK: Verify deadline hasn't passed (applies to ALL users including admins)
+      // Use the preference's stationId, not the user's primary station (cross-team fix)
+      const prefMonth = preference.month;
+      const prefYear = preference.year;
+      const prefStationId = preference.stationId;
+      if (prefMonth && prefYear && prefStationId) {
+        const deadlineCheck = await checkPreferenceDeadline(prefStationId, prefMonth, prefYear);
+        if (deadlineCheck.isPastDeadline) {
+          return res.status(403).json({ 
+            message: `De deadline voor het wijzigen van voorkeuren is verstreken. De deadline was ${deadlineCheck.deadlineString}.`,
+            deadlinePassed: true,
+            deadline: deadlineCheck.deadlineString
+          });
+        }
       }
 
       // Store preference details before deletion for logging
