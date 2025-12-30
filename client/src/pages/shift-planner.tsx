@@ -112,8 +112,8 @@ export default function ShiftPlanner() {
     enabled: !!user,
   });
 
-  // Haal deadline status op voor alle toegewezen stations (cross-team waarschuwing)
-  // Enabled wanneer userStations geladen is EN user meerdere stations heeft
+  // Haal deadline status op voor alle toegewezen stations
+  // Enabled voor ALLE gebruikers om correcte deadline blokkering te garanderen
   const { data: deadlineStatus } = useQuery<{
     expiredStations: Array<{ stationId: number; displayName: string; deadline: string }>;
     activeStations: Array<{ stationId: number; displayName: string; deadline: string }>;
@@ -126,7 +126,7 @@ export default function ShiftPlanner() {
       if (!res.ok) throw new Error("Kon deadline status niet ophalen");
       return res.json();
     },
-    enabled: !!user && userStationsLoaded && isMultiStation,
+    enabled: !!user && userStationsLoaded,
     staleTime: 60 * 1000, // 1 minuut
   });
 
@@ -534,6 +534,26 @@ export default function ShiftPlanner() {
         </AlertDescription>
       </Alert>
 
+      {/* Blokkeerbanner wanneer ALLE deadlines verstreken zijn */}
+      {deadlineStatus?.allExpired && (
+        <Alert className="mb-4 md:mb-6 border-red-500 bg-red-50 dark:bg-red-950/30">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-sm text-red-800 dark:text-red-200 ml-2">
+            <span className="font-semibold">Deadline verstreken:</span> De deadline voor het indienen van voorkeuren is verstreken voor alle stations.
+            U kunt geen voorkeuren meer invoeren voor deze maand.
+            {deadlineStatus.expiredStations.length > 0 && (
+              <span className="block text-xs text-red-600 dark:text-red-400 mt-1">
+                Deadlines: {deadlineStatus.expiredStations.map((s, idx) => (
+                  <span key={s.stationId}>
+                    {s.displayName} ({s.deadline}){idx < deadlineStatus.expiredStations.length - 1 ? ", " : ""}
+                  </span>
+                ))}
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Waarschuwingsbanner voor cross-team medewerkers met verstreken deadlines */}
       {deadlineStatus?.hasExpiredStations && !deadlineStatus?.allExpired && (
         <Alert className="mb-4 md:mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950/30">
@@ -723,7 +743,7 @@ export default function ShiftPlanner() {
                     </div>
                     <Button
                       type="submit"
-                      disabled={createPreferenceMutation.isPending}
+                      disabled={createPreferenceMutation.isPending || deadlineStatus?.allExpired}
                       className="w-full"
                     >
                       {createPreferenceMutation.isPending ? (
@@ -731,6 +751,8 @@ export default function ShiftPlanner() {
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                           Bezig met opslaan...
                         </>
+                      ) : deadlineStatus?.allExpired ? (
+                        "Deadline verstreken"
                       ) : (
                         "Dag Shift Voorkeur Opslaan"
                       )}
@@ -765,7 +787,7 @@ export default function ShiftPlanner() {
                   </div>
                   <Button
                     type="submit"
-                    disabled={createPreferenceMutation.isPending}
+                    disabled={createPreferenceMutation.isPending || deadlineStatus?.allExpired}
                     className="w-full"
                   >
                     {createPreferenceMutation.isPending ? (
@@ -773,6 +795,8 @@ export default function ShiftPlanner() {
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Bezig met opslaan...
                       </>
+                    ) : deadlineStatus?.allExpired ? (
+                      "Deadline verstreken"
                     ) : (
                       "Nacht Shift Voorkeur Opslaan"
                     )}

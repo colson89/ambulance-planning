@@ -2476,8 +2476,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // DEADLINE CHECK: Only block if ALL station deadlines have passed
       // Get all stations the user is assigned to
       const userStationAssignments = await storage.getUserStationAssignments(userId);
-      const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
-      const uniqueStationIds = [...new Set(allStationIds)];
+      // Filter out null/undefined station IDs to prevent deadline check failures
+      const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.station?.id).filter((id): id is number => id != null)];
+      const uniqueStationIds = [...new Set(allStationIds)].filter((id): id is number => id != null);
       
       // Check all stations and collect expired ones
       const expiredStations: { stationId: number; displayName: string; deadline: string }[] = [];
@@ -2565,8 +2566,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // DEADLINE CHECK: Only block if ALL station deadlines have passed
       // Get all stations the user is assigned to
       const userStationAssignments = await storage.getUserStationAssignments(userId);
-      const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
-      const uniqueStationIds = [...new Set(allStationIds)];
+      // Filter out null/undefined station IDs to prevent deadline check failures
+      const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.station?.id).filter((id): id is number => id != null)];
+      const uniqueStationIds = [...new Set(allStationIds)].filter((id): id is number => id != null);
       
       // Check all stations and collect expired ones
       const expiredStations: { stationId: number; displayName: string; deadline: string }[] = [];
@@ -2644,8 +2646,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (month && year) {
         // Get all stations the user is assigned to
         const userStationAssignments = await storage.getUserStationAssignments(req.user!.id);
-        const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
-        const uniqueStationIds = [...new Set(allStationIds)];
+        // Filter out null/undefined station IDs to prevent deadline check failures
+        const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.station?.id).filter((id): id is number => id != null)];
+        const uniqueStationIds = [...new Set(allStationIds)].filter((id): id is number => id != null);
         
         // Check all stations and collect expired ones
         const activeStations: { stationId: number; displayName: string }[] = [];
@@ -3329,8 +3332,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (month && year) {
         // Get all stations the user is assigned to
         const userStationAssignments = await storage.getUserStationAssignments(req.user!.id);
-        const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.stationId)];
-        const uniqueStationIds = [...new Set(allStationIds)];
+        // Filter out null/undefined station IDs to prevent deadline check failures
+        const allStationIds = [req.user!.stationId, ...userStationAssignments.map(a => a.station?.id).filter((id): id is number => id != null)];
+        const uniqueStationIds = [...new Set(allStationIds)].filter((id): id is number => id != null);
         
         // Check all stations and collect expired ones
         const activeStations: { stationId: number; displayName: string }[] = [];
