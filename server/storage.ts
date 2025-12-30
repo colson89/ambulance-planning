@@ -1303,15 +1303,18 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
 
-    // === PRIMAIRE CHECK: SAME-DAY CONFLICT (ROBUUST, TIMEZONE-ONAFHANKELIJK) ===
-    // Cross-team gebruikers mogen NIET op dezelfde planningsdatum werken bij meerdere stations
-    // Dit voorkomt dubbele inplanning ongeacht tijdzone-issues
-    const proposedDay = proposedDate.getDate();
-    const proposedMonth = proposedDate.getMonth() + 1;
-    const proposedYear = proposedDate.getFullYear();
+    // === PRIMAIRE CHECK: SAME-DAY/OVERLAP CONFLICT (TIMESTAMP-BASED) ===
+    // Cross-team gebruikers mogen NIET werken bij meerdere stations als shifts overlappen of te dicht bij elkaar liggen
+    // MAANDGRENS FIX: Query op basis van startTime/endTime timestamps, NIET op month/year
+    // Dit zorgt ervoor dat een nachtshift van 31 dec die eindigt op 1 jan correct wordt gedetecteerd bij januari planning
     
-    // Query shifts op basis van month/year en dag van de maand
-    const sameDayShifts = await db
+    // Bereken het tijdvenster voor de voorgestelde shift inclusief 12 uur rust buffer
+    const minBreakTimeMs = 12 * 60 * 60 * 1000; // 12 uur minimum rust tussen cross-team shifts
+    const proposedStartWithBuffer = new Date(proposedStartTime.getTime() - minBreakTimeMs);
+    const proposedEndWithBuffer = new Date(proposedEndTime.getTime() + minBreakTimeMs);
+    
+    // Query shifts die overlappen met het voorgestelde tijdvenster (inclusief rust buffer)
+    const overlappingShifts = await db
       .select()
       .from(shifts)
       .where(
@@ -1319,83 +1322,41 @@ export class DatabaseStorage implements IStorage {
           eq(shifts.userId, userId),
           ne(shifts.stationId, targetStationId), // Alleen shifts van andere stations
           ne(shifts.status, "open"), // Ignore open shifts
-          eq(shifts.month, proposedMonth),
-          eq(shifts.year, proposedYear)
+          // Overlap check: bestaande shift eindigt NA start buffer EN begint VOOR eind buffer
+          gte(shifts.endTime, proposedStartWithBuffer),
+          lte(shifts.startTime, proposedEndWithBuffer)
         )
       );
     
-    // Check of er een shift is op dezelfde dag (dag van de maand)
-    for (const existingShift of sameDayShifts) {
-      const existingDay = existingShift.date.getDate();
-      
-      if (existingDay === proposedDay) {
-        const existingStation = await this.getStation(existingShift.stationId);
-        const targetStation = await this.getStation(targetStationId);
-        
-        console.log(`❌ CROSS-TEAM SAME-DAY CONFLICT: User ${userId} heeft al shift op dag ${proposedDay} in ${existingStation?.displayName} (shift ${existingShift.id}), kan niet ook inprogrammeren bij ${targetStation?.displayName}`);
-        return true;
-      }
-    }
-
-    // === SECUNDAIRE CHECK: TIME-BASED OVERLAP (VOOR CROSS-DAY CONFLICTS) ===
-    // Extra check voor shifts die over meerdere dagen lopen (bijv. nachtshift van dag 28 naar dag 29)
-    const bufferHours = 24;
-    const queryStartTime = new Date(proposedStartTime.getTime() - (bufferHours * 60 * 60 * 1000));
-    const queryEndTime = new Date(proposedEndTime.getTime() + (bufferHours * 60 * 60 * 1000));
-
-    // Haal alle shifts op voor deze gebruiker binnen het tijdvenster
-    const existingShifts = await db
-      .select()
-      .from(shifts)
-      .where(
-        and(
-          eq(shifts.userId, userId),
-          ne(shifts.stationId, targetStationId), // Alleen shifts van andere stations
-          ne(shifts.status, "open"), // Ignore open shifts
-          // Time window: shift end tijd > query start EN shift start tijd < query end
-          gte(shifts.endTime, queryStartTime),
-          lte(shifts.startTime, queryEndTime)
-        )
-      );
-
-    // Check voor overlapping/aaneensluitende shifts
-    for (const existingShift of existingShifts) {
+    // Check of er conflicterende shifts zijn
+    for (const existingShift of overlappingShifts) {
       const existingStart = existingShift.startTime.getTime();
       const existingEnd = existingShift.endTime.getTime();
       const proposedStart = proposedStartTime.getTime();
       const proposedEnd = proposedEndTime.getTime();
-
-      // BUSINESS RULE CLARITY: Geen overlappende shifts, minimum 12 uur rust tussen stations
-      // Overlap check: shifts overlappen direct
-      const hasOverlap = (proposedStart < existingEnd) && (proposedEnd > existingStart);
       
-      // Consecutive check: minder dan minimum break time tussen shifts
-      // Voor cross-team: minimum 12 uur rust tussen shifts van verschillende stations
-      // (zelfde regel als voor opeenvolgende shifts binnen 1 station)
-      const minBreakTimeMs = 12 * 60 * 60 * 1000; // 12 uur = 43200000 milliseconden
-      
-      // Controleer gap tussen shifts (in beide richtingen)
-      const gapAfterExisting = proposedStart - existingEnd;  // Positief als proposed shift later is
-      const gapBeforeExisting = existingStart - proposedEnd; // Positief als proposed shift eerder is
-      
-      // Er is een conflict als er overlap is of als de gap kleiner is dan minimum break time
+      // Bereken daadwerkelijke overlap of gap
+      const hasDirectOverlap = (proposedStart < existingEnd) && (proposedEnd > existingStart);
+      const gapAfterExisting = proposedStart - existingEnd;
+      const gapBeforeExisting = existingStart - proposedEnd;
       const hasInsufficientBreak = (gapAfterExisting >= 0 && gapAfterExisting < minBreakTimeMs) ||
-                                  (gapBeforeExisting >= 0 && gapBeforeExisting < minBreakTimeMs);
+                                   (gapBeforeExisting >= 0 && gapBeforeExisting < minBreakTimeMs);
       
-      const isConflicting = hasOverlap || hasInsufficientBreak;
-
-      if (isConflicting) {
+      if (hasDirectOverlap || hasInsufficientBreak) {
         const existingStation = await this.getStation(existingShift.stationId);
         const targetStation = await this.getStation(targetStationId);
+        const conflictType = hasDirectOverlap ? "OVERLAP" : "INSUFFICIENT_BREAK";
+        const gapHours = hasDirectOverlap ? 0 : Math.min(
+          gapAfterExisting >= 0 ? gapAfterExisting : Infinity,
+          gapBeforeExisting >= 0 ? gapBeforeExisting : Infinity
+        ) / (60 * 60 * 1000);
         
-        const conflictType = hasOverlap ? "OVERLAPPING" : "INSUFFICIENT_BREAK";
-        const gapInfo = hasOverlap ? "overlapping" : `gap: ${Math.min(gapAfterExisting || Infinity, gapBeforeExisting || Infinity) / (60 * 1000)} minutes`;
-        
-        console.log(`❌ CROSS-TEAM CONFLICT (${conflictType}): User ${userId} heeft al shift ${existingShift.startTime.toLocaleString()}-${existingShift.endTime.toLocaleString()} in ${existingStation?.displayName}, conflict met voorgestelde shift ${proposedStartTime.toLocaleString()}-${proposedEndTime.toLocaleString()} in ${targetStation?.displayName} (${gapInfo})`);
+        console.log(`❌ CROSS-TEAM CONFLICT (${conflictType}): User ${userId} heeft shift ${existingShift.startTime.toISOString()}-${existingShift.endTime.toISOString()} in ${existingStation?.displayName} (shift ${existingShift.id}, month ${existingShift.month}/${existingShift.year}), conflict met voorgestelde shift ${proposedStartTime.toISOString()}-${proposedEndTime.toISOString()} in ${targetStation?.displayName} (gap: ${gapHours.toFixed(1)}h, need 12h)`);
         return true;
       }
     }
 
+    // Geen conflicten gevonden
     return false;
   }
 
@@ -1908,14 +1869,23 @@ export class DatabaseStorage implements IStorage {
     const nextMonthStart = new Date(year, month, 1); // Eerste dag volgende maand
     
     // Query shifts die overlappen met deze maand (inclusief nachtdiensten van vorige/naar volgende maand)
+    // MAANDGRENS FIX: Gebruik UTC datums om timezone issues te voorkomen
+    // Een nachtshift van 31 dec 19:00 UTC eindigt op 1 jan 07:00 UTC en moet worden gevonden bij januari planning
+    const monthStartUTC = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+    const monthEndUTC = new Date(Date.UTC(year, month, 0, 23, 59, 59)); // Laatste dag van de maand 23:59:59 UTC
+    
+    console.log(`🗓️ CROSS-STATION QUERY: Looking for shifts where endTime >= ${monthStartUTC.toISOString()} AND startTime <= ${monthEndUTC.toISOString()}`);
+    
     const existingAllStationShifts = await db.select()
       .from(shifts)
       .where(and(
         // Shifts waarvan de endTime >= eerste dag van deze maand EN startTime <= laatste dag van deze maand
-        gte(shifts.endTime, monthStart),
-        lte(shifts.startTime, new Date(year, month, 0, 23, 59, 59)),
+        gte(shifts.endTime, monthStartUTC),
+        lte(shifts.startTime, monthEndUTC),
         ne(shifts.status, "open")
       ));
+    
+    console.log(`🗓️ CROSS-STATION QUERY: Found ${existingAllStationShifts.length} total shifts across all stations for ${month}/${year} (including month boundary shifts)`);
     
     // Helper om YYYY-MM-DD string te maken
     const formatDateKey = (date: Date): string => {

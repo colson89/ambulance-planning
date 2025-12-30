@@ -1592,9 +1592,12 @@ Na de eerste ronde volgen 3 optimalisatie-passes om resterende open shifts in te
 | Situatie | Actie |
 |----------|-------|
 | Overlap met ander station | ❌ Geblokkeerd |
-| < 1 uur pauze tussen stations | ❌ Geblokkeerd |
-| Maandgrens conflict | ✅ Gecontroleerd (24 uur buffer) |
+| < 12 uur rust tussen stations | ❌ Geblokkeerd (minimale rustperiode) |
+| Maandgrens conflict | ✅ Automatisch gedetecteerd via timestamps |
 | Split shift in eenvoudig systeem | ❌ Niet toegestaan voor cross-team |
+
+**Maandgrens Detectie:**
+Het systeem detecteert automatisch conflicten over maandgrenzen heen. Bijvoorbeeld: als iemand een nachtshift heeft op 31 december (19:00-07:00 op 1 januari), wordt dit correct geblokkeerd bij het genereren van de januari planning. Dit werkt door de start- en eindtijden van shifts te vergelijken (timestamps) in plaats van alleen naar de maand te kijken.
 
 ##### Samenvatting: De Prioriteitsvolgorde
 
