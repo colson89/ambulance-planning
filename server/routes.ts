@@ -5009,13 +5009,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         existingShift.stationId
       );
       
-      // Zoek de andere helft: eerst via splitGroup, dan via complementaire tijdslots
+      // Zoek de andere helft: eerst via splitGroup met zelfde user, dan via complementaire tijdslots
       const splitGroup = existingShift.splitGroup;
+      
+      // Eerst: zoek splitGroup match met DEZELFDE gebruiker (meest gewenst)
       let otherHalf = allShifts.find(shift => 
         shift.id !== shiftId && 
         shift.splitGroup === splitGroup &&
-        shift.isSplitShift
+        shift.isSplitShift &&
+        shift.userId === existingShift.userId
       );
+      
+      // Dan: zoek splitGroup match zonder user filter (andere gebruiker)
+      if (!otherHalf) {
+        otherHalf = allShifts.find(shift => 
+          shift.id !== shiftId && 
+          shift.splitGroup === splitGroup &&
+          shift.isSplitShift
+        );
+      }
       
       // Als niet gevonden via splitGroup, zoek op complementaire tijdslots
       // Dagshifts: ochtend (07:00-13:00) ↔ middag (13:00-19:00)
@@ -5027,7 +5039,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Bereken verwachte complementaire tijdslot
         // De complementaire shift moet starten waar deze eindigt, of eindigen waar deze start
-        otherHalf = allShifts.find(shift => {
+        const tolerance = 5 * 60 * 1000; // 5 minuten
+        
+        // Functie om te checken of een shift complementair is
+        const isComplementary = (shift: Shift): boolean => {
           if (shift.id === shiftId) return false;
           if (!shift.isSplitShift) return false;
           if (shift.type !== existingShift.type) return false;
@@ -5041,17 +5056,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Complementaire check: deze shift eindigt waar de andere begint
           // OF deze shift begint waar de andere eindigt
-          // Gebruik 5 minuten tolerantie voor kleine tijdsverschillen
-          const tolerance = 5 * 60 * 1000; // 5 minuten
-          const isComplementary = 
-            Math.abs(existingEndTime - shiftStartTime) < tolerance ||
-            Math.abs(shiftEndTime - existingStartTime) < tolerance;
-          
-          return isComplementary;
-        });
+          return Math.abs(existingEndTime - shiftStartTime) < tolerance ||
+                 Math.abs(shiftEndTime - existingStartTime) < tolerance;
+        };
+        
+        // PRIORITEIT 1: Zoek complementaire shift van DEZELFDE gebruiker
+        otherHalf = allShifts.find(shift => 
+          isComplementary(shift) && shift.userId === existingShift.userId
+        );
+        
+        // PRIORITEIT 2: Als niet gevonden, zoek complementaire shift van andere gebruikers
+        if (!otherHalf) {
+          otherHalf = allShifts.find(isComplementary);
+        }
         
         if (otherHalf) {
-          console.log(`Merge: andere helft gevonden via complementaire tijdslots (shift ID: ${otherHalf.id})`);
+          console.log(`Merge: andere helft gevonden via complementaire tijdslots (shift ID: ${otherHalf.id}, zelfde user: ${otherHalf.userId === existingShift.userId})`);
         }
       }
       
