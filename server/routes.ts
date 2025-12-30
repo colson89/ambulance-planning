@@ -5009,12 +5009,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         existingShift.stationId
       );
       
+      // Zoek de andere helft: eerst via splitGroup, dan via complementaire tijdslots
       const splitGroup = existingShift.splitGroup;
-      const otherHalf = allShifts.find(shift => 
+      let otherHalf = allShifts.find(shift => 
         shift.id !== shiftId && 
         shift.splitGroup === splitGroup &&
         shift.isSplitShift
       );
+      
+      // Als niet gevonden via splitGroup, zoek op complementaire tijdslots
+      // Dagshifts: ochtend (07:00-13:00) ↔ middag (13:00-19:00)
+      // Nachtshifts: eerste (19:00-01:00) ↔ tweede (01:00-07:00)
+      if (!otherHalf) {
+        const existingDateStr = existingShift.date.toISOString().split('T')[0];
+        const existingStartTime = existingShift.startTime ? existingShift.startTime.getTime() : 0;
+        const existingEndTime = existingShift.endTime ? existingShift.endTime.getTime() : 0;
+        
+        // Bereken verwachte complementaire tijdslot
+        // De complementaire shift moet starten waar deze eindigt, of eindigen waar deze start
+        otherHalf = allShifts.find(shift => {
+          if (shift.id === shiftId) return false;
+          if (!shift.isSplitShift) return false;
+          if (shift.type !== existingShift.type) return false;
+          
+          // Zelfde datum check
+          const shiftDateStr = shift.date.toISOString().split('T')[0];
+          if (shiftDateStr !== existingDateStr) return false;
+          
+          const shiftStartTime = shift.startTime ? shift.startTime.getTime() : 0;
+          const shiftEndTime = shift.endTime ? shift.endTime.getTime() : 0;
+          
+          // Complementaire check: deze shift eindigt waar de andere begint
+          // OF deze shift begint waar de andere eindigt
+          // Gebruik 5 minuten tolerantie voor kleine tijdsverschillen
+          const tolerance = 5 * 60 * 1000; // 5 minuten
+          const isComplementary = 
+            Math.abs(existingEndTime - shiftStartTime) < tolerance ||
+            Math.abs(shiftEndTime - existingStartTime) < tolerance;
+          
+          return isComplementary;
+        });
+        
+        if (otherHalf) {
+          console.log(`Merge: andere helft gevonden via complementaire tijdslots (shift ID: ${otherHalf.id})`);
+        }
+      }
       
       // Collect assigned users from both halves
       const assignedUsers: { id: number; name: string; shiftPart: string }[] = [];
