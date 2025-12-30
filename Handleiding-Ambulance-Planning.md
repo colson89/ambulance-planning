@@ -1499,8 +1499,64 @@ Bij ELKE toewijzing controleert het systeem de volgende regels:
 | **12-uur rustperiode** | Minimum 12 uur tussen shifts (veiligheidsregel) |
 | **1 shift per dag** | Niemand krijgt dag én nacht op dezelfde dag |
 | **Cross-team conflict** | Werkt de persoon al bij een ander station op dit moment? |
-| **Professionele gebruikers** | Max 1 shift per week over alle stations |
+| **Beroepspersoneel** | Max 1 shift per week over alle stations (zie details hieronder) |
+| **Rijbewijs C vereiste** | Minimaal 1 persoon per shift moet rijbewijs C hebben |
 | **Split shift rechten** | Mag cross-team gebruiker split shifts krijgen in dit systeem? |
+
+##### 🚑 Beroepspersoneel en Rijbewijs C
+
+Het systeem houdt rekening met twee belangrijke medewerker-eigenschappen die invloed hebben op de planning:
+
+**Beroepspersoneel (isProfessional)**
+
+Sommige medewerkers zijn aangemerkt als "beroepspersoneel". Voor deze medewerkers gelden speciale regels:
+
+| Regel | Beschrijving |
+|-------|-------------|
+| **Max 1 shift per week** | Beroepspersoneel mag maximaal 1 shift per week worden ingepland, over ALLE stations |
+| **Split shifts toegestaan** | Op dezelfde dag mogen wel meerdere split shifts (bijv. ochtend + middag) |
+| **Cross-station telling** | De weekbeperking geldt over alle stations waar de persoon werkt |
+
+**Voorbeeld:**
+Jan is aangemerkt als beroepspersoneel en werkt bij PIT Mol en ZW Balen:
+- Week 1, maandag: Jan wordt ingepland bij PIT Mol (dagshift)
+- Week 1, woensdag: Jan kan NIET worden ingepland bij ZW Balen (weekbeperking)
+- Week 2, dinsdag: Jan kan weer worden ingepland (nieuwe week)
+
+**Rijbewijs C (hasDrivingLicenseC)**
+
+Voor het rijden met een ambulance is een rijbewijs C vereist. Het systeem zorgt ervoor dat:
+
+| Regel | Beschrijving |
+|-------|-------------|
+| **Minimaal 1 per shift** | Elke shift moet minimaal 1 persoon met rijbewijs C hebben |
+| **Blokkering zonder rijbewijs** | Als de shift nog niemand met rijbewijs C heeft, worden kandidaten ZONDER rijbewijs C geblokkeerd |
+| **Quota bereikt** | Zodra de shift iemand met rijbewijs C heeft, kunnen kandidaten zonder rijbewijs C wel worden toegewezen |
+
+**Voorbeeld:**
+Een dagshift moet worden ingevuld (1 persoon met rijbewijs C vereist):
+- Kandidaat A: Beschikbaar, GEEN rijbewijs C
+- Kandidaat B: Beschikbaar, WEL rijbewijs C
+
+**Scenario 1 - Shift heeft nog niemand met rijbewijs C:**
+- Kandidaat A → ❌ GEBLOKKEERD (rijbewijs C vereist)
+- Kandidaat B → ✅ Kan worden toegewezen
+
+**Scenario 2 - Shift heeft al iemand met rijbewijs C:**
+- Kandidaat A → ✅ Kan worden toegewezen (quota is voldaan)
+- Kandidaat B → ✅ Kan worden toegewezen
+
+**Instellen in Gebruikersbeheer:**
+
+Als admin kunt u deze eigenschappen instellen bij het aanmaken of bewerken van een gebruiker:
+
+1. Ga naar **Gebruikersbeheer**
+2. Klik op een gebruiker om te bewerken
+3. Vink aan/uit:
+   - ☐ **Beroepspersoneel** - Activeer de weekbeperking
+   - ☐ **Rijbewijs C** - Geef aan of de persoon rijbewijs C heeft
+
+> ⚠️ **Standaard waarden:** Nieuwe gebruikers hebben standaard WEL rijbewijs C (aangevinkt) en zijn GEEN beroepspersoneel (uitgevinkt).
 
 ##### Fase 5: Eerlijke Verdeling (Prioriteit Systeem)
 
