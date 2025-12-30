@@ -280,6 +280,37 @@ Als ambulancier ziet u op het dashboard:
 - U kunt alleen voorkeuren opgeven voor toekomstige maanden
 - **Let op de deadline!** (Na deze deadline is het niet meer mogelijk om beschikbaarheden door te geven!)
 
+### ⏰ Deadline Blokkering
+
+**Wat gebeurt er na de deadline?**
+
+Wanneer de deadline voor het opgeven van voorkeuren is verstreken, wordt u automatisch geblokkeerd:
+
+**Visuele Indicatoren:**
+- 🔴 **Rode banner** bovenaan de pagina met de tekst "Deadline verstreken"
+- De exacte deadline datum(s) worden getoond per station
+- ⚪ **Grijze knoppen** - de "Dag Shift Voorkeur Opslaan" en "Nacht Shift Voorkeur Opslaan" knoppen zijn uitgeschakeld
+- Knoptekst verandert naar "Deadline verstreken"
+
+**Voor Cross-Team Medewerkers:**
+
+Werkt u bij meerdere stations? Dan gelden de volgende regels:
+
+- 🟡 **Gedeeltelijke blokkering**: Als de deadline voor één station is verstreken maar niet voor alle stations, ziet u een **oranje waarschuwingsbanner**
+  - U kunt nog steeds voorkeuren invoeren voor stations waar de deadline nog niet is verstreken
+  - Het systeem toont welke stations nog open zijn en welke gesloten
+  
+- 🔴 **Volledige blokkering**: Pas wanneer de deadlines voor **alle** uw toegewezen stations zijn verstreken, worden de invoervelden volledig geblokkeerd
+
+**Voorbeeld:**
+Jan werkt bij PIT Mol (deadline: 27 december) en ZW Balen (deadline: 25 december):
+- Op 26 december: ZW Balen is gesloten, PIT Mol is nog open → Jan kan nog invoeren (oranje waarschuwing)
+- Op 28 december: Beide stations zijn gesloten → Jan is volledig geblokkerd (rode banner)
+
+**Wat te doen bij verstreken deadline?**
+- Neem contact op met uw admin of supervisor voor noodgevallen
+- Controleer of er nog andere maanden zijn waarvoor u voorkeuren kunt opgeven
+
 **Kalender Gebruiken**
 - 🟢 **Groen**: Zowel dag als nacht beschikbaar
 - 🟠 **Oranje**: Alleen dag OF nacht beschikbaar
