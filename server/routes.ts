@@ -7293,7 +7293,15 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
       
       // Haal shifts op voor deze maand
       const shifts = await storage.getShiftsByMonth(month, year, stationId);
-      const plannedShifts = shifts.filter(s => s.status === 'planned');
+      
+      // Filter alleen geplande shifts die nog niet voorbij zijn (endTime >= huidige tijd)
+      const now = new Date();
+      const plannedShifts = shifts.filter(s => 
+        s.status === 'planned' && 
+        s.endTime && new Date(s.endTime).getTime() >= now.getTime()
+      );
+      
+      console.log(`Verdi sync: ${shifts.length} totaal shifts, ${plannedShifts.length} toekomstige/lopende geplande shifts (cutoff: ${now.toISOString()})`);
       
       if (plannedShifts.length === 0) {
         return res.json({ 
