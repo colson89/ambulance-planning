@@ -2831,147 +2831,128 @@ function ScheduleGenerator() {
             </div>
           )}
           
-          <DialogFooter className="flex flex-col gap-4">
-            {/* Shift bewerking knoppen */}
-            {editingShift && (editingShift.type === "night" || editingShift.type === "day") && (
-              <div className="flex flex-col gap-2 border-t pt-4">
-                <Label className="text-sm font-medium">Shift opties:</Label>
-                <div className="flex flex-wrap gap-2">
-                  {!editingShift.isSplitShift && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleSplitShift}
-                      disabled={updateShiftMutation.isPending}
-                    >
-                      <Split className="h-4 w-4 mr-2" />
-                      {editingShift.type === "night" 
-                        ? "Splitsen" 
-                        : "Splitsen"
-                      }
-                    </Button>
-                  )}
-                  
-                  {/* Noodinplanning knop - alleen voor supervisors */}
-                  {user?.role === 'supervisor' && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700"
-                      onClick={() => {
-                        setEmergencyShift(editingShift);
-                        setShowEmergencyDialog(true);
-                      }}
-                    >
-                      <AlertTriangle className="h-4 w-4 mr-2" />
-                      Noodinplanning
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {!showDeleteConfirm ? (
-              <div className="flex flex-col gap-3 w-full">
-                {/* Primaire actieknoppen */}
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" onClick={() => setEditingShift(null)}>
-                    Annuleren
-                  </Button>
-                  
-                  <Button 
-                    onClick={handleSaveShift}
-                    disabled={updateShiftMutation.isPending}
-                  >
-                    {updateShiftMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Opslaan...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Opslaan
-                      </>
+          {!showDeleteConfirm ? (
+            <>
+              {/* Geavanceerde opties - subtiele weergave */}
+              {editingShift && (editingShift.type === "night" || editingShift.type === "day") && (
+                <div className="border-t pt-4 mt-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {!editingShift.isSplitShift && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={handleSplitShift}
+                        disabled={updateShiftMutation.isPending}
+                      >
+                        <Split className="h-4 w-4 mr-1.5" />
+                        Splitsen
+                      </Button>
                     )}
-                  </Button>
-                </div>
-                
-                {/* Destructieve acties - gescheiden weergave */}
-                {editingShift && (
-                  <div className="flex gap-2 pt-2 border-t border-gray-200">
+                    
+                    {user?.role === 'supervisor' && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                        onClick={() => {
+                          setEmergencyShift(editingShift);
+                          setShowEmergencyDialog(true);
+                        }}
+                      >
+                        <AlertTriangle className="h-4 w-4 mr-1.5" />
+                        Noodinplanning
+                      </Button>
+                    )}
+                    
                     {editingShift.userId > 0 && (
                       <Button 
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                         onClick={handleRemoveFromShift}
                         disabled={updateShiftMutation.isPending}
                       >
-                        {updateShiftMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <UserMinus className="h-4 w-4 mr-2" />
-                            Verwijderen Ambulancier
-                          </>
-                        )}
+                        <UserMinus className="h-4 w-4 mr-1.5" />
+                        Ambulancier verwijderen
                       </Button>
                     )}
                     
                     <Button 
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       onClick={() => setShowDeleteConfirm(true)}
                       disabled={updateShiftMutation.isPending || deleteShiftMutation.isPending}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Shift Verwijderen
+                      <Trash2 className="h-4 w-4 mr-1.5" />
+                      Shift verwijderen
                     </Button>
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="w-full">
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md mb-4">
-                  <div className="flex items-center gap-2 text-red-800 font-medium mb-1">
-                    <AlertTriangle className="h-4 w-4" />
-                    Weet je zeker dat je deze shift wilt verwijderen?
-                  </div>
-                  <p className="text-sm text-red-600">
-                    Deze actie kan niet ongedaan worden gemaakt. De shift wordt volledig verwijderd uit de planning.
-                  </p>
                 </div>
-                <div className="flex gap-2 justify-end">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowDeleteConfirm(false)}
-                    disabled={deleteShiftMutation.isPending}
-                  >
-                    Annuleren
-                  </Button>
-                  <Button 
-                    variant="destructive"
-                    onClick={() => editingShift && deleteShiftMutation.mutate(editingShift.id)}
-                    disabled={deleteShiftMutation.isPending}
-                  >
-                    {deleteShiftMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Bezig met verwijderen...
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Ja, verwijder shift
-                      </>
-                    )}
-                  </Button>
+              )}
+              
+              <DialogFooter className="mt-4">
+                <Button variant="outline" onClick={() => setEditingShift(null)}>
+                  Annuleren
+                </Button>
+                <Button 
+                  onClick={handleSaveShift}
+                  disabled={updateShiftMutation.isPending}
+                >
+                  {updateShiftMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Opslaan...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Opslaan
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <div className="mt-4">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md mb-4">
+                <div className="flex items-center gap-2 text-red-800 font-medium mb-1">
+                  <AlertTriangle className="h-4 w-4" />
+                  Weet je zeker dat je deze shift wilt verwijderen?
                 </div>
+                <p className="text-sm text-red-600">
+                  Deze actie kan niet ongedaan worden gemaakt.
+                </p>
               </div>
-            )}
-          </DialogFooter>
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleteShiftMutation.isPending}
+                >
+                  Annuleren
+                </Button>
+                <Button 
+                  variant="destructive"
+                  onClick={() => editingShift && deleteShiftMutation.mutate(editingShift.id)}
+                  disabled={deleteShiftMutation.isPending}
+                >
+                  {deleteShiftMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Verwijderen...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Ja, verwijder
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
       
