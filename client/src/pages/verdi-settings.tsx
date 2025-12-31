@@ -766,23 +766,29 @@ export default function VerdiSettings() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="emergencyPersonGuid1">Nood PersonGUID 1</Label>
+                    <Label htmlFor="emergencyPersonGuid1">Nood PersonGUID 1 (met rijbewijs C)</Label>
                     <Input
                       id="emergencyPersonGuid1"
                       placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                       value={configForm.emergencyPersonGuid1}
                       onChange={(e) => setConfigForm({ ...configForm, emergencyPersonGuid1: e.target.value })}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Gebruikt voor ambulanciers met rijbewijs C
+                    </p>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="emergencyPersonGuid2">Nood PersonGUID 2</Label>
+                    <Label htmlFor="emergencyPersonGuid2">Nood PersonGUID 2 (zonder rijbewijs C)</Label>
                     <Input
                       id="emergencyPersonGuid2"
                       placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                       value={configForm.emergencyPersonGuid2}
                       onChange={(e) => setConfigForm({ ...configForm, emergencyPersonGuid2: e.target.value })}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Gebruikt voor ambulanciers zonder rijbewijs C, of als fallback
+                    </p>
                   </div>
                 </div>
               </div>

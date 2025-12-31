@@ -110,6 +110,9 @@ export class VerdiClient {
 
     // Bouw assignments array
     const verdiAssignments: VerdiShiftAssignment[] = [];
+    // Track of GUID1 slot al gereserveerd is (voor rijbewijs C users)
+    let emergencyGuid1Reserved = false;
+    
     for (let i = 0; i < assignedUsers.length; i++) {
       const user = assignedUsers[i];
       const userMapping = userMappings.get(user.id);
@@ -132,21 +135,33 @@ export class VerdiClient {
       let personGuid: string;
       
       if (isEmergencyScheduled) {
-        // Noodinplanning: gebruik emergency PersonGUID op basis van positie
-        const emergencyGuid = positionIndex === 1 
+        // Noodinplanning: kies GUID op basis van rijbewijs C
+        // GUID 1 = met rijbewijs C, GUID 2 = zonder rijbewijs C of als fallback
+        const hasLicenseC = user.hasDrivingLicenseC === true;
+        
+        // Selecteer GUID: GUID 1 voor rijbewijs C (tenzij al gereserveerd), anders GUID 2
+        let selectedGuidNumber: 1 | 2;
+        if (hasLicenseC && !emergencyGuid1Reserved && stationConfig.emergencyPersonGuid1) {
+          selectedGuidNumber = 1;
+          emergencyGuid1Reserved = true; // Reserveer GUID1 slot
+        } else {
+          selectedGuidNumber = 2;
+        }
+        
+        const emergencyGuid = selectedGuidNumber === 1 
           ? stationConfig.emergencyPersonGuid1 
           : stationConfig.emergencyPersonGuid2;
           
         if (!emergencyGuid) {
           console.warn(
-            `Noodinplanning voor ${user.firstName} ${user.lastName} op positie ${positionIndex}: ` +
-            `geen nood PersonGUID ${positionIndex} geconfigureerd, proberen met user mapping...`
+            `Noodinplanning voor ${user.firstName} ${user.lastName} (rijbewijs C: ${hasLicenseC}): ` +
+            `geen nood PersonGUID ${selectedGuidNumber} geconfigureerd, proberen met user mapping...`
           );
           // Fallback: probeer toch de user mapping (voor het geval de user ook in dit station geregistreerd is)
           if (!userMapping) {
             throw new Error(
               `Noodinplanning voor ${user.firstName} ${user.lastName}: ` +
-              `geen nood PersonGUID ${positionIndex} geconfigureerd en geen Verdi mapping gevonden. ` +
+              `geen nood PersonGUID ${selectedGuidNumber} geconfigureerd en geen Verdi mapping gevonden. ` +
               `Configureer de nood PersonGUID in Verdi instellingen.`
             );
           }
@@ -154,8 +169,8 @@ export class VerdiClient {
         } else {
           personGuid = emergencyGuid;
           console.log(
-            `🚨 Noodinplanning: ${user.firstName} ${user.lastName} op positie ${positionIndex} ` +
-            `gebruikt nood PersonGUID ${positionIndex}: ${emergencyGuid}`
+            `🚨 Noodinplanning: ${user.firstName} ${user.lastName} (rijbewijs C: ${hasLicenseC}) ` +
+            `gebruikt nood PersonGUID ${selectedGuidNumber}: ${emergencyGuid}`
           );
         }
       } else {
