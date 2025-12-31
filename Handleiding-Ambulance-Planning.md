@@ -2963,6 +2963,27 @@ Vul de volgende velden in voor uw station:
 - Klik op "Configuratie Opslaan" onderaan
 - Credentials worden veilig opgeslagen per station
 
+**🗑️ Verdi Shift Data Wissen:**
+
+Deze functie wist de Verdi-koppeling voor alle shifts van een geselecteerde maand. Dit is nuttig na handmatige verwijderingen in Verdi, zodat het planning systeem opnieuw kan synchroniseren.
+
+**Wanneer gebruiken:**
+- Na handmatig verwijderen van shifts in Verdi
+- Bij synchronisatieproblemen waar shifts niet meer overeenkomen
+- Om een "schone lei" te krijgen voor een specifieke maand
+
+**Hoe te gebruiken:**
+1. Selecteer de **maand** en het **jaar** waarvoor u de koppeling wilt wissen
+2. Klik op **"Verdi Data Wissen"** (rode knop)
+3. Bevestig in de waarschuwingsdialoog
+4. Het systeem wist de Verdi-koppeling voor alle shifts van die maand
+5. U kunt nu opnieuw synchroniseren via de Planning Generator
+
+**Let op:**
+- Deze actie verwijdert NIET de shifts uit de planning, alleen de Verdi-koppeling
+- Shifts in Verdi worden NIET verwijderd - doe dit eerst handmatig in Verdi
+- Na het wissen moet u opnieuw synchroniseren om Verdi weer up-to-date te brengen
+
 #### 👤 Tab 2: Gebruiker Mappings (Person GUID Koppeling)
 
 **Waarom Nodig?**
@@ -3899,6 +3920,7 @@ Het systeem wordt continu verbeterd. Hieronder vindt u een overzicht van de bela
 
 | Versie | Datum | Belangrijkste Verbeteringen |
 |--------|-------|----------------------------|
+| **2025.21** | Dec 2025 | Verdi Shift Data Wissen: mogelijkheid om Verdi-koppelingen te wissen voor een specifieke maand na handmatige verwijderingen in Verdi |
 | **2025.20** | Dec 2025 | Station kiosk links beheer: admins/supervisors kunnen nu per station display links genereren, kopiëren en intrekken via Integraties pagina |
 | **2025.19** | Dec 2025 | Uitgebreide logging: push notificaties, Excel exports, kalender tokens en beschikbaarheden export worden nu gelogd voor volledige audit trail |
 | **2025.18** | Dec 2025 | Viewer rol met kiosk/display modus voor Lumaps, BASE_URL configuratie, verbeterde fullscreen titel met stationnaam |
