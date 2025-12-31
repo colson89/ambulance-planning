@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO, addDays } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Merge, Zap, UserPlus, UserMinus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X, CheckCircle, XCircle } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Zap, UserPlus, UserMinus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X, CheckCircle, XCircle } from "lucide-react";
 import { UndoHistoryPanel } from "@/components/undo-history-panel";
 import { EmergencySchedulingDialog } from "@/components/emergency-scheduling-dialog";
 import { useLocation } from "wouter";
@@ -125,11 +125,6 @@ function ScheduleGenerator() {
   // Shift bid viewing state (voor admins/supervisors)
   const [showBidsDialog, setShowBidsDialog] = useState(false);
   const [selectedBidShift, setSelectedBidShift] = useState<Shift | null>(null);
-  
-  // Merge selection dialog state (when users are assigned to half shifts)
-  const [showMergeSelectionDialog, setShowMergeSelectionDialog] = useState(false);
-  const [mergeAssignedUsers, setMergeAssignedUsers] = useState<{ id: number; name: string; shiftPart: string }[]>([]);
-  const [mergeShiftId, setMergeShiftId] = useState<number | null>(null);
   
   // Verdi sync results dialog state
   const [showVerdiSyncResultsDialog, setShowVerdiSyncResultsDialog] = useState(false);
@@ -1328,82 +1323,6 @@ function ScheduleGenerator() {
       });
     }
   }
-
-  const handleMergeShift = async () => {
-    if (!editingShift || (editingShift.type !== "night" && editingShift.type !== "day") || !editingShift.isSplitShift) return;
-    
-    try {
-      const res = await apiRequest("POST", `/api/shifts/${editingShift.id}/merge`, {});
-      
-      if (!res.ok) {
-        throw new Error("Kon shift niet samenvoegen");
-      }
-      
-      const data = await res.json();
-      
-      // Check if backend requires user selection (users are assigned to half shifts)
-      if (data.requiresSelection) {
-        setMergeShiftId(editingShift.id);
-        setMergeAssignedUsers(data.assignedUsers || []);
-        setShowMergeSelectionDialog(true);
-        return; // Don't close edit dialog yet, wait for selection
-      }
-      
-      const mergeDescription = editingShift.type === "night" 
-        ? "De halve shifts zijn samengevoegd tot één volledige nachtshift (19:00-07:00)"
-        : "De halve shifts zijn samengevoegd tot één volledige dagshift (07:00-19:00)";
-      
-      toast({
-        title: "Shift samengevoegd",
-        description: mergeDescription,
-      });
-      
-      setEditingShift(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts", selectedMonth + 1, selectedYear, effectiveStationId] });
-    } catch (error) {
-      toast({
-        title: "Fout bij samenvoegen",
-        description: "Er ging iets mis bij het samenvoegen van de shift",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  const handleMergeWithUser = async (selectedUserId: number) => {
-    if (!mergeShiftId) return;
-    
-    try {
-      const res = await apiRequest("POST", `/api/shifts/${mergeShiftId}/merge`, {
-        selectedUserId,
-        confirm: true
-      });
-      
-      if (!res.ok) {
-        throw new Error("Kon shift niet samenvoegen");
-      }
-      
-      const assignmentText = selectedUserId === 0 
-        ? "open gelaten" 
-        : `toegewezen aan ${mergeAssignedUsers.find(u => u.id === selectedUserId)?.name || 'geselecteerde persoon'}`;
-      
-      toast({
-        title: "Shift samengevoegd",
-        description: `De halve shifts zijn samengevoegd en ${assignmentText}.`,
-      });
-      
-      setShowMergeSelectionDialog(false);
-      setMergeShiftId(null);
-      setMergeAssignedUsers([]);
-      setEditingShift(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/shifts", selectedMonth + 1, selectedYear, effectiveStationId] });
-    } catch (error) {
-      toast({
-        title: "Fout bij samenvoegen",
-        description: "Er ging iets mis bij het samenvoegen van de shift",
-        variant: "destructive",
-      });
-    }
-  };
 
   // Helper functie om Verdi sync status voor een shift op te halen
   const getVerdiSyncStatus = (shiftId: number) => {
@@ -2776,7 +2695,13 @@ function ScheduleGenerator() {
               <div className="grid gap-2">
                 <Label htmlFor="shift-type">Type Shift</Label>
                 <div className="p-2 border rounded-md bg-gray-50">
-                  {editingShift.type === "day" ? "Dag" : "Nacht"}
+                  {editingShift.type === "day" 
+                    ? (editingShift.isSplitShift 
+                        ? (editingShift.startTime && formatInTimeZone(new Date(editingShift.startTime), 'Europe/Brussels', 'HH:mm') === '07:00'
+                            ? "Dag (voormiddag)" 
+                            : "Dag (namiddag)")
+                        : "Dag")
+                    : "Nacht"}
                 </div>
               </div>
               
@@ -2847,18 +2772,6 @@ function ScheduleGenerator() {
                         ? "Splitsen" 
                         : "Splitsen"
                       }
-                    </Button>
-                  )}
-                  
-                  {editingShift.isSplitShift && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleMergeShift}
-                      disabled={updateShiftMutation.isPending}
-                    >
-                      <Merge className="h-4 w-4 mr-2" />
-                      Samenvoegen
                     </Button>
                   )}
                   
@@ -3444,68 +3357,6 @@ function ScheduleGenerator() {
         </DialogContent>
       </Dialog>
 
-      {/* Merge Selection Dialog - when users are assigned to half shifts */}
-      <Dialog open={showMergeSelectionDialog} onOpenChange={(open) => {
-        if (!open) {
-          setShowMergeSelectionDialog(false);
-          setMergeShiftId(null);
-          setMergeAssignedUsers([]);
-        }
-      }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Shifts samenvoegen</DialogTitle>
-            <DialogDescription>
-              Er zijn personen toegewezen aan de halve shifts. Kies wie de volledige shift krijgt.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-3 py-4">
-            {mergeAssignedUsers.map((user) => (
-              <Button
-                key={user.id}
-                variant="outline"
-                className="w-full justify-start h-auto py-3"
-                onClick={() => handleMergeWithUser(user.id)}
-              >
-                <div className="flex flex-col items-start">
-                  <span className="font-medium">{user.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    Huidige shift: {user.shiftPart}
-                  </span>
-                </div>
-              </Button>
-            ))}
-            
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">of</span>
-              </div>
-            </div>
-            
-            <Button
-              variant="outline"
-              className="w-full justify-center text-muted-foreground"
-              onClick={() => handleMergeWithUser(0)}
-            >
-              Leeg laten (open shift)
-            </Button>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => {
-              setShowMergeSelectionDialog(false);
-              setMergeShiftId(null);
-              setMergeAssignedUsers([]);
-            }}>
-              Annuleren
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
