@@ -4388,6 +4388,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Shift not found" });
       }
       
+      // Converteer startTime/endTime strings ("07:00", "13:00") naar volledige Date objecten
+      // gebaseerd op de shift datum in Brussels timezone
+      // Gebruik updateData.date indien meegegeven, anders existingShift.date
+      const effectiveDate = updateData.date ? new Date(updateData.date) : existingShift.date;
+      
+      if (updateData.startTime && typeof updateData.startTime === 'string' && updateData.startTime.includes(':')) {
+        const dateStr = `${effectiveDate.getFullYear()}-${String(effectiveDate.getMonth() + 1).padStart(2, '0')}-${String(effectiveDate.getDate()).padStart(2, '0')}`;
+        updateData.startTime = fromZonedTime(`${dateStr}T${updateData.startTime}:00`, STATION_TIMEZONE);
+      }
+      
+      if (updateData.endTime && typeof updateData.endTime === 'string' && updateData.endTime.includes(':')) {
+        const [hours] = updateData.endTime.split(':').map(Number);
+        // Voor eindtijden van 07:00 bij een nacht shift, voeg een dag toe
+        let dayOffset = 0;
+        if (existingShift.type === 'night' && hours < 12) {
+          dayOffset = 1;
+        }
+        const endDate = new Date(effectiveDate);
+        endDate.setDate(endDate.getDate() + dayOffset);
+        const dateStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
+        updateData.endTime = fromZonedTime(`${dateStr}T${updateData.endTime}:00`, STATION_TIMEZONE);
+      }
+      
       // BUSINESS RULE VALIDATION: Check if updating to split shift for cross-team user in simple system
       // Skip validation if 'force' flag is set (admin/supervisor emergency override)
       if (!force && updateData.userId && updateData.userId > 0 && (updateData.isSplitShift || existingShift.isSplitShift)) {

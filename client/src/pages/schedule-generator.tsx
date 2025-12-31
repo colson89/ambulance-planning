@@ -264,6 +264,7 @@ function ScheduleGenerator() {
   });
   const [lastGeneratedDate, setLastGeneratedDate] = useState<Date | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number>(0);
+  const [selectedShiftMode, setSelectedShiftMode] = useState<"full" | "morning" | "afternoon">("full");
   
   // Query voor planning publicatie status
   const { data: planningStatus, refetch: refetchPlanningStatus } = useQuery<{
@@ -947,12 +948,26 @@ function ScheduleGenerator() {
   
   // Mutatie om een shift te updaten
   const updateShiftMutation = useMutation({
-    mutationFn: async ({ shiftId, userId, force }: { shiftId: number; userId: number; force?: boolean }) => {
-      const res = await apiRequest("PATCH", `/api/shifts/${shiftId}`, {
+    mutationFn: async ({ shiftId, userId, force, startTime, endTime, isSplitShift }: { 
+      shiftId: number; 
+      userId: number; 
+      force?: boolean;
+      startTime?: string;
+      endTime?: string;
+      isSplitShift?: boolean;
+    }) => {
+      const body: any = {
         userId: userId,
         status: userId === 0 ? "open" : "planned",
         force: force || false
-      });
+      };
+      
+      // Voeg optionele tijdvelden toe als ze zijn opgegeven
+      if (startTime !== undefined) body.startTime = startTime;
+      if (endTime !== undefined) body.endTime = endTime;
+      if (isSplitShift !== undefined) body.isSplitShift = isSplitShift;
+      
+      const res = await apiRequest("PATCH", `/api/shifts/${shiftId}`, body);
       if (!res.ok) {
         const errorData = await res.json();
         if (errorData.errorCode === "SPLIT_SHIFT_NOT_ALLOWED_FOR_CROSS_TEAM_USER") {
@@ -1263,15 +1278,67 @@ function ScheduleGenerator() {
     setSelectedUserId(shift.userId);
     setForceAssignment(false);
     setShowForceOption(false);
+    
+    // Bepaal huidige shift mode op basis van isSplitShift en startTime
+    if (shift.type === "day") {
+      if (shift.isSplitShift && shift.startTime) {
+        const startHour = formatInTimeZone(new Date(shift.startTime), 'Europe/Brussels', 'HH:mm');
+        if (startHour === '07:00') {
+          setSelectedShiftMode("morning");
+        } else {
+          setSelectedShiftMode("afternoon");
+        }
+      } else {
+        setSelectedShiftMode("full");
+      }
+    } else {
+      setSelectedShiftMode("full"); // Nacht is altijd full
+    }
   };
   
   // Handle save
   const handleSaveShift = () => {
     if (editingShift) {
+      // Bepaal of de shift mode is veranderd (alleen voor dag shifts)
+      let shiftModeChanged = false;
+      let newStartTime: string | undefined;
+      let newEndTime: string | undefined;
+      let newIsSplitShift: boolean | undefined;
+      
+      if (editingShift.type === "day") {
+        // Bepaal huidige mode
+        let currentMode: "full" | "morning" | "afternoon" = "full";
+        if (editingShift.isSplitShift && editingShift.startTime) {
+          const startHour = formatInTimeZone(new Date(editingShift.startTime), 'Europe/Brussels', 'HH:mm');
+          currentMode = startHour === '07:00' ? "morning" : "afternoon";
+        }
+        
+        if (currentMode !== selectedShiftMode) {
+          shiftModeChanged = true;
+          // Stel nieuwe tijden in gebaseerd op geselecteerde mode
+          if (selectedShiftMode === "full") {
+            newStartTime = "07:00";
+            newEndTime = "19:00";
+            newIsSplitShift = false;
+          } else if (selectedShiftMode === "morning") {
+            newStartTime = "07:00";
+            newEndTime = "13:00";
+            newIsSplitShift = true;
+          } else { // afternoon
+            newStartTime = "13:00";
+            newEndTime = "19:00";
+            newIsSplitShift = true;
+          }
+        }
+      }
+      
       updateShiftMutation.mutate({
         shiftId: editingShift.id,
         userId: selectedUserId,
-        force: forceAssignment
+        force: forceAssignment,
+        startTime: shiftModeChanged ? newStartTime : undefined,
+        endTime: shiftModeChanged ? newEndTime : undefined,
+        isSplitShift: shiftModeChanged ? newIsSplitShift : undefined
       });
     }
   };
@@ -2694,15 +2761,25 @@ function ScheduleGenerator() {
               
               <div className="grid gap-2">
                 <Label htmlFor="shift-type">Type Shift</Label>
-                <div className="p-2 border rounded-md bg-gray-50">
-                  {editingShift.type === "day" 
-                    ? (editingShift.isSplitShift 
-                        ? (editingShift.startTime && formatInTimeZone(new Date(editingShift.startTime), 'Europe/Brussels', 'HH:mm') === '07:00'
-                            ? "Dag (voormiddag)" 
-                            : "Dag (namiddag)")
-                        : "Dag")
-                    : "Nacht"}
-                </div>
+                {editingShift.type === "day" ? (
+                  <Select
+                    value={selectedShiftMode}
+                    onValueChange={(value: "full" | "morning" | "afternoon") => setSelectedShiftMode(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full">Dag (07:00-19:00)</SelectItem>
+                      <SelectItem value="morning">Dag (voormiddag) (07:00-13:00)</SelectItem>
+                      <SelectItem value="afternoon">Dag (namiddag) (13:00-19:00)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="p-2 border rounded-md bg-gray-50">
+                    Nacht (19:00-07:00)
+                  </div>
+                )}
               </div>
               
               <div className="grid gap-2">
