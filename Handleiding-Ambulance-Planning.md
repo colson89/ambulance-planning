@@ -2949,14 +2949,15 @@ Vul de volgende velden in voor uw station:
 
 5. **Verdi synchronisatie ingeschakeld**: Schakelaar om sync aan/uit te zetten
 
-6. **Nood PersonGUID 1 (Chauffeur)**: PersonGUID voor noodinplanning positie 1
-   - Wordt gebruikt wanneer een medewerker van een ander station via noodinplanning wordt ingepland
+6. **Nood PersonGUID 1 (met rijbewijs C)**: PersonGUID voor noodinplanning
+   - Wordt gebruikt wanneer een medewerker **met rijbewijs C** van een ander station via noodinplanning wordt ingepland
    - Omdat die persoon niet in Verdi van dit station is geregistreerd, wordt een "nood" persoon gebruikt
    - Optioneel - alleen nodig als u noodinplanning gebruikt
 
-7. **Nood PersonGUID 2 (Ambulancier)**: PersonGUID voor noodinplanning positie 2
-   - Zelfde als Nood PersonGUID 1, maar voor de tweede positie (ambulancier)
-   - Optioneel - alleen nodig als u noodinplanning met 2 personen van andere stations gebruikt
+7. **Nood PersonGUID 2 (zonder rijbewijs C)**: PersonGUID voor noodinplanning
+   - Wordt gebruikt voor medewerkers **zonder rijbewijs C**
+   - Ook als fallback wanneer Nood PersonGUID 1 al bezet is (bijv. 2 personen met rijbewijs C)
+   - Optioneel - alleen nodig als u noodinplanning met meerdere personen gebruikt
 
 **💾 Opslaan:**
 - Klik op "Configuratie Opslaan" onderaan
@@ -3665,6 +3666,10 @@ Bij noodinplanning wordt automatisch de **Nood PersonGUID** gebruikt voor Verdi 
 - Omdat de medewerker niet geregistreerd is in Verdi van dit station
 - Wordt een generieke "nood" persoon gebruikt in Verdi
 - Configureer de Nood PersonGUIDs in Verdi Instellingen → Station Configuratie
+
+**GUID Selectie op basis van rijbewijs C:**
+- **Nood PersonGUID 1**: Gebruikt voor ambulanciers **met** rijbewijs C
+- **Nood PersonGUID 2**: Gebruikt voor ambulanciers **zonder** rijbewijs C, of als fallback wanneer GUID 1 al bezet is
 
 **Belangrijk:** Configureer de Nood PersonGUIDs voordat u noodinplanning gebruikt, anders zal Verdi synchronisatie mislukken voor deze shifts.
 
