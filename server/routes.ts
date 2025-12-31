@@ -4723,6 +4723,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const station = await storage.getStation(existingShift.stationId);
       const targetStation = await storage.getStation(targetUser.stationId);
       
+      // KRITIEKE VEILIGHEID: Controleer rijbewijs C voor deze shift
+      // Haal alle shifts op voor dezelfde datum, type en station
+      const allShiftsThisMonth = await storage.getShiftsByMonth(existingShift.month, existingShift.year, existingShift.stationId);
+      
+      // Filter op shifts die in dezelfde tijdslot vallen
+      // Voor split shifts: match op splitStartTime en splitEndTime
+      // Voor reguliere shifts: match op date en type
+      const shiftsInSameSlot = allShiftsThisMonth.filter(s => {
+        // Basic match: same date, type, and station
+        if (s.date !== existingShift.date || s.type !== existingShift.type) {
+          return false;
+        }
+        // Exclude the current shift being assigned
+        if (s.id === shiftId) {
+          return false;
+        }
+        // Only consider shifts with assigned users
+        if (s.userId <= 0) {
+          return false;
+        }
+        
+        // For split shifts: must match the exact time window
+        if (existingShift.isSplitShift || existingShift.splitStartTime || existingShift.splitEndTime) {
+          // Both must be split shifts with matching times
+          return s.splitStartTime === existingShift.splitStartTime && 
+                 s.splitEndTime === existingShift.splitEndTime;
+        } else {
+          // For regular shifts: exclude split shifts (they're different time windows)
+          return !s.isSplitShift && !s.splitStartTime && !s.splitEndTime;
+        }
+      });
+      
+      // Haal users op voor de andere shifts in dezelfde tijdslot
+      let hasOtherWithLicenseC = false;
+      
+      for (const otherShift of shiftsInSameSlot) {
+        const otherUser = await storage.getUser(otherShift.userId);
+        if (otherUser?.hasDrivingLicenseC) {
+          hasOtherWithLicenseC = true;
+          break;
+        }
+      }
+      
+      // Als de nieuwe persoon GEEN rijbewijs C heeft EN niemand anders op dezelfde shift heeft rijbewijs C
+      // => Blokkeer de actie
+      if (!targetUser.hasDrivingLicenseC && !hasOtherWithLicenseC) {
+        const shiftTypeStr = existingShift.type === 'day' ? 'dagshift' : 'nachtshift';
+        const shiftDateStr = new Date(existingShift.date).toLocaleDateString('nl-BE');
+        const timeInfo = existingShift.splitStartTime && existingShift.splitEndTime 
+          ? ` (${existingShift.splitStartTime} - ${existingShift.splitEndTime})`
+          : '';
+        return res.status(400).json({ 
+          message: `Rijbewijs C vereist: ${targetUser.firstName} ${targetUser.lastName} heeft geen rijbewijs C en er is niemand anders met rijbewijs C op deze ${shiftTypeStr}${timeInfo} (${shiftDateStr}). Kies een medewerker met rijbewijs C of plan eerst iemand met rijbewijs C in.`
+        });
+      }
+      
       // Update the shift with emergency scheduling flags
       const updatedShift = await storage.updateShift(shiftId, {
         userId,

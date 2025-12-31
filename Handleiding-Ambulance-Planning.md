@@ -3665,6 +3665,22 @@ Noodinplanning is een functie waarmee supervisors in noodgevallen medewerkers va
    - Klik op "Noodinplanning Bevestigen"
    - De shift wordt toegewezen aan de geselecteerde medewerker
 
+#### Rijbewijs C Veiligheidsblokkade
+
+**Kritieke Veiligheidsregel:** Er moet altijd minimaal één persoon met rijbewijs C op elke shift staan.
+
+**Automatische Controle:**
+- Wanneer u iemand **zonder rijbewijs C** probeert in te plannen via noodinplanning
+- EN er staat niemand anders met rijbewijs C op dezelfde shift
+- Dan wordt de actie **geblokkeerd** met een duidelijke foutmelding
+
+**Foutmelding voorbeeld:**
+> "Rijbewijs C vereist: [Naam] heeft geen rijbewijs C en er is niemand anders met rijbewijs C op deze dagshift (01/02/2025). Kies een medewerker met rijbewijs C of plan eerst iemand met rijbewijs C in."
+
+**Oplossingen:**
+1. Kies een medewerker **met** rijbewijs C
+2. Of plan eerst iemand met rijbewijs C in op de andere positie van dezelfde shift
+
 #### Visuele Indicatie
 
 Shifts met noodinplanning zijn herkenbaar aan:
