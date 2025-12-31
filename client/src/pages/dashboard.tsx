@@ -530,14 +530,37 @@ export default function Dashboard() {
   });
   
   const deadlineDays = deadlineConfig?.days || 1;
-  // Bereken deadline: X dagen voor de 1e van de volgende maand
-  const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-  const currentMonthDeadline = new Date(nextMonthStart.getTime() - (deadlineDays * 24 * 60 * 60 * 1000));
-  currentMonthDeadline.setHours(23, 0, 0, 0);
-  const isPastDeadline = today > currentMonthDeadline;
-
-  // Als we voorbij de deadline zijn van deze maand, toon dan de planning voor de maand na volgende maand
-  const planningMonth = addMonths(today, isPastDeadline ? 2 : 1);
+  
+  // Bereken welke maand open is voor voorkeuren door te blijven controleren
+  // tot we een deadline vinden die nog niet verstreken is
+  const calculatePlanningPeriod = () => {
+    let monthsAhead = 1;
+    let deadline: Date;
+    
+    // Blijf controleren tot we een toekomstige deadline vinden (max 12 maanden vooruit)
+    while (monthsAhead <= 12) {
+      // Bereken de 1e van de planning maand
+      const planningMonthStart = new Date(today.getFullYear(), today.getMonth() + monthsAhead, 1);
+      // Deadline is X dagen voor de 1e van die maand
+      deadline = new Date(planningMonthStart.getTime() - (deadlineDays * 24 * 60 * 60 * 1000));
+      deadline.setHours(23, 0, 0, 0);
+      
+      // Als we nog voor de deadline zijn, hebben we de juiste maand gevonden
+      if (today <= deadline) {
+        return { planningMonth: addMonths(today, monthsAhead), deadline, isPastDeadline: false };
+      }
+      
+      monthsAhead++;
+    }
+    
+    // Fallback: als alle deadlines voorbij zijn, toon 2 maanden vooruit
+    const fallbackMonthStart = new Date(today.getFullYear(), today.getMonth() + 2, 1);
+    const fallbackDeadline = new Date(fallbackMonthStart.getTime() - (deadlineDays * 24 * 60 * 60 * 1000));
+    fallbackDeadline.setHours(23, 0, 0, 0);
+    return { planningMonth: addMonths(today, 2), deadline: fallbackDeadline, isPastDeadline: true };
+  };
+  
+  const { planningMonth, deadline: currentMonthDeadline, isPastDeadline } = calculatePlanningPeriod();
   
   // Navigatie functies voor maand/jaar
   const prevMonth = () => {
@@ -1137,10 +1160,7 @@ export default function Dashboard() {
               <p className="text-muted-foreground">
                 {format(planningMonth, "MMMM yyyy", { locale: nl })} is nu open voor voorkeuren.
                 <br />
-                {isPastDeadline 
-                  ? `U kunt tot ${format(addMonths(currentMonthDeadline, 1), "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
-                  : `U kunt tot ${format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.`
-                }
+                U kunt tot {format(currentMonthDeadline, "d MMMM HH:mm", { locale: nl })} uw voorkeuren opgeven.
                 <br />
                 <span className="text-xs">
                   Planning moet {deadlineDays} dag{deadlineDays !== 1 ? 'en' : ''} van tevoren worden ingediend
