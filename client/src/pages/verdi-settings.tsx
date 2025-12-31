@@ -19,7 +19,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Home, Save, Upload, Download, Search, FileUp, CheckCircle, XCircle, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Home, Save, Upload, Download, Search, FileUp, CheckCircle, XCircle, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -309,16 +319,24 @@ export default function VerdiSettings() {
     },
   });
 
-  const cleanupLegacyLogsMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/verdi/cleanup-legacy-logs", { stationId: effectiveStationId });
-      if (!res.ok) throw new Error("Kon legacy logs niet opschonen");
+  const [clearShiftMonth, setClearShiftMonth] = useState<number>(new Date().getMonth() + 1);
+  const [clearShiftYear, setClearShiftYear] = useState<number>(new Date().getFullYear());
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  const clearVerdiShiftDataMutation = useMutation({
+    mutationFn: async ({ month, year }: { month: number; year: number }) => {
+      const res = await apiRequest("POST", `/api/verdi/clear-shift-data/${effectiveStationId}`, { month, year });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Kon Verdi shift data niet wissen");
+      }
       return res.json();
     },
     onSuccess: (data) => {
+      setShowClearConfirm(false);
       toast({
-        title: "Opgeschoond",
-        description: `${data.deleted} legacy logs verwijderd${data.failed > 0 ? `, ${data.failed} fouten` : ''}`,
+        title: "Verdi data gewist",
+        description: `${data.clearedCount} shift(s) losgekoppeld van Verdi`,
       });
     },
     onError: (error: Error) => {
@@ -802,24 +820,84 @@ export default function VerdiSettings() {
                 <Label htmlFor="enabled">Verdi synchronisatie ingeschakeld</Label>
               </div>
 
-              <div className="flex gap-2">
-                <Button onClick={handleConfigSave} disabled={updateConfigMutation.isPending}>
-                  <Save className="mr-2 h-4 w-4" />
-                  {updateConfigMutation.isPending ? "Opslaan..." : "Configuratie Opslaan"}
-                </Button>
+              <Button onClick={handleConfigSave} disabled={updateConfigMutation.isPending}>
+                <Save className="mr-2 h-4 w-4" />
+                {updateConfigMutation.isPending ? "Opslaan..." : "Configuratie Opslaan"}
+              </Button>
 
-                <Button 
-                  variant="outline"
-                  onClick={() => cleanupLegacyLogsMutation.mutate()}
-                  disabled={cleanupLegacyLogsMutation.isPending}
-                >
-                  {cleanupLegacyLogsMutation.isPending ? "Opschonen..." : "Legacy Logs Opschonen"}
-                </Button>
+              <div className="border-t pt-4 mt-4">
+                <h4 className="font-semibold mb-2">Verdi Shift Data Wissen</h4>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Wis de Verdi koppeling voor alle shifts van een bepaalde maand. 
+                  Gebruik dit na het handmatig verwijderen van shifts in Verdi om opnieuw te kunnen synchroniseren.
+                </p>
+                
+                <div className="flex items-end gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="clear-month" className="text-xs">Maand</Label>
+                    <select
+                      id="clear-month"
+                      value={clearShiftMonth}
+                      onChange={(e) => setClearShiftMonth(parseInt(e.target.value))}
+                      className="flex h-9 w-24 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                    >
+                      {[1,2,3,4,5,6,7,8,9,10,11,12].map(m => (
+                        <option key={m} value={m}>
+                          {new Date(2000, m - 1, 1).toLocaleDateString('nl-BE', { month: 'short' })}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label htmlFor="clear-year" className="text-xs">Jaar</Label>
+                    <select
+                      id="clear-year"
+                      value={clearShiftYear}
+                      onChange={(e) => setClearShiftYear(parseInt(e.target.value))}
+                      className="flex h-9 w-20 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                    >
+                      {[2024, 2025, 2026, 2027].map(y => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <Button 
+                    variant="outline"
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                    onClick={() => setShowClearConfirm(true)}
+                    disabled={clearVerdiShiftDataMutation.isPending || !effectiveStationId}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Verdi Data Wissen
+                  </Button>
+                </div>
               </div>
 
-              <p className="text-sm text-muted-foreground">
-                Gebruik "Legacy Logs Opschonen" om oude sync logs zonder snapshot data te verwijderen. Dit is nodig na de update naar het nieuwe systeem.
-              </p>
+              <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Verdi Shift Data Wissen</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Dit zal de Verdi koppeling wissen voor alle shifts van {new Date(clearShiftYear, clearShiftMonth - 1, 1).toLocaleDateString('nl-BE', { month: 'long', year: 'numeric' })}.
+                      <br /><br />
+                      <strong>Let op:</strong> De shifts zelf blijven bestaan, alleen de koppeling met Verdi wordt verwijderd. 
+                      Na het wissen kunt u de shifts opnieuw naar Verdi synchroniseren.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-red-600 hover:bg-red-700"
+                      onClick={() => clearVerdiShiftDataMutation.mutate({ month: clearShiftMonth, year: clearShiftYear })}
+                      disabled={clearVerdiShiftDataMutation.isPending}
+                    >
+                      {clearVerdiShiftDataMutation.isPending ? "Bezig..." : "Ja, wis Verdi data"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </TabsContent>

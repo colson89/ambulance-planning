@@ -8067,6 +8067,82 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
     }
   });
 
+  // Clear Verdi shift data for a specific station and month
+  app.post("/api/verdi/clear-shift-data/:stationId", requireAdmin, async (req, res) => {
+    try {
+      const user = req.user as User;
+      const stationId = parseInt(req.params.stationId);
+      const { month, year } = req.body;
+      
+      if (!month || !year || month < 1 || month > 12) {
+        return res.status(400).json({ message: "Ongeldige maand of jaar" });
+      }
+      
+      // Verify user has access to this station
+      // Supervisors can access all stations, admins can only access their own
+      if (user.role !== 'supervisor' && user.stationId !== stationId) {
+        return res.status(403).json({ message: "Geen toegang tot dit station" });
+      }
+      
+      // Get all shifts for this station and month that have a verdiShiftGuid
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0); // Last day of month
+      
+      const shifts = await storage.getShiftsByDateRange(stationId, startDate, endDate);
+      const shiftsWithVerdi = shifts.filter(s => s.verdiShiftGuid);
+      
+      if (shiftsWithVerdi.length === 0) {
+        return res.json({
+          success: true,
+          message: 'Geen shifts met Verdi koppeling gevonden voor deze maand',
+          clearedCount: 0
+        });
+      }
+      
+      console.log(`Clearing Verdi data for ${shiftsWithVerdi.length} shifts in station ${stationId}, ${month}/${year}`);
+      
+      let clearedCount = 0;
+      const errors: string[] = [];
+      
+      for (const shift of shiftsWithVerdi) {
+        try {
+          // Clear the verdiShiftGuid field
+          await storage.updateShift(shift.id, { verdiShiftGuid: null });
+          // Also delete any sync logs for this shift
+          await storage.deleteVerdiSyncLog(shift.id);
+          clearedCount++;
+        } catch (error: any) {
+          console.error(`Error clearing Verdi data for shift ${shift.id}:`, error);
+          errors.push(`Shift ${shift.id}: ${error.message}`);
+        }
+      }
+      
+      // Log activity
+      const station = await storage.getStation(stationId);
+      const monthName = new Date(year, month - 1, 1).toLocaleDateString('nl-BE', { month: 'long', year: 'numeric' });
+      
+      await logActivity({
+        userId: user.id,
+        stationId,
+        action: 'VERDI_DATA_CLEARED',
+        category: 'VERDI',
+        details: `Verdi koppeling gewist voor ${clearedCount} shifts in ${monthName} (${station?.displayName || 'Onbekend station'})`,
+        ...getClientInfo(req)
+      });
+      
+      res.json({
+        success: true,
+        message: `Verdi koppeling gewist voor ${clearedCount} shifts`,
+        clearedCount,
+        errors: errors.length > 0 ? errors : undefined
+      });
+      
+    } catch (error: any) {
+      console.error("Error clearing Verdi shift data:", error);
+      res.status(500).json({ message: "Kon Verdi shift data niet wissen", error: error.message });
+    }
+  });
+
   // =====================
   // Push Notifications API
   // =====================
