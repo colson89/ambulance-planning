@@ -44,6 +44,12 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { User, ShiftPreference, Shift } from "@shared/schema";
 
 interface Station {
@@ -267,7 +273,7 @@ function ScheduleGenerator() {
   const [selectedShiftMode, setSelectedShiftMode] = useState<"full" | "morning" | "afternoon">("full");
   
   // Query voor planning publicatie status
-  const { data: planningStatus, refetch: refetchPlanningStatus } = useQuery<{
+  const { data: planningStatus, refetch: refetchPlanningStatus, isLoading: isLoadingPlanningStatus } = useQuery<{
     hasShifts: boolean;
     shiftCount: number;
     isPublished: boolean;
@@ -2008,24 +2014,29 @@ function ScheduleGenerator() {
                     </div>
                   )}
                 </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      disabled={generateScheduleMutation.isPending}
-                    >
-                      {generateScheduleMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Bezig met genereren...
-                        </>
-                      ) : (
-                        <>
-                          <CalendarDays className="h-4 w-4 mr-2" />
-                          Genereer Planning
-                        </>
-                      )}
-                    </Button>
-                  </AlertDialogTrigger>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              disabled={generateScheduleMutation.isPending || isLoadingPlanningStatus || planningStatus?.isPublished}
+                              className={planningStatus?.isPublished ? "opacity-50 cursor-not-allowed" : ""}
+                            >
+                              {generateScheduleMutation.isPending ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Bezig met genereren...
+                                </>
+                              ) : (
+                                <>
+                                  <CalendarDays className="h-4 w-4 mr-2" />
+                                  Genereer Planning
+                                </>
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Planning Genereren</AlertDialogTitle>
@@ -2077,7 +2088,16 @@ function ScheduleGenerator() {
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
-                </AlertDialog>
+                        </AlertDialog>
+                      </span>
+                    </TooltipTrigger>
+                    {planningStatus?.isPublished && (
+                      <TooltipContent>
+                        <p>Planning is gepubliceerd. Trek de planning eerst in om opnieuw te genereren.</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
               
               {/* Publicatie Status Banner en Knoppen */}
