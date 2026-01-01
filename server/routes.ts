@@ -8140,14 +8140,10 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         return res.status(403).json({ message: "Geen toegang tot dit station" });
       }
       
-      // Get all shifts for this station and month that have a verdiShiftGuid
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0); // Last day of month
+      // Get all sync logs for this station and month
+      const syncLogs = await storage.getVerdiSyncLogsByMonth(month, year, stationId);
       
-      const shifts = await storage.getShiftsByDateRange(stationId, startDate, endDate);
-      const shiftsWithVerdi = shifts.filter(s => s.verdiShiftGuid);
-      
-      if (shiftsWithVerdi.length === 0) {
+      if (syncLogs.length === 0) {
         return res.json({
           success: true,
           message: 'Geen shifts met Verdi koppeling gevonden voor deze maand',
@@ -8155,21 +8151,19 @@ Accessible Stations: ${JSON.stringify(accessibleStations, null, 2)}
         });
       }
       
-      console.log(`Clearing Verdi data for ${shiftsWithVerdi.length} shifts in station ${stationId}, ${month}/${year}`);
+      console.log(`Clearing Verdi data for ${syncLogs.length} sync logs in station ${stationId}, ${month}/${year}`);
       
       let clearedCount = 0;
       const errors: string[] = [];
       
-      for (const shift of shiftsWithVerdi) {
+      for (const log of syncLogs) {
         try {
-          // Clear the verdiShiftGuid field
-          await storage.updateShift(shift.id, { verdiShiftGuid: null });
-          // Also delete any sync logs for this shift
-          await storage.deleteVerdiSyncLog(shift.id);
+          // Delete the sync log for this shift
+          await storage.deleteVerdiSyncLog(log.shiftId);
           clearedCount++;
         } catch (error: any) {
-          console.error(`Error clearing Verdi data for shift ${shift.id}:`, error);
-          errors.push(`Shift ${shift.id}: ${error.message}`);
+          console.error(`Error clearing Verdi data for shift ${log.shiftId}:`, error);
+          errors.push(`Shift ${log.shiftId}: ${error.message}`);
         }
       }
       
