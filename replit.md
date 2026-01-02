@@ -48,6 +48,33 @@ Documentation Policy: **ALWAYS update `Handleiding-Ambulance-Planning.md` when a
 - **Undo History System**: Allows admins/supervisors to revert recent changes to shift planning and user management, with station-scoped access.
 - **Password Reset via Email**: Self-service password reset functionality, supervisor-controlled, requiring SMTP configuration and using secure, expiring tokens.
 
+## Vriendenkring Mol Module (Separate System)
+
+A completely separate module for "Vriendenkring VZW Brandweer Mol" - a social organization for members and their families.
+
+### VK Module Architecture
+- **Separate Authentication**: Own login system with vkAdmins table (not connected to ambulance user system)
+- **Own Database Tables**: All tables prefixed with `vk_` (vkAdmins, vkMembers, vkActivities, vkSubActivities, vkPricing, vkRegistrations, vkRegistrationItems, vkMembershipTypes)
+- **Own API Routes**: All routes under `/api/vk/*` in `server/vk-routes.ts`
+- **Hidden Pages**: Accessed via `/VriendenkringMol` (no link in main navigation)
+
+### VK Features
+- **Member Management**: Track members with membership types (Lid VZW, Niet Lid VZW, Genodigde, Weduwe, etc.)
+- **Activity Management**: Create events like "Sint Barbara 2025" with sub-activities (Avondfeest, Ontbijt, etc.)
+- **Flexible Pricing**: Different prices per sub-activity per membership type
+- **Public Registration**: Open registration form for activities with live price calculation
+- **Stripe Payments**: Integrated checkout with Bancontact, iDEAL, and card payments
+- **Admin Dashboard**: Overview of registrations, payments, and statistics
+
+### VK URLs
+- `/VriendenkringMol` - Admin login
+- `/VriendenkringMol/admin` - Admin dashboard
+- `/VriendenkringMol/inschrijven` - Public registration form
+
+### VK Stripe Integration
+Connected to: **vriendenkring.vzwbrandweermol@gmail.com**
+Uses Replit Stripe connector for secure credential management.
+
 ### System Design Choices
 - **Database Schema**: Multi-station support with normalized tables for users, shifts, preferences, configurations, holidays, and weekdays.
 - **Deployment**: Pre-compiled backend and static frontend assets. Designed for VM deployment (Linux/Ubuntu, Windows Server) and Docker-ready, using PM2 and Nginx.
