@@ -806,3 +806,33 @@ export const insertAzureAdConfigSchema = createInsertSchema(azureAdConfig).omit(
 });
 export type AzureAdConfig = typeof azureAdConfig.$inferSelect;
 export type InsertAzureAdConfig = z.infer<typeof insertAzureAdConfigSchema>;
+
+// Shift Assignment Explanations - Legt uit waarom een shift is toegewezen of open is
+export const shiftAssignmentExplanations = pgTable("shift_assignment_explanations", {
+  id: serial("id").primaryKey(),
+  shiftId: integer("shift_id").notNull().references(() => shifts.id, { onDelete: 'cascade' }),
+  stationId: integer("station_id").notNull().references(() => stations.id, { onDelete: 'cascade' }),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  assignedUserId: integer("assigned_user_id"), // null als shift open is
+  explanationType: text("explanation_type", { enum: ["assigned", "open"] }).notNull(),
+  primaryReason: text("primary_reason").notNull(), // Hoofdreden in leesbare tekst
+  assignedUserPreference: text("assigned_user_preference"), // "volunteered" | "auto-assigned" | null
+  assignedUserHoursAtAssignment: integer("assigned_user_hours_at_assignment"), // Hoeveel uren had deze user al
+  assignedUserTargetHours: integer("assigned_user_target_hours"), // Doeluren van de user
+  assignedUserCandidateDays: integer("assigned_user_candidate_days"), // Aantal kandidaat-dagen in maand
+  candidatesConsidered: text("candidates_considered"), // JSON array van candidate objects
+  rejectedCandidates: text("rejected_candidates"), // JSON array van afgewezen kandidaten met redenen
+  constraintsApplied: text("constraints_applied"), // JSON array van toegepaste constraints
+  fairnessMetrics: text("fairness_metrics"), // JSON object met fairness scores
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertShiftAssignmentExplanationSchema = createInsertSchema(shiftAssignmentExplanations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+export type ShiftAssignmentExplanation = typeof shiftAssignmentExplanations.$inferSelect;
+export type InsertShiftAssignmentExplanation = z.infer<typeof insertShiftAssignmentExplanationSchema>;

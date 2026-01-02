@@ -1,4 +1,4 @@
-import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, userStationNotificationPreferences, reportageConfig, reportageRecipients, reportageLogs, welcomeEmailConfig, overtime, stationSettings, shiftSwapRequests, shiftSwapOffers, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, azureAdConfig, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type UserStationNotificationPreference, type InsertUserStationNotificationPreference, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type WelcomeEmailConfig, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftSwapOffer, type InsertShiftSwapOffer, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod, type AzureAdConfig } from "../shared/schema";
+import { users, shifts, shiftPreferences, systemSettings, weekdayConfigs, userComments, stations, userStations, holidays, calendarTokens, verdiStationConfig, verdiUserMappings, verdiPositionMappings, verdiSyncLog, verdiShiftRegistry, pushSubscriptions, userStationNotificationPreferences, reportageConfig, reportageRecipients, reportageLogs, welcomeEmailConfig, overtime, stationSettings, shiftSwapRequests, shiftSwapOffers, shiftBids, undoHistory, passwordResetTokens, customNotifications, customNotificationRecipients, planningPeriods, azureAdConfig, shiftAssignmentExplanations, type User, type InsertUser, type Shift, type ShiftPreference, type InsertShiftPreference, type WeekdayConfig, type UserComment, type InsertUserComment, type Station, type InsertStation, type Holiday, type InsertHoliday, type UserStation, type InsertUserStation, type CalendarToken, type InsertCalendarToken, type VerdiStationConfig, type VerdiUserMapping, type VerdiPositionMapping, type VerdiSyncLog, type VerdiShiftRegistry, type PushSubscription, type InsertPushSubscription, type UserStationNotificationPreference, type InsertUserStationNotificationPreference, type ReportageConfig, type ReportageRecipient, type ReportageLog, type InsertReportageRecipient, type WelcomeEmailConfig, type Overtime, type InsertOvertime, type StationSettings, type InsertStationSettings, type ShiftSwapRequest, type InsertShiftSwapRequest, type ShiftSwapOffer, type InsertShiftSwapOffer, type ShiftBid, type InsertShiftBid, type UndoHistory, type InsertUndoHistory, type PasswordResetToken, type CustomNotification, type CustomNotificationRecipient, type PlanningPeriod, type InsertPlanningPeriod, type AzureAdConfig, type ShiftAssignmentExplanation, type InsertShiftAssignmentExplanation } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, lt, gte, lte, ne, asc, desc, inArray, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -6169,6 +6169,41 @@ export class DatabaseStorage implements IStorage {
         .set({ enabled, updatedAt: new Date() })
         .where(eq(azureAdConfig.id, existing.id));
     }
+  }
+
+  // Shift Assignment Explanation Methods
+  async createShiftAssignmentExplanation(data: InsertShiftAssignmentExplanation): Promise<ShiftAssignmentExplanation> {
+    const result = await db.insert(shiftAssignmentExplanations).values(data).returning();
+    return result[0];
+  }
+
+  async getShiftAssignmentExplanation(shiftId: number): Promise<ShiftAssignmentExplanation | undefined> {
+    const result = await db.select().from(shiftAssignmentExplanations).where(eq(shiftAssignmentExplanations.shiftId, shiftId));
+    return result[0];
+  }
+
+  async getShiftAssignmentExplanationsByMonth(month: number, year: number, stationId: number): Promise<ShiftAssignmentExplanation[]> {
+    return await db.select().from(shiftAssignmentExplanations).where(
+      and(
+        eq(shiftAssignmentExplanations.month, month),
+        eq(shiftAssignmentExplanations.year, year),
+        eq(shiftAssignmentExplanations.stationId, stationId)
+      )
+    );
+  }
+
+  async deleteShiftAssignmentExplanationsByMonth(month: number, year: number, stationId: number): Promise<void> {
+    await db.delete(shiftAssignmentExplanations).where(
+      and(
+        eq(shiftAssignmentExplanations.month, month),
+        eq(shiftAssignmentExplanations.year, year),
+        eq(shiftAssignmentExplanations.stationId, stationId)
+      )
+    );
+  }
+
+  async deleteShiftAssignmentExplanation(shiftId: number): Promise<void> {
+    await db.delete(shiftAssignmentExplanations).where(eq(shiftAssignmentExplanations.shiftId, shiftId));
   }
 }
 
