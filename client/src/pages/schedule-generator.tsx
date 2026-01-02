@@ -8,7 +8,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { format, addMonths, isWeekend, parseISO, addDays } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { nl } from "date-fns/locale";
-import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Zap, UserPlus, UserMinus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X, CheckCircle, XCircle } from "lucide-react";
+import { Home, Loader2, CalendarDays, Check, AlertCircle, Users, Edit, Save, ChevronLeft, ChevronRight, Trash2, AlertTriangle, Clock, Split, Zap, UserPlus, UserMinus, RefreshCw, Calendar, Eye, Download, Link as LinkIcon, X, CheckCircle, XCircle, Info } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { UndoHistoryPanel } from "@/components/undo-history-panel";
 import { EmergencySchedulingDialog } from "@/components/emergency-scheduling-dialog";
 import { useLocation } from "wouter";
@@ -123,6 +125,10 @@ function ScheduleGenerator() {
   // Force assignment state (voor noodgevallen)
   const [forceAssignment, setForceAssignment] = useState<boolean>(false);
   const [showForceOption, setShowForceOption] = useState<boolean>(false);
+  
+  // Assignment reason sheet state
+  const [assignmentReasonSheetOpen, setAssignmentReasonSheetOpen] = useState(false);
+  const [selectedExplanationShiftId, setSelectedExplanationShiftId] = useState<number | null>(null);
   
   // Emergency scheduling state (noodinplanning voor supervisors)
   const [showEmergencyDialog, setShowEmergencyDialog] = useState<boolean>(false);
@@ -445,6 +451,28 @@ function ScheduleGenerator() {
     },
     enabled: !!user && !!effectiveStationId && (user.role === "admin" || user.role === "supervisor"),
   });
+
+  // Query for shift assignment explanation (on-demand, only when sheet is open)
+  const { data: assignmentExplanation, isLoading: explanationLoading } = useQuery<any>({
+    queryKey: ["/api/shifts", selectedExplanationShiftId, "assignment-reason"],
+    queryFn: async () => {
+      if (!selectedExplanationShiftId) return null;
+      const res = await apiRequest("GET", `/api/shifts/${selectedExplanationShiftId}/assignment-reason`);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Kon inplanningsreden niet ophalen");
+      }
+      return res.json();
+    },
+    enabled: assignmentReasonSheetOpen && !!selectedExplanationShiftId && (user?.role === 'admin' || user?.role === 'supervisor'),
+  });
+
+  // Handler to show assignment explanation
+  const handleShowAssignmentReason = (shiftId: number) => {
+    if (user?.role !== 'admin' && user?.role !== 'supervisor') return;
+    setSelectedExplanationShiftId(shiftId);
+    setAssignmentReasonSheetOpen(true);
+  };
 
   // Haal laatste succesvolle Verdi sync timestamp op
   const { data: lastVerdiSync } = useQuery<{ lastSync: string | null }>({
@@ -2582,13 +2610,30 @@ function ScheduleGenerator() {
                                   );
                                 })()}
                               </div>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleEditShift(shift)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                {/* Assignment Reason Info Button - Admin/Supervisor only */}
+                                {(user?.role === 'admin' || user?.role === 'supervisor') && shift.status === 'planned' && !isUserDeleted && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleShowAssignmentReason(shift.id);
+                                    }}
+                                    title="Bekijk inplanningsreden"
+                                  >
+                                    <Info className="h-3.5 w-3.5 text-blue-500" />
+                                  </Button>
+                                )}
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleEditShift(shift)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -3435,6 +3480,125 @@ function ScheduleGenerator() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Assignment Explanation Sheet - Admin/Supervisor only */}
+      <Sheet open={assignmentReasonSheetOpen} onOpenChange={setAssignmentReasonSheetOpen}>
+        <SheetContent className="sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-blue-500" />
+              Inplanningsreden
+            </SheetTitle>
+            <SheetDescription>
+              Waarom is deze shift zo ingepland?
+            </SheetDescription>
+          </SheetHeader>
+          <ScrollArea className="mt-4 h-[calc(100vh-160px)]">
+            {explanationLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            ) : assignmentExplanation ? (
+              <div className="space-y-6 pr-4">
+                {/* Primary Reason */}
+                <div className="rounded-lg border p-4 bg-gray-50 dark:bg-gray-900">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Hoofdreden</h4>
+                  <p className="text-gray-700 dark:text-gray-300">{assignmentExplanation.primaryReason}</p>
+                </div>
+
+                {/* Status Badge */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Status:</span>
+                  <Badge variant={assignmentExplanation.explanationType === 'assigned' ? 'default' : 'destructive'}>
+                    {assignmentExplanation.explanationType === 'assigned' ? 'Toegewezen' : 'Open'}
+                  </Badge>
+                </div>
+
+                {/* Assigned User Details */}
+                {assignmentExplanation.assignedUser && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Toegewezen persoon</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Naam:</span>
+                        <span className="font-medium">{assignmentExplanation.assignedUser.firstName} {assignmentExplanation.assignedUser.lastName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Toewijzing:</span>
+                        <Badge variant={assignmentExplanation.assignedUser.preferenceStatus === 'volunteered' ? 'default' : 'secondary'}>
+                          {assignmentExplanation.assignedUser.preferenceStatus === 'volunteered' ? 'Voorkeur opgegeven' : 'Automatisch toegewezen'}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Gewerkte uren deze maand:</span>
+                        <span>{assignmentExplanation.assignedUser.hoursWorkedThisMonth}u / {assignmentExplanation.assignedUser.targetHours}u doel</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Rijbewijs C:</span>
+                        <span>{assignmentExplanation.assignedUser.hasDrivingLicenseC ? 'Ja' : 'Nee'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Beroeps:</span>
+                        <span>{assignmentExplanation.assignedUser.isProfessional ? 'Ja' : 'Nee'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Candidates Considered */}
+                {assignmentExplanation.candidatesConsidered?.length > 0 && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Andere kandidaten</h4>
+                    <div className="space-y-2">
+                      {assignmentExplanation.candidatesConsidered.map((candidate: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center text-sm py-1 border-b last:border-0">
+                          <span>{candidate.name}</span>
+                          <div className="flex gap-2">
+                            {candidate.hadPreference && (
+                              <Badge variant="outline" className="text-xs">Voorkeur</Badge>
+                            )}
+                            {candidate.wasUnavailable && (
+                              <Badge variant="destructive" className="text-xs">Niet beschikbaar</Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* On-Demand Analysis Note */}
+                {assignmentExplanation.isOnDemandAnalysis && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4">
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      <strong>Let op:</strong> {assignmentExplanation.note}
+                    </p>
+                  </div>
+                )}
+
+                {/* Fairness Metrics (if available from stored explanation) */}
+                {assignmentExplanation.fairnessMetrics && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Eerlijkheidsscore</h4>
+                    <div className="space-y-2 text-sm">
+                      {Object.entries(assignmentExplanation.fairnessMetrics).map(([key, value]: [string, any]) => (
+                        <div key={key} className="flex justify-between">
+                          <span className="text-gray-500">{key}:</span>
+                          <span>{String(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-8">
+                Geen inplanningsreden beschikbaar
+              </div>
+            )}
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
 
     </div>
   );
