@@ -852,6 +852,57 @@ export function registerVkRoutes(app: Express): void {
     }
   });
 
+  // GRATIS REGISTRATIES - directe bevestiging zonder betaling
+  app.post("/api/vk/confirm-free", async (req: Request, res: Response) => {
+    try {
+      const { registrationId } = req.body;
+
+      if (!registrationId) {
+        return res.status(400).json({ message: "Inschrijving ID is verplicht" });
+      }
+
+      const [registration] = await db
+        .select()
+        .from(vkRegistrations)
+        .where(eq(vkRegistrations.id, registrationId))
+        .limit(1);
+
+      if (!registration) {
+        return res.status(404).json({ message: "Inschrijving niet gevonden" });
+      }
+
+      if (registration.paymentStatus === 'paid') {
+        return res.status(400).json({ message: "Deze inschrijving is al bevestigd" });
+      }
+
+      // Verify this is actually a free registration (totalAmount = 0)
+      const amount = Number(registration.totalAmount);
+      if (isNaN(amount) || amount !== 0) {
+        return res.status(400).json({ message: "Deze inschrijving is niet gratis en vereist betaling" });
+      }
+
+      // Mark as confirmed (paid status for consistency, even though no payment)
+      const [updated] = await db
+        .update(vkRegistrations)
+        .set({
+          paymentStatus: 'paid',
+          paidAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(vkRegistrations.id, registrationId))
+        .returning();
+
+      res.json({ 
+        success: true, 
+        message: "Inschrijving bevestigd",
+        registration: updated 
+      });
+    } catch (error) {
+      console.error("VK confirm-free error:", error);
+      res.status(500).json({ message: "Fout bij bevestigen inschrijving" });
+    }
+  });
+
   app.get("/api/vk/checkout/verify/:registrationId", async (req: Request, res: Response) => {
     try {
       const registrationId = parseInt(req.params.registrationId);
@@ -906,6 +957,141 @@ export function registerVkRoutes(app: Express): void {
     } catch (error) {
       console.error("VK checkout verify error:", error);
       res.status(500).json({ message: "Fout bij verificatie betaling" });
+    }
+  });
+
+  // ========================================
+  // EMAIL UITNODIGINGEN
+  // ========================================
+
+  // Send invitation emails to members of selected membership types
+  app.post("/api/vk/send-invitations", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const { activityId, membershipTypeIds, subject, message } = req.body;
+
+      if (!activityId || !membershipTypeIds || !Array.isArray(membershipTypeIds) || membershipTypeIds.length === 0) {
+        return res.status(400).json({ message: "Activiteit en minstens één lidmaatschapstype zijn verplicht" });
+      }
+
+      if (!subject || !message) {
+        return res.status(400).json({ message: "Onderwerp en bericht zijn verplicht" });
+      }
+
+      // Get the activity
+      const [activity] = await db
+        .select()
+        .from(vkActivities)
+        .where(eq(vkActivities.id, activityId))
+        .limit(1);
+
+      if (!activity) {
+        return res.status(404).json({ message: "Activiteit niet gevonden" });
+      }
+
+      // Get members of selected membership types with valid emails
+      const members = await db
+        .select()
+        .from(vkMembers)
+        .where(eq(vkMembers.isActive, true));
+
+      const filteredMembers = members.filter(
+        (m) => m.email && membershipTypeIds.includes(m.membershipTypeId)
+      );
+
+      if (filteredMembers.length === 0) {
+        return res.status(400).json({ message: "Geen leden gevonden met de geselecteerde categorieën en een geldig e-mailadres" });
+      }
+
+      // Check if Gmail credentials are configured
+      const gmailUser = process.env.VK_GMAIL_USER?.trim();
+      const gmailPassword = process.env.VK_GMAIL_APP_PASSWORD?.trim();
+
+      if (!gmailUser || !gmailPassword) {
+        console.error("VK email: Gmail credentials not configured");
+        return res.status(500).json({ message: "E-mailconfiguratie niet ingesteld. Contacteer de beheerder." });
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(gmailUser)) {
+        console.error("VK email: Invalid Gmail user format");
+        return res.status(500).json({ message: "Ongeldige e-mailconfiguratie. Contacteer de beheerder." });
+      }
+
+      // Create nodemailer transporter
+      const nodemailer = await import("nodemailer");
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: gmailUser,
+          pass: gmailPassword,
+        },
+      });
+
+      // Build registration link with validation
+      const rawDomains = process.env.REPLIT_DOMAINS || '';
+      const firstDomain = rawDomains.split(',')[0]?.trim();
+      // Validate domain format (alphanumeric, dots, hyphens only)
+      const domainRegex = /^[a-zA-Z0-9.-]+$/;
+      const baseUrl = (firstDomain && domainRegex.test(firstDomain)) ? firstDomain : 'localhost:5000';
+      const protocol = baseUrl.includes('localhost') ? 'http' : 'https';
+      const registrationUrl = `${protocol}://${baseUrl}/VriendenkringMol/inschrijven/${activityId}`;
+
+      // Build HTML email template
+      const htmlMessage = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #2563eb; color: white; padding: 20px; text-align: center;">
+            <h1 style="margin: 0;">Vriendenkring VZW Brandweer Mol</h1>
+          </div>
+          <div style="padding: 20px; background-color: #f8fafc;">
+            <h2 style="color: #1e40af;">${activity.name}</h2>
+            <div style="white-space: pre-wrap; margin-bottom: 20px;">${message}</div>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${registrationUrl}" style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                Schrijf je nu in
+              </a>
+            </div>
+            <p style="color: #64748b; font-size: 12px; text-align: center;">
+              Of kopieer deze link: ${registrationUrl}
+            </p>
+          </div>
+          <div style="background-color: #e2e8f0; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
+            Vriendenkring VZW Brandweer Mol
+          </div>
+        </div>
+      `;
+
+      // Send emails
+      let successCount = 0;
+      let failCount = 0;
+      const errors: string[] = [];
+
+      for (const member of filteredMembers) {
+        try {
+          await transporter.sendMail({
+            from: `"Vriendenkring Mol" <${gmailUser}>`,
+            to: member.email!,
+            subject: subject,
+            html: htmlMessage,
+          });
+          successCount++;
+        } catch (emailError: any) {
+          failCount++;
+          errors.push(`${member.firstName} ${member.lastName}: ${emailError.message}`);
+          console.error(`VK email failed for ${member.email}:`, emailError);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `${successCount} e-mail(s) verzonden${failCount > 0 ? `, ${failCount} mislukt` : ""}`,
+        successCount,
+        failCount,
+        errors: errors.length > 0 ? errors : undefined,
+      });
+    } catch (error) {
+      console.error("VK send-invitations error:", error);
+      res.status(500).json({ message: "Fout bij verzenden uitnodigingen" });
     }
   });
 }

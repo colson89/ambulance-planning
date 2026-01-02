@@ -172,10 +172,49 @@ export default function VriendenkringRegister() {
         const error = await res.json();
         throw new Error(error.message || "Inschrijving mislukt");
       }
-      return res.json();
+      const registration = await res.json();
+
+      // For free registrations (€0), confirm directly without payment
+      if (totalPrice === 0) {
+        const confirmRes = await fetch("/api/vk/confirm-free", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ registrationId: registration.id }),
+          credentials: "include",
+        });
+        if (!confirmRes.ok) {
+          const error = await confirmRes.json();
+          throw new Error(error.message || "Bevestiging mislukt");
+        }
+        return { ...registration, isFree: true };
+      }
+
+      // For paid registrations, redirect to Stripe checkout
+      const checkoutRes = await fetch("/api/vk/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registrationId: registration.id }),
+        credentials: "include",
+      });
+      if (!checkoutRes.ok) {
+        const error = await checkoutRes.json();
+        throw new Error(error.message || "Betaling starten mislukt");
+      }
+      const checkout = await checkoutRes.json();
+      
+      // Redirect to Stripe
+      if (checkout.url) {
+        window.location.href = checkout.url;
+      }
+      
+      return { ...registration, isFree: false, checkoutUrl: checkout.url };
     },
-    onSuccess: () => {
-      setIsSubmitted(true);
+    onSuccess: (data) => {
+      // Only show success screen for free registrations
+      // Paid registrations are redirected to Stripe
+      if (data.isFree) {
+        setIsSubmitted(true);
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -220,13 +259,20 @@ export default function VriendenkringRegister() {
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-8 pb-8">
             <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Inschrijving geslaagd!</h2>
+            <h2 className="text-2xl font-bold mb-2">Inschrijving bevestigd!</h2>
             <p className="text-muted-foreground mb-4">
               Bedankt voor je inschrijving. Je ontvangt een bevestiging per e-mail.
             </p>
-            <p className="text-lg font-semibold mb-6">
-              Te betalen: €{totalPrice.toFixed(2)}
-            </p>
+            {totalPrice > 0 && (
+              <p className="text-lg font-semibold mb-6">
+                Betaald: €{totalPrice.toFixed(2)}
+              </p>
+            )}
+            {totalPrice === 0 && (
+              <p className="text-sm text-muted-foreground mb-6">
+                Dit was een gratis activiteit - geen betaling nodig.
+              </p>
+            )}
             <Button onClick={() => setLocation("/VriendenkringMol/inschrijven")}>
               Nieuwe inschrijving
             </Button>
@@ -414,10 +460,12 @@ export default function VriendenkringRegister() {
                       {registrationMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Bezig met inschrijven...
+                          {totalPrice === 0 ? "Bezig met bevestigen..." : "Bezig met verwerken..."}
                         </>
+                      ) : totalPrice === 0 ? (
+                        "Bevestig inschrijving"
                       ) : (
-                        "Inschrijven"
+                        "Ga naar betaling"
                       )}
                     </Button>
                   </>

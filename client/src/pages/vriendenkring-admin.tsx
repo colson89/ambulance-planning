@@ -16,8 +16,9 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, LogOut, Users, Calendar, ClipboardList, Plus, Pencil, Trash2, 
-  Euro, Settings, ChevronDown, ChevronRight, CheckCircle, XCircle 
+  Euro, Settings, ChevronDown, ChevronRight, CheckCircle, XCircle, Mail, Send 
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 
@@ -99,6 +100,11 @@ export default function VriendenkringAdmin() {
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
   const [pricingSubActivityId, setPricingSubActivityId] = useState<number | null>(null);
   const [registrationFilter, setRegistrationFilter] = useState<string>("all");
+  const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
+  const [selectedInvitationActivity, setSelectedInvitationActivity] = useState<number | null>(null);
+  const [selectedMembershipTypes, setSelectedMembershipTypes] = useState<number[]>([]);
+  const [invitationSubject, setInvitationSubject] = useState("");
+  const [invitationMessage, setInvitationMessage] = useState("");
 
   const { data: admin, isLoading: adminLoading, error: adminError } = useQuery<VkAdmin>({
     queryKey: ["/api/vk/me"],
@@ -439,6 +445,43 @@ export default function VriendenkringAdmin() {
     },
   });
 
+  const sendInvitationsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/vk/send-invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          activityId: selectedInvitationActivity,
+          membershipTypeIds: selectedMembershipTypes,
+          subject: invitationSubject,
+          message: invitationMessage,
+        }),
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Fout bij verzenden");
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({ 
+        title: "Uitnodigingen verzonden", 
+        description: data.message 
+      });
+      setInvitationDialogOpen(false);
+      setSelectedInvitationActivity(null);
+      setSelectedMembershipTypes([]);
+      setInvitationSubject("");
+      setInvitationMessage("");
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Fout bij verzenden", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    },
+  });
+
   const { data: activityDetails } = useQuery<{ subActivities: VkSubActivity[]; pricing: VkPricing[] }>({
     queryKey: ["/api/vk/activities", expandedActivityId],
     enabled: !!expandedActivityId,
@@ -552,7 +595,7 @@ export default function VriendenkringAdmin() {
         <Card>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <CardHeader>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="members">
                   <Users className="h-4 w-4 mr-2" />
                   Leden
@@ -564,6 +607,10 @@ export default function VriendenkringAdmin() {
                 <TabsTrigger value="registrations">
                   <ClipboardList className="h-4 w-4 mr-2" />
                   Inschrijvingen
+                </TabsTrigger>
+                <TabsTrigger value="invitations">
+                  <Mail className="h-4 w-4 mr-2" />
+                  Uitnodigingen
                 </TabsTrigger>
               </TabsList>
             </CardHeader>
@@ -903,6 +950,110 @@ export default function VriendenkringAdmin() {
                     </Table>
                   </>
                 )}
+              </TabsContent>
+
+              <TabsContent value="invitations" className="mt-0">
+                <div className="space-y-6">
+                  <div className="border rounded-lg p-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Send className="h-5 w-5" />
+                      Uitnodigingen verzenden
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Activiteit</Label>
+                        <Select
+                          value={selectedInvitationActivity?.toString() || ""}
+                          onValueChange={(v) => setSelectedInvitationActivity(parseInt(v))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecteer een activiteit" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {activities.filter(a => a.isActive).map((activity) => (
+                              <SelectItem key={activity.id} value={activity.id.toString()}>
+                                {activity.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Categorieën (naar wie te sturen)</Label>
+                        <div className="border rounded-md p-3 space-y-2">
+                          {membershipTypes.map((type) => (
+                            <div key={type.id} className="flex items-center gap-2">
+                              <Checkbox
+                                id={`mt-${type.id}`}
+                                checked={selectedMembershipTypes.includes(type.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedMembershipTypes([...selectedMembershipTypes, type.id]);
+                                  } else {
+                                    setSelectedMembershipTypes(selectedMembershipTypes.filter(id => id !== type.id));
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`mt-${type.id}`} className="text-sm cursor-pointer">
+                                {type.name}
+                                <span className="text-muted-foreground ml-2">
+                                  ({members.filter(m => m.membershipTypeId === type.id && m.email).length} leden met e-mail)
+                                </span>
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Onderwerp</Label>
+                        <Input
+                          value={invitationSubject}
+                          onChange={(e) => setInvitationSubject(e.target.value)}
+                          placeholder="bv. Uitnodiging Sint Barbara 2025"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Bericht</Label>
+                        <Textarea
+                          value={invitationMessage}
+                          onChange={(e) => setInvitationMessage(e.target.value)}
+                          placeholder="Beste lid, ..."
+                          rows={6}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Een link naar het inschrijfformulier wordt automatisch toegevoegd.
+                        </p>
+                      </div>
+
+                      <Button
+                        onClick={() => sendInvitationsMutation.mutate()}
+                        disabled={
+                          !selectedInvitationActivity ||
+                          selectedMembershipTypes.length === 0 ||
+                          !invitationSubject ||
+                          !invitationMessage ||
+                          sendInvitationsMutation.isPending
+                        }
+                        className="w-full"
+                      >
+                        {sendInvitationsMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Verzenden...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 mr-2" />
+                            Uitnodigingen verzenden
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </TabsContent>
             </CardContent>
           </Tabs>
