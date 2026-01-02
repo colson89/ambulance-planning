@@ -26,6 +26,17 @@ import { eq, and, desc, asc } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
 
+function escapeHtml(text: string): string {
+  const htmlEscapes: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  return text.replace(/[&<>"']/g, char => htmlEscapes[char] || char);
+}
+
 declare module "express-session" {
   interface SessionData {
     vkAdminId?: number;
@@ -1076,6 +1087,10 @@ export function registerVkRoutes(app: Express): void {
         (m) => m.email && membershipTypeIds.includes(m.membershipTypeId)
       );
 
+      // Get membership types for placeholder replacement
+      const membershipTypesData = await db.select().from(vkMembershipTypes);
+      const membershipTypeMap = new Map(membershipTypesData.map(mt => [mt.id, mt.name]));
+
       if (filteredMembers.length === 0) {
         return res.status(400).json({ message: "Geen leden gevonden met de geselecteerde categorieën en een geldig e-mailadres" });
       }
@@ -1126,15 +1141,23 @@ export function registerVkRoutes(app: Express): void {
           const trackingToken = randomBytes(32).toString("hex");
           const trackingPixelUrl = `${protocol}://${baseUrl}/api/vk/track/${trackingToken}`;
 
+          // Replace placeholders in message with HTML-escaped values
+          const safeFirstName = escapeHtml(member.firstName);
+          const safeMemberTypeName = escapeHtml(membershipTypeMap.get(member.membershipTypeId) || "Lid");
+          const personalizedMessage = escapeHtml(message)
+            .replace(/\{voornaam\}/g, safeFirstName)
+            .replace(/\{lidtype\}/g, safeMemberTypeName);
+
           // Build HTML email template with tracking pixel
+          const safeActivityName = escapeHtml(activity.name);
           const htmlMessage = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <div style="background-color: #2563eb; color: white; padding: 20px; text-align: center;">
                 <h1 style="margin: 0;">Vriendenkring VZW Brandweer Mol</h1>
               </div>
               <div style="padding: 20px; background-color: #f8fafc;">
-                <h2 style="color: #1e40af;">${activity.name}</h2>
-                <div style="white-space: pre-wrap; margin-bottom: 20px;">${message}</div>
+                <h2 style="color: #1e40af;">${safeActivityName}</h2>
+                <div style="white-space: pre-wrap; margin-bottom: 20px;">${personalizedMessage}</div>
                 <div style="text-align: center; margin: 30px 0;">
                   <a href="${registrationUrl}" style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
                     Schrijf je nu in

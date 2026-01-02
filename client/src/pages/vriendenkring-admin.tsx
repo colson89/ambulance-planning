@@ -1126,16 +1126,41 @@ export default function VriendenkringAdmin() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Bericht</Label>
+                        <div className="flex items-center justify-between">
+                          <Label>Bericht</Label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const selectedActivity = activities.find(a => a.id === selectedInvitationActivity);
+                              setInvitationSubject(`Uitnodiging ${selectedActivity?.name || "activiteit"}`);
+                              setInvitationMessage(`Beste {voornaam},
+
+Graag nodigen wij je uit voor ${selectedActivity?.name || "onze activiteit"}.
+
+Als {lidtype} ben je van harte welkom!
+
+We kijken ernaar uit je te verwelkomen.
+
+Met vriendelijke groeten,
+Vriendenkring VZW Brandweer Mol`);
+                            }}
+                            disabled={!selectedInvitationActivity}
+                          >
+                            Standaard template
+                          </Button>
+                        </div>
                         <Textarea
                           value={invitationMessage}
                           onChange={(e) => setInvitationMessage(e.target.value)}
-                          placeholder="Beste lid, ..."
+                          placeholder="Beste {voornaam}, ..."
                           rows={6}
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Een link naar het inschrijfformulier wordt automatisch toegevoegd.
-                        </p>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p>Beschikbare variabelen: <code className="bg-muted px-1 rounded">{"{voornaam}"}</code> en <code className="bg-muted px-1 rounded">{"{lidtype}"}</code></p>
+                          <p>Een link naar het inschrijfformulier wordt automatisch toegevoegd.</p>
+                        </div>
                       </div>
 
                       <div className="flex gap-2">
@@ -1572,14 +1597,14 @@ export default function VriendenkringAdmin() {
           <DialogHeader>
             <DialogTitle>E-mail Preview</DialogTitle>
             <DialogDescription>
-              Dit is een voorbeeld van hoe de uitnodiging eruit ziet
+              Dit is een voorbeeld van hoe de uitnodiging eruit ziet (variabelen worden vervangen)
             </DialogDescription>
           </DialogHeader>
           <div className="border rounded-lg p-4 bg-white">
             <div className="border-b pb-2 mb-4">
               <div className="flex gap-2">
                 <span className="font-semibold text-sm text-muted-foreground w-16">Aan:</span>
-                <span className="text-sm">[ontvangers e-mail]</span>
+                <span className="text-sm">jan.voorbeeld@email.be</span>
               </div>
               <div className="flex gap-2">
                 <span className="font-semibold text-sm text-muted-foreground w-16">Onderwerp:</span>
@@ -1587,7 +1612,11 @@ export default function VriendenkringAdmin() {
               </div>
             </div>
             <div className="space-y-4">
-              <div className="whitespace-pre-wrap text-sm">{invitationMessage}</div>
+              <div className="whitespace-pre-wrap text-sm">
+                {invitationMessage
+                  .replace(/\{voornaam\}/g, "Jan")
+                  .replace(/\{lidtype\}/g, membershipTypes[0]?.name || "Lid VZW")}
+              </div>
               <div className="border-t pt-4 mt-4">
                 <p className="text-sm text-muted-foreground mb-2">
                   Automatisch toegevoegde inschrijflink:
