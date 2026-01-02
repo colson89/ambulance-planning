@@ -184,6 +184,19 @@ export default function VriendenkringRegister() {
           });
       }
 
+      // Convert total price from euros to cents for storage
+      const totalAmountInCents = Math.round(totalPrice * 100);
+      
+      // For sub-activities, convert pricePerUnit to cents and calculate subtotal
+      const itemsInCents = items.map(item => {
+        const pricePerUnitCents = Math.round(parseFloat(item.pricePerUnit) * 100);
+        return {
+          ...item,
+          pricePerUnit: pricePerUnitCents,
+          subtotal: pricePerUnitCents * item.quantity
+        };
+      });
+
       const res = await fetch("/api/vk/registrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -192,8 +205,8 @@ export default function VriendenkringRegister() {
           name: data.name,
           email: data.email,
           membershipTypeId: parseInt(data.membershipTypeId),
-          totalAmount: totalPrice.toFixed(2),
-          items, // Will be empty for simple activities with direct pricing
+          totalAmount: totalAmountInCents,
+          items: itemsInCents, // Will be empty for simple activities with direct pricing
         }),
         credentials: "include",
       });
@@ -263,12 +276,27 @@ export default function VriendenkringRegister() {
       });
       return;
     }
-    if (quantities.every((q) => q.quantity === 0)) {
+    // Only require sub-activity selection for activities WITH sub-activities
+    // For simple activities with direct pricing, skip this validation
+    if (hasSubActivities && quantities.every((q) => q.quantity === 0)) {
       toast({
         title: "Selecteer minstens één deelactiviteit",
         variant: "destructive",
       });
       return;
+    }
+    // For direct pricing activities, ensure a price exists for the selected membership type
+    if (!hasSubActivities && hasActivityPricing && totalPrice === 0) {
+      const hasValidPrice = activityDetails?.activityPricing?.some(
+        ap => ap.membershipTypeId === parseInt(data.membershipTypeId)
+      );
+      if (!hasValidPrice) {
+        toast({
+          title: "Geen prijs beschikbaar voor dit lidmaatschapstype",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     registrationMutation.mutate(data);
   };
