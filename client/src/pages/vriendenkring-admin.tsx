@@ -16,7 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, LogOut, Users, Calendar, ClipboardList, Plus, Pencil, Trash2, 
-  Euro, Settings, ChevronDown, ChevronRight, CheckCircle, XCircle, Mail, Send 
+  Euro, Settings, ChevronDown, ChevronRight, CheckCircle, XCircle, Mail, Send, Check 
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
@@ -82,6 +82,20 @@ interface VkRegistration {
   createdAt: string;
 }
 
+interface VkInvitation {
+  id: number;
+  activityId: number;
+  activityName: string | null;
+  memberId: number;
+  memberFirstName: string | null;
+  memberLastName: string | null;
+  email: string;
+  subject: string;
+  sentAt: string;
+  openedAt: string | null;
+  openCount: number;
+}
+
 export default function VriendenkringAdmin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -142,6 +156,11 @@ export default function VriendenkringAdmin() {
       if (!res.ok) throw new Error("Fout bij ophalen inschrijvingen");
       return res.json();
     },
+    enabled: !!admin,
+  });
+
+  const { data: invitations = [], isLoading: invitationsLoading } = useQuery<VkInvitation[]>({
+    queryKey: ["/api/vk/invitations"],
     enabled: !!admin,
   });
 
@@ -463,6 +482,7 @@ export default function VriendenkringAdmin() {
       return data;
     },
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/invitations"] });
       toast({ 
         title: "Uitnodigingen verzonden", 
         description: data.message 
@@ -1052,6 +1072,70 @@ export default function VriendenkringAdmin() {
                         )}
                       </Button>
                     </div>
+                  </div>
+
+                  <div className="border rounded-lg p-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Mail className="h-5 w-5" />
+                      Verzonden uitnodigingen
+                    </h3>
+                    {invitationsLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    ) : invitations.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">
+                        Nog geen uitnodigingen verzonden
+                      </p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Activiteit</TableHead>
+                            <TableHead>Lid</TableHead>
+                            <TableHead>E-mail</TableHead>
+                            <TableHead>Verzonden</TableHead>
+                            <TableHead>Geopend</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {invitations.map((inv) => (
+                            <TableRow key={inv.id}>
+                              <TableCell className="font-medium">
+                                {inv.activityName || "Onbekend"}
+                              </TableCell>
+                              <TableCell>
+                                {inv.memberFirstName} {inv.memberLastName}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {inv.email}
+                              </TableCell>
+                              <TableCell>
+                                {format(new Date(inv.sentAt), "d MMM yyyy HH:mm", { locale: nl })}
+                              </TableCell>
+                              <TableCell>
+                                {inv.openedAt ? (
+                                  <span className="text-green-600 flex items-center gap-1">
+                                    <Check className="h-4 w-4" />
+                                    {format(new Date(inv.openedAt), "d MMM HH:mm", { locale: nl })}
+                                    {inv.openCount > 1 && (
+                                      <span className="text-xs text-muted-foreground">
+                                        ({inv.openCount}x)
+                                      </span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-4">
+                      Let op: sommige e-mailprogramma's blokkeren afbeeldingen, waardoor de open-status niet altijd kan worden geregistreerd.
+                    </p>
                   </div>
                 </div>
               </TabsContent>

@@ -11,6 +11,7 @@ import {
   vkPricing, 
   vkRegistrations, 
   vkRegistrationItems,
+  vkInvitations,
   insertVkAdminSchema,
   insertVkMembershipTypeSchema,
   insertVkMemberSchema,
@@ -1037,43 +1038,58 @@ export function registerVkRoutes(app: Express): void {
       const protocol = baseUrl.includes('localhost') ? 'http' : 'https';
       const registrationUrl = `${protocol}://${baseUrl}/VriendenkringMol/inschrijven/${activityId}`;
 
-      // Build HTML email template
-      const htmlMessage = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background-color: #2563eb; color: white; padding: 20px; text-align: center;">
-            <h1 style="margin: 0;">Vriendenkring VZW Brandweer Mol</h1>
-          </div>
-          <div style="padding: 20px; background-color: #f8fafc;">
-            <h2 style="color: #1e40af;">${activity.name}</h2>
-            <div style="white-space: pre-wrap; margin-bottom: 20px;">${message}</div>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${registrationUrl}" style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-                Schrijf je nu in
-              </a>
-            </div>
-            <p style="color: #64748b; font-size: 12px; text-align: center;">
-              Of kopieer deze link: ${registrationUrl}
-            </p>
-          </div>
-          <div style="background-color: #e2e8f0; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
-            Vriendenkring VZW Brandweer Mol
-          </div>
-        </div>
-      `;
-
-      // Send emails
+      // Send emails with tracking
       let successCount = 0;
       let failCount = 0;
       const errors: string[] = [];
 
       for (const member of filteredMembers) {
         try {
+          // Generate unique tracking token
+          const trackingToken = randomBytes(32).toString("hex");
+          const trackingPixelUrl = `${protocol}://${baseUrl}/api/vk/track/${trackingToken}`;
+
+          // Build HTML email template with tracking pixel
+          const htmlMessage = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="background-color: #2563eb; color: white; padding: 20px; text-align: center;">
+                <h1 style="margin: 0;">Vriendenkring VZW Brandweer Mol</h1>
+              </div>
+              <div style="padding: 20px; background-color: #f8fafc;">
+                <h2 style="color: #1e40af;">${activity.name}</h2>
+                <div style="white-space: pre-wrap; margin-bottom: 20px;">${message}</div>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${registrationUrl}" style="background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                    Schrijf je nu in
+                  </a>
+                </div>
+                <p style="color: #64748b; font-size: 12px; text-align: center;">
+                  Of kopieer deze link: ${registrationUrl}
+                </p>
+              </div>
+              <div style="background-color: #e2e8f0; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
+                Vriendenkring VZW Brandweer Mol
+              </div>
+              <img src="${trackingPixelUrl}" width="1" height="1" style="display:none;" alt="" />
+            </div>
+          `;
+
           await transporter.sendMail({
             from: `"Vriendenkring Mol" <${gmailUser}>`,
             to: member.email!,
             subject: subject,
             html: htmlMessage,
           });
+
+          // Save invitation record for tracking
+          await db.insert(vkInvitations).values({
+            activityId: activityId,
+            memberId: member.id,
+            trackingToken: trackingToken,
+            email: member.email!,
+            subject: subject,
+          });
+
           successCount++;
         } catch (emailError: any) {
           failCount++;
@@ -1092,6 +1108,113 @@ export function registerVkRoutes(app: Express): void {
     } catch (error) {
       console.error("VK send-invitations error:", error);
       res.status(500).json({ message: "Fout bij verzenden uitnodigingen" });
+    }
+  });
+
+  // Tracking pixel endpoint - records when email is opened
+  app.get("/api/vk/track/:token", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+
+      if (!token || token.length !== 64) {
+        // Return transparent 1x1 pixel anyway to not break email display
+        const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+        res.setHeader("Content-Type", "image/gif");
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+        return res.send(pixel);
+      }
+
+      // Find and update the invitation
+      const [invitation] = await db
+        .select()
+        .from(vkInvitations)
+        .where(eq(vkInvitations.trackingToken, token))
+        .limit(1);
+
+      if (invitation) {
+        // Update openedAt (first open) and increment openCount
+        await db
+          .update(vkInvitations)
+          .set({
+            openedAt: invitation.openedAt || new Date(),
+            openCount: invitation.openCount + 1,
+          })
+          .where(eq(vkInvitations.id, invitation.id));
+      }
+
+      // Return transparent 1x1 GIF pixel
+      const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+      res.setHeader("Content-Type", "image/gif");
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+      res.send(pixel);
+    } catch (error) {
+      console.error("VK tracking error:", error);
+      // Still return pixel to not break email display
+      const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+      res.setHeader("Content-Type", "image/gif");
+      res.send(pixel);
+    }
+  });
+
+  // Get invitations for an activity (admin only)
+  app.get("/api/vk/invitations/:activityId", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const activityId = parseInt(req.params.activityId);
+      if (isNaN(activityId)) {
+        return res.status(400).json({ message: "Ongeldige activiteit ID" });
+      }
+
+      const invitations = await db
+        .select({
+          id: vkInvitations.id,
+          activityId: vkInvitations.activityId,
+          memberId: vkInvitations.memberId,
+          memberFirstName: vkMembers.firstName,
+          memberLastName: vkMembers.lastName,
+          email: vkInvitations.email,
+          subject: vkInvitations.subject,
+          sentAt: vkInvitations.sentAt,
+          openedAt: vkInvitations.openedAt,
+          openCount: vkInvitations.openCount,
+        })
+        .from(vkInvitations)
+        .leftJoin(vkMembers, eq(vkInvitations.memberId, vkMembers.id))
+        .where(eq(vkInvitations.activityId, activityId))
+        .orderBy(desc(vkInvitations.sentAt));
+
+      res.json(invitations);
+    } catch (error) {
+      console.error("VK invitations GET error:", error);
+      res.status(500).json({ message: "Fout bij ophalen uitnodigingen" });
+    }
+  });
+
+  // Get all invitations summary (admin only)
+  app.get("/api/vk/invitations", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const invitations = await db
+        .select({
+          id: vkInvitations.id,
+          activityId: vkInvitations.activityId,
+          activityName: vkActivities.name,
+          memberId: vkInvitations.memberId,
+          memberFirstName: vkMembers.firstName,
+          memberLastName: vkMembers.lastName,
+          email: vkInvitations.email,
+          subject: vkInvitations.subject,
+          sentAt: vkInvitations.sentAt,
+          openedAt: vkInvitations.openedAt,
+          openCount: vkInvitations.openCount,
+        })
+        .from(vkInvitations)
+        .leftJoin(vkMembers, eq(vkInvitations.memberId, vkMembers.id))
+        .leftJoin(vkActivities, eq(vkInvitations.activityId, vkActivities.id))
+        .orderBy(desc(vkInvitations.sentAt));
+
+      res.json(invitations);
+    } catch (error) {
+      console.error("VK invitations GET all error:", error);
+      res.status(500).json({ message: "Fout bij ophalen uitnodigingen" });
     }
   });
 }

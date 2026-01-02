@@ -995,3 +995,20 @@ export const vkRegistrationItems = pgTable("vk_registration_items", {
 export const insertVkRegistrationItemSchema = createInsertSchema(vkRegistrationItems).omit({ id: true, createdAt: true });
 export type VkRegistrationItem = typeof vkRegistrationItems.$inferSelect;
 export type InsertVkRegistrationItem = z.infer<typeof insertVkRegistrationItemSchema>;
+
+// VK Uitnodigingen - Tracking van verstuurde uitnodigingsmails
+export const vkInvitations = pgTable("vk_invitations", {
+  id: serial("id").primaryKey(),
+  activityId: integer("activity_id").notNull().references(() => vkActivities.id, { onDelete: 'cascade' }),
+  memberId: integer("member_id").notNull().references(() => vkMembers.id, { onDelete: 'cascade' }),
+  trackingToken: text("tracking_token").notNull().unique(), // Unieke token voor tracking pixel
+  email: text("email").notNull(), // E-mail adres op moment van verzenden
+  subject: text("subject").notNull(),
+  sentAt: timestamp("sent_at").defaultNow(),
+  openedAt: timestamp("opened_at"), // Null = niet geopend, timestamp = wanneer geopend
+  openCount: integer("open_count").notNull().default(0), // Aantal keer geopend
+});
+
+export const insertVkInvitationSchema = createInsertSchema(vkInvitations).omit({ id: true, sentAt: true, openedAt: true, openCount: true });
+export type VkInvitation = typeof vkInvitations.$inferSelect;
+export type InsertVkInvitation = z.infer<typeof insertVkInvitationSchema>;
