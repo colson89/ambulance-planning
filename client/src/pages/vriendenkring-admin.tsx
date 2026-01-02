@@ -567,8 +567,11 @@ export default function VriendenkringAdmin() {
       if (!res.ok) throw new Error("Fout bij opslaan prijzen");
       return res.json();
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/vk/activities", expandedActivityId] });
+    onSuccess: async (updatedPricing: VkActivityPricing[]) => {
+      queryClient.setQueryData(
+        ["/api/vk/activities", expandedActivityId],
+        (oldData: any) => oldData ? { ...oldData, activityPricing: updatedPricing } : oldData
+      );
       await queryClient.invalidateQueries({ queryKey: ["/api/vk/activities"] });
       toast({ title: "Prijzen opgeslagen" });
       setActivityPricingDialogOpen(false);
