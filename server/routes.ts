@@ -2701,9 +2701,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startTime = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate(), startHour, 0, 0);
         endTime = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate() + endDateOffset, endHour, 0, 0);
       } else if (req.body.startTime) {
-        // Legacy format: full Date objects
-        startTime = new Date(req.body.startTime);
-        endTime = req.body.endTime ? new Date(req.body.endTime) : null;
+        // Legacy format: full Date objects - parse with timezone awareness
+        // Frontend may send times with Z suffix (incorrect) - interpret as Brussels local time
+        const parsePreferenceTime = (timeStr: string): Date => {
+          const cleanTimeStr = timeStr.replace(/Z$/, '').replace(/\.\d{3}$/, '');
+          const match = cleanTimeStr.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+          if (match) {
+            return fromZonedTime(`${match[1]}T${match[2]}:00`, STATION_TIMEZONE);
+          }
+          return new Date(timeStr);
+        };
+        startTime = parsePreferenceTime(req.body.startTime);
+        endTime = req.body.endTime ? parsePreferenceTime(req.body.endTime) : null;
       }
 
       const preferenceData = {
@@ -3872,13 +3881,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('Creating shift with data:', req.body);
       
+      // Parse start/end times with Brussels timezone awareness
+      // Frontend may send times with Z suffix (incorrect) or ISO format
+      // We need to interpret these as Brussels local time, not UTC
+      const parseShiftTime = (timeStr: string): Date => {
+        // Remove Z suffix if present - the time is meant to be Brussels local time
+        const cleanTimeStr = timeStr.replace(/Z$/, '').replace(/\.\d{3}$/, '');
+        // Extract just the date and time parts (YYYY-MM-DDTHH:mm:ss or YYYY-MM-DDTHH:mm)
+        const match = cleanTimeStr.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+        if (match) {
+          // Use fromZonedTime to interpret as Brussels timezone
+          return fromZonedTime(`${match[1]}T${match[2]}:00`, STATION_TIMEZONE);
+        }
+        // Fallback: use direct Date parsing
+        return new Date(timeStr);
+      };
+      
       const shiftData = {
         ...req.body,
         userId: req.body.userId || 0, // Default to unassigned
         stationId: req.body.stationId || req.user?.stationId,
         date: new Date(req.body.date),
-        startTime: new Date(req.body.startTime),
-        endTime: new Date(req.body.endTime),
+        startTime: parseShiftTime(req.body.startTime),
+        endTime: parseShiftTime(req.body.endTime),
         month: new Date(req.body.date).getMonth() + 1,
         year: new Date(req.body.date).getFullYear()
       };
