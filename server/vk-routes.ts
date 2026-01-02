@@ -22,7 +22,7 @@ import {
   insertVkRegistrationSchema,
   insertVkRegistrationItemSchema
 } from "../shared/schema";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
 
@@ -782,9 +782,42 @@ export function registerVkRoutes(app: Express): void {
         return res.status(400).json({ message: "Inschrijving voor deze activiteit is gesloten" });
       }
 
+      // Validate personCount against activity's max (null means unlimited)
+      const maxPersons = activity.maxPersonsPerRegistration;
+      const requestedPersonCount = parsed.data.personCount ?? 1;
+      if (requestedPersonCount < 1) {
+        return res.status(400).json({ message: "Aantal personen moet minimaal 1 zijn" });
+      }
+      if (maxPersons !== null && requestedPersonCount > maxPersons) {
+        return res.status(400).json({ 
+          message: `Aantal personen mag maximaal ${maxPersons} zijn` 
+        });
+      }
+
+      // Validate sub-activity quantities against their per-registration limits
+      if (items && Array.isArray(items) && items.length > 0) {
+        const subActivityIds = items.map((item: any) => item.subActivityId);
+        const subActivities = await db
+          .select()
+          .from(vkSubActivities)
+          .where(inArray(vkSubActivities.id, subActivityIds));
+        
+        for (const item of items) {
+          const subActivity = subActivities.find((sa: any) => sa.id === item.subActivityId);
+          if (subActivity) {
+            const maxQty = subActivity.maxQuantityPerRegistration;
+            if (maxQty !== null && item.quantity > maxQty) {
+              return res.status(400).json({
+                message: `Maximum ${maxQty} stuks per registratie voor ${subActivity.name}`
+              });
+            }
+          }
+        }
+      }
+
       const [newRegistration] = await db
         .insert(vkRegistrations)
-        .values(parsed.data)
+        .values({ ...parsed.data, personCount: requestedPersonCount })
         .returning();
 
       if (items && Array.isArray(items) && items.length > 0) {

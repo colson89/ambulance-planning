@@ -27,6 +27,7 @@ interface VkActivity {
   startDate: string;
   endDate: string | null;
   isActive: boolean;
+  maxPersonsPerRegistration?: number | null;
 }
 
 interface VkSubActivity {
@@ -35,6 +36,7 @@ interface VkSubActivity {
   name: string;
   description: string | null;
   maxQuantity: number | null;
+  maxQuantityPerRegistration?: number | null;
 }
 
 interface VkPricing {
@@ -88,6 +90,7 @@ export default function VriendenkringRegister() {
     activityId ? parseInt(activityId) : null
   );
   const [quantities, setQuantities] = useState<SubActivityQuantity[]>([]);
+  const [personCount, setPersonCount] = useState<number>(1); // Aantal personen voor directe prijzen
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isPrefilledFromInvitation, setIsPrefilledFromInvitation] = useState(false);
 
@@ -147,6 +150,8 @@ export default function VriendenkringRegister() {
         }))
       );
     }
+    // Reset personCount when activity changes to respect new activity's max
+    setPersonCount(1);
   }, [activityDetails]);
 
   const selectedMembershipTypeId = form.watch("membershipTypeId");
@@ -169,7 +174,7 @@ export default function VriendenkringRegister() {
               p.membershipTypeId === parseInt(selectedMembershipTypeId)
           );
           if (pricing) {
-            total += parseFloat(pricing.pricePerUnit) * q.quantity;
+            total += (Number(pricing.pricePerUnit) / 100) * q.quantity;
           }
         }
       });
@@ -180,12 +185,12 @@ export default function VriendenkringRegister() {
         (ap) => ap.membershipTypeId === parseInt(selectedMembershipTypeId)
       );
       if (activityPrice) {
-        total = activityPrice.price / 100; // Convert from cents to euros
+        total = (activityPrice.price / 100) * personCount; // Multiply by person count
       }
     }
     
     return total;
-  }, [quantities, activityDetails?.pricing, activityDetails?.activityPricing, selectedMembershipTypeId, hasSubActivities, hasActivityPricing]);
+  }, [quantities, activityDetails?.pricing, activityDetails?.activityPricing, selectedMembershipTypeId, hasSubActivities, hasActivityPricing, personCount]);
 
   const updateQuantity = (subActivityId: number, delta: number) => {
     setQuantities((prev) =>
@@ -194,8 +199,9 @@ export default function VriendenkringRegister() {
           const subActivity = activityDetails?.subActivities.find(
             (sa) => sa.id === subActivityId
           );
-          const maxQty = subActivity?.maxQuantity ?? 99;
-          const newQty = Math.max(0, Math.min(maxQty, q.quantity + delta));
+          // Use maxQuantityPerRegistration for per-registration limit (null/undefined means unlimited)
+          const maxQty = subActivity?.maxQuantityPerRegistration;
+          const newQty = Math.max(0, maxQty != null ? Math.min(maxQty, q.quantity + delta) : q.quantity + delta);
           return { ...q, quantity: newQty };
         }
         return q;
@@ -228,11 +234,12 @@ export default function VriendenkringRegister() {
       // Convert total price from euros to cents for storage
       const totalAmountInCents = Math.round(totalPrice * 100);
       
-      // For sub-activities, convert pricePerUnit to cents and calculate subtotal
-      const itemsInCents = items.map(item => {
-        const pricePerUnitCents = Math.round(parseFloat(item.pricePerUnit) * 100);
+      // For sub-activities, pricePerUnit is already in cents from the database
+      const itemsWithSubtotal = items.map(item => {
+        const pricePerUnitCents = Number(item.pricePerUnit); // Already in cents
         return {
-          ...item,
+          subActivityId: item.subActivityId,
+          quantity: item.quantity,
           pricePerUnit: pricePerUnitCents,
           subtotal: pricePerUnitCents * item.quantity
         };
@@ -246,8 +253,9 @@ export default function VriendenkringRegister() {
           name: data.name,
           email: data.email,
           membershipTypeId: parseInt(data.membershipTypeId),
+          personCount: hasSubActivities ? 1 : personCount, // For direct pricing activities
           totalAmount: totalAmountInCents,
-          items: itemsInCents, // Will be empty for simple activities with direct pricing
+          items: itemsWithSubtotal, // Will be empty for simple activities with direct pricing
         }),
         credentials: "include",
       });
@@ -584,8 +592,42 @@ export default function VriendenkringRegister() {
 
                     {/* Show simple pricing info for activities with direct pricing (no sub-activities) */}
                     {!hasSubActivities && hasActivityPricing && selectedMembershipTypeId && (
-                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-4">
                         <div className="flex items-center justify-between">
+                          <span className="font-medium">Aantal personen</span>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setPersonCount(Math.max(1, personCount - 1))}
+                              disabled={personCount <= 1}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-8 text-center font-medium">{personCount}</span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                const max = activityDetails?.maxPersonsPerRegistration;
+                                // null means unlimited
+                                if (max === null || max === undefined) {
+                                  setPersonCount(personCount + 1);
+                                } else {
+                                  setPersonCount(Math.min(max, personCount + 1));
+                                }
+                              }}
+                              disabled={activityDetails?.maxPersonsPerRegistration !== null && activityDetails?.maxPersonsPerRegistration !== undefined && personCount >= activityDetails.maxPersonsPerRegistration}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t">
                           <span className="font-medium">Inschrijfbedrag</span>
                           <span className="text-lg font-semibold text-blue-600">
                             €{totalPrice.toFixed(2)}

@@ -913,6 +913,7 @@ export const vkActivities = pgTable("vk_activities", {
   startTime: text("start_time"), // HH:mm format
   endTime: text("end_time"), // HH:mm format
   registrationDeadline: date("registration_deadline"),
+  maxPersonsPerRegistration: integer("max_persons_per_registration").default(10), // Max personen per inschrijving
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
@@ -933,7 +934,8 @@ export const vkSubActivities = pgTable("vk_sub_activities", {
   description: text("description"),
   date: date("date"), // Datum van deze deelactiviteit
   time: text("time"), // Tijdstip als tekst (bijv. "19:00")
-  maxParticipants: integer("max_participants"), // Optioneel max aantal
+  maxParticipants: integer("max_participants"), // Optioneel max aantal totaal
+  maxQuantityPerRegistration: integer("max_quantity_per_registration").default(10), // Max per inschrijving
   allowQuantity: boolean("allow_quantity").notNull().default(true), // Mag men aantal opgeven?
   sortOrder: integer("sort_order").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
@@ -982,6 +984,7 @@ export const vkRegistrations = pgTable("vk_registrations", {
   name: text("name").notNull(), // Naam van inschrijver
   email: text("email").notNull(),
   membershipTypeId: integer("membership_type_id").notNull().references(() => vkMembershipTypes.id),
+  personCount: integer("person_count").notNull().default(1), // Aantal personen (voor directe prijsberekening)
   totalAmount: integer("total_amount").notNull(), // Totaalbedrag in eurocent
   paymentStatus: text("payment_status", { enum: ["pending", "paid", "failed", "refunded"] }).notNull().default("pending"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),

@@ -276,6 +276,7 @@ export default function VriendenkringAdmin() {
         endDate: editingActivity.endDate ? format(new Date(editingActivity.endDate), "yyyy-MM-dd") : "",
         startTime: editingActivity.startTime || "",
         endTime: editingActivity.endTime || "",
+        maxPersonsPerRegistration: editingActivity.maxPersonsPerRegistration?.toString() || "10",
         isActive: editingActivity.isActive,
       });
     } else {
@@ -286,6 +287,7 @@ export default function VriendenkringAdmin() {
         endDate: "",
         startTime: "",
         endTime: "",
+        maxPersonsPerRegistration: "10",
         isActive: true,
       });
     }
@@ -296,14 +298,14 @@ export default function VriendenkringAdmin() {
       subActivityForm.reset({
         name: editingSubActivity.name,
         description: editingSubActivity.description || "",
-        maxQuantity: editingSubActivity.maxQuantity?.toString() || "",
+        maxQuantityPerRegistration: editingSubActivity.maxQuantityPerRegistration?.toString() || "10",
         sortOrder: editingSubActivity.sortOrder,
       });
     } else {
       subActivityForm.reset({
         name: "",
         description: "",
-        maxQuantity: "",
+        maxQuantityPerRegistration: "10",
         sortOrder: 0,
       });
     }
@@ -409,6 +411,7 @@ export default function VriendenkringAdmin() {
           startTime: data.startTime || null,
           endTime: data.endTime || null,
           registrationDeadline: data.registrationDeadline ? new Date(data.registrationDeadline).toISOString() : null,
+          maxPersonsPerRegistration: data.maxPersonsPerRegistration ? parseInt(data.maxPersonsPerRegistration) : 10,
           isActive: data.isActive,
         }),
         credentials: "include",
@@ -445,8 +448,10 @@ export default function VriendenkringAdmin() {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...data,
-          maxQuantity: data.maxQuantity ? parseInt(data.maxQuantity) : null,
+          name: data.name,
+          description: data.description || null,
+          sortOrder: data.sortOrder || 0,
+          maxQuantityPerRegistration: data.maxQuantityPerRegistration ? parseInt(data.maxQuantityPerRegistration) : 10,
         }),
         credentials: "include",
       });
@@ -1502,6 +1507,10 @@ Vriendenkring VZW Brandweer Mol`);
                 <Input type="time" {...activityForm.register("endTime")} />
               </div>
             </div>
+            <div className="space-y-2">
+              <Label>Max. personen per inschrijving</Label>
+              <Input type="number" {...activityForm.register("maxPersonsPerRegistration")} placeholder="10" />
+            </div>
             <div className="flex items-center gap-2">
               <Switch
                 checked={activityForm.watch("isActive")}
@@ -1534,8 +1543,8 @@ Vriendenkring VZW Brandweer Mol`);
               <Input {...subActivityForm.register("description")} />
             </div>
             <div className="space-y-2">
-              <Label>Maximum aantal (optioneel)</Label>
-              <Input type="number" {...subActivityForm.register("maxQuantity")} placeholder="Leeg = onbeperkt" />
+              <Label>Max. personen per inschrijving</Label>
+              <Input type="number" {...subActivityForm.register("maxQuantityPerRegistration")} placeholder="10" />
             </div>
             <DialogFooter>
               <Button type="submit" disabled={saveSubActivityMutation.isPending}>
