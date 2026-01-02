@@ -4682,27 +4682,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Shift not found" });
       }
       
-      // Converteer startTime/endTime strings ("07:00", "13:00") naar volledige Date objecten
-      // gebaseerd op de shift datum in Brussels timezone
-      // Gebruik updateData.date indien meegegeven, anders existingShift.date
+      // Converteer startTime/endTime strings naar volledige Date objecten
+      // Ondersteunt twee formaten:
+      // 1. Korte "HH:mm" strings (bijv. "07:00", "19:00") - interpreteer als Brussels tijd
+      // 2. ISO strings (bijv. "2026-01-02T07:00:00.000Z") - extraheer uren/minuten als Brussels tijd
+      // Dit is nodig omdat de frontend soms .toISOString() gebruikt, waarbij de "Z" suffix
+      // incorrectly aangeeft dat het UTC is, terwijl het eigenlijk Brussels tijd bedoeld is.
       const effectiveDate = updateData.date ? new Date(updateData.date) : existingShift.date;
       
-      if (updateData.startTime && typeof updateData.startTime === 'string' && updateData.startTime.includes(':')) {
-        const dateStr = `${effectiveDate.getFullYear()}-${String(effectiveDate.getMonth() + 1).padStart(2, '0')}-${String(effectiveDate.getDate()).padStart(2, '0')}`;
-        updateData.startTime = fromZonedTime(`${dateStr}T${updateData.startTime}:00`, STATION_TIMEZONE);
-      }
-      
-      if (updateData.endTime && typeof updateData.endTime === 'string' && updateData.endTime.includes(':')) {
-        const [hours] = updateData.endTime.split(':').map(Number);
-        // Voor eindtijden van 07:00 bij een nacht shift, voeg een dag toe
+      // Helper functie om tijd te parsen - ondersteunt "HH:mm" en ISO strings
+      const parseTimeForPatch = (timeStr: string, baseDate: Date, isEndTimeForNight: boolean = false): Date => {
+        let hour: number;
+        let minute: number;
+        
+        // Check of het een korte "HH:mm" string is (5 karakters, bijv. "07:00")
+        if (/^\d{2}:\d{2}$/.test(timeStr)) {
+          [hour, minute] = timeStr.split(':').map(Number);
+        } 
+        // Check of het een ISO string is (bevat "T" en uren/minuten)
+        else if (timeStr.includes('T')) {
+          const match = timeStr.match(/T(\d{2}):(\d{2})/);
+          if (match) {
+            hour = parseInt(match[1], 10);
+            minute = parseInt(match[2], 10);
+          } else {
+            // Fallback: gebruik Date parsing (kan timezone problemen geven)
+            console.warn(`parseTimeForPatch: unexpected ISO format "${timeStr}", using direct parse`);
+            return new Date(timeStr);
+          }
+        } else {
+          // Onbekend formaat
+          console.warn(`parseTimeForPatch: unexpected format "${timeStr}", using direct parse`);
+          return new Date(timeStr);
+        }
+        
+        // Bepaal dag offset voor nachtdienst eindtijden (07:00 is volgende dag)
         let dayOffset = 0;
-        if (existingShift.type === 'night' && hours < 12) {
+        if (isEndTimeForNight && hour < 12) {
           dayOffset = 1;
         }
-        const endDate = new Date(effectiveDate);
-        endDate.setDate(endDate.getDate() + dayOffset);
-        const dateStr = `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`;
-        updateData.endTime = fromZonedTime(`${dateStr}T${updateData.endTime}:00`, STATION_TIMEZONE);
+        
+        const targetDate = new Date(baseDate);
+        targetDate.setDate(targetDate.getDate() + dayOffset);
+        const dateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+        const timeStrFormatted = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+        
+        return fromZonedTime(`${dateStr}T${timeStrFormatted}:00`, STATION_TIMEZONE);
+      };
+      
+      if (updateData.startTime && typeof updateData.startTime === 'string') {
+        updateData.startTime = parseTimeForPatch(updateData.startTime, effectiveDate, false);
+      }
+      
+      if (updateData.endTime && typeof updateData.endTime === 'string') {
+        const isNightShift = existingShift.type === 'night';
+        updateData.endTime = parseTimeForPatch(updateData.endTime, effectiveDate, isNightShift);
       }
       
       // BUSINESS RULE VALIDATION: Check if updating to split shift for cross-team user in simple system
