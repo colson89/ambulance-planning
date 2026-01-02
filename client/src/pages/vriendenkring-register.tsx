@@ -138,6 +138,11 @@ export default function VriendenkringRegister() {
 
   const { data: activityDetails, isLoading: detailsLoading } = useQuery<ActivityWithDetails>({
     queryKey: ["/api/vk/activities", selectedActivityId],
+    queryFn: async () => {
+      const res = await fetch(`/api/vk/activities/${selectedActivityId}`);
+      if (!res.ok) throw new Error("Failed to fetch activity details");
+      return res.json();
+    },
     enabled: !!selectedActivityId,
   });
 
