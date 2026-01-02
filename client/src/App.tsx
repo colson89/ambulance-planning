@@ -40,6 +40,7 @@ const AzureAdSettings = lazy(() => import("@/pages/azure-ad-settings"));
 const DatabaseExport = lazy(() => import("@/pages/database-export"));
 
 // Vriendenkring module pages
+const VriendenkringHome = lazy(() => import("@/pages/vriendenkring-home"));
 const VriendenkringLogin = lazy(() => import("@/pages/vriendenkring-login"));
 const VriendenkringAdmin = lazy(() => import("@/pages/vriendenkring-admin"));
 const VriendenkringRegister = lazy(() => import("@/pages/vriendenkring-register"));
@@ -99,7 +100,8 @@ function Router() {
         <Route path="/kiosk/:token" component={Kiosk} />
         
         {/* Vriendenkring module routes */}
-        <Route path="/VriendenkringMol" component={VriendenkringLogin} />
+        <Route path="/VriendenkringMol" component={VriendenkringHome} />
+        <Route path="/VriendenkringMol/login" component={VriendenkringLogin} />
         <Route path="/VriendenkringMol/admin" component={VriendenkringAdmin} />
         <Route path="/VriendenkringMol/inschrijven/:activityId?" component={VriendenkringRegister} />
         
