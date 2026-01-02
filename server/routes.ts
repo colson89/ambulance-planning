@@ -4436,7 +4436,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(shift.userId);
       if (user) {
         // Get user's preference for this shift date
-        const preferences = await storage.getShiftPreferencesByUser(user.id, month, year);
+        const preferences = await storage.getUserShiftPreferences(user.id, month, year);
         const shiftDate = shift.date instanceof Date ? shift.date : new Date(shift.date);
         const shiftDateStr = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
         
@@ -4503,7 +4503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user.hours === 0) continue; // Skip inactive users
       
       // Check if this user had preference for this shift
-      const preferences = await storage.getShiftPreferencesByUser(user.id, month, year);
+      const preferences = await storage.getUserShiftPreferences(user.id, month, year);
       const shiftDate = shift.date instanceof Date ? shift.date : new Date(shift.date);
       const shiftDateStr = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
       
