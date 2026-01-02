@@ -42,7 +42,7 @@ interface VkMember {
   lastName: string;
   email: string;
   membershipTypeId: number;
-  membershipPaid: boolean;
+  annualFeePaidUntil: number | null;
 }
 
 interface VkActivity {
@@ -229,12 +229,14 @@ export default function VriendenkringAdmin() {
 
   useEffect(() => {
     if (editingMember) {
+      const currentYear = new Date().getFullYear();
+      const isPaid = editingMember.annualFeePaidUntil !== null && editingMember.annualFeePaidUntil >= currentYear;
       memberForm.reset({
         firstName: editingMember.firstName,
         lastName: editingMember.lastName,
         email: editingMember.email,
         membershipTypeId: editingMember.membershipTypeId.toString(),
-        membershipPaid: editingMember.membershipPaid,
+        membershipPaid: isPaid,
       });
     } else {
       memberForm.reset({
@@ -311,12 +313,27 @@ export default function VriendenkringAdmin() {
     mutationFn: async (data: any) => {
       const url = editingMember ? `/api/vk/members/${editingMember.id}` : "/api/vk/members";
       const method = editingMember ? "PATCH" : "POST";
+      const currentYear = new Date().getFullYear();
+      const { membershipPaid, ...restData } = data;
+      
+      let annualFeePaidUntil: number | null;
+      if (membershipPaid) {
+        if (editingMember?.annualFeePaidUntil && editingMember.annualFeePaidUntil >= currentYear) {
+          annualFeePaidUntil = editingMember.annualFeePaidUntil;
+        } else {
+          annualFeePaidUntil = currentYear;
+        }
+      } else {
+        annualFeePaidUntil = null;
+      }
+      
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...data,
+          ...restData,
           membershipTypeId: parseInt(data.membershipTypeId),
+          annualFeePaidUntil,
         }),
         credentials: "include",
       });
@@ -550,8 +567,9 @@ export default function VriendenkringAdmin() {
       if (!res.ok) throw new Error("Fout bij opslaan prijzen");
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vk/activities", expandedActivityId] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/vk/activities", expandedActivityId] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/vk/activities"] });
       toast({ title: "Prijzen opgeslagen" });
       setActivityPricingDialogOpen(false);
     },
@@ -741,7 +759,7 @@ export default function VriendenkringAdmin() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {member.membershipPaid ? (
+                            {member.annualFeePaidUntil !== null && member.annualFeePaidUntil >= new Date().getFullYear() ? (
                               <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
                                 <CheckCircle className="h-3 w-3 mr-1" />
                                 Betaald
