@@ -156,6 +156,191 @@ export function registerVkRoutes(app: Express): void {
   });
 
   // ========================================
+  // VK ADMIN BEHEER
+  // ========================================
+
+  app.get("/api/vk/admins", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const admins = await db
+        .select({
+          id: vkAdmins.id,
+          username: vkAdmins.username,
+          firstName: vkAdmins.firstName,
+          lastName: vkAdmins.lastName,
+          email: vkAdmins.email,
+          isActive: vkAdmins.isActive,
+          mustChangePassword: vkAdmins.mustChangePassword,
+          createdAt: vkAdmins.createdAt,
+          updatedAt: vkAdmins.updatedAt
+        })
+        .from(vkAdmins)
+        .orderBy(asc(vkAdmins.lastName), asc(vkAdmins.firstName));
+      res.json(admins);
+    } catch (error) {
+      console.error("VK admins GET error:", error);
+      res.status(500).json({ message: "Fout bij ophalen administrators" });
+    }
+  });
+
+  app.post("/api/vk/admins", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const { username, password, firstName, lastName, email } = req.body;
+
+      if (!username || !password || !firstName || !lastName) {
+        return res.status(400).json({ message: "Gebruikersnaam, wachtwoord, voornaam en achternaam zijn verplicht" });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Wachtwoord moet minstens 6 karakters zijn" });
+      }
+
+      const existing = await db
+        .select()
+        .from(vkAdmins)
+        .where(eq(vkAdmins.username, username.toLowerCase().trim()))
+        .limit(1);
+
+      if (existing.length > 0) {
+        return res.status(400).json({ message: "Gebruikersnaam bestaat al" });
+      }
+
+      const hashedPassword = await hashPassword(password);
+      const [newAdmin] = await db.insert(vkAdmins).values({
+        username: username.toLowerCase().trim(),
+        password: hashedPassword,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email?.trim() || null,
+        isActive: true,
+        mustChangePassword: true
+      }).returning();
+
+      const { password: _, ...adminWithoutPassword } = newAdmin;
+      res.status(201).json(adminWithoutPassword);
+    } catch (error) {
+      console.error("VK admins POST error:", error);
+      res.status(500).json({ message: "Fout bij aanmaken administrator" });
+    }
+  });
+
+  app.patch("/api/vk/admins/:id", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Ongeldige ID" });
+      }
+
+      const { firstName, lastName, email, isActive } = req.body;
+      const updateData: any = { updatedAt: new Date() };
+      
+      if (firstName !== undefined) updateData.firstName = firstName.trim();
+      if (lastName !== undefined) updateData.lastName = lastName.trim();
+      if (email !== undefined) updateData.email = email?.trim() || null;
+      if (isActive !== undefined) updateData.isActive = isActive;
+
+      const [updated] = await db
+        .update(vkAdmins)
+        .set(updateData)
+        .where(eq(vkAdmins.id, id))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ message: "Administrator niet gevonden" });
+      }
+
+      const { password: _, ...adminWithoutPassword } = updated;
+      res.json(adminWithoutPassword);
+    } catch (error) {
+      console.error("VK admins PATCH error:", error);
+      res.status(500).json({ message: "Fout bij bijwerken administrator" });
+    }
+  });
+
+  app.post("/api/vk/admins/:id/reset-password", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Ongeldige ID" });
+      }
+
+      const { newPassword } = req.body;
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "Nieuw wachtwoord moet minstens 6 karakters zijn" });
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      const [updated] = await db
+        .update(vkAdmins)
+        .set({ 
+          password: hashedPassword, 
+          mustChangePassword: true,
+          updatedAt: new Date() 
+        })
+        .where(eq(vkAdmins.id, id))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ message: "Administrator niet gevonden" });
+      }
+
+      res.json({ message: "Wachtwoord is gereset. Gebruiker moet wachtwoord wijzigen bij volgende login." });
+    } catch (error) {
+      console.error("VK admins reset-password error:", error);
+      res.status(500).json({ message: "Fout bij resetten wachtwoord" });
+    }
+  });
+
+  app.post("/api/vk/change-password", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const adminId = req.session.vkAdminId;
+      if (!adminId) {
+        return res.status(401).json({ message: "Niet ingelogd" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "Nieuw wachtwoord moet minstens 6 karakters zijn" });
+      }
+
+      const [admin] = await db
+        .select()
+        .from(vkAdmins)
+        .where(eq(vkAdmins.id, adminId))
+        .limit(1);
+
+      if (!admin) {
+        return res.status(404).json({ message: "Administrator niet gevonden" });
+      }
+
+      if (!admin.mustChangePassword) {
+        if (!currentPassword) {
+          return res.status(400).json({ message: "Huidig wachtwoord is verplicht" });
+        }
+        const isValid = await comparePasswords(currentPassword, admin.password);
+        if (!isValid) {
+          return res.status(401).json({ message: "Huidig wachtwoord is onjuist" });
+        }
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      await db
+        .update(vkAdmins)
+        .set({ 
+          password: hashedPassword, 
+          mustChangePassword: false,
+          updatedAt: new Date() 
+        })
+        .where(eq(vkAdmins.id, adminId));
+
+      res.json({ message: "Wachtwoord succesvol gewijzigd" });
+    } catch (error) {
+      console.error("VK change-password error:", error);
+      res.status(500).json({ message: "Fout bij wijzigen wachtwoord" });
+    }
+  });
+
+  // ========================================
   // VK LIDMAATSCHAPSTYPES
   // ========================================
 

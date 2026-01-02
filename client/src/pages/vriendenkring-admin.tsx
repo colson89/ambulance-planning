@@ -16,7 +16,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, LogOut, Users, Calendar, ClipboardList, Plus, Pencil, Trash2, 
-  Euro, Settings, ChevronDown, ChevronRight, CheckCircle, XCircle, Mail, Send, Check 
+  Euro, Settings, ChevronDown, ChevronRight, CheckCircle, XCircle, Mail, Send, Check,
+  Shield, Key, UserPlus, RotateCcw
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
@@ -25,7 +26,13 @@ import { nl } from "date-fns/locale";
 interface VkAdmin {
   id: number;
   username: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
   isActive: boolean;
+  mustChangePassword: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface VkMembershipType {
@@ -132,6 +139,11 @@ export default function VriendenkringAdmin() {
   const [invitationMessage, setInvitationMessage] = useState("");
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [selectedInvitationsActivity, setSelectedInvitationsActivity] = useState<number | null>(null);
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false);
+  const [editingAdminUser, setEditingAdminUser] = useState<VkAdmin | null>(null);
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [resetPasswordAdmin, setResetPasswordAdmin] = useState<VkAdmin | null>(null);
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
 
   const { data: admin, isLoading: adminLoading, error: adminError } = useQuery<VkAdmin>({
     queryKey: ["/api/vk/me"],
@@ -174,6 +186,11 @@ export default function VriendenkringAdmin() {
 
   const { data: invitations = [], isLoading: invitationsLoading } = useQuery<VkInvitation[]>({
     queryKey: ["/api/vk/invitations"],
+    enabled: !!admin,
+  });
+
+  const { data: vkAdmins = [], isLoading: adminsLoading } = useQuery<VkAdmin[]>({
+    queryKey: ["/api/vk/admins"],
     enabled: !!admin,
   });
 
@@ -226,6 +243,60 @@ export default function VriendenkringAdmin() {
       sortOrder: 0,
     },
   });
+
+  const adminForm = useForm({
+    defaultValues: {
+      username: "",
+      password: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+    },
+  });
+
+  const resetPasswordForm = useForm({
+    defaultValues: {
+      newPassword: "",
+    },
+  });
+
+  const changePasswordForm = useForm({
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
+
+  useEffect(() => {
+    if (editingAdminUser) {
+      adminForm.reset({
+        username: editingAdminUser.username,
+        password: "",
+        firstName: editingAdminUser.firstName,
+        lastName: editingAdminUser.lastName,
+        email: editingAdminUser.email || "",
+      });
+    } else {
+      adminForm.reset({
+        username: "",
+        password: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+      });
+    }
+  }, [editingAdminUser, adminForm]);
+
+  useEffect(() => {
+    resetPasswordForm.reset({ newPassword: "" });
+  }, [resetPasswordAdmin, resetPasswordForm]);
+
+  useEffect(() => {
+    if (admin?.mustChangePassword) {
+      setChangePasswordDialogOpen(true);
+    }
+  }, [admin]);
 
   useEffect(() => {
     if (editingMember) {
@@ -592,6 +663,119 @@ export default function VriendenkringAdmin() {
     },
   });
 
+  const saveAdminMutation = useMutation({
+    mutationFn: async (data: { username: string; password?: string; firstName: string; lastName: string; email: string }) => {
+      if (editingAdminUser) {
+        const res = await fetch(`/api/vk/admins/${editingAdminUser.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email || null,
+          }),
+          credentials: "include",
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || "Fout bij bijwerken administrator");
+        }
+        return res.json();
+      } else {
+        const res = await fetch("/api/vk/admins", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+          credentials: "include",
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || "Fout bij aanmaken administrator");
+        }
+        return res.json();
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/admins"] });
+      toast({ title: editingAdminUser ? "Administrator bijgewerkt" : "Administrator aangemaakt" });
+      setAdminDialogOpen(false);
+      setEditingAdminUser(null);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const toggleAdminActiveMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
+      const res = await fetch(`/api/vk/admins/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Fout bij wijzigen status");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/admins"] });
+      toast({ title: "Status gewijzigd" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const resetAdminPasswordMutation = useMutation({
+    mutationFn: async ({ id, newPassword }: { id: number; newPassword: string }) => {
+      const res = await fetch(`/api/vk/admins/${id}/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword }),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Fout bij resetten wachtwoord");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/admins"] });
+      toast({ title: "Wachtwoord gereset", description: "Gebruiker moet wachtwoord wijzigen bij volgende login" });
+      setResetPasswordDialogOpen(false);
+      setResetPasswordAdmin(null);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const changeOwnPasswordMutation = useMutation({
+    mutationFn: async ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) => {
+      const res = await fetch("/api/vk/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Fout bij wijzigen wachtwoord");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/me"] });
+      toast({ title: "Wachtwoord gewijzigd" });
+      setChangePasswordDialogOpen(false);
+      changePasswordForm.reset();
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    },
+  });
+
   const openActivityPricingDialog = () => {
     const prices: Record<number, string> = {};
     membershipTypes.forEach(mt => {
@@ -710,7 +894,7 @@ export default function VriendenkringAdmin() {
         <Card>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <CardHeader>
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="members">
                   <Users className="h-4 w-4 mr-2" />
                   Leden
@@ -726,6 +910,10 @@ export default function VriendenkringAdmin() {
                 <TabsTrigger value="invitations">
                   <Mail className="h-4 w-4 mr-2" />
                   Uitnodigingen
+                </TabsTrigger>
+                <TabsTrigger value="administrators">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Beheerders
                 </TabsTrigger>
               </TabsList>
             </CardHeader>
@@ -1340,6 +1528,107 @@ Vriendenkring VZW Brandweer Mol`);
                   </div>
                 </div>
               </TabsContent>
+
+              <TabsContent value="administrators" className="mt-0">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex gap-2">
+                    <Button onClick={() => { setEditingAdminUser(null); setAdminDialogOpen(true); }}>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Beheerder toevoegen
+                    </Button>
+                    <Button variant="outline" onClick={() => setChangePasswordDialogOpen(true)}>
+                      <Key className="h-4 w-4 mr-2" />
+                      Mijn wachtwoord wijzigen
+                    </Button>
+                  </div>
+                </div>
+
+                {adminsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Naam</TableHead>
+                        <TableHead>Gebruikersnaam</TableHead>
+                        <TableHead>E-mail</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Acties</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {vkAdmins.map((adminUser) => (
+                        <TableRow key={adminUser.id}>
+                          <TableCell className="font-medium">
+                            {adminUser.firstName} {adminUser.lastName}
+                          </TableCell>
+                          <TableCell>{adminUser.username}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {adminUser.email || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              {adminUser.isActive ? (
+                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Actief
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary">
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Inactief
+                                </Badge>
+                              )}
+                              {adminUser.mustChangePassword && (
+                                <Badge variant="outline" className="text-orange-600 border-orange-300">
+                                  <Key className="h-3 w-3 mr-1" />
+                                  Wachtwoord wijzigen
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-1 justify-end">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => { setEditingAdminUser(adminUser); setAdminDialogOpen(true); }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => { setResetPasswordAdmin(adminUser); setResetPasswordDialogOpen(true); }}
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
+                              {adminUser.id !== admin?.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => toggleAdminActiveMutation.mutate({ 
+                                    id: adminUser.id, 
+                                    isActive: !adminUser.isActive 
+                                  })}
+                                >
+                                  {adminUser.isActive ? (
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                  ) : (
+                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </TabsContent>
             </CardContent>
           </Tabs>
         </Card>
@@ -1678,6 +1967,176 @@ Vriendenkring VZW Brandweer Mol`);
               Sluiten
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={adminDialogOpen} onOpenChange={setAdminDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingAdminUser ? "Beheerder bewerken" : "Nieuwe beheerder"}</DialogTitle>
+            <DialogDescription>
+              {editingAdminUser 
+                ? "Wijzig de gegevens van de beheerder"
+                : "Maak een nieuw beheerders account aan"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={adminForm.handleSubmit((data) => saveAdminMutation.mutate(data))} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Voornaam</Label>
+                <Input {...adminForm.register("firstName", { required: true })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Achternaam</Label>
+                <Input {...adminForm.register("lastName", { required: true })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Gebruikersnaam</Label>
+              <Input 
+                {...adminForm.register("username", { required: true })} 
+                disabled={!!editingAdminUser}
+              />
+              {editingAdminUser && (
+                <p className="text-xs text-muted-foreground">
+                  Gebruikersnaam kan niet worden gewijzigd
+                </p>
+              )}
+            </div>
+            {!editingAdminUser && (
+              <div className="space-y-2">
+                <Label>Initieel wachtwoord</Label>
+                <Input 
+                  type="password" 
+                  {...adminForm.register("password", { required: !editingAdminUser, minLength: 6 })} 
+                />
+                <p className="text-xs text-muted-foreground">
+                  Gebruiker moet wachtwoord wijzigen bij eerste login
+                </p>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>E-mail (optioneel)</Label>
+              <Input type="email" {...adminForm.register("email")} />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={saveAdminMutation.isPending}>
+                {saveAdminMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {editingAdminUser ? "Opslaan" : "Aanmaken"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Wachtwoord resetten</DialogTitle>
+            <DialogDescription>
+              Reset het wachtwoord voor {resetPasswordAdmin?.firstName} {resetPasswordAdmin?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          <form 
+            onSubmit={resetPasswordForm.handleSubmit((data) => {
+              if (resetPasswordAdmin) {
+                resetAdminPasswordMutation.mutate({ id: resetPasswordAdmin.id, newPassword: data.newPassword });
+              }
+            })} 
+            className="space-y-4"
+          >
+            <div className="space-y-2">
+              <Label>Nieuw wachtwoord</Label>
+              <Input 
+                type="password" 
+                {...resetPasswordForm.register("newPassword", { required: true, minLength: 6 })} 
+              />
+              <p className="text-xs text-muted-foreground">
+                Minimaal 6 karakters. Gebruiker moet wachtwoord wijzigen bij volgende login.
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" type="button" onClick={() => setResetPasswordDialogOpen(false)}>
+                Annuleren
+              </Button>
+              <Button type="submit" disabled={resetAdminPasswordMutation.isPending}>
+                {resetAdminPasswordMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Wachtwoord resetten
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog 
+        open={changePasswordDialogOpen} 
+        onOpenChange={(open) => {
+          if (admin?.mustChangePassword && !open) return;
+          setChangePasswordDialogOpen(open);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {admin?.mustChangePassword ? "Wachtwoord wijzigen verplicht" : "Wachtwoord wijzigen"}
+            </DialogTitle>
+            <DialogDescription>
+              {admin?.mustChangePassword 
+                ? "Je moet je wachtwoord wijzigen voordat je verder kunt gaan."
+                : "Wijzig je wachtwoord hieronder"}
+            </DialogDescription>
+          </DialogHeader>
+          <form 
+            onSubmit={changePasswordForm.handleSubmit((data) => {
+              if (data.newPassword !== data.confirmPassword) {
+                toast({ title: "Wachtwoorden komen niet overeen", variant: "destructive" });
+                return;
+              }
+              changeOwnPasswordMutation.mutate({ 
+                currentPassword: data.currentPassword, 
+                newPassword: data.newPassword 
+              });
+            })} 
+            className="space-y-4"
+          >
+            {!admin?.mustChangePassword && (
+              <div className="space-y-2">
+                <Label>Huidig wachtwoord</Label>
+                <Input 
+                  type="password" 
+                  {...changePasswordForm.register("currentPassword", { required: !admin?.mustChangePassword })} 
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Nieuw wachtwoord</Label>
+              <Input 
+                type="password" 
+                {...changePasswordForm.register("newPassword", { required: true, minLength: 6 })} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Bevestig nieuw wachtwoord</Label>
+              <Input 
+                type="password" 
+                {...changePasswordForm.register("confirmPassword", { required: true })} 
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Minimaal 6 karakters
+            </p>
+            <DialogFooter>
+              {!admin?.mustChangePassword && (
+                <Button variant="outline" type="button" onClick={() => setChangePasswordDialogOpen(false)}>
+                  Annuleren
+                </Button>
+              )}
+              <Button type="submit" disabled={changeOwnPasswordMutation.isPending}>
+                {changeOwnPasswordMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Wachtwoord wijzigen
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
