@@ -29,10 +29,21 @@ interface VkAdmin {
   firstName: string;
   lastName: string;
   email: string | null;
+  memberId: number | null;
   isActive: boolean;
   mustChangePassword: boolean;
   createdAt: string;
   updatedAt: string;
+  member: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    membershipTypeId: number;
+  } | null;
+  membershipType: {
+    id: number;
+    name: string;
+  } | null;
 }
 
 interface VkMembershipType {
@@ -50,6 +61,7 @@ interface VkMember {
   email: string;
   membershipTypeId: number;
   annualFeePaidUntil: number | null;
+  isActive?: boolean;
 }
 
 interface VkActivity {
@@ -251,6 +263,7 @@ export default function VriendenkringAdmin() {
       firstName: "",
       lastName: "",
       email: "",
+      memberId: "",
     },
   });
 
@@ -276,6 +289,7 @@ export default function VriendenkringAdmin() {
         firstName: editingAdminUser.firstName,
         lastName: editingAdminUser.lastName,
         email: editingAdminUser.email || "",
+        memberId: editingAdminUser.memberId?.toString() || "",
       });
     } else {
       adminForm.reset({
@@ -284,6 +298,7 @@ export default function VriendenkringAdmin() {
         firstName: "",
         lastName: "",
         email: "",
+        memberId: "",
       });
     }
   }, [editingAdminUser, adminForm]);
@@ -664,7 +679,8 @@ export default function VriendenkringAdmin() {
   });
 
   const saveAdminMutation = useMutation({
-    mutationFn: async (data: { username: string; password?: string; firstName: string; lastName: string; email: string }) => {
+    mutationFn: async (data: { username: string; password?: string; firstName: string; lastName: string; email: string; memberId: string }) => {
+      const memberId = data.memberId ? parseInt(data.memberId) : null;
       if (editingAdminUser) {
         const res = await fetch(`/api/vk/admins/${editingAdminUser.id}`, {
           method: "PATCH",
@@ -673,6 +689,7 @@ export default function VriendenkringAdmin() {
             firstName: data.firstName,
             lastName: data.lastName,
             email: data.email || null,
+            memberId,
           }),
           credentials: "include",
         });
@@ -685,7 +702,7 @@ export default function VriendenkringAdmin() {
         const res = await fetch("/api/vk/admins", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({ ...data, memberId }),
           credentials: "include",
         });
         if (!res.ok) {
@@ -1553,6 +1570,7 @@ Vriendenkring VZW Brandweer Mol`);
                       <TableRow>
                         <TableHead>Naam</TableHead>
                         <TableHead>Gebruikersnaam</TableHead>
+                        <TableHead>Lidmaatschapstype</TableHead>
                         <TableHead>E-mail</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Acties</TableHead>
@@ -1565,6 +1583,11 @@ Vriendenkring VZW Brandweer Mol`);
                             {adminUser.firstName} {adminUser.lastName}
                           </TableCell>
                           <TableCell>{adminUser.username}</TableCell>
+                          <TableCell>
+                            {adminUser.membershipType?.name || (
+                              <span className="text-muted-foreground">Niet gekoppeld</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-muted-foreground">
                             {adminUser.email || "-"}
                           </TableCell>
@@ -2018,6 +2041,31 @@ Vriendenkring VZW Brandweer Mol`);
             <div className="space-y-2">
               <Label>E-mail (optioneel)</Label>
               <Input type="email" {...adminForm.register("email")} />
+            </div>
+            <div className="space-y-2">
+              <Label>Gekoppeld lid (optioneel)</Label>
+              <Select 
+                value={adminForm.watch("memberId")} 
+                onValueChange={(value) => adminForm.setValue("memberId", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer een lid..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Geen koppeling</SelectItem>
+                  {members
+                    .filter(m => m.isActive !== false)
+                    .sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`))
+                    .map((member) => (
+                      <SelectItem key={member.id} value={member.id.toString()}>
+                        {member.lastName} {member.firstName} - {membershipTypes.find(t => t.id === member.membershipTypeId)?.name || "Onbekend"}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Koppel deze beheerder aan een lid om het lidmaatschapstype te tonen
+              </p>
             </div>
             <DialogFooter>
               <Button type="submit" disabled={saveAdminMutation.isPending}>

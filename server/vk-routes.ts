@@ -168,12 +168,25 @@ export function registerVkRoutes(app: Express): void {
           firstName: vkAdmins.firstName,
           lastName: vkAdmins.lastName,
           email: vkAdmins.email,
+          memberId: vkAdmins.memberId,
           isActive: vkAdmins.isActive,
           mustChangePassword: vkAdmins.mustChangePassword,
           createdAt: vkAdmins.createdAt,
-          updatedAt: vkAdmins.updatedAt
+          updatedAt: vkAdmins.updatedAt,
+          member: {
+            id: vkMembers.id,
+            firstName: vkMembers.firstName,
+            lastName: vkMembers.lastName,
+            membershipTypeId: vkMembers.membershipTypeId
+          },
+          membershipType: {
+            id: vkMembershipTypes.id,
+            name: vkMembershipTypes.name
+          }
         })
         .from(vkAdmins)
+        .leftJoin(vkMembers, eq(vkAdmins.memberId, vkMembers.id))
+        .leftJoin(vkMembershipTypes, eq(vkMembers.membershipTypeId, vkMembershipTypes.id))
         .orderBy(asc(vkAdmins.lastName), asc(vkAdmins.firstName));
       res.json(admins);
     } catch (error) {
@@ -184,7 +197,7 @@ export function registerVkRoutes(app: Express): void {
 
   app.post("/api/vk/admins", requireVkAdmin, async (req: Request, res: Response) => {
     try {
-      const { username, password, firstName, lastName, email } = req.body;
+      const { username, password, firstName, lastName, email, memberId } = req.body;
 
       if (!username || !password || !firstName || !lastName) {
         return res.status(400).json({ message: "Gebruikersnaam, wachtwoord, voornaam en achternaam zijn verplicht" });
@@ -204,6 +217,14 @@ export function registerVkRoutes(app: Express): void {
         return res.status(400).json({ message: "Gebruikersnaam bestaat al" });
       }
 
+      // Validate memberId if provided
+      if (memberId) {
+        const memberExists = await db.select().from(vkMembers).where(eq(vkMembers.id, memberId)).limit(1);
+        if (memberExists.length === 0) {
+          return res.status(400).json({ message: "Geselecteerd lid bestaat niet" });
+        }
+      }
+
       const hashedPassword = await hashPassword(password);
       const [newAdmin] = await db.insert(vkAdmins).values({
         username: username.toLowerCase().trim(),
@@ -211,6 +232,7 @@ export function registerVkRoutes(app: Express): void {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email?.trim() || null,
+        memberId: memberId || null,
         isActive: true,
         mustChangePassword: true
       }).returning();
@@ -230,13 +252,23 @@ export function registerVkRoutes(app: Express): void {
         return res.status(400).json({ message: "Ongeldige ID" });
       }
 
-      const { firstName, lastName, email, isActive } = req.body;
+      const { firstName, lastName, email, isActive, memberId } = req.body;
       const updateData: any = { updatedAt: new Date() };
       
       if (firstName !== undefined) updateData.firstName = firstName.trim();
       if (lastName !== undefined) updateData.lastName = lastName.trim();
       if (email !== undefined) updateData.email = email?.trim() || null;
       if (isActive !== undefined) updateData.isActive = isActive;
+      if (memberId !== undefined) {
+        // Validate memberId if provided and not null
+        if (memberId !== null) {
+          const memberExists = await db.select().from(vkMembers).where(eq(vkMembers.id, memberId)).limit(1);
+          if (memberExists.length === 0) {
+            return res.status(400).json({ message: "Geselecteerd lid bestaat niet" });
+          }
+        }
+        updateData.memberId = memberId;
+      }
 
       const [updated] = await db
         .update(vkAdmins)
