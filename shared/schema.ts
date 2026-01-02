@@ -1019,6 +1019,7 @@ export const vkInvitations = pgTable("vk_invitations", {
   activityId: integer("activity_id").notNull().references(() => vkActivities.id, { onDelete: 'cascade' }),
   memberId: integer("member_id").notNull().references(() => vkMembers.id, { onDelete: 'cascade' }),
   trackingToken: text("tracking_token").notNull().unique(), // Unieke token voor tracking pixel
+  registrationToken: text("registration_token").unique(), // Unieke token voor registratie link (vooringevuld formulier)
   email: text("email").notNull(), // E-mail adres op moment van verzenden
   subject: text("subject").notNull(),
   sentAt: timestamp("sent_at").defaultNow(),

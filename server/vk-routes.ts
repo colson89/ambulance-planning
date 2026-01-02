@@ -1128,7 +1128,6 @@ export function registerVkRoutes(app: Express): void {
       const domainRegex = /^[a-zA-Z0-9.-]+$/;
       const baseUrl = (firstDomain && domainRegex.test(firstDomain)) ? firstDomain : 'localhost:5000';
       const protocol = baseUrl.includes('localhost') ? 'http' : 'https';
-      const registrationUrl = `${protocol}://${baseUrl}/VriendenkringMol/inschrijven/${activityId}`;
 
       // Send emails with tracking
       let successCount = 0;
@@ -1137,9 +1136,13 @@ export function registerVkRoutes(app: Express): void {
 
       for (const member of filteredMembers) {
         try {
-          // Generate unique tracking token
+          // Generate unique tracking token and registration token
           const trackingToken = randomBytes(32).toString("hex");
+          const registrationToken = randomBytes(32).toString("hex");
           const trackingPixelUrl = `${protocol}://${baseUrl}/api/vk/track/${trackingToken}`;
+          
+          // Build personalized registration URL with registration token
+          const registrationUrl = `${protocol}://${baseUrl}/VriendenkringMol/inschrijven?token=${registrationToken}`;
 
           // Replace placeholders in message with HTML-escaped values
           const safeFirstName = escapeHtml(member.firstName);
@@ -1181,11 +1184,12 @@ export function registerVkRoutes(app: Express): void {
             html: htmlMessage,
           });
 
-          // Save invitation record for tracking
+          // Save invitation record for tracking with registration token
           await db.insert(vkInvitations).values({
             activityId: activityId,
             memberId: member.id,
             trackingToken: trackingToken,
+            registrationToken: registrationToken,
             email: member.email!,
             subject: subject,
           });
@@ -1315,6 +1319,72 @@ export function registerVkRoutes(app: Express): void {
     } catch (error) {
       console.error("VK invitations GET all error:", error);
       res.status(500).json({ message: "Fout bij ophalen uitnodigingen" });
+    }
+  });
+
+  // Get invitation data by registration token (public endpoint for pre-filling registration form)
+  app.get("/api/vk/invitation-data/:token", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+
+      if (!token || token.length !== 64) {
+        return res.status(400).json({ message: "Ongeldige token" });
+      }
+
+      // Find invitation by registration token
+      const [invitation] = await db
+        .select({
+          id: vkInvitations.id,
+          activityId: vkInvitations.activityId,
+          memberId: vkInvitations.memberId,
+          email: vkInvitations.email,
+        })
+        .from(vkInvitations)
+        .where(eq(vkInvitations.registrationToken, token))
+        .limit(1);
+
+      if (!invitation) {
+        return res.status(404).json({ message: "Uitnodiging niet gevonden of verlopen" });
+      }
+
+      // Get member details
+      const [member] = await db
+        .select()
+        .from(vkMembers)
+        .where(eq(vkMembers.id, invitation.memberId))
+        .limit(1);
+
+      if (!member) {
+        return res.status(404).json({ message: "Lid niet gevonden" });
+      }
+
+      // Get activity details
+      const [activity] = await db
+        .select()
+        .from(vkActivities)
+        .where(eq(vkActivities.id, invitation.activityId))
+        .limit(1);
+
+      if (!activity) {
+        return res.status(404).json({ message: "Activiteit niet gevonden" });
+      }
+
+      // Check if activity is still active
+      if (!activity.isActive) {
+        return res.status(400).json({ message: "Deze activiteit is niet meer actief" });
+      }
+
+      // Return data for pre-filling the registration form
+      res.json({
+        name: `${member.firstName} ${member.lastName}`,
+        email: invitation.email,
+        membershipTypeId: member.membershipTypeId,
+        activityId: invitation.activityId,
+        activityName: activity.name,
+      });
+    } catch (error) {
+      console.error("VK invitation-data error:", error);
+      res.status(500).json({ message: "Fout bij ophalen uitnodigingsgegevens" });
     }
   });
 }

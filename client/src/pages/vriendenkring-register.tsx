@@ -1,16 +1,24 @@
 import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation, useParams } from "wouter";
+import { useLocation, useParams, useSearch } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Users, CheckCircle, Minus, Plus, Calendar } from "lucide-react";
+import { Loader2, Users, CheckCircle, Minus, Plus, Calendar, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
+
+interface InvitationData {
+  name: string;
+  email: string;
+  membershipTypeId: number;
+  activityId: number;
+  activityName: string;
+}
 
 interface VkActivity {
   id: number;
@@ -68,13 +76,20 @@ interface SubActivityQuantity {
 
 export default function VriendenkringRegister() {
   const { activityId } = useParams<{ activityId?: string }>();
+  const searchString = useSearch();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  
+  // Parse token from URL query string
+  const urlParams = new URLSearchParams(searchString);
+  const invitationToken = urlParams.get("token");
+
   const [selectedActivityId, setSelectedActivityId] = useState<number | null>(
     activityId ? parseInt(activityId) : null
   );
   const [quantities, setQuantities] = useState<SubActivityQuantity[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isPrefilledFromInvitation, setIsPrefilledFromInvitation] = useState(false);
 
   const form = useForm<RegistrationForm>({
     defaultValues: {
@@ -83,6 +98,32 @@ export default function VriendenkringRegister() {
       membershipTypeId: "",
     },
   });
+
+  // Fetch invitation data if token is present
+  const { data: invitationData, isLoading: invitationLoading } = useQuery<InvitationData>({
+    queryKey: ["/api/vk/invitation-data", invitationToken],
+    queryFn: async () => {
+      const res = await fetch(`/api/vk/invitation-data/${invitationToken}`);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Uitnodiging niet gevonden");
+      }
+      return res.json();
+    },
+    enabled: !!invitationToken && invitationToken.length === 64,
+    retry: false,
+  });
+
+  // Pre-fill form when invitation data is loaded
+  useEffect(() => {
+    if (invitationData && !isPrefilledFromInvitation) {
+      form.setValue("name", invitationData.name);
+      form.setValue("email", invitationData.email);
+      form.setValue("membershipTypeId", invitationData.membershipTypeId.toString());
+      setSelectedActivityId(invitationData.activityId);
+      setIsPrefilledFromInvitation(true);
+    }
+  }, [invitationData, form, isPrefilledFromInvitation]);
 
   const { data: activities = [], isLoading: activitiesLoading } = useQuery<VkActivity[]>({
     queryKey: ["/api/vk/activities"],
@@ -366,31 +407,49 @@ export default function VriendenkringRegister() {
               </div>
             ) : (
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Show info banner when form is pre-filled from invitation */}
+                {isPrefilledFromInvitation && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-center gap-3">
+                    <Lock className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      Je gegevens zijn automatisch ingevuld op basis van je uitnodiging. Selecteer hieronder je deelactiviteiten.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label>Activiteit</Label>
-                  <Select
-                    value={selectedActivityId?.toString() || ""}
-                    onValueChange={(v) => setSelectedActivityId(parseInt(v))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecteer een activiteit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {activeActivities.map((activity) => (
-                        <SelectItem key={activity.id} value={activity.id.toString()}>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            <span>{activity.name}</span>
-                            {activity.startDate && (
-                              <span className="text-muted-foreground">
-                                ({format(new Date(activity.startDate), "d MMM yyyy", { locale: nl })})
-                              </span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {isPrefilledFromInvitation ? (
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{invitationData?.activityName}</span>
+                      <Lock className="h-3 w-3 text-muted-foreground ml-auto" />
+                    </div>
+                  ) : (
+                    <Select
+                      value={selectedActivityId?.toString() || ""}
+                      onValueChange={(v) => setSelectedActivityId(parseInt(v))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecteer een activiteit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeActivities.map((activity) => (
+                          <SelectItem key={activity.id} value={activity.id.toString()}>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              <span>{activity.name}</span>
+                              {activity.startDate && (
+                                <span className="text-muted-foreground">
+                                  ({format(new Date(activity.startDate), "d MMM yyyy", { locale: nl })})
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
 
                 {selectedActivityId && activityDetails && (
@@ -403,46 +462,66 @@ export default function VriendenkringRegister() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Naam *</Label>
+                        <Label htmlFor="name" className="flex items-center gap-2">
+                          Naam *
+                          {isPrefilledFromInvitation && <Lock className="h-3 w-3 text-muted-foreground" />}
+                        </Label>
                         <Input
                           id="name"
                           placeholder="Volledige naam"
+                          readOnly={isPrefilledFromInvitation}
+                          className={isPrefilledFromInvitation ? "bg-muted/50 cursor-not-allowed" : ""}
                           {...form.register("name", { required: true })}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email">E-mail *</Label>
+                        <Label htmlFor="email" className="flex items-center gap-2">
+                          E-mail *
+                          {isPrefilledFromInvitation && <Lock className="h-3 w-3 text-muted-foreground" />}
+                        </Label>
                         <Input
                           id="email"
                           type="email"
                           placeholder="email@voorbeeld.be"
+                          readOnly={isPrefilledFromInvitation}
+                          className={isPrefilledFromInvitation ? "bg-muted/50 cursor-not-allowed" : ""}
                           {...form.register("email", { required: true })}
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Lidmaatschapstype *</Label>
-                      <Select
-                        value={form.watch("membershipTypeId")}
-                        onValueChange={(v) => form.setValue("membershipTypeId", v)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecteer je lidmaatschapstype" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {membershipTypes.map((type) => (
-                            <SelectItem key={type.id} value={type.id.toString()}>
-                              {type.name}
-                              {type.description && (
-                                <span className="text-muted-foreground ml-2">
-                                  - {type.description}
-                                </span>
-                              )}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label className="flex items-center gap-2">
+                        Lidmaatschapstype *
+                        {isPrefilledFromInvitation && <Lock className="h-3 w-3 text-muted-foreground" />}
+                      </Label>
+                      {isPrefilledFromInvitation ? (
+                        <div className="p-3 bg-muted/50 rounded-md border flex items-center justify-between">
+                          <span>{membershipTypes.find(t => t.id === invitationData?.membershipTypeId)?.name || "Onbekend"}</span>
+                          <Lock className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <Select
+                          value={form.watch("membershipTypeId")}
+                          onValueChange={(v) => form.setValue("membershipTypeId", v)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecteer je lidmaatschapstype" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {membershipTypes.map((type) => (
+                              <SelectItem key={type.id} value={type.id.toString()}>
+                                {type.name}
+                                {type.description && (
+                                  <span className="text-muted-foreground ml-2">
+                                    - {type.description}
+                                  </span>
+                                )}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
 
                     {/* Show sub-activities section for activities with sub-activities */}
