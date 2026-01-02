@@ -3545,8 +3545,62 @@ function ScheduleGenerator() {
                   </div>
                 )}
 
-                {/* Candidates Considered */}
-                {assignmentExplanation.candidatesConsidered?.length > 0 && (
+                {/* Available Candidates Comparison - NEW detailed view */}
+                {assignmentExplanation.availableCandidates?.length > 0 && (
+                  <div className="rounded-lg border p-4">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                      Andere beschikbare kandidaten ({assignmentExplanation.availableCandidates.length})
+                    </h4>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Gesorteerd op eerlijkheidsscore. Mensen die niet beschikbaar waren worden niet getoond.
+                    </p>
+                    <div className="space-y-3">
+                      {assignmentExplanation.availableCandidates.map((candidate: any, idx: number) => (
+                        <div key={idx} className="border rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="font-medium">{candidate.name}</span>
+                            <div className="flex gap-1">
+                              {candidate.hasPreference && (
+                                <Badge variant="default" className="text-xs">Voorkeur</Badge>
+                              )}
+                              {candidate.hasDrivingLicenseC && (
+                                <Badge variant="outline" className="text-xs">Rijbewijs C</Badge>
+                              )}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div>
+                              <span className="text-gray-500">Uren: </span>
+                              <span className="font-medium">{candidate.hoursWorked}u / {candidate.targetHours}u</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Ratio: </span>
+                              <span className={`font-medium ${candidate.hoursRatio > 100 ? 'text-red-600' : candidate.hoursRatio < 50 ? 'text-green-600' : ''}`}>
+                                {candidate.hoursRatio}%
+                              </span>
+                            </div>
+                          </div>
+                          {candidate.notChosenReasons?.length > 0 && (
+                            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                              <span className="text-xs font-medium text-gray-500">Waarom niet gekozen:</span>
+                              <ul className="mt-1 space-y-0.5">
+                                {candidate.notChosenReasons.map((reason: string, rIdx: number) => (
+                                  <li key={rIdx} className="text-xs text-gray-600 dark:text-gray-400 flex items-start gap-1">
+                                    <span className="text-gray-400">•</span>
+                                    {reason}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Legacy: Candidates Considered (for stored explanations) */}
+                {!assignmentExplanation.availableCandidates && assignmentExplanation.candidatesConsidered?.length > 0 && (
                   <div className="rounded-lg border p-4">
                     <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Andere kandidaten</h4>
                     <div className="space-y-2">

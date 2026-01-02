@@ -4494,18 +4494,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       primaryReason = 'Geen geschikte kandidaat gevonden of manueel als open gemarkeerd';
     }
     
-    // Get other potential candidates for context
-    const allUsers = await storage.getUsersByStation(stationId);
-    const candidatesInfo: any[] = [];
+    // Get all shifts for this month to calculate hours worked per user
+    const allShifts = await storage.getShiftsByMonth(month, year, stationId);
+    const shiftDate = shift.date instanceof Date ? shift.date : new Date(shift.date);
+    const shiftDateStr = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
     
-    for (const user of allUsers.slice(0, 10)) { // Limit to first 10 for performance
-      if (user.id === shift.userId) continue; // Skip assigned user
+    // Get other potential candidates - only show AVAILABLE candidates (not unavailable)
+    const allUsers = await storage.getUsersByStation(stationId);
+    const availableCandidates: any[] = [];
+    
+    for (const user of allUsers) {
+      if (user.id === shift.userId) continue; // Skip assigned user (shown separately)
       if (user.hours === 0) continue; // Skip inactive users
       
-      // Check if this user had preference for this shift
+      // Check if this user had preference for this shift or was unavailable
       const preferences = await storage.getUserShiftPreferences(user.id, month, year);
-      const shiftDate = shift.date instanceof Date ? shift.date : new Date(shift.date);
-      const shiftDateStr = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
       
       const matchingPrefs = preferences.filter(p => {
         const prefDate = p.date instanceof Date ? p.date : new Date(p.date);
@@ -4519,32 +4522,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return prefDateStr === shiftDateStr && p.type === 'unavailable';
       });
       
-      if (matchingPrefs.length > 0) {
-        candidatesInfo.push({
-          userId: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          hadPreference: true,
-          wasUnavailable: false
-        });
-      } else if (unavailablePrefs.length > 0) {
-        candidatesInfo.push({
-          userId: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          hadPreference: false,
-          wasUnavailable: true,
-          reason: 'Niet beschikbaar opgegeven'
-        });
+      // Skip users who explicitly marked themselves as unavailable
+      if (unavailablePrefs.length > 0) continue;
+      
+      // Calculate hours worked this month for this user
+      const userMonthShifts = allShifts.filter(s => s.userId === user.id && s.status === 'planned');
+      let hoursWorked = 0;
+      for (const s of userMonthShifts) {
+        const start = s.startTime instanceof Date ? s.startTime : new Date(s.startTime);
+        const end = s.endTime instanceof Date ? s.endTime : new Date(s.endTime);
+        hoursWorked += (end.getTime() - start.getTime()) / (1000 * 60 * 60);
       }
+      
+      // Get cross-team effective hours
+      const crossTeamStations = await storage.getUserCrossTeamStations(user.id);
+      const crossTeamEntry = crossTeamStations.find(ct => ct.stationId === stationId);
+      const targetHours = crossTeamEntry?.hours ?? user.hours;
+      
+      // Calculate fairness score (lower = more fair to assign, higher = less fair)
+      // This mirrors the schedule generator's fairness algorithm
+      const hoursRatio = targetHours > 0 ? hoursWorked / targetHours : 1;
+      const hasPreference = matchingPrefs.length > 0;
+      
+      // Build list of reasons why this candidate wasn't chosen over the assigned user
+      const notChosenReasons: string[] = [];
+      
+      // Compare with assigned user if exists
+      if (assignedUserInfo) {
+        const assignedHoursRatio = assignedUserInfo.targetHours > 0 
+          ? assignedUserInfo.hoursWorkedThisMonth / assignedUserInfo.targetHours 
+          : 1;
+        
+        // Preference comparison
+        if (assignedUserInfo.preferenceStatus === 'volunteered' && !hasPreference) {
+          notChosenReasons.push('Geen voorkeur opgegeven (gekozen persoon wel)');
+        }
+        
+        // Hours comparison - fairness based
+        if (hoursRatio > assignedHoursRatio + 0.1) {
+          const percentMore = Math.round((hoursRatio - assignedHoursRatio) * 100);
+          notChosenReasons.push(`Relatief ${percentMore}% meer uren gewerkt t.o.v. doeluren`);
+        }
+        
+        // Already at or over target hours
+        if (targetHours > 0 && hoursWorked >= targetHours) {
+          notChosenReasons.push('Doeluren al bereikt');
+        }
+      }
+      
+      // Check for conflicts on same day
+      const sameDayShifts = allShifts.filter(s => {
+        if (s.userId !== user.id || s.status !== 'planned') return false;
+        const sDate = s.date instanceof Date ? s.date : new Date(s.date);
+        const sDateStr = `${sDate.getFullYear()}-${String(sDate.getMonth() + 1).padStart(2, '0')}-${String(sDate.getDate()).padStart(2, '0')}`;
+        return sDateStr === shiftDateStr;
+      });
+      
+      if (sameDayShifts.length > 0) {
+        notChosenReasons.push('Reeds ingepland op deze dag');
+      }
+      
+      // If no specific reason found, add general note
+      if (notChosenReasons.length === 0) {
+        notChosenReasons.push('Lagere prioriteit in eerlijkheidsalgoritme');
+      }
+      
+      availableCandidates.push({
+        userId: user.id,
+        name: `${user.firstName} ${user.lastName}`,
+        hasPreference,
+        hoursWorked: Math.round(hoursWorked),
+        targetHours,
+        hoursRatio: Math.round(hoursRatio * 100),
+        hasDrivingLicenseC: user.hasDrivingLicenseC,
+        isProfessional: user.isProfessional,
+        notChosenReasons
+      });
     }
+    
+    // Sort candidates by fairness (preference first, then by hours ratio ascending)
+    availableCandidates.sort((a, b) => {
+      // Preference trumps hours
+      if (a.hasPreference && !b.hasPreference) return -1;
+      if (!a.hasPreference && b.hasPreference) return 1;
+      // Then by hours ratio (lower = more fair)
+      return a.hoursRatio - b.hoursRatio;
+    });
+    
+    // Limit to top 15 for performance
+    const topCandidates = availableCandidates.slice(0, 15);
     
     return {
       shiftId: shift.id,
       explanationType,
       primaryReason,
       assignedUser: assignedUserInfo,
-      candidatesConsidered: candidatesInfo,
+      availableCandidates: topCandidates,
       isOnDemandAnalysis: true,
-      note: 'Deze analyse is gegenereerd op basis van huidige data. Voor gedetailleerde algoritme-beslissingen is een nieuwe planning generatie nodig.'
+      note: 'Deze analyse is gegenereerd op basis van huidige data. Alleen beschikbare kandidaten worden getoond.'
     };
   }
   
