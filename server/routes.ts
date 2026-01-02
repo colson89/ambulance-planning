@@ -2986,7 +2986,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { month, year, userId } = req.body;
+      const { month, year, userId, stationId: targetStationId } = req.body;
       const userStationId = req.user?.stationId;
       
       if (!month || !year) {
@@ -2998,10 +2998,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Geen geldige sessie of station informatie. Log opnieuw in." });
       }
 
+      // Gebruik het meegegeven targetStationId, of fallback naar userStationId
+      const effectiveStationId = targetStationId || userStationId;
+      console.log(`[GENERATE-TEST] Target station: ${effectiveStationId} (requested: ${targetStationId}, user: ${userStationId})`);
+
       // Mark process as active
       isGeneratingPreferences = true;
       currentProgress = { percentage: 0, message: "Voorkeurengeneratie gestart...", isActive: true };
-      console.log(`[BLOKKERING] Voorkeurengeneratie proces gestart voor station ${userStationId} - nieuwe verzoeken worden geblokkeerd`);
+      console.log(`[BLOKKERING] Voorkeurengeneratie proces gestart voor station ${effectiveStationId} - nieuwe verzoeken worden geblokkeerd`);
       
       let users;
       if (userId) {
@@ -3011,9 +3015,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         users = [user];
       } else {
-        // Alleen gebruikers van het huidige station ophalen
-        users = await storage.getUsersByStation(userStationId);
-        console.log(`[0%] Voorkeuren genereren voor ${users.length} gebruikers van station ${userStationId}`);
+        // Gebruikers ophalen van het TARGET station (niet van de admin)
+        users = await storage.getUsersByStation(effectiveStationId);
+        console.log(`[0%] Voorkeuren genereren voor ${users.length} gebruikers van station ${effectiveStationId}`);
       }
       
       // Eerst alle bestaande voorkeuren voor deze maand/jaar verwijderen
@@ -3127,10 +3131,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
             }
             
-            // Creëer de beschikbaarheidsvoorkeur
+            // Creëer de beschikbaarheidsvoorkeur - gebruik effectiveStationId (het target station)
             await storage.createShiftPreference({
               userId: user.id,
-              stationId: user.stationId,
+              stationId: effectiveStationId,
               date: currentDate,
               type: shiftType,
               startTime: startTime,
@@ -3144,10 +3148,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           } 
           // Voor alle andere dagen (75%) expliciet markeren als onbeschikbaar
           else {
-            // Maak een "unavailable" voorkeur
+            // Maak een "unavailable" voorkeur - gebruik effectiveStationId (het target station)
             await storage.createShiftPreference({
               userId: user.id,
-              stationId: user.stationId,
+              stationId: effectiveStationId,
               date: currentDate,
               type: "unavailable",
               startTime: null,

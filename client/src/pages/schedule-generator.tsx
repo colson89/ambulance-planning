@@ -1721,7 +1721,8 @@ function ScheduleGenerator() {
                             
                             const res = await apiRequest("POST", "/api/preferences/generate-test-data", {
                               month: selectedMonth + 1,
-                              year: selectedYear
+                              year: selectedYear,
+                              stationId: effectiveStationId
                             });
                             
                             if (!res.ok) {
