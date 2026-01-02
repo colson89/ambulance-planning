@@ -756,4 +756,156 @@ export function registerVkRoutes(app: Express): void {
       res.status(500).json({ message: "Fout bij bijwerken inschrijving" });
     }
   });
+
+  // ========================================
+  // STRIPE CHECKOUT VOOR VK INSCHRIJVINGEN
+  // ========================================
+
+  app.post("/api/vk/checkout", async (req: Request, res: Response) => {
+    try {
+      const { registrationId } = req.body;
+
+      if (!registrationId) {
+        return res.status(400).json({ message: "Inschrijving ID is verplicht" });
+      }
+
+      const [registration] = await db
+        .select()
+        .from(vkRegistrations)
+        .where(eq(vkRegistrations.id, registrationId))
+        .limit(1);
+
+      if (!registration) {
+        return res.status(404).json({ message: "Inschrijving niet gevonden" });
+      }
+
+      if (registration.paymentStatus === 'paid') {
+        return res.status(400).json({ message: "Deze inschrijving is al betaald" });
+      }
+
+      const [activity] = await db
+        .select()
+        .from(vkActivities)
+        .where(eq(vkActivities.id, registration.activityId))
+        .limit(1);
+
+      const items = await db
+        .select()
+        .from(vkRegistrationItems)
+        .where(eq(vkRegistrationItems.registrationId, registrationId));
+
+      const { getUncachableStripeClient } = await import('./stripeClient');
+      const stripe = await getUncachableStripeClient();
+
+      const lineItems = items.map(item => ({
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            name: `${activity?.name || 'Activiteit'} - Deelactiviteit`,
+          },
+          unit_amount: item.pricePerUnit,
+        },
+        quantity: item.quantity,
+      }));
+
+      if (lineItems.length === 0) {
+        lineItems.push({
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: `${activity?.name || 'Inschrijving'} - Deelnamekosten`,
+            },
+            unit_amount: registration.totalAmount,
+          },
+          quantity: 1,
+        });
+      }
+
+      const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000';
+      const protocol = baseUrl.includes('localhost') ? 'http' : 'https';
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card', 'bancontact', 'ideal'],
+        line_items: lineItems,
+        mode: 'payment',
+        success_url: `${protocol}://${baseUrl}/VriendenkringMol/inschrijven?success=true&registrationId=${registrationId}`,
+        cancel_url: `${protocol}://${baseUrl}/VriendenkringMol/inschrijven?canceled=true`,
+        customer_email: registration.email,
+        metadata: {
+          registrationId: registrationId.toString(),
+          activityId: registration.activityId.toString(),
+        },
+      });
+
+      await db
+        .update(vkRegistrations)
+        .set({
+          stripeCheckoutSessionId: session.id,
+          updatedAt: new Date()
+        })
+        .where(eq(vkRegistrations.id, registrationId));
+
+      res.json({ url: session.url, sessionId: session.id });
+    } catch (error) {
+      console.error("VK checkout error:", error);
+      res.status(500).json({ message: "Fout bij aanmaken betaling" });
+    }
+  });
+
+  app.get("/api/vk/checkout/verify/:registrationId", async (req: Request, res: Response) => {
+    try {
+      const registrationId = parseInt(req.params.registrationId);
+      if (isNaN(registrationId)) {
+        return res.status(400).json({ message: "Ongeldige ID" });
+      }
+
+      const [registration] = await db
+        .select()
+        .from(vkRegistrations)
+        .where(eq(vkRegistrations.id, registrationId))
+        .limit(1);
+
+      if (!registration) {
+        return res.status(404).json({ message: "Inschrijving niet gevonden" });
+      }
+
+      if (registration.paymentStatus === 'paid') {
+        return res.json({ paid: true, registration });
+      }
+
+      if (!registration.stripeCheckoutSessionId) {
+        return res.json({ paid: false, registration });
+      }
+
+      const { getUncachableStripeClient } = await import('./stripeClient');
+      const stripe = await getUncachableStripeClient();
+
+      const session = await stripe.checkout.sessions.retrieve(registration.stripeCheckoutSessionId);
+
+      if (session.payment_status === 'paid') {
+        await db
+          .update(vkRegistrations)
+          .set({
+            paymentStatus: 'paid',
+            stripePaymentIntentId: session.payment_intent as string,
+            paidAt: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(vkRegistrations.id, registrationId));
+
+        const [updatedRegistration] = await db
+          .select()
+          .from(vkRegistrations)
+          .where(eq(vkRegistrations.id, registrationId))
+          .limit(1);
+
+        return res.json({ paid: true, registration: updatedRegistration });
+      }
+
+      res.json({ paid: false, registration });
+    } catch (error) {
+      console.error("VK checkout verify error:", error);
+      res.status(500).json({ message: "Fout bij verificatie betaling" });
+    }
+  });
 }
