@@ -105,13 +105,6 @@ export default function VriendenkringHome() {
                       {activity.description}
                     </p>
                   )}
-                  <Button 
-                    className="mt-3" 
-                    size="sm"
-                    onClick={() => setLocation(`/VriendenkringMol/inschrijven/${activity.id}`)}
-                  >
-                    Inschrijven
-                  </Button>
                 </div>
               ))}
             </CardContent>
