@@ -352,6 +352,7 @@ function ScheduleGenerator() {
   });
 
   // Haal alle shifts op voor de geselecteerde maand (gefilterd per station via backend)
+  // Admin/supervisor gebruikt ignorePublishStatus=true om ook ongepubliceerde planning te zien
   const { data: shifts = [], refetch: refetchShifts } = useQuery<Shift[]>({
     queryKey: ["/api/shifts", selectedMonth + 1, selectedYear, effectiveStationId, user?.id, user?.role],
     queryFn: async () => {
@@ -360,6 +361,11 @@ function ScheduleGenerator() {
       // Voeg stationId toe voor alle rollen wanneer beschikbaar
       if (effectiveStationId) {
         url += `&stationId=${effectiveStationId}`;
+      }
+      
+      // Admin/supervisor: altijd alle shifts tonen, ook ongepubliceerde
+      if (user?.role === 'admin' || user?.role === 'supervisor') {
+        url += '&ignorePublishStatus=true';
       }
       
       const res = await apiRequest("GET", url);

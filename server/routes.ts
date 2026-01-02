@@ -3768,17 +3768,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentUser = req.user as any;
       const isAdminOrSupervisor = currentUser.role === 'admin' || currentUser.role === 'supervisor';
       
+      // Check if caller explicitly wants to ignore publish status (for schedule-generator page)
+      const ignorePublishStatus = req.query.ignorePublishStatus === 'true';
+      
       if (req.query.month && req.query.year) {
         const month = parseInt(req.query.month as string);
         const year = parseInt(req.query.year as string);
         
-        // Check if planning is published - applies to ALL users (including admins/supervisors)
+        // Check if planning is published
+        // Admins/supervisors can bypass this check with ignorePublishStatus=true
         // NOTE: If no planning period record exists, treat as published (backwards compatibility)
         const planningPeriod = await storage.getPlanningPeriod(effectiveStationId!, month, year);
         // Only hide if explicitly marked as unpublished (isPublished === false)
+        // AND caller is not an admin/supervisor requesting to ignore publish status
         if (planningPeriod && planningPeriod.isPublished === false) {
-          // Return empty array if planning is explicitly unpublished
-          return res.status(200).json([]);
+          if (!isAdminOrSupervisor || !ignorePublishStatus) {
+            // Return empty array if planning is explicitly unpublished
+            return res.status(200).json([]);
+          }
         }
         
         shifts = await storage.getShiftsByMonth(month, year, effectiveStationId!);
