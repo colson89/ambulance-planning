@@ -36,6 +36,13 @@ interface VkPricing {
   pricePerUnit: string;
 }
 
+interface VkActivityPricing {
+  id: number;
+  activityId: number;
+  membershipTypeId: number;
+  price: number;
+}
+
 interface VkMembershipType {
   id: number;
   name: string;
@@ -45,6 +52,7 @@ interface VkMembershipType {
 interface ActivityWithDetails extends VkActivity {
   subActivities: VkSubActivity[];
   pricing: VkPricing[];
+  activityPricing: VkActivityPricing[];
 }
 
 interface RegistrationForm {
@@ -102,24 +110,41 @@ export default function VriendenkringRegister() {
 
   const selectedMembershipTypeId = form.watch("membershipTypeId");
 
+  const hasSubActivities = activityDetails?.subActivities && activityDetails.subActivities.length > 0;
+  const hasActivityPricing = activityDetails?.activityPricing && activityDetails.activityPricing.length > 0;
+
   const totalPrice = useMemo(() => {
-    if (!activityDetails?.pricing || !selectedMembershipTypeId) return 0;
+    if (!selectedMembershipTypeId) return 0;
 
     let total = 0;
-    quantities.forEach((q) => {
-      if (q.quantity > 0) {
-        const pricing = activityDetails.pricing.find(
-          (p) =>
-            p.subActivityId === q.subActivityId &&
-            p.membershipTypeId === parseInt(selectedMembershipTypeId)
-        );
-        if (pricing) {
-          total += parseFloat(pricing.pricePerUnit) * q.quantity;
+
+    // If activity has sub-activities, calculate based on sub-activity pricing
+    if (hasSubActivities && activityDetails?.pricing) {
+      quantities.forEach((q) => {
+        if (q.quantity > 0) {
+          const pricing = activityDetails.pricing.find(
+            (p) =>
+              p.subActivityId === q.subActivityId &&
+              p.membershipTypeId === parseInt(selectedMembershipTypeId)
+          );
+          if (pricing) {
+            total += parseFloat(pricing.pricePerUnit) * q.quantity;
+          }
         }
+      });
+    } 
+    // If activity has direct pricing (no sub-activities), use activity pricing
+    else if (hasActivityPricing && activityDetails?.activityPricing) {
+      const activityPrice = activityDetails.activityPricing.find(
+        (ap) => ap.membershipTypeId === parseInt(selectedMembershipTypeId)
+      );
+      if (activityPrice) {
+        total = activityPrice.price / 100; // Convert from cents to euros
       }
-    });
+    }
+    
     return total;
-  }, [quantities, activityDetails?.pricing, selectedMembershipTypeId]);
+  }, [quantities, activityDetails?.pricing, activityDetails?.activityPricing, selectedMembershipTypeId, hasSubActivities, hasActivityPricing]);
 
   const updateQuantity = (subActivityId: number, delta: number) => {
     setQuantities((prev) =>
@@ -139,20 +164,25 @@ export default function VriendenkringRegister() {
 
   const registrationMutation = useMutation({
     mutationFn: async (data: RegistrationForm) => {
-      const items = quantities
-        .filter((q) => q.quantity > 0)
-        .map((q) => {
-          const pricing = activityDetails?.pricing.find(
-            (p) =>
-              p.subActivityId === q.subActivityId &&
-              p.membershipTypeId === parseInt(data.membershipTypeId)
-          );
-          return {
-            subActivityId: q.subActivityId,
-            quantity: q.quantity,
-            pricePerUnit: pricing?.pricePerUnit || "0",
-          };
-        });
+      // For activities with sub-activities, calculate items
+      let items: { subActivityId: number; quantity: number; pricePerUnit: string }[] = [];
+      
+      if (hasSubActivities) {
+        items = quantities
+          .filter((q) => q.quantity > 0)
+          .map((q) => {
+            const pricing = activityDetails?.pricing.find(
+              (p) =>
+                p.subActivityId === q.subActivityId &&
+                p.membershipTypeId === parseInt(data.membershipTypeId)
+            );
+            return {
+              subActivityId: q.subActivityId,
+              quantity: q.quantity,
+              pricePerUnit: pricing?.pricePerUnit || "0",
+            };
+          });
+      }
 
       const res = await fetch("/api/vk/registrations", {
         method: "POST",
@@ -163,7 +193,7 @@ export default function VriendenkringRegister() {
           email: data.email,
           membershipTypeId: parseInt(data.membershipTypeId),
           totalAmount: totalPrice.toFixed(2),
-          items,
+          items, // Will be empty for simple activities with direct pricing
         }),
         credentials: "include",
       });
@@ -387,7 +417,8 @@ export default function VriendenkringRegister() {
                       </Select>
                     </div>
 
-                    {activityDetails.subActivities.length > 0 && selectedMembershipTypeId && (
+                    {/* Show sub-activities section for activities with sub-activities */}
+                    {hasSubActivities && selectedMembershipTypeId && (
                       <div className="space-y-3">
                         <Label>Deelactiviteiten</Label>
                         <div className="space-y-2">
@@ -440,6 +471,18 @@ export default function VriendenkringRegister() {
                               </div>
                             );
                           })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Show simple pricing info for activities with direct pricing (no sub-activities) */}
+                    {!hasSubActivities && hasActivityPricing && selectedMembershipTypeId && (
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Inschrijfbedrag</span>
+                          <span className="text-lg font-semibold text-blue-600">
+                            €{totalPrice.toFixed(2)}
+                          </span>
                         </div>
                       </div>
                     )}

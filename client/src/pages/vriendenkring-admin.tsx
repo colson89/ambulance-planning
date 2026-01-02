@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -72,6 +72,13 @@ interface VkPricing {
   pricePerUnit: string;
 }
 
+interface VkActivityPricing {
+  id: number;
+  activityId: number;
+  membershipTypeId: number;
+  price: number;
+}
+
 interface VkRegistration {
   id: number;
   activityId: number;
@@ -115,6 +122,8 @@ export default function VriendenkringAdmin() {
   const [editingSubActivity, setEditingSubActivity] = useState<VkSubActivity | null>(null);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
   const [pricingSubActivityId, setPricingSubActivityId] = useState<number | null>(null);
+  const [activityPricingDialogOpen, setActivityPricingDialogOpen] = useState(false);
+  const [activityPrices, setActivityPrices] = useState<Record<number, string>>({});
   const [registrationFilter, setRegistrationFilter] = useState<string>("all");
   const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
   const [selectedInvitationActivity, setSelectedInvitationActivity] = useState<number | null>(null);
@@ -515,10 +524,49 @@ export default function VriendenkringAdmin() {
     },
   });
 
-  const { data: activityDetails } = useQuery<{ subActivities: VkSubActivity[]; pricing: VkPricing[] }>({
+  const { data: activityDetails } = useQuery<{ subActivities: VkSubActivity[]; pricing: VkPricing[]; activityPricing: VkActivityPricing[] }>({
     queryKey: ["/api/vk/activities", expandedActivityId],
     enabled: !!expandedActivityId,
   });
+
+  const saveActivityPricingMutation = useMutation({
+    mutationFn: async () => {
+      if (!expandedActivityId) return;
+      const prices = Object.entries(activityPrices)
+        .filter(([_, price]) => price !== "" && price !== null && price !== undefined)
+        .map(([membershipTypeId, price]) => ({
+          membershipTypeId: parseInt(membershipTypeId),
+          price: parseFloat(price)
+        }));
+      
+      const res = await fetch(`/api/vk/activities/${expandedActivityId}/pricing`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prices }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Fout bij opslaan prijzen");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/activities", expandedActivityId] });
+      toast({ title: "Prijzen opgeslagen" });
+      setActivityPricingDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout bij opslaan", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const openActivityPricingDialog = () => {
+    const prices: Record<number, string> = {};
+    membershipTypes.forEach(mt => {
+      const existing = activityDetails?.activityPricing?.find(ap => ap.membershipTypeId === mt.id);
+      prices[mt.id] = existing ? (existing.price / 100).toFixed(2) : "";
+    });
+    setActivityPrices(prices);
+    setActivityPricingDialogOpen(true);
+  };
 
   const getMembershipTypeName = (id: number) => {
     return membershipTypes.find((t) => t.id === id)?.name || "Onbekend";
@@ -867,6 +915,31 @@ export default function VriendenkringAdmin() {
                             ) : (
                               <p className="text-sm text-muted-foreground">Geen deelactiviteiten</p>
                             )}
+
+                            {/* Direct Activity Pricing Section */}
+                            <div className="mt-4 pt-4 border-t">
+                              <div className="flex justify-between items-center mb-3">
+                                <h4 className="font-medium">Directe Prijzen (voor activiteiten zonder deelactiviteiten)</h4>
+                                <Button size="sm" variant="outline" onClick={openActivityPricingDialog}>
+                                  <Euro className="h-4 w-4 mr-1" />
+                                  Prijzen instellen
+                                </Button>
+                              </div>
+                              {activityDetails?.activityPricing?.length ? (
+                                <div className="text-sm text-muted-foreground">
+                                  {membershipTypes.map((mt) => {
+                                    const price = activityDetails.activityPricing.find(ap => ap.membershipTypeId === mt.id);
+                                    return price ? (
+                                      <span key={mt.id} className="mr-3">
+                                        {mt.name}: €{(price.price / 100).toFixed(2)}
+                                      </span>
+                                    ) : null;
+                                  })}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">Geen directe prijzen ingesteld</p>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1400,6 +1473,41 @@ export default function VriendenkringAdmin() {
               );
             })}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={activityPricingDialogOpen} onOpenChange={setActivityPricingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Directe Activiteit Prijzen</DialogTitle>
+            <DialogDescription>
+              Stel prijzen in voor activiteiten zonder deelactiviteiten (bv. lidgeld, nieuwjaarsreceptie)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {membershipTypes.map((type) => (
+              <div key={type.id} className="flex items-center gap-4">
+                <Label className="w-32">{type.name}</Label>
+                <div className="flex items-center gap-2 flex-1">
+                  <span>€</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={activityPrices[type.id] || ""}
+                    placeholder="0.00"
+                    onChange={(e) => setActivityPrices(prev => ({ ...prev, [type.id]: e.target.value }))}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setActivityPricingDialogOpen(false)}>Annuleren</Button>
+            <Button onClick={() => saveActivityPricingMutation.mutate()} disabled={saveActivityPricingMutation.isPending}>
+              {saveActivityPricingMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Opslaan
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
