@@ -8,7 +8,8 @@ import {
   vkMembers, 
   vkActivities, 
   vkSubActivities, 
-  vkPricing, 
+  vkPricing,
+  vkActivityPricing,
   vkRegistrations, 
   vkRegistrationItems,
   vkInvitations,
@@ -373,10 +374,17 @@ export function registerVkRoutes(app: Express): void {
         }
       }
 
+      // Get direct activity pricing (for simple activities without sub-activities)
+      const activityPricing = await db
+        .select()
+        .from(vkActivityPricing)
+        .where(eq(vkActivityPricing.activityId, id));
+
       res.json({
         ...activity,
         subActivities,
-        pricing
+        pricing,
+        activityPricing
       });
     } catch (error) {
       console.error("VK activities/:id GET error:", error);
@@ -452,6 +460,73 @@ export function registerVkRoutes(app: Express): void {
     } catch (error) {
       console.error("VK activities DELETE error:", error);
       res.status(500).json({ message: "Fout bij verwijderen activiteit" });
+    }
+  });
+
+  // ========================================
+  // VK ACTIVITEIT PRIJZEN (directe prijzen op hoofdactiviteit)
+  // ========================================
+
+  // Get activity pricing for an activity
+  app.get("/api/vk/activities/:activityId/pricing", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const activityId = parseInt(req.params.activityId);
+      if (isNaN(activityId)) {
+        return res.status(400).json({ message: "Ongeldige activiteit ID" });
+      }
+
+      const pricing = await db
+        .select()
+        .from(vkActivityPricing)
+        .where(eq(vkActivityPricing.activityId, activityId));
+
+      res.json(pricing);
+    } catch (error) {
+      console.error("VK activity pricing GET error:", error);
+      res.status(500).json({ message: "Fout bij ophalen prijzen" });
+    }
+  });
+
+  // Save/update activity pricing (upsert all prices for an activity)
+  app.put("/api/vk/activities/:activityId/pricing", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const activityId = parseInt(req.params.activityId);
+      if (isNaN(activityId)) {
+        return res.status(400).json({ message: "Ongeldige activiteit ID" });
+      }
+
+      const { prices } = req.body; // Array of { membershipTypeId, price }
+      if (!Array.isArray(prices)) {
+        return res.status(400).json({ message: "Prijzen moeten als array worden meegegeven" });
+      }
+
+      // Delete existing pricing for this activity
+      await db.delete(vkActivityPricing).where(eq(vkActivityPricing.activityId, activityId));
+
+      // Insert new pricing
+      if (prices.length > 0) {
+        const validPrices = prices.filter(p => p.membershipTypeId && (p.price !== null && p.price !== undefined && p.price !== ""));
+        if (validPrices.length > 0) {
+          await db.insert(vkActivityPricing).values(
+            validPrices.map(p => ({
+              activityId,
+              membershipTypeId: parseInt(p.membershipTypeId),
+              price: Math.round(parseFloat(p.price) * 100) // Convert euros to cents
+            }))
+          );
+        }
+      }
+
+      // Return updated pricing
+      const updatedPricing = await db
+        .select()
+        .from(vkActivityPricing)
+        .where(eq(vkActivityPricing.activityId, activityId));
+
+      res.json(updatedPricing);
+    } catch (error) {
+      console.error("VK activity pricing PUT error:", error);
+      res.status(500).json({ message: "Fout bij opslaan prijzen" });
     }
   });
 

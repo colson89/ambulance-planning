@@ -959,6 +959,21 @@ export const insertVkPricingSchema = createInsertSchema(vkPricing).omit({ id: tr
 export type VkPricing = typeof vkPricing.$inferSelect;
 export type InsertVkPricing = z.infer<typeof insertVkPricingSchema>;
 
+// VK Activiteit Prijzen - Directe prijzen per hoofdactiviteit per lidmaatschapstype (voor eenvoudige activiteiten)
+export const vkActivityPricing = pgTable("vk_activity_pricing", {
+  id: serial("id").primaryKey(),
+  activityId: integer("activity_id").notNull().references(() => vkActivities.id, { onDelete: 'cascade' }),
+  membershipTypeId: integer("membership_type_id").notNull().references(() => vkMembershipTypes.id),
+  price: integer("price").notNull(), // Prijs in eurocent
+  createdAt: timestamp("created_at").defaultNow()
+}, (table) => ({
+  uniqueActivityMembershipType: unique().on(table.activityId, table.membershipTypeId)
+}));
+
+export const insertVkActivityPricingSchema = createInsertSchema(vkActivityPricing).omit({ id: true, createdAt: true });
+export type VkActivityPricing = typeof vkActivityPricing.$inferSelect;
+export type InsertVkActivityPricing = z.infer<typeof insertVkActivityPricingSchema>;
+
 // VK Inschrijvingen - Registraties voor activiteiten
 export const vkRegistrations = pgTable("vk_registrations", {
   id: serial("id").primaryKey(),
