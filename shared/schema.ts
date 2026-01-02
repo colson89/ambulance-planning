@@ -263,7 +263,7 @@ export const verdiPositionMappings = pgTable("verdi_position_mappings", {
 
 export const verdiSyncLog = pgTable("verdi_sync_log", {
   id: serial("id").primaryKey(),
-  shiftId: integer("shift_id").notNull().references(() => shifts.id),
+  shiftId: integer("shift_id").references(() => shifts.id), // Nullable om planning regeneratie toe te staan
   stationId: integer("station_id").notNull().references(() => stations.id),
   syncStatus: text("sync_status", { enum: ["pending", "success", "error"] }).notNull().default("pending"),
   verdiShiftGuid: text("verdi_shift_guid"), // GUID van de shift in Verdi (uit response)

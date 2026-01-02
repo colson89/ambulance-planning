@@ -1848,7 +1848,13 @@ export class DatabaseStorage implements IStorage {
         inArray(shiftBids.shiftId, shiftIdsToDelete)
       );
       
-      console.log(`Deleted swap requests and bids for ${shiftIdsToDelete.length} shifts before regenerating schedule`);
+      // VERDI FIX: Ontkoppel sync logs van de te verwijderen shifts (zet shiftId naar NULL)
+      // Dit voorkomt foreign key constraint errors en behoudt de sync logs voor hercoppeling
+      await db.update(verdiSyncLog)
+        .set({ shiftId: null })
+        .where(inArray(verdiSyncLog.shiftId, shiftIdsToDelete));
+      
+      console.log(`Deleted swap requests and bids for ${shiftIdsToDelete.length} shifts, uncoupled Verdi sync logs before regenerating schedule`);
     }
     
     await db.delete(shifts).where(and(...deleteConditions));
@@ -4002,6 +4008,62 @@ export class DatabaseStorage implements IStorage {
       }
       
       console.log(`========================================\n`);
+    }
+    
+    // VERDI FIX: Hercoppel ontkoppelde sync logs aan de nieuwe shifts
+    // Match op basis van station, startTime, endTime, type en splitGroup
+    const uncoupledSyncLogs = await db.select()
+      .from(verdiSyncLog)
+      .where(and(
+        isNull(verdiSyncLog.shiftId),
+        eq(verdiSyncLog.stationId, stationId)
+      ));
+    
+    if (uncoupledSyncLogs.length > 0) {
+      console.log(`🔗 VERDI RECOUPLE: Found ${uncoupledSyncLogs.length} uncoupled sync logs for station ${stationId}`);
+      
+      let recoupledCount = 0;
+      for (const syncLog of uncoupledSyncLogs) {
+        // Vind een matching nieuwe shift
+        const matchingShift = generatedShifts.find(shift => {
+          // Match op station
+          if (shift.stationId !== syncLog.stationId) return false;
+          
+          // Match op shift type
+          if (shift.type !== syncLog.shiftType) return false;
+          
+          // Match op start/end time
+          const shiftStart = shift.startTime instanceof Date ? shift.startTime : new Date(shift.startTime);
+          const shiftEnd = shift.endTime instanceof Date ? shift.endTime : new Date(shift.endTime);
+          const syncStart = syncLog.shiftStartTime instanceof Date ? syncLog.shiftStartTime : new Date(syncLog.shiftStartTime!);
+          const syncEnd = syncLog.shiftEndTime instanceof Date ? syncLog.shiftEndTime : new Date(syncLog.shiftEndTime!);
+          
+          if (shiftStart.getTime() !== syncStart.getTime()) return false;
+          if (shiftEnd.getTime() !== syncEnd.getTime()) return false;
+          
+          // Match op split status
+          if (shift.isSplitShift !== syncLog.isSplitShift) return false;
+          if (shift.isSplitShift && shift.splitGroup !== syncLog.splitGroup) return false;
+          
+          return true;
+        });
+        
+        if (matchingShift) {
+          // Update sync log met nieuwe shift ID
+          await db.update(verdiSyncLog)
+            .set({ shiftId: matchingShift.id })
+            .where(eq(verdiSyncLog.id, syncLog.id));
+          recoupledCount++;
+        }
+      }
+      
+      console.log(`🔗 VERDI RECOUPLE: Successfully recoupled ${recoupledCount}/${uncoupledSyncLogs.length} sync logs`);
+      
+      // Verwijder sync logs die niet konden worden gekoppeld (bijv. verwijderde shifts)
+      const remainingUncoupled = uncoupledSyncLogs.length - recoupledCount;
+      if (remainingUncoupled > 0) {
+        console.log(`🔗 VERDI RECOUPLE: ${remainingUncoupled} sync logs could not be matched (shift configuration changed)`);
+      }
     }
     
     return generatedShifts;
