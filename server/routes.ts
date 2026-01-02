@@ -4375,6 +4375,174 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to get shift" });
     }
   });
+
+  // Get assignment explanation for a shift (why was this person assigned or why is it open?)
+  app.get("/api/shifts/:id/assignment-reason", requireAdmin, async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
+    try {
+      const shiftId = parseInt(req.params.id);
+      const shift = await storage.getShift(shiftId);
+      
+      if (!shift) {
+        return res.status(404).json({ message: "Shift niet gevonden" });
+      }
+      
+      // Check if we have a stored explanation
+      const storedExplanation = await storage.getShiftAssignmentExplanation(shiftId);
+      if (storedExplanation) {
+        // Parse JSON fields and return
+        return res.json({
+          shiftId,
+          explanationType: storedExplanation.explanationType,
+          primaryReason: storedExplanation.primaryReason,
+          assignedUserId: storedExplanation.assignedUserId,
+          assignedUserPreference: storedExplanation.assignedUserPreference,
+          assignedUserHoursAtAssignment: storedExplanation.assignedUserHoursAtAssignment,
+          assignedUserTargetHours: storedExplanation.assignedUserTargetHours,
+          assignedUserCandidateDays: storedExplanation.assignedUserCandidateDays,
+          candidatesConsidered: storedExplanation.candidatesConsidered ? JSON.parse(storedExplanation.candidatesConsidered) : [],
+          rejectedCandidates: storedExplanation.rejectedCandidates ? JSON.parse(storedExplanation.rejectedCandidates) : [],
+          constraintsApplied: storedExplanation.constraintsApplied ? JSON.parse(storedExplanation.constraintsApplied) : [],
+          fairnessMetrics: storedExplanation.fairnessMetrics ? JSON.parse(storedExplanation.fairnessMetrics) : null
+        });
+      }
+      
+      // No stored explanation - generate on-demand analysis
+      const explanation = await generateOnDemandExplanation(shift);
+      res.json(explanation);
+      
+    } catch (error) {
+      console.error("Error getting shift assignment reason:", error);
+      res.status(500).json({ message: "Kon inplanningsreden niet ophalen" });
+    }
+  });
+  
+  // Helper function to generate on-demand explanation when no stored explanation exists
+  async function generateOnDemandExplanation(shift: any) {
+    const stationId = shift.stationId;
+    const month = shift.month;
+    const year = shift.year;
+    
+    // Get the assigned user's info if assigned
+    let assignedUserInfo = null;
+    if (shift.userId && shift.userId > 0) {
+      const user = await storage.getUser(shift.userId);
+      if (user) {
+        // Get user's preference for this shift date
+        const preferences = await storage.getShiftPreferencesByUser(user.id, month, year);
+        const shiftDate = shift.date instanceof Date ? shift.date : new Date(shift.date);
+        const shiftDateStr = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
+        
+        const matchingPrefs = preferences.filter(p => {
+          const prefDate = p.date instanceof Date ? p.date : new Date(p.date);
+          const prefDateStr = `${prefDate.getFullYear()}-${String(prefDate.getMonth() + 1).padStart(2, '0')}-${String(prefDate.getDate()).padStart(2, '0')}`;
+          return prefDateStr === shiftDateStr && p.type === shift.type;
+        });
+        
+        const hasPreference = matchingPrefs.length > 0;
+        const preferenceStatus = hasPreference ? 'volunteered' : 'auto-assigned';
+        
+        // Calculate current hours for this user in this month
+        const userShifts = await storage.getShiftsByMonth(month, year, stationId);
+        const userMonthShifts = userShifts.filter(s => s.userId === user.id && s.status === 'planned');
+        let totalHours = 0;
+        for (const s of userMonthShifts) {
+          const start = s.startTime instanceof Date ? s.startTime : new Date(s.startTime);
+          const end = s.endTime instanceof Date ? s.endTime : new Date(s.endTime);
+          totalHours += (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        }
+        
+        // Get cross-team info for effective hours
+        const crossTeamStations = await storage.getUserCrossTeamStations(user.id);
+        const crossTeamEntry = crossTeamStations.find(ct => ct.stationId === stationId);
+        const effectiveHours = crossTeamEntry?.hours ?? user.hours;
+        
+        assignedUserInfo = {
+          userId: user.id,
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          preferenceStatus,
+          hoursWorkedThisMonth: Math.round(totalHours),
+          targetHours: effectiveHours,
+          hasDrivingLicenseC: user.hasDrivingLicenseC,
+          isProfessional: user.isProfessional
+        };
+      }
+    }
+    
+    // Determine primary reason based on shift state
+    let primaryReason = '';
+    let explanationType: 'assigned' | 'open' = shift.status === 'open' || !shift.userId || shift.userId === 0 ? 'open' : 'assigned';
+    
+    if (explanationType === 'assigned' && assignedUserInfo) {
+      if (shift.isEmergencyScheduling) {
+        primaryReason = `Noodinplanning: ${shift.emergencyReason || 'Geen reden opgegeven'}`;
+      } else if (assignedUserInfo.preferenceStatus === 'volunteered') {
+        primaryReason = `${assignedUserInfo.firstName} ${assignedUserInfo.lastName} heeft voorkeur opgegeven voor deze ${shift.type === 'day' ? 'dag' : 'nacht'}dienst`;
+      } else {
+        primaryReason = `${assignedUserInfo.firstName} ${assignedUserInfo.lastName} is automatisch toegewezen op basis van beschikbaarheid en eerlijkheidsverdeling`;
+      }
+    } else {
+      primaryReason = 'Geen geschikte kandidaat gevonden of manueel als open gemarkeerd';
+    }
+    
+    // Get other potential candidates for context
+    const allUsers = await storage.getUsersByStation(stationId);
+    const candidatesInfo: any[] = [];
+    
+    for (const user of allUsers.slice(0, 10)) { // Limit to first 10 for performance
+      if (user.id === shift.userId) continue; // Skip assigned user
+      if (user.hours === 0) continue; // Skip inactive users
+      
+      // Check if this user had preference for this shift
+      const preferences = await storage.getShiftPreferencesByUser(user.id, month, year);
+      const shiftDate = shift.date instanceof Date ? shift.date : new Date(shift.date);
+      const shiftDateStr = `${shiftDate.getFullYear()}-${String(shiftDate.getMonth() + 1).padStart(2, '0')}-${String(shiftDate.getDate()).padStart(2, '0')}`;
+      
+      const matchingPrefs = preferences.filter(p => {
+        const prefDate = p.date instanceof Date ? p.date : new Date(p.date);
+        const prefDateStr = `${prefDate.getFullYear()}-${String(prefDate.getMonth() + 1).padStart(2, '0')}-${String(prefDate.getDate()).padStart(2, '0')}`;
+        return prefDateStr === shiftDateStr && p.type === shift.type;
+      });
+      
+      const unavailablePrefs = preferences.filter(p => {
+        const prefDate = p.date instanceof Date ? p.date : new Date(p.date);
+        const prefDateStr = `${prefDate.getFullYear()}-${String(prefDate.getMonth() + 1).padStart(2, '0')}-${String(prefDate.getDate()).padStart(2, '0')}`;
+        return prefDateStr === shiftDateStr && p.type === 'unavailable';
+      });
+      
+      if (matchingPrefs.length > 0) {
+        candidatesInfo.push({
+          userId: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          hadPreference: true,
+          wasUnavailable: false
+        });
+      } else if (unavailablePrefs.length > 0) {
+        candidatesInfo.push({
+          userId: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          hadPreference: false,
+          wasUnavailable: true,
+          reason: 'Niet beschikbaar opgegeven'
+        });
+      }
+    }
+    
+    return {
+      shiftId: shift.id,
+      explanationType,
+      primaryReason,
+      assignedUser: assignedUserInfo,
+      candidatesConsidered: candidatesInfo,
+      isOnDemandAnalysis: true,
+      note: 'Deze analyse is gegenereerd op basis van huidige data. Voor gedetailleerde algoritme-beslissingen is een nieuwe planning generatie nodig.'
+    };
+  }
   
   // Update a shift (for manual planning adjustments)
   app.patch("/api/shifts/:id", requireAdmin, async (req, res) => {

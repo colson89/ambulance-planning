@@ -295,6 +295,13 @@ export interface IStorage {
   setUserStationNotificationPreference(userId: number, stationId: number, prefs: Partial<InsertUserStationNotificationPreference>): Promise<UserStationNotificationPreference>;
   deleteUserStationNotificationPreference(userId: number, stationId: number): Promise<void>;
   getUsersWithNotificationPreferenceForStation(stationId: number, notificationType: 'notifyNewPlanningPublished' | 'notifyShiftSwapUpdates' | 'notifyBidUpdates' | 'notifyOpenSwapRequests'): Promise<number[]>;
+  
+  // Shift Assignment Explanations - Legt uit waarom shifts worden toegewezen of open zijn
+  createShiftAssignmentExplanation(data: InsertShiftAssignmentExplanation): Promise<ShiftAssignmentExplanation>;
+  getShiftAssignmentExplanation(shiftId: number): Promise<ShiftAssignmentExplanation | undefined>;
+  getShiftAssignmentExplanationsByMonth(month: number, year: number, stationId: number): Promise<ShiftAssignmentExplanation[]>;
+  deleteShiftAssignmentExplanationsByMonth(month: number, year: number, stationId: number): Promise<void>;
+  deleteShiftAssignmentExplanation(shiftId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
