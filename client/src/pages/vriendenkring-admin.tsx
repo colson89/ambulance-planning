@@ -1550,6 +1550,9 @@ Vriendenkring VZW Brandweer Mol`);
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Prijzen instellen</DialogTitle>
+            <DialogDescription>
+              Prijzen worden automatisch opgeslagen bij elke wijziging
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {membershipTypes.map((type) => {
@@ -1580,6 +1583,9 @@ Vriendenkring VZW Brandweer Mol`);
               );
             })}
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPricingDialogOpen(false)}>Sluiten</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
