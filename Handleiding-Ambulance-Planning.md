@@ -1308,6 +1308,42 @@ Als admin ziet u extra knoppen:
 - **Planning**: Automatische planningen genereren
 - **Weekdag Instellingen**: Configureer shift tijden en regels
 
+### 📊 Inplanningsreden Bekijken
+
+Als admin of supervisor kunt u voor elke shift zien **waarom** deze persoon is ingepland of waarom de shift open is gebleven.
+
+#### Hoe te Gebruiken
+
+1. Open het **Dashboard** en bekijk de shiftlijst
+2. Naast elke shiftstatus (Gepland/Open) ziet u een **ℹ️ info icoon**
+3. **Klik op het icoon** om de inplanningsreden te bekijken
+4. Een zijpaneel opent met gedetailleerde informatie
+
+#### Informatie in het Zijpaneel
+
+| Veld | Beschrijving |
+|------|-------------|
+| **Hoofdreden** | Korte samenvatting waarom deze toewijzing is gemaakt |
+| **Status** | "Toegewezen" of "Open" |
+| **Toegewezen persoon** | Details over de ingeplande medewerker (indien van toepassing) |
+| **Toewijzing type** | "Voorkeur opgegeven" (vrijwillig) of "Automatisch toegewezen" |
+| **Gewerkte uren** | Hoeveel uren de persoon deze maand al heeft gewerkt vs. doeluren |
+| **Rijbewijs C** | Of de persoon rijbewijs C heeft |
+| **Andere kandidaten** | Lijst van andere medewerkers die ook beschikbaar waren of voorkeur hadden |
+
+#### Voorbeelden van Redenen
+
+- **"Jan Jansen heeft voorkeur opgegeven voor deze dagdienst"** - De medewerker had zelf aangegeven beschikbaar te zijn
+- **"Pieter Pietersen is automatisch toegewezen op basis van beschikbaarheid en eerlijkheidsverdeling"** - Het systeem heeft deze persoon gekozen
+- **"Noodinplanning: Ziek gemeld"** - Een noodinplanning is gebruikt
+- **"Geen geschikte kandidaat gevonden"** - Niemand was beschikbaar voor deze shift
+
+#### Let Op
+
+- Deze functie toont een **on-demand analyse** op basis van de huidige gegevens
+- Voor de meest nauwkeurige informatie is het aanbevolen om de redenen direct na het genereren van de planning te bekijken
+- Het systeem analyseert automatisch voorkeuren, gewerkte uren, en beschikbaarheid
+
 ### 👥 Gebruikersbeheer
 
 #### Nieuwe Gebruiker Aanmaken
