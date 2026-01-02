@@ -545,6 +545,11 @@ export default function VriendenkringAdmin() {
 
   const { data: activityDetails } = useQuery<{ subActivities: VkSubActivity[]; pricing: VkPricing[]; activityPricing: VkActivityPricing[] }>({
     queryKey: ["/api/vk/activities", expandedActivityId],
+    queryFn: async () => {
+      const res = await fetch(`/api/vk/activities/${expandedActivityId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Fout bij ophalen activiteit details");
+      return res.json();
+    },
     enabled: !!expandedActivityId,
   });
 
