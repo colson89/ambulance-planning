@@ -130,6 +130,8 @@ export default function VriendenkringAdmin() {
   const [selectedMembershipTypes, setSelectedMembershipTypes] = useState<number[]>([]);
   const [invitationSubject, setInvitationSubject] = useState("");
   const [invitationMessage, setInvitationMessage] = useState("");
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [selectedInvitationsActivity, setSelectedInvitationsActivity] = useState<number | null>(null);
 
   const { data: admin, isLoading: adminLoading, error: adminError } = useQuery<VkAdmin>({
     queryKey: ["/api/vk/me"],
@@ -1136,29 +1138,44 @@ export default function VriendenkringAdmin() {
                         </p>
                       </div>
 
-                      <Button
-                        onClick={() => sendInvitationsMutation.mutate()}
-                        disabled={
-                          !selectedInvitationActivity ||
-                          selectedMembershipTypes.length === 0 ||
-                          !invitationSubject ||
-                          !invitationMessage ||
-                          sendInvitationsMutation.isPending
-                        }
-                        className="w-full"
-                      >
-                        {sendInvitationsMutation.isPending ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Verzenden...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="h-4 w-4 mr-2" />
-                            Uitnodigingen verzenden
-                          </>
-                        )}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setPreviewDialogOpen(true)}
+                          disabled={
+                            !selectedInvitationActivity ||
+                            !invitationSubject ||
+                            !invitationMessage
+                          }
+                          className="flex-1"
+                        >
+                          <Mail className="h-4 w-4 mr-2" />
+                          Preview
+                        </Button>
+                        <Button
+                          onClick={() => sendInvitationsMutation.mutate()}
+                          disabled={
+                            !selectedInvitationActivity ||
+                            selectedMembershipTypes.length === 0 ||
+                            !invitationSubject ||
+                            !invitationMessage ||
+                            sendInvitationsMutation.isPending
+                          }
+                          className="flex-1"
+                        >
+                          {sendInvitationsMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Verzenden...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4 mr-2" />
+                              Verzenden
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
@@ -1167,6 +1184,29 @@ export default function VriendenkringAdmin() {
                       <Mail className="h-5 w-5" />
                       Verzonden uitnodigingen
                     </h3>
+                    
+                    <div className="mb-4">
+                      <Select 
+                        value={selectedInvitationsActivity?.toString() || "all"} 
+                        onValueChange={(val) => setSelectedInvitationsActivity(val === "all" ? null : parseInt(val))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filter op activiteit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Alle activiteiten</SelectItem>
+                          {activities.map((act) => {
+                            const count = invitations.filter(i => i.activityId === act.id).length;
+                            return (
+                              <SelectItem key={act.id} value={act.id.toString()}>
+                                {act.name} ({count} uitnodigingen)
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     {invitationsLoading ? (
                       <div className="flex justify-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin" />
@@ -1175,52 +1215,68 @@ export default function VriendenkringAdmin() {
                       <p className="text-muted-foreground text-center py-8">
                         Nog geen uitnodigingen verzonden
                       </p>
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Activiteit</TableHead>
-                            <TableHead>Lid</TableHead>
-                            <TableHead>E-mail</TableHead>
-                            <TableHead>Verzonden</TableHead>
-                            <TableHead>Geopend</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {invitations.map((inv) => (
-                            <TableRow key={inv.id}>
-                              <TableCell className="font-medium">
-                                {inv.activityName || "Onbekend"}
-                              </TableCell>
-                              <TableCell>
-                                {inv.memberFirstName} {inv.memberLastName}
-                              </TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {inv.email}
-                              </TableCell>
-                              <TableCell>
-                                {format(new Date(inv.sentAt), "d MMM yyyy HH:mm", { locale: nl })}
-                              </TableCell>
-                              <TableCell>
-                                {inv.openedAt ? (
-                                  <span className="text-green-600 flex items-center gap-1">
-                                    <Check className="h-4 w-4" />
-                                    {format(new Date(inv.openedAt), "d MMM HH:mm", { locale: nl })}
-                                    {inv.openCount > 1 && (
-                                      <span className="text-xs text-muted-foreground">
-                                        ({inv.openCount}x)
-                                      </span>
-                                    )}
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground">-</span>
-                                )}
-                              </TableCell>
+                    ) : (() => {
+                      const filteredInvitations = selectedInvitationsActivity 
+                        ? invitations.filter(i => i.activityId === selectedInvitationsActivity)
+                        : invitations;
+                      
+                      if (filteredInvitations.length === 0) {
+                        return (
+                          <p className="text-muted-foreground text-center py-8">
+                            Geen uitnodigingen voor deze activiteit
+                          </p>
+                        );
+                      }
+                      
+                      return (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              {!selectedInvitationsActivity && <TableHead>Activiteit</TableHead>}
+                              <TableHead>Lid</TableHead>
+                              <TableHead>E-mail</TableHead>
+                              <TableHead>Verzonden</TableHead>
+                              <TableHead>Geopend</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
+                          </TableHeader>
+                          <TableBody>
+                            {filteredInvitations.map((inv) => (
+                              <TableRow key={inv.id}>
+                                {!selectedInvitationsActivity && (
+                                  <TableCell className="font-medium">
+                                    {inv.activityName || "Onbekend"}
+                                  </TableCell>
+                                )}
+                                <TableCell>
+                                  {inv.memberFirstName} {inv.memberLastName}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                  {inv.email}
+                                </TableCell>
+                                <TableCell>
+                                  {format(new Date(inv.sentAt), "d MMM yyyy HH:mm", { locale: nl })}
+                                </TableCell>
+                                <TableCell>
+                                  {inv.openedAt ? (
+                                    <span className="text-green-600 flex items-center gap-1">
+                                      <Check className="h-4 w-4" />
+                                      {format(new Date(inv.openedAt), "d MMM HH:mm", { locale: nl })}
+                                      {inv.openCount > 1 && (
+                                        <span className="text-xs text-muted-foreground">
+                                          ({inv.openCount}x)
+                                        </span>
+                                      )}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      );
+                    })()}
                     <p className="text-xs text-muted-foreground mt-4">
                       Let op: sommige e-mailprogramma's blokkeren afbeeldingen, waardoor de open-status niet altijd kan worden geregistreerd.
                     </p>
@@ -1506,6 +1562,49 @@ export default function VriendenkringAdmin() {
             <Button onClick={() => saveActivityPricingMutation.mutate()} disabled={saveActivityPricingMutation.isPending}>
               {saveActivityPricingMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Opslaan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>E-mail Preview</DialogTitle>
+            <DialogDescription>
+              Dit is een voorbeeld van hoe de uitnodiging eruit ziet
+            </DialogDescription>
+          </DialogHeader>
+          <div className="border rounded-lg p-4 bg-white">
+            <div className="border-b pb-2 mb-4">
+              <div className="flex gap-2">
+                <span className="font-semibold text-sm text-muted-foreground w-16">Aan:</span>
+                <span className="text-sm">[ontvangers e-mail]</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold text-sm text-muted-foreground w-16">Onderwerp:</span>
+                <span className="text-sm font-medium">{invitationSubject}</span>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="whitespace-pre-wrap text-sm">{invitationMessage}</div>
+              <div className="border-t pt-4 mt-4">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Automatisch toegevoegde inschrijflink:
+                </p>
+                <a 
+                  href="#" 
+                  className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded text-sm hover:bg-primary/90"
+                  onClick={(e) => e.preventDefault()}
+                >
+                  Inschrijven voor {activities.find(a => a.id === selectedInvitationActivity)?.name || "activiteit"}
+                </a>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewDialogOpen(false)}>
+              Sluiten
             </Button>
           </DialogFooter>
         </DialogContent>
