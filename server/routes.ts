@@ -2703,13 +2703,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else if (req.body.startTime) {
         // Legacy format: full Date objects - parse with timezone awareness
         // Frontend may send times with Z suffix (incorrect) - interpret as Brussels local time
-        const parsePreferenceTime = (timeStr: string): Date => {
-          const cleanTimeStr = timeStr.replace(/Z$/, '').replace(/\.\d{3}$/, '');
-          const match = cleanTimeStr.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
-          if (match) {
-            return fromZonedTime(`${match[1]}T${match[2]}:00`, STATION_TIMEZONE);
+        const parsePreferenceTime = (timeStr: string): Date | null => {
+          if (!timeStr) return null;
+          
+          // Extract date/time components, ignoring any timezone suffix
+          const match = timeStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+          if (!match) {
+            console.warn(`parsePreferenceTime: unexpected format "${timeStr}", using direct parse`);
+            return new Date(timeStr);
           }
-          return new Date(timeStr);
+          
+          const [, year, month, day, hour, minute] = match;
+          const brusselsTimeStr = `${year}-${month}-${day}T${hour}:${minute}:00`;
+          return fromZonedTime(brusselsTimeStr, STATION_TIMEZONE);
         };
         startTime = parsePreferenceTime(req.body.startTime);
         endTime = req.body.endTime ? parsePreferenceTime(req.body.endTime) : null;
@@ -3882,19 +3888,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Creating shift with data:', req.body);
       
       // Parse start/end times with Brussels timezone awareness
-      // Frontend may send times with Z suffix (incorrect) or ISO format
-      // We need to interpret these as Brussels local time, not UTC
-      const parseShiftTime = (timeStr: string): Date => {
-        // Remove Z suffix if present - the time is meant to be Brussels local time
-        const cleanTimeStr = timeStr.replace(/Z$/, '').replace(/\.\d{3}$/, '');
-        // Extract just the date and time parts (YYYY-MM-DDTHH:mm:ss or YYYY-MM-DDTHH:mm)
-        const match = cleanTimeStr.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
-        if (match) {
-          // Use fromZonedTime to interpret as Brussels timezone
-          return fromZonedTime(`${match[1]}T${match[2]}:00`, STATION_TIMEZONE);
+      // The frontend sends times like "2026-01-02T19:00:00.000Z" where 19:00 is meant
+      // to be Brussels local time, NOT UTC. We need to interpret the hour/minute as
+      // Brussels time and convert to the correct UTC instant.
+      const parseShiftTime = (timeStr: string | null | undefined): Date => {
+        if (!timeStr) {
+          throw new Error('Shift time is required');
         }
-        // Fallback: use direct Date parsing
-        return new Date(timeStr);
+        
+        // Extract the date and time components from the ISO string
+        // We ignore any timezone suffix because the frontend always sends
+        // Brussels local times with incorrect Z suffix
+        const match = timeStr.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+        if (!match) {
+          // Fallback for unexpected formats
+          console.warn(`parseShiftTime: unexpected format "${timeStr}", using direct parse`);
+          return new Date(timeStr);
+        }
+        
+        const [, year, month, day, hour, minute] = match;
+        // Construct the datetime string without timezone and interpret as Brussels time
+        const brusselsTimeStr = `${year}-${month}-${day}T${hour}:${minute}:00`;
+        return fromZonedTime(brusselsTimeStr, STATION_TIMEZONE);
       };
       
       const shiftData = {
