@@ -850,6 +850,7 @@ export const vkAdmins = pgTable("vk_admins", {
   lastName: text("last_name").notNull(),
   email: text("email"),
   isActive: boolean("is_active").notNull().default(true),
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow()
 });
@@ -860,7 +861,7 @@ export const insertVkAdminSchema = createInsertSchema(vkAdmins, {
   firstName: z.string().min(1, "Voornaam is verplicht"),
   lastName: z.string().min(1, "Achternaam is verplicht"),
   email: z.string().email("Ongeldig email adres").optional()
-}).omit({ id: true, createdAt: true, updatedAt: true });
+}).omit({ id: true, createdAt: true, updatedAt: true, mustChangePassword: true });
 export type VkAdmin = typeof vkAdmins.$inferSelect;
 export type InsertVkAdmin = z.infer<typeof insertVkAdminSchema>;
 
