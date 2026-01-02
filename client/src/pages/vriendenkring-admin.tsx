@@ -51,6 +51,8 @@ interface VkActivity {
   description: string | null;
   startDate: string;
   endDate: string | null;
+  startTime: string | null;
+  endTime: string | null;
   isActive: boolean;
 }
 
@@ -199,6 +201,8 @@ export default function VriendenkringAdmin() {
       description: "",
       startDate: "",
       endDate: "",
+      startTime: "",
+      endTime: "",
       isActive: true,
     },
   });
@@ -257,6 +261,8 @@ export default function VriendenkringAdmin() {
         description: editingActivity.description || "",
         startDate: editingActivity.startDate ? format(new Date(editingActivity.startDate), "yyyy-MM-dd") : "",
         endDate: editingActivity.endDate ? format(new Date(editingActivity.endDate), "yyyy-MM-dd") : "",
+        startTime: editingActivity.startTime || "",
+        endTime: editingActivity.endTime || "",
         isActive: editingActivity.isActive,
       });
     } else {
@@ -265,6 +271,8 @@ export default function VriendenkringAdmin() {
         description: "",
         startDate: "",
         endDate: "",
+        startTime: "",
+        endTime: "",
         isActive: true,
       });
     }
@@ -366,9 +374,14 @@ export default function VriendenkringAdmin() {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...data,
+          name: data.name,
+          description: data.description || null,
           startDate: data.startDate ? new Date(data.startDate).toISOString() : null,
           endDate: data.endDate ? new Date(data.endDate).toISOString() : null,
+          startTime: data.startTime || null,
+          endTime: data.endTime || null,
+          registrationDeadline: data.registrationDeadline ? new Date(data.registrationDeadline).toISOString() : null,
+          isActive: data.isActive,
         }),
         credentials: "include",
       });
@@ -754,6 +767,8 @@ export default function VriendenkringAdmin() {
                               <div className="font-medium">{activity.name}</div>
                               <div className="text-sm text-muted-foreground">
                                 {activity.startDate && format(new Date(activity.startDate), "d MMMM yyyy", { locale: nl })}
+                                {activity.startTime && ` om ${activity.startTime}`}
+                                {activity.endTime && ` - ${activity.endTime}`}
                               </div>
                             </div>
                           </div>
@@ -1294,6 +1309,16 @@ export default function VriendenkringAdmin() {
               <div className="space-y-2">
                 <Label>Einddatum (optioneel)</Label>
                 <Input type="date" {...activityForm.register("endDate")} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Startuur (optioneel)</Label>
+                <Input type="time" {...activityForm.register("startTime")} />
+              </div>
+              <div className="space-y-2">
+                <Label>Einduur (optioneel)</Label>
+                <Input type="time" {...activityForm.register("endTime")} />
               </div>
             </div>
             <div className="flex items-center gap-2">

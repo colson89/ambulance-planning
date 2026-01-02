@@ -910,6 +910,8 @@ export const vkActivities = pgTable("vk_activities", {
   description: text("description"),
   startDate: date("start_date").notNull(),
   endDate: date("end_date"),
+  startTime: text("start_time"), // HH:mm format
+  endTime: text("end_time"), // HH:mm format
   registrationDeadline: date("registration_deadline"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),

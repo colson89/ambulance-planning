@@ -386,7 +386,7 @@ export function registerVkRoutes(app: Express): void {
 
   app.post("/api/vk/activities", requireVkAdmin, async (req: Request, res: Response) => {
     try {
-      const { name, description, startDate, endDate, registrationDeadline, isActive } = req.body;
+      const { name, description, startDate, endDate, startTime, endTime, registrationDeadline, isActive } = req.body;
       
       if (!name || !startDate) {
         return res.status(400).json({ message: "Naam en startdatum zijn verplicht" });
@@ -397,6 +397,8 @@ export function registerVkRoutes(app: Express): void {
         description: description || null,
         startDate: typeof startDate === 'string' ? startDate : new Date(startDate).toISOString().split('T')[0],
         endDate: endDate ? (typeof endDate === 'string' ? endDate : new Date(endDate).toISOString().split('T')[0]) : null,
+        startTime: startTime || null,
+        endTime: endTime || null,
         registrationDeadline: registrationDeadline ? (typeof registrationDeadline === 'string' ? registrationDeadline : new Date(registrationDeadline).toISOString().split('T')[0]) : null,
         isActive: isActive ?? true
       }).returning();
