@@ -905,7 +905,7 @@ export default function VriendenkringAdmin() {
                                           );
                                           return price ? (
                                             <span key={mt.id} className="mr-2">
-                                              {mt.name}: €{parseFloat(price.pricePerUnit).toFixed(2)}
+                                              {mt.name}: €{(Number(price.pricePerUnit) / 100).toFixed(2)}
                                             </span>
                                           ) : null;
                                         })}
