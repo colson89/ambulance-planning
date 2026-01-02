@@ -6,6 +6,7 @@ if (!process.env.NODE_ENV) {
 import express, { type Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import { registerRoutes } from "./routes";
+import { registerVkRoutes } from "./vk-routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { checkAndNotifyDeadlines, checkAndSendShiftReminders } from "./push-notifications";
 
@@ -72,6 +73,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  registerVkRoutes(app);
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

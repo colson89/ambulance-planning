@@ -836,3 +836,162 @@ export const insertShiftAssignmentExplanationSchema = createInsertSchema(shiftAs
 });
 export type ShiftAssignmentExplanation = typeof shiftAssignmentExplanations.$inferSelect;
 export type InsertShiftAssignmentExplanation = z.infer<typeof insertShiftAssignmentExplanationSchema>;
+
+// ============================================
+// VRIENDENKRING MOL MODULE - Aparte ledenbeheer en activiteitensysteem
+// ============================================
+
+// VK Admins - Aparte admin accounts voor Vriendenkring (los van ambulance systeem)
+export const vkAdmins = pgTable("vk_admins", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertVkAdminSchema = createInsertSchema(vkAdmins, {
+  username: z.string().min(3, "Gebruikersnaam moet minstens 3 karakters zijn"),
+  password: z.string().min(6, "Wachtwoord moet minstens 6 karakters zijn"),
+  firstName: z.string().min(1, "Voornaam is verplicht"),
+  lastName: z.string().min(1, "Achternaam is verplicht"),
+  email: z.string().email("Ongeldig email adres").optional()
+}).omit({ id: true, createdAt: true, updatedAt: true });
+export type VkAdmin = typeof vkAdmins.$inferSelect;
+export type InsertVkAdmin = z.infer<typeof insertVkAdminSchema>;
+
+// VK Lidmaatschapstypes - Lid VZW, Niet Lid VZW, Genodigde, Weduwe, etc.
+export const vkMembershipTypes = pgTable("vk_membership_types", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // bijv. "Lid VZW", "Niet Lid VZW", "Genodigde", "Weduwe"
+  description: text("description"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const insertVkMembershipTypeSchema = createInsertSchema(vkMembershipTypes).omit({ id: true, createdAt: true });
+export type VkMembershipType = typeof vkMembershipTypes.$inferSelect;
+export type InsertVkMembershipType = z.infer<typeof insertVkMembershipTypeSchema>;
+
+// VK Leden - Leden van de vriendenkring
+export const vkMembers = pgTable("vk_members", {
+  id: serial("id").primaryKey(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull(),
+  phoneNumber: text("phone_number"),
+  membershipTypeId: integer("membership_type_id").notNull().references(() => vkMembershipTypes.id),
+  memberSince: date("member_since"),
+  annualFeePaidUntil: integer("annual_fee_paid_until"), // Jaar tot wanneer lidgeld betaald is
+  notes: text("notes"),
+  isActive: boolean("is_active").notNull().default(true),
+  stripeCustomerId: text("stripe_customer_id"), // Koppeling met Stripe
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertVkMemberSchema = createInsertSchema(vkMembers, {
+  firstName: z.string().min(1, "Voornaam is verplicht"),
+  lastName: z.string().min(1, "Achternaam is verplicht"),
+  email: z.string().email("Ongeldig email adres")
+}).omit({ id: true, createdAt: true, updatedAt: true });
+export type VkMember = typeof vkMembers.$inferSelect;
+export type InsertVkMember = z.infer<typeof insertVkMemberSchema>;
+
+// VK Activiteiten - Hoofdactiviteiten zoals Sint Barbara
+export const vkActivities = pgTable("vk_activities", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // bijv. "Sint Barbara 2025"
+  description: text("description"),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date"),
+  registrationDeadline: date("registration_deadline"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertVkActivitySchema = createInsertSchema(vkActivities, {
+  name: z.string().min(1, "Naam is verplicht"),
+  startDate: z.coerce.date()
+}).omit({ id: true, createdAt: true, updatedAt: true });
+export type VkActivity = typeof vkActivities.$inferSelect;
+export type InsertVkActivity = z.infer<typeof insertVkActivitySchema>;
+
+// VK Deelactiviteiten - Onderdelen van een activiteit (ontbijt, avondfeest, etc.)
+export const vkSubActivities = pgTable("vk_sub_activities", {
+  id: serial("id").primaryKey(),
+  activityId: integer("activity_id").notNull().references(() => vkActivities.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(), // bijv. "Avondfeest", "Ontbijt", "Worstenbroden"
+  description: text("description"),
+  date: date("date"), // Datum van deze deelactiviteit
+  time: text("time"), // Tijdstip als tekst (bijv. "19:00")
+  maxParticipants: integer("max_participants"), // Optioneel max aantal
+  allowQuantity: boolean("allow_quantity").notNull().default(true), // Mag men aantal opgeven?
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const insertVkSubActivitySchema = createInsertSchema(vkSubActivities).omit({ id: true, createdAt: true });
+export type VkSubActivity = typeof vkSubActivities.$inferSelect;
+export type InsertVkSubActivity = z.infer<typeof insertVkSubActivitySchema>;
+
+// VK Prijzen - Prijzen per deelactiviteit per lidmaatschapstype
+export const vkPricing = pgTable("vk_pricing", {
+  id: serial("id").primaryKey(),
+  subActivityId: integer("sub_activity_id").notNull().references(() => vkSubActivities.id, { onDelete: 'cascade' }),
+  membershipTypeId: integer("membership_type_id").notNull().references(() => vkMembershipTypes.id),
+  pricePerUnit: integer("price_per_unit").notNull(), // Prijs in eurocent
+  createdAt: timestamp("created_at").defaultNow()
+}, (table) => ({
+  uniqueSubActivityMembershipType: unique().on(table.subActivityId, table.membershipTypeId)
+}));
+
+export const insertVkPricingSchema = createInsertSchema(vkPricing).omit({ id: true, createdAt: true });
+export type VkPricing = typeof vkPricing.$inferSelect;
+export type InsertVkPricing = z.infer<typeof insertVkPricingSchema>;
+
+// VK Inschrijvingen - Registraties voor activiteiten
+export const vkRegistrations = pgTable("vk_registrations", {
+  id: serial("id").primaryKey(),
+  activityId: integer("activity_id").notNull().references(() => vkActivities.id),
+  memberId: integer("member_id").references(() => vkMembers.id), // Optioneel - kan ook gastregistratie zijn
+  name: text("name").notNull(), // Naam van inschrijver
+  email: text("email").notNull(),
+  membershipTypeId: integer("membership_type_id").notNull().references(() => vkMembershipTypes.id),
+  totalAmount: integer("total_amount").notNull(), // Totaalbedrag in eurocent
+  paymentStatus: text("payment_status", { enum: ["pending", "paid", "failed", "refunded"] }).notNull().default("pending"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+  paidAt: timestamp("paid_at"),
+  notes: text("notes"),
+  tableAssignment: text("table_assignment"), // Tafelindeling
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+export const insertVkRegistrationSchema = createInsertSchema(vkRegistrations).omit({ id: true, createdAt: true, updatedAt: true });
+export type VkRegistration = typeof vkRegistrations.$inferSelect;
+export type InsertVkRegistration = z.infer<typeof insertVkRegistrationSchema>;
+
+// VK Inschrijvingsitems - Geselecteerde deelactiviteiten per inschrijving
+export const vkRegistrationItems = pgTable("vk_registration_items", {
+  id: serial("id").primaryKey(),
+  registrationId: integer("registration_id").notNull().references(() => vkRegistrations.id, { onDelete: 'cascade' }),
+  subActivityId: integer("sub_activity_id").notNull().references(() => vkSubActivities.id),
+  quantity: integer("quantity").notNull().default(1),
+  pricePerUnit: integer("price_per_unit").notNull(), // Prijs op moment van registratie (in eurocent)
+  subtotal: integer("subtotal").notNull(), // quantity * pricePerUnit
+  notes: text("notes"), // bijv. "Spek met brood" voor ontbijt keuze
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+export const insertVkRegistrationItemSchema = createInsertSchema(vkRegistrationItems).omit({ id: true, createdAt: true });
+export type VkRegistrationItem = typeof vkRegistrationItems.$inferSelect;
+export type InsertVkRegistrationItem = z.infer<typeof insertVkRegistrationItemSchema>;

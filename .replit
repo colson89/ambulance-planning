@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "bash", "web", "postgresql-16"]
+modules = ["nodejs-20", "bash", "web", "postgresql-16", "python-3.11"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
@@ -43,6 +43,7 @@ waitForPort = 5000
 
 [agent]
 expertMode = true
+integrations = ["stripe:2.0.0"]
 
 [userenv]
 

@@ -1,0 +1,1147 @@
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Loader2, LogOut, Users, Calendar, ClipboardList, Plus, Pencil, Trash2, 
+  Euro, Settings, ChevronDown, ChevronRight, CheckCircle, XCircle 
+} from "lucide-react";
+import { format } from "date-fns";
+import { nl } from "date-fns/locale";
+
+interface VkAdmin {
+  id: number;
+  username: string;
+  isActive: boolean;
+}
+
+interface VkMembershipType {
+  id: number;
+  name: string;
+  description: string | null;
+  annualFee: string | null;
+  sortOrder: number;
+}
+
+interface VkMember {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  membershipTypeId: number;
+  membershipPaid: boolean;
+}
+
+interface VkActivity {
+  id: number;
+  name: string;
+  description: string | null;
+  startDate: string;
+  endDate: string | null;
+  isActive: boolean;
+}
+
+interface VkSubActivity {
+  id: number;
+  activityId: number;
+  name: string;
+  description: string | null;
+  maxQuantity: number | null;
+  sortOrder: number;
+}
+
+interface VkPricing {
+  id: number;
+  subActivityId: number;
+  membershipTypeId: number;
+  pricePerUnit: string;
+}
+
+interface VkRegistration {
+  id: number;
+  activityId: number;
+  memberId: number | null;
+  name: string;
+  email: string;
+  membershipTypeId: number;
+  totalAmount: string;
+  isPaid: boolean;
+  createdAt: string;
+}
+
+export default function VriendenkringAdmin() {
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [activeTab, setActiveTab] = useState("members");
+  const [memberDialogOpen, setMemberDialogOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<VkMember | null>(null);
+  const [membershipTypeDialogOpen, setMembershipTypeDialogOpen] = useState(false);
+  const [editingMembershipType, setEditingMembershipType] = useState<VkMembershipType | null>(null);
+  const [activityDialogOpen, setActivityDialogOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<VkActivity | null>(null);
+  const [expandedActivityId, setExpandedActivityId] = useState<number | null>(null);
+  const [subActivityDialogOpen, setSubActivityDialogOpen] = useState(false);
+  const [editingSubActivity, setEditingSubActivity] = useState<VkSubActivity | null>(null);
+  const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
+  const [pricingSubActivityId, setPricingSubActivityId] = useState<number | null>(null);
+  const [registrationFilter, setRegistrationFilter] = useState<string>("all");
+
+  const { data: admin, isLoading: adminLoading, error: adminError } = useQuery<VkAdmin>({
+    queryKey: ["/api/vk/me"],
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!adminLoading && (adminError || !admin)) {
+      setLocation("/VriendenkringMol");
+    }
+  }, [admin, adminLoading, adminError, setLocation]);
+
+  const { data: members = [], isLoading: membersLoading } = useQuery<VkMember[]>({
+    queryKey: ["/api/vk/members"],
+    enabled: !!admin,
+  });
+
+  const { data: membershipTypes = [] } = useQuery<VkMembershipType[]>({
+    queryKey: ["/api/vk/membership-types"],
+    enabled: !!admin,
+  });
+
+  const { data: activities = [], isLoading: activitiesLoading } = useQuery<VkActivity[]>({
+    queryKey: ["/api/vk/activities"],
+    enabled: !!admin,
+  });
+
+  const { data: registrations = [], isLoading: registrationsLoading } = useQuery<VkRegistration[]>({
+    queryKey: ["/api/vk/registrations", registrationFilter],
+    queryFn: async () => {
+      const url = registrationFilter === "all" 
+        ? "/api/vk/registrations"
+        : `/api/vk/registrations?activityId=${registrationFilter}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("Fout bij ophalen inschrijvingen");
+      return res.json();
+    },
+    enabled: !!admin,
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await fetch("/api/vk/logout", { method: "POST", credentials: "include" });
+    },
+    onSuccess: () => {
+      queryClient.clear();
+      setLocation("/VriendenkringMol");
+    },
+  });
+
+  const memberForm = useForm({
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      membershipTypeId: "",
+      membershipPaid: false,
+    },
+  });
+
+  const membershipTypeForm = useForm({
+    defaultValues: {
+      name: "",
+      description: "",
+      annualFee: "",
+      sortOrder: 0,
+    },
+  });
+
+  const activityForm = useForm({
+    defaultValues: {
+      name: "",
+      description: "",
+      startDate: "",
+      endDate: "",
+      isActive: true,
+    },
+  });
+
+  const subActivityForm = useForm({
+    defaultValues: {
+      name: "",
+      description: "",
+      maxQuantity: "",
+      sortOrder: 0,
+    },
+  });
+
+  useEffect(() => {
+    if (editingMember) {
+      memberForm.reset({
+        firstName: editingMember.firstName,
+        lastName: editingMember.lastName,
+        email: editingMember.email,
+        membershipTypeId: editingMember.membershipTypeId.toString(),
+        membershipPaid: editingMember.membershipPaid,
+      });
+    } else {
+      memberForm.reset({
+        firstName: "",
+        lastName: "",
+        email: "",
+        membershipTypeId: "",
+        membershipPaid: false,
+      });
+    }
+  }, [editingMember, memberForm]);
+
+  useEffect(() => {
+    if (editingMembershipType) {
+      membershipTypeForm.reset({
+        name: editingMembershipType.name,
+        description: editingMembershipType.description || "",
+        annualFee: editingMembershipType.annualFee || "",
+        sortOrder: editingMembershipType.sortOrder,
+      });
+    } else {
+      membershipTypeForm.reset({
+        name: "",
+        description: "",
+        annualFee: "",
+        sortOrder: 0,
+      });
+    }
+  }, [editingMembershipType, membershipTypeForm]);
+
+  useEffect(() => {
+    if (editingActivity) {
+      activityForm.reset({
+        name: editingActivity.name,
+        description: editingActivity.description || "",
+        startDate: editingActivity.startDate ? format(new Date(editingActivity.startDate), "yyyy-MM-dd") : "",
+        endDate: editingActivity.endDate ? format(new Date(editingActivity.endDate), "yyyy-MM-dd") : "",
+        isActive: editingActivity.isActive,
+      });
+    } else {
+      activityForm.reset({
+        name: "",
+        description: "",
+        startDate: "",
+        endDate: "",
+        isActive: true,
+      });
+    }
+  }, [editingActivity, activityForm]);
+
+  useEffect(() => {
+    if (editingSubActivity) {
+      subActivityForm.reset({
+        name: editingSubActivity.name,
+        description: editingSubActivity.description || "",
+        maxQuantity: editingSubActivity.maxQuantity?.toString() || "",
+        sortOrder: editingSubActivity.sortOrder,
+      });
+    } else {
+      subActivityForm.reset({
+        name: "",
+        description: "",
+        maxQuantity: "",
+        sortOrder: 0,
+      });
+    }
+  }, [editingSubActivity, subActivityForm]);
+
+  const saveMemberMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const url = editingMember ? `/api/vk/members/${editingMember.id}` : "/api/vk/members";
+      const method = editingMember ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          membershipTypeId: parseInt(data.membershipTypeId),
+        }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Fout bij opslaan lid");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/members"] });
+      setMemberDialogOpen(false);
+      setEditingMember(null);
+      toast({ title: "Lid opgeslagen" });
+    },
+    onError: () => {
+      toast({ title: "Fout bij opslaan lid", variant: "destructive" });
+    },
+  });
+
+  const deleteMemberMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/vk/members/${id}`, { method: "DELETE", credentials: "include" });
+      if (!res.ok) throw new Error("Fout bij verwijderen lid");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/members"] });
+      toast({ title: "Lid verwijderd" });
+    },
+  });
+
+  const saveMembershipTypeMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const url = editingMembershipType ? `/api/vk/membership-types/${editingMembershipType.id}` : "/api/vk/membership-types";
+      const method = editingMembershipType ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Fout bij opslaan lidmaatschapstype");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/membership-types"] });
+      setMembershipTypeDialogOpen(false);
+      setEditingMembershipType(null);
+      toast({ title: "Lidmaatschapstype opgeslagen" });
+    },
+  });
+
+  const deleteMembershipTypeMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/vk/membership-types/${id}`, { method: "DELETE", credentials: "include" });
+      if (!res.ok) throw new Error("Fout bij verwijderen");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/membership-types"] });
+      toast({ title: "Lidmaatschapstype verwijderd" });
+    },
+  });
+
+  const saveActivityMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const url = editingActivity ? `/api/vk/activities/${editingActivity.id}` : "/api/vk/activities";
+      const method = editingActivity ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          startDate: data.startDate ? new Date(data.startDate).toISOString() : null,
+          endDate: data.endDate ? new Date(data.endDate).toISOString() : null,
+        }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Fout bij opslaan activiteit");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/activities"] });
+      setActivityDialogOpen(false);
+      setEditingActivity(null);
+      toast({ title: "Activiteit opgeslagen" });
+    },
+  });
+
+  const deleteActivityMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/vk/activities/${id}`, { method: "DELETE", credentials: "include" });
+      if (!res.ok) throw new Error("Fout bij verwijderen");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/activities"] });
+      toast({ title: "Activiteit verwijderd" });
+    },
+  });
+
+  const saveSubActivityMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const url = editingSubActivity 
+        ? `/api/vk/sub-activities/${editingSubActivity.id}` 
+        : `/api/vk/activities/${expandedActivityId}/sub-activities`;
+      const method = editingSubActivity ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          maxQuantity: data.maxQuantity ? parseInt(data.maxQuantity) : null,
+        }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Fout bij opslaan deelactiviteit");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/activities", expandedActivityId] });
+      setSubActivityDialogOpen(false);
+      setEditingSubActivity(null);
+      toast({ title: "Deelactiviteit opgeslagen" });
+    },
+  });
+
+  const deleteSubActivityMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/vk/sub-activities/${id}`, { method: "DELETE", credentials: "include" });
+      if (!res.ok) throw new Error("Fout bij verwijderen");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/activities", expandedActivityId] });
+      toast({ title: "Deelactiviteit verwijderd" });
+    },
+  });
+
+  const savePricingMutation = useMutation({
+    mutationFn: async ({ membershipTypeId, pricePerUnit }: { membershipTypeId: number; pricePerUnit: string }) => {
+      const res = await fetch(`/api/vk/sub-activities/${pricingSubActivityId}/pricing`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ membershipTypeId, pricePerUnit }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Fout bij opslaan prijs");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/activities", expandedActivityId] });
+      toast({ title: "Prijs opgeslagen" });
+    },
+  });
+
+  const togglePaymentMutation = useMutation({
+    mutationFn: async ({ id, isPaid }: { id: number; isPaid: boolean }) => {
+      const res = await fetch(`/api/vk/registrations/${id}/payment`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPaid }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Fout bij bijwerken betaling");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/registrations"] });
+    },
+  });
+
+  const { data: activityDetails } = useQuery<{ subActivities: VkSubActivity[]; pricing: VkPricing[] }>({
+    queryKey: ["/api/vk/activities", expandedActivityId],
+    enabled: !!expandedActivityId,
+  });
+
+  const getMembershipTypeName = (id: number) => {
+    return membershipTypes.find((t) => t.id === id)?.name || "Onbekend";
+  };
+
+  const getActivityName = (id: number) => {
+    return activities.find((a) => a.id === id)?.name || "Onbekend";
+  };
+
+  const stats = {
+    totalMembers: members.length,
+    activeActivities: activities.filter((a) => a.isActive).length,
+    unpaidRegistrations: registrations.filter((r) => !r.isPaid).length,
+    totalUnpaidAmount: registrations
+      .filter((r) => !r.isPaid)
+      .reduce((sum, r) => sum + parseFloat(r.totalAmount), 0),
+  };
+
+  if (adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!admin) return null;
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold">Vriendenkring Mol</h1>
+                <p className="text-sm text-muted-foreground">Admin Dashboard</p>
+              </div>
+            </div>
+            <Button variant="outline" onClick={() => logoutMutation.mutate()}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Uitloggen
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.totalMembers}</p>
+                  <p className="text-sm text-muted-foreground">Leden</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                  <Calendar className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.activeActivities}</p>
+                  <p className="text-sm text-muted-foreground">Actieve activiteiten</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                  <ClipboardList className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.unpaidRegistrations}</p>
+                  <p className="text-sm text-muted-foreground">Openstaande betalingen</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
+                  <Euro className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">€{stats.totalUnpaidAmount.toFixed(2)}</p>
+                  <p className="text-sm text-muted-foreground">Te ontvangen</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <CardHeader>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="members">
+                  <Users className="h-4 w-4 mr-2" />
+                  Leden
+                </TabsTrigger>
+                <TabsTrigger value="activities">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Activiteiten
+                </TabsTrigger>
+                <TabsTrigger value="registrations">
+                  <ClipboardList className="h-4 w-4 mr-2" />
+                  Inschrijvingen
+                </TabsTrigger>
+              </TabsList>
+            </CardHeader>
+
+            <CardContent>
+              <TabsContent value="members" className="mt-0">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex gap-2">
+                    <Button onClick={() => { setEditingMember(null); setMemberDialogOpen(true); }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Lid toevoegen
+                    </Button>
+                    <Button variant="outline" onClick={() => { setEditingMembershipType(null); setMembershipTypeDialogOpen(true); }}>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Lidmaatschapstypes
+                    </Button>
+                  </div>
+                </div>
+
+                {membersLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Naam</TableHead>
+                        <TableHead>E-mail</TableHead>
+                        <TableHead>Lidmaatschap</TableHead>
+                        <TableHead>Lidgeld</TableHead>
+                        <TableHead className="text-right">Acties</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {members.map((member) => (
+                        <TableRow key={member.id}>
+                          <TableCell className="font-medium">
+                            {member.firstName} {member.lastName}
+                          </TableCell>
+                          <TableCell>{member.email}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {getMembershipTypeName(member.membershipTypeId)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {member.membershipPaid ? (
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Betaald
+                              </Badge>
+                            ) : (
+                              <Badge variant="destructive">
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Niet betaald
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => { setEditingMember(member); setMemberDialogOpen(true); }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                if (confirm("Weet je zeker dat je dit lid wilt verwijderen?")) {
+                                  deleteMemberMutation.mutate(member.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {members.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                            Nog geen leden
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </TabsContent>
+
+              <TabsContent value="activities" className="mt-0">
+                <div className="flex justify-between items-center mb-4">
+                  <Button onClick={() => { setEditingActivity(null); setActivityDialogOpen(true); }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Activiteit toevoegen
+                  </Button>
+                </div>
+
+                {activitiesLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {activities.map((activity) => (
+                      <div key={activity.id} className="border rounded-lg">
+                        <div
+                          className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50"
+                          onClick={() => setExpandedActivityId(expandedActivityId === activity.id ? null : activity.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            {expandedActivityId === activity.id ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                            <div>
+                              <div className="font-medium">{activity.name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {activity.startDate && format(new Date(activity.startDate), "d MMMM yyyy", { locale: nl })}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={activity.isActive ? "default" : "secondary"}>
+                              {activity.isActive ? "Actief" : "Inactief"}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => { e.stopPropagation(); setEditingActivity(activity); setActivityDialogOpen(true); }}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm("Weet je zeker dat je deze activiteit wilt verwijderen?")) {
+                                  deleteActivityMutation.mutate(activity.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {expandedActivityId === activity.id && (
+                          <div className="border-t p-4 bg-muted/30">
+                            <div className="flex justify-between items-center mb-3">
+                              <h4 className="font-medium">Deelactiviteiten</h4>
+                              <Button
+                                size="sm"
+                                onClick={() => { setEditingSubActivity(null); setSubActivityDialogOpen(true); }}
+                              >
+                                <Plus className="h-4 w-4 mr-1" />
+                                Toevoegen
+                              </Button>
+                            </div>
+
+                            {activityDetails?.subActivities?.length ? (
+                              <div className="space-y-2">
+                                {activityDetails.subActivities.map((sub) => (
+                                  <div key={sub.id} className="flex items-center justify-between p-3 bg-background rounded-md border">
+                                    <div>
+                                      <div className="font-medium">{sub.name}</div>
+                                      {sub.description && (
+                                        <div className="text-sm text-muted-foreground">{sub.description}</div>
+                                      )}
+                                      <div className="text-xs text-muted-foreground mt-1">
+                                        Prijzen:{" "}
+                                        {membershipTypes.map((mt) => {
+                                          const price = activityDetails.pricing?.find(
+                                            (p) => p.subActivityId === sub.id && p.membershipTypeId === mt.id
+                                          );
+                                          return price ? (
+                                            <span key={mt.id} className="mr-2">
+                                              {mt.name}: €{parseFloat(price.pricePerUnit).toFixed(2)}
+                                            </span>
+                                          ) : null;
+                                        })}
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => { setPricingSubActivityId(sub.id); setPricingDialogOpen(true); }}
+                                      >
+                                        <Euro className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => { setEditingSubActivity(sub); setSubActivityDialogOpen(true); }}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                          if (confirm("Weet je zeker dat je deze deelactiviteit wilt verwijderen?")) {
+                                            deleteSubActivityMutation.mutate(sub.id);
+                                          }
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">Geen deelactiviteiten</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {activities.length === 0 && (
+                      <div className="text-center text-muted-foreground py-8">
+                        Nog geen activiteiten
+                      </div>
+                    )}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="registrations" className="mt-0">
+                <div className="flex justify-between items-center mb-4">
+                  <Select value={registrationFilter} onValueChange={setRegistrationFilter}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Filter op activiteit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle activiteiten</SelectItem>
+                      {activities.map((activity) => (
+                        <SelectItem key={activity.id} value={activity.id.toString()}>
+                          {activity.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {registrationsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="mb-4 p-4 bg-muted/50 rounded-lg flex gap-8">
+                      <div>
+                        <span className="text-sm text-muted-foreground">Totaal inschrijvingen:</span>
+                        <span className="ml-2 font-semibold">{registrations.length}</span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-muted-foreground">Betaald:</span>
+                        <span className="ml-2 font-semibold text-green-600">
+                          €{registrations.filter((r) => r.isPaid).reduce((s, r) => s + parseFloat(r.totalAmount), 0).toFixed(2)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-sm text-muted-foreground">Openstaand:</span>
+                        <span className="ml-2 font-semibold text-red-600">
+                          €{registrations.filter((r) => !r.isPaid).reduce((s, r) => s + parseFloat(r.totalAmount), 0).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Naam</TableHead>
+                          <TableHead>E-mail</TableHead>
+                          <TableHead>Activiteit</TableHead>
+                          <TableHead>Lidmaatschap</TableHead>
+                          <TableHead>Bedrag</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Datum</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {registrations.map((reg) => (
+                          <TableRow key={reg.id} className={reg.isPaid ? "" : "bg-red-50 dark:bg-red-950/20"}>
+                            <TableCell className="font-medium">{reg.name}</TableCell>
+                            <TableCell>{reg.email}</TableCell>
+                            <TableCell>{getActivityName(reg.activityId)}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">
+                                {getMembershipTypeName(reg.membershipTypeId)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-medium">€{parseFloat(reg.totalAmount).toFixed(2)}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={reg.isPaid 
+                                  ? "text-green-600 hover:text-green-700" 
+                                  : "text-red-600 hover:text-red-700"
+                                }
+                                onClick={() => togglePaymentMutation.mutate({ id: reg.id, isPaid: !reg.isPaid })}
+                              >
+                                {reg.isPaid ? (
+                                  <>
+                                    <CheckCircle className="h-4 w-4 mr-1" />
+                                    Betaald
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Niet betaald
+                                  </>
+                                )}
+                              </Button>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {format(new Date(reg.createdAt), "d MMM yyyy", { locale: nl })}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {registrations.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                              Geen inschrijvingen gevonden
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </>
+                )}
+              </TabsContent>
+            </CardContent>
+          </Tabs>
+        </Card>
+      </main>
+
+      <Dialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingMember ? "Lid bewerken" : "Nieuw lid"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={memberForm.handleSubmit((data) => saveMemberMutation.mutate(data))} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Voornaam</Label>
+                <Input {...memberForm.register("firstName", { required: true })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Achternaam</Label>
+                <Input {...memberForm.register("lastName", { required: true })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>E-mail</Label>
+              <Input type="email" {...memberForm.register("email", { required: true })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Lidmaatschapstype</Label>
+              <Select
+                value={memberForm.watch("membershipTypeId")}
+                onValueChange={(v) => memberForm.setValue("membershipTypeId", v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecteer type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {membershipTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id.toString()}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={memberForm.watch("membershipPaid")}
+                onCheckedChange={(v) => memberForm.setValue("membershipPaid", v)}
+              />
+              <Label>Lidgeld betaald</Label>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={saveMemberMutation.isPending}>
+                {saveMemberMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Opslaan
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={membershipTypeDialogOpen} onOpenChange={setMembershipTypeDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Lidmaatschapstypes beheren</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border rounded-lg p-4">
+              <h4 className="font-medium mb-3">{editingMembershipType ? "Type bewerken" : "Nieuw type"}</h4>
+              <form onSubmit={membershipTypeForm.handleSubmit((data) => saveMembershipTypeMutation.mutate(data))} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Naam</Label>
+                    <Input {...membershipTypeForm.register("name", { required: true })} placeholder="bv. Lid, Symphatisant" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Jaarlijks lidgeld</Label>
+                    <Input {...membershipTypeForm.register("annualFee")} placeholder="bv. 25.00" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Beschrijving</Label>
+                  <Input {...membershipTypeForm.register("description")} placeholder="Optionele beschrijving" />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={saveMembershipTypeMutation.isPending}>
+                    {saveMembershipTypeMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    {editingMembershipType ? "Bijwerken" : "Toevoegen"}
+                  </Button>
+                  {editingMembershipType && (
+                    <Button type="button" variant="outline" onClick={() => setEditingMembershipType(null)}>
+                      Annuleren
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-medium">Bestaande types</h4>
+              {membershipTypes.map((type) => (
+                <div key={type.id} className="flex items-center justify-between p-3 border rounded-md">
+                  <div>
+                    <div className="font-medium">{type.name}</div>
+                    {type.annualFee && (
+                      <div className="text-sm text-muted-foreground">Lidgeld: €{parseFloat(type.annualFee).toFixed(2)}</div>
+                    )}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => setEditingMembershipType(type)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (confirm("Weet je zeker dat je dit type wilt verwijderen?")) {
+                          deleteMembershipTypeMutation.mutate(type.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {membershipTypes.length === 0 && (
+                <p className="text-sm text-muted-foreground">Nog geen lidmaatschapstypes</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={activityDialogOpen} onOpenChange={setActivityDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingActivity ? "Activiteit bewerken" : "Nieuwe activiteit"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={activityForm.handleSubmit((data) => saveActivityMutation.mutate(data))} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Naam</Label>
+              <Input {...activityForm.register("name", { required: true })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Beschrijving</Label>
+              <Textarea {...activityForm.register("description")} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Startdatum</Label>
+                <Input type="date" {...activityForm.register("startDate")} />
+              </div>
+              <div className="space-y-2">
+                <Label>Einddatum (optioneel)</Label>
+                <Input type="date" {...activityForm.register("endDate")} />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={activityForm.watch("isActive")}
+                onCheckedChange={(v) => activityForm.setValue("isActive", v)}
+              />
+              <Label>Inschrijving open</Label>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={saveActivityMutation.isPending}>
+                {saveActivityMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Opslaan
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={subActivityDialogOpen} onOpenChange={setSubActivityDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingSubActivity ? "Deelactiviteit bewerken" : "Nieuwe deelactiviteit"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={subActivityForm.handleSubmit((data) => saveSubActivityMutation.mutate(data))} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Naam</Label>
+              <Input {...subActivityForm.register("name", { required: true })} placeholder="bv. Volwassene, Kind, Maaltijd" />
+            </div>
+            <div className="space-y-2">
+              <Label>Beschrijving (optioneel)</Label>
+              <Input {...subActivityForm.register("description")} />
+            </div>
+            <div className="space-y-2">
+              <Label>Maximum aantal (optioneel)</Label>
+              <Input type="number" {...subActivityForm.register("maxQuantity")} placeholder="Leeg = onbeperkt" />
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={saveSubActivityMutation.isPending}>
+                {saveSubActivityMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Opslaan
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pricingDialogOpen} onOpenChange={setPricingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Prijzen instellen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {membershipTypes.map((type) => {
+              const existingPrice = activityDetails?.pricing?.find(
+                (p) => p.subActivityId === pricingSubActivityId && p.membershipTypeId === type.id
+              );
+              return (
+                <div key={type.id} className="flex items-center gap-4">
+                  <Label className="w-32">{type.name}</Label>
+                  <div className="flex items-center gap-2 flex-1">
+                    <span>€</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      defaultValue={existingPrice ? parseFloat(existingPrice.pricePerUnit).toFixed(2) : ""}
+                      placeholder="0.00"
+                      onBlur={(e) => {
+                        if (e.target.value) {
+                          savePricingMutation.mutate({
+                            membershipTypeId: type.id,
+                            pricePerUnit: e.target.value,
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

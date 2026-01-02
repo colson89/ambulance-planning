@@ -39,6 +39,11 @@ const Kiosk = lazy(() => import("@/pages/kiosk"));
 const AzureAdSettings = lazy(() => import("@/pages/azure-ad-settings"));
 const DatabaseExport = lazy(() => import("@/pages/database-export"));
 
+// Vriendenkring module pages
+const VriendenkringLogin = lazy(() => import("@/pages/vriendenkring-login"));
+const VriendenkringAdmin = lazy(() => import("@/pages/vriendenkring-admin"));
+const VriendenkringRegister = lazy(() => import("@/pages/vriendenkring-register"));
+
 // Loading component for Suspense boundaries
 function PageLoader() {
   return (
@@ -92,6 +97,12 @@ function Router() {
         <Route path="/reset-password" component={ResetPassword} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/kiosk/:token" component={Kiosk} />
+        
+        {/* Vriendenkring module routes */}
+        <Route path="/VriendenkringMol" component={VriendenkringLogin} />
+        <Route path="/VriendenkringMol/admin" component={VriendenkringAdmin} />
+        <Route path="/VriendenkringMol/inschrijven/:activityId?" component={VriendenkringRegister} />
+        
         <Route component={NotFound} />
       </Switch>
     </Suspense>
