@@ -474,10 +474,11 @@ export default function VriendenkringAdmin() {
 
   const savePricingMutation = useMutation({
     mutationFn: async ({ membershipTypeId, pricePerUnit }: { membershipTypeId: number; pricePerUnit: string }) => {
+      const priceInCents = Math.round(parseFloat(pricePerUnit) * 100);
       const res = await fetch(`/api/vk/sub-activities/${pricingSubActivityId}/pricing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ membershipTypeId, pricePerUnit }),
+        body: JSON.stringify({ membershipTypeId, pricePerUnit: priceInCents }),
         credentials: "include",
       });
       if (!res.ok) throw new Error("Fout bij opslaan prijs");
@@ -1567,7 +1568,7 @@ Vriendenkring VZW Brandweer Mol`);
                     <Input
                       type="number"
                       step="0.01"
-                      defaultValue={existingPrice ? parseFloat(existingPrice.pricePerUnit).toFixed(2) : ""}
+                      defaultValue={existingPrice ? (Number(existingPrice.pricePerUnit) / 100).toFixed(2) : ""}
                       placeholder="0.00"
                       onBlur={(e) => {
                         if (e.target.value) {
