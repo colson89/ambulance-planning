@@ -1036,3 +1036,58 @@ export const vkInvitations = pgTable("vk_invitations", {
 export const insertVkInvitationSchema = createInsertSchema(vkInvitations).omit({ id: true, sentAt: true, openedAt: true, openCount: true });
 export type VkInvitation = typeof vkInvitations.$inferSelect;
 export type InsertVkInvitation = z.infer<typeof insertVkInvitationSchema>;
+
+// VK Lidgeld Rondes - Jaarlijkse lidgeld inningsrondes
+export const vkMembershipFeeCycles = pgTable("vk_membership_fee_cycles", {
+  id: serial("id").primaryKey(),
+  year: integer("year").notNull(), // Het jaar waarvoor het lidgeld is (bijv. 2026)
+  label: text("label").notNull(), // bijv. "Lidgeld 2026"
+  baseAmountCents: integer("base_amount_cents").notNull(), // Basisbedrag in eurocent (bijv. 2500 = €25)
+  penaltyAmountCents: integer("penalty_amount_cents").notNull().default(1000), // Boetebedrag in eurocent (bijv. 1000 = €10)
+  dueDate: date("due_date").notNull(), // Uiterste betaaldatum
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: integer("created_by").references(() => vkAdmins.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertVkMembershipFeeCycleSchema = createInsertSchema(vkMembershipFeeCycles, {
+  year: z.number().min(2020).max(2100),
+  label: z.string().min(1, "Label is verplicht"),
+  baseAmountCents: z.number().min(0),
+  penaltyAmountCents: z.number().min(0),
+}).omit({ id: true, createdAt: true });
+export type VkMembershipFeeCycle = typeof vkMembershipFeeCycles.$inferSelect;
+export type InsertVkMembershipFeeCycle = z.infer<typeof insertVkMembershipFeeCycleSchema>;
+
+// VK Lidgeld Uitnodigingen - Individuele lidgeld betalingsverzoeken per lid
+export const vkMembershipFeeInvitations = pgTable("vk_membership_fee_invitations", {
+  id: serial("id").primaryKey(),
+  cycleId: integer("cycle_id").notNull().references(() => vkMembershipFeeCycles.id, { onDelete: 'cascade' }),
+  memberId: integer("member_id").notNull().references(() => vkMembers.id, { onDelete: 'cascade' }),
+  email: text("email").notNull(), // E-mail adres op moment van verzenden
+  token: text("token").notNull().unique(), // Unieke token voor betaallink
+  status: text("status").notNull().default("pending"), // pending, paid, overdue, cancelled
+  amountDueCents: integer("amount_due_cents").notNull(), // Te betalen bedrag (incl. eventuele boete)
+  amountPaidCents: integer("amount_paid_cents"), // Werkelijk betaald bedrag
+  penaltyApplied: boolean("penalty_applied").notNull().default(false), // Of boete is toegepast
+  stripePaymentIntentId: text("stripe_payment_intent_id"), // Stripe PaymentIntent ID
+  invitationSentAt: timestamp("invitation_sent_at"), // Wanneer eerste uitnodiging verstuurd
+  paidAt: timestamp("paid_at"), // Wanneer betaald
+  reminderOneWeekSentAt: timestamp("reminder_one_week_sent_at"), // Reminder 1 week voor deadline
+  reminderThreeDaysSentAt: timestamp("reminder_three_days_sent_at"), // Reminder 3 dagen voor deadline
+  reminderOneDaySentAt: timestamp("reminder_one_day_sent_at"), // Reminder 1 dag voor deadline
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertVkMembershipFeeInvitationSchema = createInsertSchema(vkMembershipFeeInvitations).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true,
+  paidAt: true,
+  reminderOneWeekSentAt: true,
+  reminderThreeDaysSentAt: true,
+  reminderOneDaySentAt: true,
+});
+export type VkMembershipFeeInvitation = typeof vkMembershipFeeInvitations.$inferSelect;
+export type InsertVkMembershipFeeInvitation = z.infer<typeof insertVkMembershipFeeInvitationSchema>;
