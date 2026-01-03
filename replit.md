@@ -65,11 +65,13 @@ A completely separate module for "Vriendenkring VZW Brandweer Mol" - a social or
 - **Public Registration**: Open registration form for activities with live price calculation
 - **Stripe Payments**: Integrated checkout with Bancontact, iDEAL, and card payments
 - **Admin Dashboard**: Overview of registrations, payments, and statistics
+- **Membership Fee System**: Annual fee collection with cycles, payment deadlines, automatic reminders (7/3/1 days before), late payment penalties, and Stripe online payment
 
 ### VK URLs
 - `/VriendenkringMol` - Admin login
 - `/VriendenkringMol/admin` - Admin dashboard
 - `/VriendenkringMol/inschrijven` - Public registration form
+- `/VriendenkringMol/lidgeld/:token` - Public membership fee payment page
 
 ### VK Stripe Integration
 Connected to: **vriendenkring.vzwbrandweermol@gmail.com**
