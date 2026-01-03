@@ -1765,6 +1765,8 @@ export function registerVkRoutes(app: Express): void {
           reminderOneWeekSentAt: vkMembershipFeeInvitations.reminderOneWeekSentAt,
           reminderThreeDaysSentAt: vkMembershipFeeInvitations.reminderThreeDaysSentAt,
           reminderOneDaySentAt: vkMembershipFeeInvitations.reminderOneDaySentAt,
+          openedAt: vkMembershipFeeInvitations.openedAt,
+          openCount: vkMembershipFeeInvitations.openCount,
         })
         .from(vkMembershipFeeInvitations)
         .leftJoin(vkMembers, eq(vkMembershipFeeInvitations.memberId, vkMembers.id))
@@ -1822,6 +1824,8 @@ export function registerVkRoutes(app: Express): void {
           reminderOneWeekSentAt: vkMembershipFeeInvitations.reminderOneWeekSentAt,
           reminderThreeDaysSentAt: vkMembershipFeeInvitations.reminderThreeDaysSentAt,
           reminderOneDaySentAt: vkMembershipFeeInvitations.reminderOneDaySentAt,
+          openedAt: vkMembershipFeeInvitations.openedAt,
+          openCount: vkMembershipFeeInvitations.openCount,
           createdAt: vkMembershipFeeInvitations.createdAt,
         })
         .from(vkMembershipFeeInvitations)

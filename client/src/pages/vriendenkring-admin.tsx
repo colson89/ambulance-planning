@@ -153,6 +153,8 @@ interface VkMembershipFeeInvitation {
   status: "pending" | "overdue" | "paid" | "cancelled" | "declined";
   sentAt: string | null;
   paidAt: string | null;
+  openedAt: string | null;
+  openCount: number;
   createdAt: string;
 }
 
@@ -1909,6 +1911,7 @@ Vriendenkring VZW Brandweer Mol`);
                               <TableRow>
                                 <TableHead>Lid</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Geopend</TableHead>
                                 <TableHead>Bedrag</TableHead>
                                 <TableHead className="text-right">Acties</TableHead>
                               </TableRow>
@@ -1947,6 +1950,18 @@ Vriendenkring VZW Brandweer Mol`);
                                       <Badge className="bg-gray-100 text-gray-600 hover:bg-gray-100">
                                         Geen lid
                                       </Badge>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {inv.openedAt ? (
+                                      <div className="text-sm">
+                                        <span className="text-green-600">Ja</span>
+                                        {(inv.openCount || 0) > 1 && (
+                                          <span className="text-muted-foreground ml-1">({inv.openCount}x)</span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted-foreground">Nee</span>
                                     )}
                                   </TableCell>
                                   <TableCell>
