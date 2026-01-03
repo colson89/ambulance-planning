@@ -1931,6 +1931,10 @@ export class DatabaseStorage implements IStorage {
     // Bijhouden hoeveel uren elke medewerker al is ingepland
     const userAssignedHours = new Map<number, number>();
     
+    // SHIFT SPREIDING: Bijhouden op welke dag (dagnummer 1-31) elke gebruiker het laatst een shift kreeg
+    // Gebruikers met meer dagen sinds hun laatste shift krijgen voorrang binnen dezelfde prioriteitsgroep
+    const userLastAssignedDay = new Map<number, number>();
+    
     // FAIRNESS FIX: Track hoeveel kandidaat-dagen elke gebruiker heeft
     // Dit wordt later gevuld na allDayInfos berekening
     // Gebruikers met minder kandidaat-dagen krijgen prioriteit bij toewijzing
@@ -2365,11 +2369,16 @@ export class DatabaseStorage implements IStorage {
       return currentHours + hoursToAdd <= stationLimit;
     };
     
-    // Helper functie om bij te houden hoeveel uren een gebruiker werkt
-    const addAssignedHours = (userId: number, hoursToAdd: number): void => {
+    // Helper functie om bij te houden hoeveel uren een gebruiker werkt + shift spreiding tracking
+    const addAssignedHours = (userId: number, hoursToAdd: number, dayNumber?: number): void => {
       if (userId === 0) return; // 0 = niet toegewezen
       const currentHours = userAssignedHours.get(userId) || 0;
       userAssignedHours.set(userId, currentHours + hoursToAdd);
+      
+      // SHIFT SPREIDING: Update laatste toegewezen dag als dayNumber is opgegeven
+      if (dayNumber !== undefined) {
+        userLastAssignedDay.set(userId, dayNumber);
+      }
     };
     
     // Bereken gewicht voor toewijzing op basis van huidige uren
@@ -2444,7 +2453,8 @@ export class DatabaseStorage implements IStorage {
     // Functie om actieve gebruikers te sorteren op basis van werklast en voorkeuren
     // CROSS-TEAM FIX: Gebruik getEffectiveHours() voor station-specifieke uren
     // FAIRNESS FIX: Gebruikers met 0 uren krijgen ALTIJD voorrang
-    const getSortedUsersForAssignment = (availableUserIds: number[]): number[] => {
+    // SHIFT SPREIDING: Binnen groepen, sorteer op afstand tot laatste shift (meer afstand = hogere prioriteit)
+    const getSortedUsersForAssignment = (availableUserIds: number[], currentDay?: number): number[] => {
       // Eerst filteren op gebruikers die nog uren kunnen werken
       const filteredUsers = availableUserIds.filter(userId => {
         const user = eligibleUsers.find(u => u.id === userId);
@@ -2489,17 +2499,55 @@ export class DatabaseStorage implements IStorage {
         }
       });
       
-      // Shuffle binnen elke groep voor willekeurigheid
-      const shuffle = (array: number[]) => {
-        for (let i = array.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [array[i], array[j]] = [array[j], array[i]];
+      // SHIFT SPREIDING: Sorteer binnen groepen op afstand tot laatste shift
+      // Gebruikers die langer geleden een shift kregen, krijgen voorrang
+      // Als iemand nog geen shift heeft (lastDay = undefined), krijgt die hoogste prioriteit binnen de groep
+      const sortBySpread = (userIds: number[]): number[] => {
+        if (!currentDay) {
+          // Fallback naar shuffle als currentDay niet bekend is
+          const shuffled = [...userIds];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          return shuffled;
         }
-        return array;
+        
+        return [...userIds].sort((a, b) => {
+          const aLastDay = userLastAssignedDay.get(a);
+          const bLastDay = userLastAssignedDay.get(b);
+          
+          // Gebruikers zonder eerdere shift krijgen hoogste prioriteit
+          if (aLastDay === undefined && bLastDay !== undefined) return -1;
+          if (bLastDay === undefined && aLastDay !== undefined) return 1;
+          if (aLastDay === undefined && bLastDay === undefined) {
+            // Beide hebben nog geen shift - sorteer op kandidaat-dagen voor determinisme
+            const aCandidateDays = userCandidateDayCounts.get(a) || 999;
+            const bCandidateDays = userCandidateDayCounts.get(b) || 999;
+            if (aCandidateDays !== bCandidateDays) return aCandidateDays - bCandidateDays;
+            return a - b;
+          }
+          
+          // SHIFT SPREIDING: Wie langer geleden werkte krijgt voorrang
+          // Berekening: currentDay - lastDay = dagen sinds laatste shift
+          // Hogere afstand = hogere prioriteit (dus b - a voor DESC sortering)
+          const aDistance = currentDay - aLastDay!;
+          const bDistance = currentDay - bLastDay!;
+          
+          if (aDistance !== bDistance) {
+            return bDistance - aDistance; // Grotere afstand = hogere prioriteit
+          }
+          
+          // Bij gelijke afstand, gebruik kandidaat-dagen als tiebreaker
+          const aCandidateDays = userCandidateDayCounts.get(a) || 999;
+          const bCandidateDays = userCandidateDayCounts.get(b) || 999;
+          if (aCandidateDays !== bCandidateDays) return aCandidateDays - bCandidateDays;
+          return a - b;
+        });
       };
       
       // FAIRNESS FIX: Sorteer zeroHoursUsers op kandidaat-dagen (minst eerst = hoogste prioriteit)
-      // Dit zorgt ervoor dat gebruikers met beperkte beschikbaarheid voorrang krijgen
+      // SHIFT SPREIDING: Ook hier sorteren op afstand tot laatste shift
       const sortedZeroHoursUsers = [...zeroHoursUsers].sort((a, b) => {
         const aCandidateDays = userCandidateDayCounts.get(a) || 999;
         const bCandidateDays = userCandidateDayCounts.get(b) || 999;
@@ -2513,11 +2561,12 @@ export class DatabaseStorage implements IStorage {
       
       // Combineer de groepen in volgorde van prioriteit
       // FAIRNESS FIX: zeroHoursUsers komt EERST - gesorteerd op kandidaat-dagen
+      // SHIFT SPREIDING: Andere groepen gesorteerd op afstand tot laatste shift
       return [
         ...sortedZeroHoursUsers, // Gesorteerd op kandidaat-dagen (minst eerst)
-        ...shuffle([...urgentUsers]),
-        ...shuffle([...normalUsers]),
-        ...shuffle([...lowPriorityUsers])
+        ...sortBySpread(urgentUsers),
+        ...sortBySpread(normalUsers),
+        ...sortBySpread(lowPriorityUsers)
       ];
     };
     
@@ -2804,9 +2853,10 @@ export class DatabaseStorage implements IStorage {
       // ONLY process day shifts if target > 0
       if (targetDayShifts > 0) {
         // Sorteer beschikbare gebruikers op basis van weekend geschiedenis als het weekend is
+        // SHIFT SPREIDING: Geef huidige dag door voor betere spreiding
         const dayUsersToUse = isWeekend 
           ? getSortedUsersForWeekendAssignment(availableForDay)
-          : getSortedUsersForAssignment(availableForDay);
+          : getSortedUsersForAssignment(availableForDay, day);
         
         // 🔍 DEBUG DAG 6: Log assignment fase
         if (day === DEBUG_DAY) {
@@ -2967,7 +3017,7 @@ export class DatabaseStorage implements IStorage {
             };
             
             assignedDayIds.push(userId);
-            addAssignedHours(userId, dayShiftHours);
+            addAssignedHours(userId, dayShiftHours, day); // SHIFT SPREIDING: Track laatste dag
             assignedFullDayShifts++;
             
             const savedDayShift = await this.createShift(dayShift);
@@ -2999,8 +3049,10 @@ export class DatabaseStorage implements IStorage {
         if (stillNeedDayShifts > 0 && allowSplitShifts) {
           
           // Eerste helft van de dag (7:00 - 13:00) - blijf proberen tot we targetDayShifts personen hebben!
+          // SHIFT SPREIDING: Geef huidige dag door voor betere spreiding
           const sortedDayFirstHalfUsers = getSortedUsersForAssignment(
-            availableForDayFirstHalf.filter(id => !assignedDayIds.includes(id))
+            availableForDayFirstHalf.filter(id => !assignedDayIds.includes(id)),
+            day
           );
           
           if (sortedDayFirstHalfUsers.length > 0) {
@@ -3062,7 +3114,7 @@ export class DatabaseStorage implements IStorage {
                 };
                 
                 assignedDayIds.push(userId);
-                addAssignedHours(userId, halfShiftHours);
+                addAssignedHours(userId, halfShiftHours, day); // SHIFT SPREIDING: Track laatste dag
                 const savedHalfShift1 = await this.createShift(dayHalfShift1);
                 generatedShifts.push(savedHalfShift1);
                 assignedMorningShifts++;
@@ -3073,8 +3125,10 @@ export class DatabaseStorage implements IStorage {
           }
           
           // Tweede helft van de dag (13:00 - 19:00) - blijf proberen tot we targetDayShifts personen hebben!
+          // SHIFT SPREIDING: Geef huidige dag door voor betere spreiding
           const sortedDaySecondHalfUsers = getSortedUsersForAssignment(
-            availableForDaySecondHalf.filter(id => !assignedDayIds.includes(id))
+            availableForDaySecondHalf.filter(id => !assignedDayIds.includes(id)),
+            day
           );
           
           if (sortedDaySecondHalfUsers.length > 0) {
@@ -3137,7 +3191,7 @@ export class DatabaseStorage implements IStorage {
                 };
                 
                 assignedDayIds.push(userId);
-                addAssignedHours(userId, halfShiftHours);
+                addAssignedHours(userId, halfShiftHours, day); // SHIFT SPREIDING: Track laatste dag
                 const savedHalfShift2 = await this.createShift(dayHalfShift2);
                 generatedShifts.push(savedHalfShift2);
                 assignedAfternoonShifts++;
@@ -3245,7 +3299,8 @@ export class DatabaseStorage implements IStorage {
         );
         
         // Sorteer op basis van werklast
-        const sortedNightUsers = getSortedUsersForAssignment(availableForNightFiltered);
+        // SHIFT SPREIDING: Geef huidige dag door voor betere spreiding
+        const sortedNightUsers = getSortedUsersForAssignment(availableForNightFiltered, day);
         
         // Stap 1: Probeer EERST volledige 12-uurs nachtshifts toe te wijzen
         let assignedFullShifts = 0;
@@ -3299,7 +3354,7 @@ export class DatabaseStorage implements IStorage {
             }
 
             assignedNightIds.push(userId);
-            addAssignedHours(userId, nightShiftHours);
+            addAssignedHours(userId, nightShiftHours, day); // SHIFT SPREIDING: Track laatste dag
             assignedFullShifts++;
             
             const nightShift = {
@@ -3822,7 +3877,8 @@ export class DatabaseStorage implements IStorage {
               })
               .where(eq(shifts.id, openShift.id));
             
-            addAssignedHours(selectedUser.id, shiftHours);
+            // SHIFT SPREIDING: Track laatste dag - gebruik openShift.date.getDate() voor de dag
+            addAssignedHours(selectedUser.id, shiftHours, openShift.date.getDate());
             openShift.userId = selectedUser.id;
             openShift.status = "planned";
             optimizationChanges++;
