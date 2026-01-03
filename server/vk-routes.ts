@@ -2501,6 +2501,51 @@ export function registerVkRoutes(app: Express): void {
     }
   });
 
+  // Tracking pixel endpoint for membership fee emails - records when email is opened
+  app.get("/api/vk/membership-fee-track/:token", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+
+      // Return transparent 1x1 pixel regardless of outcome to not break email display
+      const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+
+      if (!token || token.length !== 64) {
+        res.setHeader("Content-Type", "image/gif");
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+        return res.send(pixel);
+      }
+
+      // Find and update the invitation
+      const [invitation] = await db
+        .select()
+        .from(vkMembershipFeeInvitations)
+        .where(eq(vkMembershipFeeInvitations.token, token))
+        .limit(1);
+
+      if (invitation) {
+        // Update openedAt (first open) and increment openCount
+        await db
+          .update(vkMembershipFeeInvitations)
+          .set({
+            openedAt: invitation.openedAt || new Date(),
+            openCount: (invitation.openCount || 0) + 1,
+          })
+          .where(eq(vkMembershipFeeInvitations.id, invitation.id));
+      }
+
+      // Return transparent 1x1 GIF pixel
+      res.setHeader("Content-Type", "image/gif");
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+      res.send(pixel);
+    } catch (error) {
+      console.error("VK membership fee tracking error:", error);
+      // Still return pixel to not break email display
+      const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+      res.setHeader("Content-Type", "image/gif");
+      res.send(pixel);
+    }
+  });
+
   // Cancel a membership fee invitation
   app.patch("/api/vk/membership-fee-invitations/:id/cancel", requireVkAdmin, async (req: Request, res: Response) => {
     try {
