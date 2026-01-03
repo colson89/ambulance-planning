@@ -2,7 +2,10 @@ import { storage } from './storage';
 import { emailService } from './email-service';
 import ExcelJS from 'exceljs';
 import { format, subMonths } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { nl } from 'date-fns/locale';
+
+const BRUSSELS_TIMEZONE = 'Europe/Brussels';
 
 interface SendResult {
   success: boolean;
@@ -252,8 +255,8 @@ class ReportageScheduler {
           date: format(new Date(shift.date), 'dd-MM-yyyy'),
           user: user ? `${user.firstName} ${user.lastName}` : 'Onbekend',
           type: shift.type === 'day' ? 'Dag' : 'Nacht',
-          start: format(new Date(shift.startTime), 'HH:mm'),
-          end: format(new Date(shift.endTime), 'HH:mm'),
+          start: formatInTimeZone(new Date(shift.startTime), BRUSSELS_TIMEZONE, 'HH:mm'),
+          end: formatInTimeZone(new Date(shift.endTime), BRUSSELS_TIMEZONE, 'HH:mm'),
           split: shift.isSplitShift ? 'Ja' : 'Nee',
           status: shift.status === 'planned' ? 'Gepland' : 'Open',
           emergency: shift.isEmergencyScheduling ? 'Ja' : 'Nee',
@@ -309,7 +312,7 @@ class ReportageScheduler {
           date: format(new Date(overtime.date), 'dd-MM-yyyy'),
           station: station?.displayName || 'Onbekend',
           user: user ? `${user.firstName} ${user.lastName}` : 'Onbekend',
-          startTime: format(new Date(overtime.startTime), 'HH:mm'),
+          startTime: formatInTimeZone(new Date(overtime.startTime), BRUSSELS_TIMEZONE, 'HH:mm'),
           duration: overtime.durationMinutes,
           durationHours: (overtime.durationMinutes / 60).toFixed(1),
           reason: overtime.reason
