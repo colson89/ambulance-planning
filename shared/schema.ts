@@ -1076,6 +1076,8 @@ export const vkMembershipFeeInvitations = pgTable("vk_membership_fee_invitations
   reminderOneWeekSentAt: timestamp("reminder_one_week_sent_at"), // Reminder 1 week voor deadline
   reminderThreeDaysSentAt: timestamp("reminder_three_days_sent_at"), // Reminder 3 dagen voor deadline
   reminderOneDaySentAt: timestamp("reminder_one_day_sent_at"), // Reminder 1 dag voor deadline
+  openedAt: timestamp("opened_at"), // Null = niet geopend, timestamp = wanneer geopend
+  openCount: integer("open_count").notNull().default(0), // Aantal keer geopend
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1088,6 +1090,8 @@ export const insertVkMembershipFeeInvitationSchema = createInsertSchema(vkMember
   reminderOneWeekSentAt: true,
   reminderThreeDaysSentAt: true,
   reminderOneDaySentAt: true,
+  openedAt: true,
+  openCount: true,
 });
 export type VkMembershipFeeInvitation = typeof vkMembershipFeeInvitations.$inferSelect;
 export type InsertVkMembershipFeeInvitation = z.infer<typeof insertVkMembershipFeeInvitationSchema>;
