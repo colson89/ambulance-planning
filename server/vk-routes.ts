@@ -1797,11 +1797,7 @@ export function registerVkRoutes(app: Express): void {
     try {
       const { id } = req.params;
       const cycleId = parseInt(id);
-      const { subject, message } = req.body;
-
-      if (!subject || !message) {
-        return res.status(400).json({ message: "Onderwerp en bericht zijn verplicht" });
-      }
+      const { memberIds } = req.body;
 
       // Get cycle
       const [cycle] = await db
@@ -1853,20 +1849,18 @@ export function registerVkRoutes(app: Express): void {
       const protocol = process.env.NODE_ENV === "production" ? "https" : "https";
       const baseUrl = req.get("host") || "localhost:5000";
 
-      for (const { invitation, member } of invitations) {
+      // Filter by memberIds if provided
+      const filteredInvitations = memberIds && Array.isArray(memberIds) && memberIds.length > 0
+        ? invitations.filter(({ member }) => member && memberIds.includes(member.id))
+        : invitations;
+
+      for (const { invitation, member } of filteredInvitations) {
         if (!member) continue;
 
         try {
           const paymentUrl = `${protocol}://${baseUrl}/VriendenkringMol/lidgeld/${invitation.token}`;
           const dueDateFormatted = new Date(cycle.dueDate).toLocaleDateString("nl-BE");
           const amountFormatted = `€${(invitation.amountDueCents / 100).toFixed(2)}`;
-
-          const personalizedMessage = message
-            .replace(/\{voornaam\}/g, member.firstName)
-            .replace(/\{achternaam\}/g, member.lastName)
-            .replace(/\{bedrag\}/g, amountFormatted)
-            .replace(/\{vervaldatum\}/g, dueDateFormatted)
-            .replace(/\{jaar\}/g, cycle.year.toString());
 
           const htmlContent = `
             <!DOCTYPE html>
@@ -1890,7 +1884,8 @@ export function registerVkRoutes(app: Express): void {
                   <h1>Vriendenkring VZW Brandweer Mol</h1>
                 </div>
                 <div class="content">
-                  <p>${escapeHtml(personalizedMessage).replace(/\n/g, '<br>')}</p>
+                  <p>Beste ${escapeHtml(member.firstName)},</p>
+                  <p>We willen je vriendelijk herinneren aan het lidgeld voor ${cycle.label}. Via onderstaande link kun je eenvoudig en veilig online betalen.</p>
                   <p style="text-align: center;">
                     <span class="amount">${amountFormatted}</span><br>
                     <span class="deadline">Te betalen voor: ${dueDateFormatted}</span>
@@ -1901,6 +1896,8 @@ export function registerVkRoutes(app: Express): void {
                   <p style="font-size: 12px; color: #64748b;">
                     Of kopieer deze link: ${paymentUrl}
                   </p>
+                  <p>Heb je vragen? Neem gerust contact met ons op.</p>
+                  <p>Met vriendelijke groeten,<br>Vriendenkring VZW Brandweer Mol</p>
                 </div>
                 <div class="footer">
                   <p>Vriendenkring VZW Brandweer Mol</p>
@@ -1913,7 +1910,7 @@ export function registerVkRoutes(app: Express): void {
           await transporter.sendMail({
             from: `"Vriendenkring Brandweer Mol" <${gmailUser}>`,
             to: member.email,
-            subject: subject.replace(/\{jaar\}/g, cycle.year.toString()),
+            subject: `Lidgeld ${cycle.year} - Vriendenkring Brandweer Mol`,
             html: htmlContent,
           });
 
