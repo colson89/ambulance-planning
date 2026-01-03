@@ -263,7 +263,7 @@ export default function VriendenkringAdmin() {
       firstName: "",
       lastName: "",
       email: "",
-      memberId: "",
+      memberId: "none",
     },
   });
 
@@ -289,7 +289,7 @@ export default function VriendenkringAdmin() {
         firstName: editingAdminUser.firstName,
         lastName: editingAdminUser.lastName,
         email: editingAdminUser.email || "",
-        memberId: editingAdminUser.memberId?.toString() || "",
+        memberId: editingAdminUser.memberId?.toString() || "none",
       });
     } else {
       adminForm.reset({
@@ -298,7 +298,7 @@ export default function VriendenkringAdmin() {
         firstName: "",
         lastName: "",
         email: "",
-        memberId: "",
+        memberId: "none",
       });
     }
   }, [editingAdminUser, adminForm]);
@@ -680,7 +680,7 @@ export default function VriendenkringAdmin() {
 
   const saveAdminMutation = useMutation({
     mutationFn: async (data: { username: string; password?: string; firstName: string; lastName: string; email: string; memberId: string }) => {
-      const memberId = data.memberId ? parseInt(data.memberId) : null;
+      const memberId = data.memberId && data.memberId !== "none" ? parseInt(data.memberId) : null;
       if (editingAdminUser) {
         const res = await fetch(`/api/vk/admins/${editingAdminUser.id}`, {
           method: "PATCH",
@@ -2053,7 +2053,7 @@ Vriendenkring VZW Brandweer Mol`);
                   <SelectValue placeholder="Selecteer een lid..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Geen koppeling</SelectItem>
+                  <SelectItem value="none">Geen koppeling</SelectItem>
                   {members
                     .filter(m => m.isActive !== false)
                     .sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`))
