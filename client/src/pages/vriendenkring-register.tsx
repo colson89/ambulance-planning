@@ -82,12 +82,17 @@ export default function VriendenkringRegister() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   
-  // Parse token from URL query string
+  // Parse token and preview params from URL query string
   const urlParams = new URLSearchParams(searchString);
   const invitationToken = urlParams.get("token");
+  const isPreview = urlParams.get("preview") === "true";
+  const previewName = urlParams.get("name");
+  const previewEmail = urlParams.get("email");
+  const previewMembershipTypeId = urlParams.get("membershipTypeId");
+  const previewActivityId = urlParams.get("activity");
 
   const [selectedActivityId, setSelectedActivityId] = useState<number | null>(
-    activityId ? parseInt(activityId) : null
+    activityId ? parseInt(activityId) : (previewActivityId ? parseInt(previewActivityId) : null)
   );
   const [quantities, setQuantities] = useState<SubActivityQuantity[]>([]);
   const [personCount, setPersonCount] = useState<number>(1); // Aantal personen voor directe prijzen
@@ -127,6 +132,17 @@ export default function VriendenkringRegister() {
       setIsPrefilledFromInvitation(true);
     }
   }, [invitationData, form, isPrefilledFromInvitation]);
+
+  // Pre-fill form when preview parameters are present
+  useEffect(() => {
+    if (isPreview && !isPrefilledFromInvitation) {
+      if (previewName) form.setValue("name", previewName);
+      if (previewEmail) form.setValue("email", previewEmail);
+      if (previewMembershipTypeId) form.setValue("membershipTypeId", previewMembershipTypeId);
+      if (previewActivityId) setSelectedActivityId(parseInt(previewActivityId));
+      setIsPrefilledFromInvitation(true);
+    }
+  }, [isPreview, previewName, previewEmail, previewMembershipTypeId, previewActivityId, form, isPrefilledFromInvitation]);
 
   const { data: activities = [], isLoading: activitiesLoading } = useQuery<VkActivity[]>({
     queryKey: ["/api/vk/activities"],
