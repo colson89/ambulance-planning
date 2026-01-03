@@ -1976,9 +1976,10 @@ Vriendenkring VZW Brandweer Mol`);
                   Automatisch toegevoegde inschrijflink:
                 </p>
                 <a 
-                  href="#" 
+                  href={`/VriendenkringMol/inschrijven${selectedInvitationActivity ? `?activity=${selectedInvitationActivity}` : ''}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded text-sm hover:bg-primary/90"
-                  onClick={(e) => e.preventDefault()}
                 >
                   Inschrijven voor {activities.find(a => a.id === selectedInvitationActivity)?.name || "activiteit"}
                 </a>
