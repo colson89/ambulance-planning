@@ -13,6 +13,8 @@ import {
   vkRegistrations, 
   vkRegistrationItems,
   vkInvitations,
+  vkMembershipFeeCycles,
+  vkMembershipFeeInvitations,
   insertVkAdminSchema,
   insertVkMembershipTypeSchema,
   insertVkMemberSchema,
@@ -20,7 +22,8 @@ import {
   insertVkSubActivitySchema,
   insertVkPricingSchema,
   insertVkRegistrationSchema,
-  insertVkRegistrationItemSchema
+  insertVkRegistrationItemSchema,
+  insertVkMembershipFeeCycleSchema
 } from "../shared/schema";
 import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
@@ -1635,6 +1638,571 @@ export function registerVkRoutes(app: Express): void {
     } catch (error) {
       console.error("VK invitation-data error:", error);
       res.status(500).json({ message: "Fout bij ophalen uitnodigingsgegevens" });
+    }
+  });
+
+  // ========================================
+  // MEMBERSHIP FEE MANAGEMENT ROUTES
+  // ========================================
+
+  // Get all membership fee cycles
+  app.get("/api/vk/membership-fee-cycles", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const cycles = await db
+        .select()
+        .from(vkMembershipFeeCycles)
+        .orderBy(desc(vkMembershipFeeCycles.year));
+      res.json(cycles);
+    } catch (error) {
+      console.error("VK membership fee cycles GET error:", error);
+      res.status(500).json({ message: "Fout bij ophalen lidgeldrondes" });
+    }
+  });
+
+  // Get single cycle with invitations summary
+  app.get("/api/vk/membership-fee-cycles/:id", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const cycleId = parseInt(id);
+
+      const [cycle] = await db
+        .select()
+        .from(vkMembershipFeeCycles)
+        .where(eq(vkMembershipFeeCycles.id, cycleId))
+        .limit(1);
+
+      if (!cycle) {
+        return res.status(404).json({ message: "Lidgeldronde niet gevonden" });
+      }
+
+      // Get all invitations for this cycle with member details
+      const invitations = await db
+        .select({
+          id: vkMembershipFeeInvitations.id,
+          memberId: vkMembershipFeeInvitations.memberId,
+          memberFirstName: vkMembers.firstName,
+          memberLastName: vkMembers.lastName,
+          email: vkMembershipFeeInvitations.email,
+          status: vkMembershipFeeInvitations.status,
+          amountDueCents: vkMembershipFeeInvitations.amountDueCents,
+          amountPaidCents: vkMembershipFeeInvitations.amountPaidCents,
+          penaltyApplied: vkMembershipFeeInvitations.penaltyApplied,
+          invitationSentAt: vkMembershipFeeInvitations.invitationSentAt,
+          paidAt: vkMembershipFeeInvitations.paidAt,
+          reminderOneWeekSentAt: vkMembershipFeeInvitations.reminderOneWeekSentAt,
+          reminderThreeDaysSentAt: vkMembershipFeeInvitations.reminderThreeDaysSentAt,
+          reminderOneDaySentAt: vkMembershipFeeInvitations.reminderOneDaySentAt,
+        })
+        .from(vkMembershipFeeInvitations)
+        .leftJoin(vkMembers, eq(vkMembershipFeeInvitations.memberId, vkMembers.id))
+        .where(eq(vkMembershipFeeInvitations.cycleId, cycleId))
+        .orderBy(asc(vkMembers.lastName), asc(vkMembers.firstName));
+
+      // Calculate summary stats
+      const summary = {
+        total: invitations.length,
+        pending: invitations.filter(i => i.status === "pending").length,
+        paid: invitations.filter(i => i.status === "paid").length,
+        overdue: invitations.filter(i => i.status === "overdue").length,
+        totalAmountDue: invitations.reduce((sum, i) => sum + (i.amountDueCents || 0), 0),
+        totalAmountPaid: invitations.reduce((sum, i) => sum + (i.amountPaidCents || 0), 0),
+      };
+
+      res.json({ cycle, invitations, summary });
+    } catch (error) {
+      console.error("VK membership fee cycle GET error:", error);
+      res.status(500).json({ message: "Fout bij ophalen lidgeldronde" });
+    }
+  });
+
+  // Create new membership fee cycle and send invitations
+  app.post("/api/vk/membership-fee-cycles", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const validationResult = insertVkMembershipFeeCycleSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Ongeldige invoer", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      const { year, label, baseAmountCents, penaltyAmountCents, dueDate, memberIds } = req.body;
+
+      // Create the cycle
+      const [newCycle] = await db
+        .insert(vkMembershipFeeCycles)
+        .values({
+          year,
+          label,
+          baseAmountCents,
+          penaltyAmountCents,
+          dueDate,
+          createdBy: req.session.vkAdminId,
+        })
+        .returning();
+
+      // Get selected members (or all active members if no selection)
+      let membersToInvite;
+      if (memberIds && memberIds.length > 0) {
+        membersToInvite = await db
+          .select()
+          .from(vkMembers)
+          .where(and(
+            eq(vkMembers.isActive, true),
+            inArray(vkMembers.id, memberIds)
+          ));
+      } else {
+        membersToInvite = await db
+          .select()
+          .from(vkMembers)
+          .where(eq(vkMembers.isActive, true));
+      }
+
+      // Create invitations for each member
+      const invitationsCreated = [];
+      for (const member of membersToInvite) {
+        const token = randomBytes(32).toString("hex");
+        
+        const [invitation] = await db
+          .insert(vkMembershipFeeInvitations)
+          .values({
+            cycleId: newCycle.id,
+            memberId: member.id,
+            email: member.email,
+            token,
+            status: "pending",
+            amountDueCents: baseAmountCents,
+            penaltyApplied: false,
+          })
+          .returning();
+
+        invitationsCreated.push({ invitation, member });
+      }
+
+      res.status(201).json({ 
+        cycle: newCycle, 
+        invitationsCreated: invitationsCreated.length,
+        message: `Lidgeldronde aangemaakt met ${invitationsCreated.length} uitnodigingen`
+      });
+    } catch (error) {
+      console.error("VK membership fee cycle POST error:", error);
+      res.status(500).json({ message: "Fout bij aanmaken lidgeldronde" });
+    }
+  });
+
+  // Send invitation emails for a cycle
+  app.post("/api/vk/membership-fee-cycles/:id/send-invitations", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const cycleId = parseInt(id);
+      const { subject, message } = req.body;
+
+      if (!subject || !message) {
+        return res.status(400).json({ message: "Onderwerp en bericht zijn verplicht" });
+      }
+
+      // Get cycle
+      const [cycle] = await db
+        .select()
+        .from(vkMembershipFeeCycles)
+        .where(eq(vkMembershipFeeCycles.id, cycleId))
+        .limit(1);
+
+      if (!cycle) {
+        return res.status(404).json({ message: "Lidgeldronde niet gevonden" });
+      }
+
+      // Get pending invitations that haven't been sent yet
+      const invitations = await db
+        .select({
+          invitation: vkMembershipFeeInvitations,
+          member: vkMembers,
+        })
+        .from(vkMembershipFeeInvitations)
+        .leftJoin(vkMembers, eq(vkMembershipFeeInvitations.memberId, vkMembers.id))
+        .where(and(
+          eq(vkMembershipFeeInvitations.cycleId, cycleId),
+          eq(vkMembershipFeeInvitations.status, "pending"),
+          sql`${vkMembershipFeeInvitations.invitationSentAt} IS NULL`
+        ));
+
+      let sentCount = 0;
+      let errorCount = 0;
+
+      // Import nodemailer dynamically to avoid issues if not configured
+      const nodemailer = await import("nodemailer");
+      
+      // Check if email credentials are available
+      const gmailUser = process.env.VK_GMAIL_USER;
+      const gmailPassword = process.env.VK_GMAIL_APP_PASSWORD;
+      
+      if (!gmailUser || !gmailPassword) {
+        return res.status(400).json({ message: "E-mail instellingen niet geconfigureerd" });
+      }
+
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: gmailUser,
+          pass: gmailPassword,
+        },
+      });
+
+      const protocol = process.env.NODE_ENV === "production" ? "https" : "https";
+      const baseUrl = req.get("host") || "localhost:5000";
+
+      for (const { invitation, member } of invitations) {
+        if (!member) continue;
+
+        try {
+          const paymentUrl = `${protocol}://${baseUrl}/VriendenkringMol/lidgeld/${invitation.token}`;
+          const dueDateFormatted = new Date(cycle.dueDate).toLocaleDateString("nl-BE");
+          const amountFormatted = `€${(invitation.amountDueCents / 100).toFixed(2)}`;
+
+          const personalizedMessage = message
+            .replace(/\{voornaam\}/g, member.firstName)
+            .replace(/\{achternaam\}/g, member.lastName)
+            .replace(/\{bedrag\}/g, amountFormatted)
+            .replace(/\{vervaldatum\}/g, dueDateFormatted)
+            .replace(/\{jaar\}/g, cycle.year.toString());
+
+          const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+                .content { background-color: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; }
+                .button { display: inline-block; background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+                .footer { background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b; border-radius: 0 0 8px 8px; }
+                .amount { font-size: 24px; font-weight: bold; color: #2563eb; }
+                .deadline { color: #dc2626; font-weight: bold; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>Vriendenkring VZW Brandweer Mol</h1>
+                </div>
+                <div class="content">
+                  <p>${escapeHtml(personalizedMessage).replace(/\n/g, '<br>')}</p>
+                  <p style="text-align: center;">
+                    <span class="amount">${amountFormatted}</span><br>
+                    <span class="deadline">Te betalen voor: ${dueDateFormatted}</span>
+                  </p>
+                  <p style="text-align: center;">
+                    <a href="${paymentUrl}" class="button">Nu betalen</a>
+                  </p>
+                  <p style="font-size: 12px; color: #64748b;">
+                    Of kopieer deze link: ${paymentUrl}
+                  </p>
+                </div>
+                <div class="footer">
+                  <p>Vriendenkring VZW Brandweer Mol</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `;
+
+          await transporter.sendMail({
+            from: `"Vriendenkring Brandweer Mol" <${gmailUser}>`,
+            to: member.email,
+            subject: subject.replace(/\{jaar\}/g, cycle.year.toString()),
+            html: htmlContent,
+          });
+
+          // Update invitation as sent
+          await db
+            .update(vkMembershipFeeInvitations)
+            .set({ invitationSentAt: new Date() })
+            .where(eq(vkMembershipFeeInvitations.id, invitation.id));
+
+          sentCount++;
+        } catch (emailError) {
+          console.error(`Failed to send email to ${member.email}:`, emailError);
+          errorCount++;
+        }
+      }
+
+      res.json({ 
+        message: `${sentCount} uitnodigingen verstuurd${errorCount > 0 ? `, ${errorCount} mislukt` : ""}`,
+        sentCount,
+        errorCount
+      });
+    } catch (error) {
+      console.error("VK send membership fee invitations error:", error);
+      res.status(500).json({ message: "Fout bij versturen uitnodigingen" });
+    }
+  });
+
+  // Resend single invitation
+  app.post("/api/vk/membership-fee-invitations/:id/resend", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const invitationId = parseInt(id);
+      const { subject, message } = req.body;
+
+      // Get invitation with cycle and member
+      const [result] = await db
+        .select({
+          invitation: vkMembershipFeeInvitations,
+          cycle: vkMembershipFeeCycles,
+          member: vkMembers,
+        })
+        .from(vkMembershipFeeInvitations)
+        .leftJoin(vkMembershipFeeCycles, eq(vkMembershipFeeInvitations.cycleId, vkMembershipFeeCycles.id))
+        .leftJoin(vkMembers, eq(vkMembershipFeeInvitations.memberId, vkMembers.id))
+        .where(eq(vkMembershipFeeInvitations.id, invitationId))
+        .limit(1);
+
+      if (!result || !result.member || !result.cycle) {
+        return res.status(404).json({ message: "Uitnodiging niet gevonden" });
+      }
+
+      const { invitation, cycle, member } = result;
+
+      // Check email credentials
+      const gmailUser = process.env.VK_GMAIL_USER;
+      const gmailPassword = process.env.VK_GMAIL_APP_PASSWORD;
+      
+      if (!gmailUser || !gmailPassword) {
+        return res.status(400).json({ message: "E-mail instellingen niet geconfigureerd" });
+      }
+
+      const nodemailer = await import("nodemailer");
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: gmailUser, pass: gmailPassword },
+      });
+
+      const protocol = "https";
+      const baseUrl = req.get("host") || "localhost:5000";
+      const paymentUrl = `${protocol}://${baseUrl}/VriendenkringMol/lidgeld/${invitation.token}`;
+      const dueDateFormatted = new Date(cycle.dueDate).toLocaleDateString("nl-BE");
+      const amountFormatted = `€${(invitation.amountDueCents / 100).toFixed(2)}`;
+
+      const personalizedMessage = (message || `Beste {voornaam},\n\nHerinnering om je lidgeld te betalen voor ${cycle.year}.`)
+        .replace(/\{voornaam\}/g, member.firstName)
+        .replace(/\{achternaam\}/g, member.lastName)
+        .replace(/\{bedrag\}/g, amountFormatted)
+        .replace(/\{vervaldatum\}/g, dueDateFormatted)
+        .replace(/\{jaar\}/g, cycle.year.toString());
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background-color: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; }
+            .button { display: inline-block; background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+            .amount { font-size: 24px; font-weight: bold; color: #2563eb; }
+            .deadline { color: #dc2626; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Vriendenkring VZW Brandweer Mol</h1>
+            </div>
+            <div class="content">
+              <p>${escapeHtml(personalizedMessage).replace(/\n/g, '<br>')}</p>
+              <p style="text-align: center;">
+                <span class="amount">${amountFormatted}</span><br>
+                <span class="deadline">Te betalen voor: ${dueDateFormatted}</span>
+              </p>
+              <p style="text-align: center;">
+                <a href="${paymentUrl}" class="button">Nu betalen</a>
+              </p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await transporter.sendMail({
+        from: `"Vriendenkring Brandweer Mol" <${gmailUser}>`,
+        to: member.email,
+        subject: (subject || `Herinnering: Lidgeld ${cycle.year}`).replace(/\{jaar\}/g, cycle.year.toString()),
+        html: htmlContent,
+      });
+
+      // Update invitation sent timestamp
+      await db
+        .update(vkMembershipFeeInvitations)
+        .set({ invitationSentAt: new Date(), updatedAt: new Date() })
+        .where(eq(vkMembershipFeeInvitations.id, invitationId));
+
+      res.json({ message: "Herinnering verstuurd" });
+    } catch (error) {
+      console.error("VK resend membership fee invitation error:", error);
+      res.status(500).json({ message: "Fout bij versturen herinnering" });
+    }
+  });
+
+  // Public endpoint: Get payment info by token
+  app.get("/api/vk/membership-fee-payment/:token", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+
+      if (!token || token.length !== 64) {
+        return res.status(400).json({ message: "Ongeldige betaallink" });
+      }
+
+      // Get invitation with cycle and member info
+      const [result] = await db
+        .select({
+          invitation: vkMembershipFeeInvitations,
+          cycle: vkMembershipFeeCycles,
+          member: vkMembers,
+        })
+        .from(vkMembershipFeeInvitations)
+        .leftJoin(vkMembershipFeeCycles, eq(vkMembershipFeeInvitations.cycleId, vkMembershipFeeCycles.id))
+        .leftJoin(vkMembers, eq(vkMembershipFeeInvitations.memberId, vkMembers.id))
+        .where(eq(vkMembershipFeeInvitations.token, token))
+        .limit(1);
+
+      if (!result || !result.cycle || !result.member) {
+        return res.status(404).json({ message: "Betaallink niet gevonden of verlopen" });
+      }
+
+      const { invitation, cycle, member } = result;
+
+      // Check if already paid
+      if (invitation.status === "paid") {
+        return res.json({
+          status: "paid",
+          message: "Dit lidgeld is al betaald",
+          paidAt: invitation.paidAt,
+        });
+      }
+
+      // Check if cycle is still active
+      if (!cycle.isActive) {
+        return res.status(400).json({ message: "Deze lidgeldronde is niet meer actief" });
+      }
+
+      // Check if deadline has passed and apply penalty if needed
+      const now = new Date();
+      const dueDate = new Date(cycle.dueDate);
+      const isOverdue = now > dueDate;
+      
+      let amountDue = cycle.baseAmountCents;
+      let penaltyApplied = false;
+
+      if (isOverdue && !invitation.penaltyApplied) {
+        amountDue = cycle.baseAmountCents + cycle.penaltyAmountCents;
+        penaltyApplied = true;
+
+        // Update invitation with penalty
+        await db
+          .update(vkMembershipFeeInvitations)
+          .set({ 
+            amountDueCents: amountDue, 
+            penaltyApplied: true,
+            status: "overdue",
+            updatedAt: new Date()
+          })
+          .where(eq(vkMembershipFeeInvitations.id, invitation.id));
+      } else if (invitation.penaltyApplied) {
+        amountDue = invitation.amountDueCents;
+        penaltyApplied = true;
+      }
+
+      res.json({
+        status: invitation.status,
+        memberName: `${member.firstName} ${member.lastName}`,
+        memberEmail: member.email,
+        cycleLabel: cycle.label,
+        cycleYear: cycle.year,
+        baseAmount: cycle.baseAmountCents,
+        penaltyAmount: cycle.penaltyAmountCents,
+        amountDue,
+        penaltyApplied,
+        dueDate: cycle.dueDate,
+        isOverdue,
+      });
+    } catch (error) {
+      console.error("VK membership fee payment info error:", error);
+      res.status(500).json({ message: "Fout bij ophalen betalingsgegevens" });
+    }
+  });
+
+  // Cancel a membership fee invitation
+  app.patch("/api/vk/membership-fee-invitations/:id/cancel", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const invitationId = parseInt(id);
+
+      const [updated] = await db
+        .update(vkMembershipFeeInvitations)
+        .set({ status: "cancelled", updatedAt: new Date() })
+        .where(eq(vkMembershipFeeInvitations.id, invitationId))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ message: "Uitnodiging niet gevonden" });
+      }
+
+      res.json({ message: "Uitnodiging geannuleerd", invitation: updated });
+    } catch (error) {
+      console.error("VK cancel membership fee invitation error:", error);
+      res.status(500).json({ message: "Fout bij annuleren uitnodiging" });
+    }
+  });
+
+  // Manually mark as paid (admin override)
+  app.patch("/api/vk/membership-fee-invitations/:id/mark-paid", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const invitationId = parseInt(id);
+
+      // Get invitation to update member record
+      const [invitation] = await db
+        .select()
+        .from(vkMembershipFeeInvitations)
+        .leftJoin(vkMembershipFeeCycles, eq(vkMembershipFeeInvitations.cycleId, vkMembershipFeeCycles.id))
+        .where(eq(vkMembershipFeeInvitations.id, invitationId))
+        .limit(1);
+
+      if (!invitation) {
+        return res.status(404).json({ message: "Uitnodiging niet gevonden" });
+      }
+
+      // Update invitation
+      const [updated] = await db
+        .update(vkMembershipFeeInvitations)
+        .set({ 
+          status: "paid", 
+          paidAt: new Date(),
+          amountPaidCents: invitation.vk_membership_fee_invitations.amountDueCents,
+          updatedAt: new Date() 
+        })
+        .where(eq(vkMembershipFeeInvitations.id, invitationId))
+        .returning();
+
+      // Update member's annualFeePaidUntil
+      if (invitation.vk_membership_fee_cycles) {
+        await db
+          .update(vkMembers)
+          .set({ 
+            annualFeePaidUntil: invitation.vk_membership_fee_cycles.year,
+            updatedAt: new Date()
+          })
+          .where(eq(vkMembers.id, invitation.vk_membership_fee_invitations.memberId));
+      }
+
+      res.json({ message: "Betaling geregistreerd", invitation: updated });
+    } catch (error) {
+      console.error("VK mark paid membership fee invitation error:", error);
+      res.status(500).json({ message: "Fout bij registreren betaling" });
     }
   });
 }
