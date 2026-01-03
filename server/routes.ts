@@ -4500,10 +4500,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userShifts = await storage.getShiftsByMonth(month, year, stationId);
         const userMonthShifts = userShifts.filter(s => s.userId === user.id && s.status === 'planned');
         let totalHours = 0;
+        let assignedLastDay: number | null = null;
         for (const s of userMonthShifts) {
           const start = s.startTime instanceof Date ? s.startTime : new Date(s.startTime);
           const end = s.endTime instanceof Date ? s.endTime : new Date(s.endTime);
           totalHours += (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+          // SPREIDING: Track laatste shift dag - gebruik CET timezone voor correcte dag
+          const sDay = parseInt(formatInTimeZone(start, STATION_TIMEZONE, 'd'), 10);
+          if (assignedLastDay === null || sDay > assignedLastDay) {
+            assignedLastDay = sDay;
+          }
         }
         
         // Get cross-team info for effective hours
@@ -4520,7 +4526,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hoursWorkedThisMonth: Math.round(totalHours),
           targetHours: effectiveHours,
           hasDrivingLicenseC: user.hasDrivingLicenseC,
-          isProfessional: user.isProfessional
+          isProfessional: user.isProfessional,
+          lastAssignedDay: assignedLastDay
         };
       }
     }
@@ -4575,10 +4582,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate hours worked this month for this user
       const userMonthShifts = allShifts.filter(s => s.userId === user.id && s.status === 'planned');
       let hoursWorked = 0;
+      let lastAssignedDay: number | null = null;
       for (const s of userMonthShifts) {
         const start = s.startTime instanceof Date ? s.startTime : new Date(s.startTime);
         const end = s.endTime instanceof Date ? s.endTime : new Date(s.endTime);
         hoursWorked += (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+        // SPREIDING: Track laatste shift dag - gebruik CET timezone voor correcte dag
+        const sDay = parseInt(formatInTimeZone(start, STATION_TIMEZONE, 'd'), 10);
+        if (lastAssignedDay === null || sDay > lastAssignedDay) {
+          lastAssignedDay = sDay;
+        }
       }
       
       // Get cross-team effective hours
@@ -4615,6 +4628,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (targetHours > 0 && hoursWorked >= targetHours) {
           notChosenReasons.push('Doeluren al bereikt');
         }
+        
+        // SPREIDING: Vergelijk laatste shift dag (alleen als er een toegewezen persoon is)
+        // Gebruik CET timezone voor correcte dag bepaling
+        const shiftDay = parseInt(formatInTimeZone(shiftDate, STATION_TIMEZONE, 'd'), 10);
+        const assignedLastDay = (assignedUserInfo as any).lastAssignedDay as number | null;
+        if (lastAssignedDay !== null && assignedLastDay !== null) {
+          // Bereken afstand (clamp op >= 0 voor correcte interpretatie)
+          const candidateDistance = Math.max(0, shiftDay - lastAssignedDay);
+          const assignedDistance = Math.max(0, shiftDay - assignedLastDay);
+          if (candidateDistance < assignedDistance && candidateDistance >= 0 && assignedDistance > 0) {
+            notChosenReasons.push(`Kortere pauze sinds laatste shift (${candidateDistance} vs ${assignedDistance} dagen)`);
+          }
+        } else if (lastAssignedDay !== null && assignedLastDay === null && shiftDay > lastAssignedDay) {
+          // Kandidaat heeft recente shift, toegewezen persoon nog niet - dit kan nadelig zijn
+          const candidateDistance = shiftDay - lastAssignedDay;
+          if (candidateDistance > 0) {
+            notChosenReasons.push(`Al shift gehad op dag ${lastAssignedDay} (${candidateDistance} dagen geleden)`);
+          }
+        }
       }
       
       // Check for conflicts on same day
@@ -4643,6 +4675,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hoursRatio: Math.round(hoursRatio * 100),
         hasDrivingLicenseC: user.hasDrivingLicenseC,
         isProfessional: user.isProfessional,
+        lastAssignedDay,
         notChosenReasons
       });
     }

@@ -1935,6 +1935,24 @@ export class DatabaseStorage implements IStorage {
     // Gebruikers met meer dagen sinds hun laatste shift krijgen voorrang binnen dezelfde prioriteitsgroep
     const userLastAssignedDay = new Map<number, number>();
     
+    // CROSS-TEAM SPREIDING: Seed de userLastAssignedDay map met bestaande shifts van ALLE stations
+    // Dit zorgt ervoor dat cross-team users ook spreiding krijgen over stations heen
+    // Gebruik getCETDay() voor correcte tijdzone handling (legacy 23:00 UTC timestamps)
+    for (const existingShift of existingAllStationShifts) {
+      if (existingShift.userId) {
+        // Gebruik getCETDay voor correcte dag bepaling (handelt legacy timestamps correct af)
+        const shiftDay = getCETDay(existingShift.startTime);
+        if (shiftDay > 0) {
+          const currentLastDay = userLastAssignedDay.get(existingShift.userId);
+          // Houd de hoogste (meest recente) dag bij
+          if (currentLastDay === undefined || shiftDay > currentLastDay) {
+            userLastAssignedDay.set(existingShift.userId, shiftDay);
+          }
+        }
+      }
+    }
+    console.log(`📊 SHIFT SPREIDING: Seeded ${userLastAssignedDay.size} users with their last assigned day from cross-station shifts`);
+    
     // FAIRNESS FIX: Track hoeveel kandidaat-dagen elke gebruiker heeft
     // Dit wordt later gevuld na allDayInfos berekening
     // Gebruikers met minder kandidaat-dagen krijgen prioriteit bij toewijzing
