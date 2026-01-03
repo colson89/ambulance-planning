@@ -1066,7 +1066,7 @@ export const vkMembershipFeeInvitations = pgTable("vk_membership_fee_invitations
   memberId: integer("member_id").notNull().references(() => vkMembers.id, { onDelete: 'cascade' }),
   email: text("email").notNull(), // E-mail adres op moment van verzenden
   token: text("token").notNull().unique(), // Unieke token voor betaallink
-  status: text("status").notNull().default("pending"), // pending, paid, overdue, cancelled
+  status: text("status").notNull().default("pending"), // pending, paid, overdue, cancelled, declined
   amountDueCents: integer("amount_due_cents").notNull(), // Te betalen bedrag (incl. eventuele boete)
   amountPaidCents: integer("amount_paid_cents"), // Werkelijk betaald bedrag
   penaltyApplied: boolean("penalty_applied").notNull().default(false), // Of boete is toegepast

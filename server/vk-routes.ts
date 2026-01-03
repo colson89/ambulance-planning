@@ -1776,7 +1776,7 @@ export function registerVkRoutes(app: Express): void {
         total: invitations.length,
         pending: invitations.filter(i => i.status === "pending").length,
         paid: invitations.filter(i => i.status === "paid").length,
-        overdue: invitations.filter(i => i.status === "overdue").length,
+        declined: invitations.filter(i => i.status === "declined").length,
         totalAmountDue: invitations.reduce((sum, i) => sum + (i.amountDueCents || 0), 0),
         totalAmountPaid: invitations.reduce((sum, i) => sum + (i.amountPaidCents || 0), 0),
       };
@@ -1992,6 +1992,7 @@ export function registerVkRoutes(app: Express): void {
                 .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
                 .content { background-color: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; }
                 .button { display: inline-block; background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+                .button-secondary { display: inline-block; background-color: #6b7280; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-size: 14px; margin: 10px 0; }
                 .footer { background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b; border-radius: 0 0 8px 8px; }
                 .amount { font-size: 24px; font-weight: bold; color: #2563eb; }
                 .deadline { color: #dc2626; font-weight: bold; }
@@ -2014,6 +2015,10 @@ export function registerVkRoutes(app: Express): void {
                   </p>
                   <p style="font-size: 12px; color: #64748b;">
                     Of kopieer deze link: ${paymentUrl}
+                  </p>
+                  <p style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                    <span style="font-size: 13px; color: #64748b;">Wordt u geen lid meer?</span><br>
+                    <a href="${paymentUrl}" class="button-secondary">Ik word geen lid</a>
                   </p>
                   <p>Heb je vragen? Neem gerust contact met ons op.</p>
                   <p>Met vriendelijke groeten,<br>Vriendenkring VZW Brandweer Mol</p>
@@ -2121,6 +2126,7 @@ export function registerVkRoutes(app: Express): void {
             .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
             .content { background-color: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; }
             .button { display: inline-block; background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+            .button-secondary { display: inline-block; background-color: #6b7280; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-size: 14px; margin: 10px 0; }
             .amount { font-size: 24px; font-weight: bold; color: #2563eb; }
             .deadline { color: #dc2626; font-weight: bold; }
           </style>
@@ -2138,6 +2144,10 @@ export function registerVkRoutes(app: Express): void {
               </p>
               <p style="text-align: center;">
                 <a href="${paymentUrl}" class="button">Nu betalen</a>
+              </p>
+              <p style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <span style="font-size: 13px; color: #64748b;">Wordt u geen lid meer?</span><br>
+                <a href="${paymentUrl}" class="button-secondary">Ik word geen lid</a>
               </p>
             </div>
           </div>
@@ -2219,13 +2229,12 @@ export function registerVkRoutes(app: Express): void {
         amountDue = cycle.baseAmountCents + cycle.penaltyAmountCents;
         penaltyApplied = true;
 
-        // Update invitation with penalty
+        // Update invitation with penalty (don't change status - still allow payment for declined)
         await db
           .update(vkMembershipFeeInvitations)
           .set({ 
             amountDueCents: amountDue, 
             penaltyApplied: true,
-            status: "overdue",
             updatedAt: new Date()
           })
           .where(eq(vkMembershipFeeInvitations.id, invitation.id));
@@ -2299,13 +2308,12 @@ export function registerVkRoutes(app: Express): void {
       let amountDue = invitation.amountDueCents;
       if (isOverdue && !invitation.penaltyApplied) {
         amountDue = cycle.baseAmountCents + cycle.penaltyAmountCents;
-        // Update invitation with penalty
+        // Update invitation with penalty (don't change status - still allow payment for declined)
         await db
           .update(vkMembershipFeeInvitations)
           .set({ 
             amountDueCents: amountDue, 
             penaltyApplied: true,
-            status: "overdue",
             updatedAt: new Date()
           })
           .where(eq(vkMembershipFeeInvitations.id, invitation.id));
@@ -2433,6 +2441,63 @@ export function registerVkRoutes(app: Express): void {
     } catch (error) {
       console.error("VK get Stripe key error:", error);
       res.status(500).json({ message: "Kon Stripe niet initialiseren" });
+    }
+  });
+
+  // Public endpoint: Decline membership (member chooses not to be a member)
+  app.post("/api/vk/membership-fee-payment/:token/decline", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+
+      // Get invitation with member and cycle info
+      const [result] = await db
+        .select({
+          invitation: vkMembershipFeeInvitations,
+          member: vkMembers,
+          cycle: vkMembershipFeeCycles,
+        })
+        .from(vkMembershipFeeInvitations)
+        .leftJoin(vkMembers, eq(vkMembershipFeeInvitations.memberId, vkMembers.id))
+        .leftJoin(vkMembershipFeeCycles, eq(vkMembershipFeeInvitations.cycleId, vkMembershipFeeCycles.id))
+        .where(eq(vkMembershipFeeInvitations.token, token))
+        .limit(1);
+
+      if (!result || !result.invitation) {
+        return res.status(404).json({ message: "Uitnodiging niet gevonden" });
+      }
+
+      const { invitation } = result;
+
+      // Check if already processed
+      if (invitation.status === "paid") {
+        return res.status(400).json({ message: "Deze uitnodiging is al betaald" });
+      }
+      if (invitation.status === "cancelled") {
+        return res.status(400).json({ message: "Deze uitnodiging is geannuleerd" });
+      }
+      if (invitation.status === "declined") {
+        return res.status(400).json({ message: "U heeft al aangegeven geen lid te worden" });
+      }
+
+      // Update invitation status to declined
+      const [updated] = await db
+        .update(vkMembershipFeeInvitations)
+        .set({ 
+          status: "declined",
+          updatedAt: new Date()
+        })
+        .where(eq(vkMembershipFeeInvitations.id, invitation.id))
+        .returning();
+
+      console.log(`VK Membership declined: invitation ${invitation.id}, member ${invitation.memberId}`);
+
+      res.json({ 
+        message: "Bedankt voor uw melding. U bent geregistreerd als 'geen lid'.",
+        status: "declined"
+      });
+    } catch (error) {
+      console.error("VK decline membership error:", error);
+      res.status(500).json({ message: "Fout bij verwerken van uw keuze" });
     }
   });
 

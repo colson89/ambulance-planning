@@ -139,6 +139,7 @@ class VkMembershipFeeScheduler {
               .header { background-color: #f59e0b; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
               .content { background-color: #f8fafc; padding: 30px; border: 1px solid #e2e8f0; }
               .button { display: inline-block; background-color: #2563eb; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+              .button-secondary { display: inline-block; background-color: #6b7280; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-size: 14px; margin: 10px 0; }
               .amount { font-size: 24px; font-weight: bold; color: #2563eb; }
               .deadline { color: #dc2626; font-weight: bold; }
               .warning { background-color: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 15px 0; }
@@ -161,6 +162,10 @@ class VkMembershipFeeScheduler {
                 </p>
                 <p style="text-align: center;">
                   <a href="${paymentUrl}" class="button">Nu betalen</a>
+                </p>
+                <p style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                  <span style="font-size: 13px; color: #64748b;">Wordt u geen lid meer?</span><br>
+                  <a href="${paymentUrl}" class="button-secondary">Ik word geen lid</a>
                 </p>
               </div>
             </div>
@@ -213,10 +218,12 @@ class VkMembershipFeeScheduler {
       ));
 
     for (const cycle of overdueCycles) {
+      // Mark pending invitations as declined (Geen lid) after deadline
+      // Members can still pay late and the status will become "paid"
       const result = await db
         .update(vkMembershipFeeInvitations)
         .set({ 
-          status: "overdue",
+          status: "declined",
           amountDueCents: cycle.baseAmountCents + cycle.penaltyAmountCents,
           penaltyApplied: true,
           updatedAt: new Date()
@@ -224,6 +231,18 @@ class VkMembershipFeeScheduler {
         .where(and(
           eq(vkMembershipFeeInvitations.cycleId, cycle.id),
           eq(vkMembershipFeeInvitations.status, "pending")
+        ));
+        
+      // Also update any "overdue" invitations to "declined" for consistency
+      await db
+        .update(vkMembershipFeeInvitations)
+        .set({ 
+          status: "declined",
+          updatedAt: new Date()
+        })
+        .where(and(
+          eq(vkMembershipFeeInvitations.cycleId, cycle.id),
+          eq(vkMembershipFeeInvitations.status, "overdue")
         ));
     }
   }

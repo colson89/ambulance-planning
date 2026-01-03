@@ -150,7 +150,7 @@ interface VkMembershipFeeInvitation {
   memberLastName: string | null;
   memberEmail: string | null;
   amountCents: number;
-  status: "pending" | "overdue" | "paid" | "cancelled";
+  status: "pending" | "overdue" | "paid" | "cancelled" | "declined";
   sentAt: string | null;
   paidAt: string | null;
   createdAt: string;
@@ -1129,6 +1129,11 @@ export default function VriendenkringAdmin() {
                                   <CheckCircle className="h-3 w-3 mr-1" />
                                   Betaald {member.latestFeeCycleYear}
                                 </Badge>
+                              ) : member.latestFeeStatus.status === "declined" ? (
+                                <Badge className="bg-gray-100 text-gray-600 hover:bg-gray-100">
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Geen lid
+                                </Badge>
                               ) : member.latestFeeStatus.status === "overdue" ? (
                                 <Badge variant="destructive">
                                   <XCircle className="h-3 w-3 mr-1" />
@@ -1938,12 +1943,17 @@ Vriendenkring VZW Brandweer Mol`);
                                         Geannuleerd
                                       </Badge>
                                     )}
+                                    {inv.status === "declined" && (
+                                      <Badge className="bg-gray-100 text-gray-600 hover:bg-gray-100">
+                                        Geen lid
+                                      </Badge>
+                                    )}
                                   </TableCell>
                                   <TableCell>
                                     €{(inv.amountCents / 100).toFixed(2)}
                                   </TableCell>
                                   <TableCell className="text-right">
-                                    {inv.status !== "paid" && inv.status !== "cancelled" && (
+                                    {inv.status !== "paid" && inv.status !== "cancelled" && inv.status !== "declined" && (
                                       <div className="flex gap-1 justify-end">
                                         <Button
                                           variant="ghost"

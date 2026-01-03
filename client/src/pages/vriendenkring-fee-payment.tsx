@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle, AlertTriangle, CreditCard } from "lucide-react";
+import { Loader2, CheckCircle, AlertTriangle, CreditCard, XCircle, UserX } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
@@ -111,8 +112,10 @@ function PaymentForm({ amount }: { amount: number }) {
 export default function VriendenkringFeePayment() {
   const params = useParams<{ token: string }>();
   const token = params.token || "";
+  const queryClient = useQueryClient();
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [declineSuccess, setDeclineSuccess] = useState(false);
 
   const { data: paymentInfo, isLoading, error } = useQuery<PaymentInfo>({
     queryKey: ["fee-payment-info", token],
@@ -142,6 +145,24 @@ export default function VriendenkringFeePayment() {
     onSuccess: (data) => {
       setStripePromise(loadStripe(data.publishableKey));
       setClientSecret(data.clientSecret);
+    },
+  });
+
+  const declineMembershipMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/vk/membership-fee-payment/${token}/decline`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Fout bij verwerken van uw keuze");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setDeclineSuccess(true);
+      queryClient.invalidateQueries({ queryKey: ["fee-payment-info", token] });
     },
   });
 
@@ -189,6 +210,42 @@ export default function VriendenkringFeePayment() {
             <h2 className="text-xl font-bold text-green-700 mb-2">Al betaald!</h2>
             <p className="text-gray-600">
               Dit lidgeld is al betaald op {new Date(paymentInfo.paidAt!).toLocaleDateString("nl-BE")}.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (paymentInfo.status === "declined" || declineSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center">
+            <UserX className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-700 mb-2">Geen lid</h2>
+            <p className="text-gray-600">
+              U heeft aangegeven geen lid te worden van de Vriendenkring. 
+              Bedankt voor uw melding.
+            </p>
+            <p className="text-sm text-gray-500 mt-4">
+              Mocht u van gedachten veranderen, neem dan contact op met de organisatie.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (paymentInfo.status === "cancelled") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="pt-6 text-center">
+            <XCircle className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-700 mb-2">Uitnodiging geannuleerd</h2>
+            <p className="text-gray-600">
+              Deze uitnodiging is door de beheerder geannuleerd.
             </p>
           </CardContent>
         </Card>
@@ -268,24 +325,76 @@ export default function VriendenkringFeePayment() {
                 <PaymentForm amount={paymentInfo.amountDue} />
               </Elements>
             ) : (
-              <Button 
-                onClick={() => createPaymentIntentMutation.mutate()}
-                disabled={createPaymentIntentMutation.isPending}
-                className="w-full"
-                size="lg"
-              >
-                {createPaymentIntentMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Laden...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Ga door naar betaling
-                  </>
-                )}
-              </Button>
+              <div className="space-y-3">
+                <Button 
+                  onClick={() => createPaymentIntentMutation.mutate()}
+                  disabled={createPaymentIntentMutation.isPending}
+                  className="w-full"
+                  size="lg"
+                >
+                  {createPaymentIntentMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Laden...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Ga door naar betaling
+                    </>
+                  )}
+                </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-muted-foreground">of</span>
+                  </div>
+                </div>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline"
+                      className="w-full text-gray-600 hover:text-gray-800"
+                      size="lg"
+                      disabled={declineMembershipMutation.isPending}
+                    >
+                      {declineMembershipMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Bezig...
+                        </>
+                      ) : (
+                        <>
+                          <UserX className="mr-2 h-4 w-4" />
+                          Ik word geen lid
+                        </>
+                      )}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Geen lid worden?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Weet u zeker dat u geen lid wilt worden van de Vriendenkring? 
+                        U zult dan niet kunnen deelnemen aan de activiteiten.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => declineMembershipMutation.mutate()}
+                        className="bg-gray-600 hover:bg-gray-700"
+                      >
+                        Bevestig: geen lid
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             )}
           </CardContent>
         </Card>
