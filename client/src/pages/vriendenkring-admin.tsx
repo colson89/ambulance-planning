@@ -62,6 +62,13 @@ interface VkMember {
   membershipTypeId: number;
   annualFeePaidUntil: number | null;
   isActive?: boolean;
+  latestFeeStatus: {
+    status: string;
+    invitationSentAt: string | null;
+    paidAt: string | null;
+    amountDueCents: number;
+  } | null;
+  latestFeeCycleYear: number | null;
 }
 
 interface VkActivity {
@@ -1135,15 +1142,36 @@ export default function VriendenkringAdmin() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {member.annualFeePaidUntil !== null && member.annualFeePaidUntil >= new Date().getFullYear() ? (
-                              <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Betaald
-                              </Badge>
+                            {member.latestFeeStatus ? (
+                              member.latestFeeStatus.status === "paid" ? (
+                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Betaald {member.latestFeeCycleYear}
+                                </Badge>
+                              ) : member.latestFeeStatus.status === "overdue" ? (
+                                <Badge variant="destructive">
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Achterstallig
+                                </Badge>
+                              ) : member.latestFeeStatus.status === "pending" ? (
+                                member.latestFeeStatus.invitationSentAt ? (
+                                  <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                                    <Mail className="h-3 w-3 mr-1" />
+                                    Verzonden
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary">
+                                    Wacht op verzending
+                                  </Badge>
+                                )
+                              ) : (
+                                <Badge variant="outline">
+                                  {member.latestFeeStatus.status}
+                                </Badge>
+                              )
                             ) : (
-                              <Badge variant="destructive">
-                                <XCircle className="h-3 w-3 mr-1" />
-                                Niet betaald
+                              <Badge variant="outline" className="text-muted-foreground">
+                                Geen uitnodiging
                               </Badge>
                             )}
                           </TableCell>

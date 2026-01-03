@@ -464,7 +464,47 @@ export function registerVkRoutes(app: Express): void {
         .select()
         .from(vkMembers)
         .orderBy(asc(vkMembers.lastName), asc(vkMembers.firstName));
-      res.json(members);
+
+      // Get the latest membership fee cycle
+      const [latestCycle] = await db
+        .select()
+        .from(vkMembershipFeeCycles)
+        .orderBy(desc(vkMembershipFeeCycles.year), desc(vkMembershipFeeCycles.createdAt))
+        .limit(1);
+
+      // If there's a latest cycle, get all invitations for it
+      let latestFeeStatusMap: Map<number, { status: string; invitationSentAt: Date | null; paidAt: Date | null; amountDueCents: number }> = new Map();
+      
+      if (latestCycle) {
+        const latestInvitations = await db
+          .select({
+            memberId: vkMembershipFeeInvitations.memberId,
+            status: vkMembershipFeeInvitations.status,
+            invitationSentAt: vkMembershipFeeInvitations.invitationSentAt,
+            paidAt: vkMembershipFeeInvitations.paidAt,
+            amountDueCents: vkMembershipFeeInvitations.amountDueCents,
+          })
+          .from(vkMembershipFeeInvitations)
+          .where(eq(vkMembershipFeeInvitations.cycleId, latestCycle.id));
+
+        for (const inv of latestInvitations) {
+          latestFeeStatusMap.set(inv.memberId, {
+            status: inv.status,
+            invitationSentAt: inv.invitationSentAt,
+            paidAt: inv.paidAt,
+            amountDueCents: inv.amountDueCents,
+          });
+        }
+      }
+
+      // Augment members with latest fee status
+      const membersWithFeeStatus = members.map(member => ({
+        ...member,
+        latestFeeStatus: latestFeeStatusMap.get(member.id) || null,
+        latestFeeCycleYear: latestCycle?.year || null,
+      }));
+
+      res.json(membersWithFeeStatus);
     } catch (error) {
       console.error("VK members GET error:", error);
       res.status(500).json({ message: "Fout bij ophalen leden" });
