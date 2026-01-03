@@ -169,6 +169,7 @@ class VkMembershipFeeScheduler {
                 </p>
               </div>
             </div>
+            <img src="${baseUrl}/api/vk/membership-fee-track/${invitation.token}" width="1" height="1" style="display:none;" alt="" />
           </body>
           </html>
         `;

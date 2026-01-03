@@ -2027,6 +2027,7 @@ export function registerVkRoutes(app: Express): void {
                   <p>Vriendenkring VZW Brandweer Mol</p>
                 </div>
               </div>
+              <img src="${protocol}://${baseUrl}/api/vk/membership-fee-track/${invitation.token}" width="1" height="1" style="display:none;" alt="" />
             </body>
             </html>
           `;
@@ -2151,6 +2152,7 @@ export function registerVkRoutes(app: Express): void {
               </p>
             </div>
           </div>
+          <img src="${protocol}://${baseUrl}/api/vk/membership-fee-track/${invitation.token}" width="1" height="1" style="display:none;" alt="" />
         </body>
         </html>
       `;
