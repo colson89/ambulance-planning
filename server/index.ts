@@ -19,6 +19,10 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 
+// Stripe webhook needs raw body for signature verification
+app.use('/api/vk/stripe-webhook', express.raw({ type: 'application/json' }));
+
+// JSON parsing for all other routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

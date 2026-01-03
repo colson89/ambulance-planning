@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { db } from "./db";
-import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
+import { getUncachableStripeClient, getStripePublishableKey, getStripeSync } from "./stripeClient";
 import { vkMembershipFeeScheduler } from "./vk-membership-fee-scheduler";
 import { 
   vkAdmins, 
@@ -87,7 +87,36 @@ function optionalVkAdmin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+// Setup VK Stripe webhook with managed webhook
+async function setupVkStripeWebhook() {
+  try {
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      console.error('VK Stripe webhook: DATABASE_URL not set');
+      return;
+    }
+
+    // Run migrations to create stripe schema
+    const { runMigrations } = await import('stripe-replit-sync');
+    await runMigrations({ databaseUrl, schema: 'stripe' });
+    console.log('VK Stripe schema ready');
+
+    const stripeSync = await getStripeSync();
+    const domains = process.env.REPLIT_DOMAINS?.split(',') || [];
+    const webhookBaseUrl = domains.length > 0 ? `https://${domains[0]}` : 'http://localhost:5000';
+    const webhookUrl = `${webhookBaseUrl}/api/vk/stripe-webhook`;
+    
+    const result = await stripeSync.findOrCreateManagedWebhook(webhookUrl);
+    console.log(`VK Stripe webhook configured: ${webhookUrl}`, result ? 'success' : 'no result');
+  } catch (error) {
+    console.error('Failed to setup VK Stripe webhook:', error);
+  }
+}
+
 export function registerVkRoutes(app: Express): void {
+  
+  // Setup Stripe webhook on server start
+  setupVkStripeWebhook();
   
   // ========================================
   // VK AUTHENTICATIE
@@ -2323,7 +2352,23 @@ export function registerVkRoutes(app: Express): void {
   app.post("/api/vk/stripe-webhook", async (req: Request, res: Response) => {
     try {
       const stripe = await getUncachableStripeClient();
-      const event = req.body;
+      
+      // Parse raw body (Buffer from express.raw middleware)
+      let event;
+      const rawBody = req.body;
+      
+      if (Buffer.isBuffer(rawBody)) {
+        try {
+          event = JSON.parse(rawBody.toString());
+        } catch (parseError) {
+          console.error("VK Stripe webhook: Failed to parse JSON body");
+          return res.status(400).json({ message: "Invalid JSON" });
+        }
+      } else {
+        event = rawBody;
+      }
+
+      console.log(`VK Stripe webhook received: ${event.type}`);
 
       // Handle payment_intent.succeeded event
       if (event.type === "payment_intent.succeeded") {
