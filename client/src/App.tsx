@@ -44,6 +44,7 @@ const VriendenkringHome = lazy(() => import("@/pages/vriendenkring-home"));
 const VriendenkringLogin = lazy(() => import("@/pages/vriendenkring-login"));
 const VriendenkringAdmin = lazy(() => import("@/pages/vriendenkring-admin"));
 const VriendenkringRegister = lazy(() => import("@/pages/vriendenkring-register"));
+const VriendenkringFeePayment = lazy(() => import("@/pages/vriendenkring-fee-payment"));
 
 // Loading component for Suspense boundaries
 function PageLoader() {
@@ -104,6 +105,7 @@ function Router() {
         <Route path="/VriendenkringMol/login" component={VriendenkringLogin} />
         <Route path="/VriendenkringMol/admin" component={VriendenkringAdmin} />
         <Route path="/VriendenkringMol/inschrijven/:activityId?" component={VriendenkringRegister} />
+        <Route path="/VriendenkringMol/lidgeld/:token" component={VriendenkringFeePayment} />
         
         <Route component={NotFound} />
       </Switch>
