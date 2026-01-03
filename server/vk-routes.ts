@@ -3,6 +3,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { db } from "./db";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
+import { vkMembershipFeeScheduler } from "./vk-membership-fee-scheduler";
 import { 
   vkAdmins, 
   vkMembershipTypes, 
