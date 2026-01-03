@@ -274,7 +274,6 @@ export default function VriendenkringAdmin() {
       lastName: "",
       email: "",
       membershipTypeId: "",
-      membershipPaid: false,
     },
   });
 
@@ -377,14 +376,11 @@ export default function VriendenkringAdmin() {
 
   useEffect(() => {
     if (editingMember) {
-      const currentYear = new Date().getFullYear();
-      const isPaid = editingMember.annualFeePaidUntil !== null && editingMember.annualFeePaidUntil >= currentYear;
       memberForm.reset({
         firstName: editingMember.firstName,
         lastName: editingMember.lastName,
         email: editingMember.email,
         membershipTypeId: editingMember.membershipTypeId.toString(),
-        membershipPaid: isPaid,
       });
     } else {
       memberForm.reset({
@@ -392,7 +388,6 @@ export default function VriendenkringAdmin() {
         lastName: "",
         email: "",
         membershipTypeId: "",
-        membershipPaid: false,
       });
     }
   }, [editingMember, memberForm]);
@@ -463,27 +458,13 @@ export default function VriendenkringAdmin() {
     mutationFn: async (data: any) => {
       const url = editingMember ? `/api/vk/members/${editingMember.id}` : "/api/vk/members";
       const method = editingMember ? "PATCH" : "POST";
-      const currentYear = new Date().getFullYear();
-      const { membershipPaid, ...restData } = data;
-      
-      let annualFeePaidUntil: number | null;
-      if (membershipPaid) {
-        if (editingMember?.annualFeePaidUntil && editingMember.annualFeePaidUntil >= currentYear) {
-          annualFeePaidUntil = editingMember.annualFeePaidUntil;
-        } else {
-          annualFeePaidUntil = currentYear;
-        }
-      } else {
-        annualFeePaidUntil = null;
-      }
       
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...restData,
+          ...data,
           membershipTypeId: parseInt(data.membershipTypeId),
-          annualFeePaidUntil,
         }),
         credentials: "include",
       });
@@ -2174,13 +2155,6 @@ Vriendenkring VZW Brandweer Mol`);
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={memberForm.watch("membershipPaid")}
-                onCheckedChange={(v) => memberForm.setValue("membershipPaid", v)}
-              />
-              <Label>Lidgeld betaald</Label>
             </div>
             <DialogFooter>
               <Button type="submit" disabled={saveMemberMutation.isPending}>

@@ -562,7 +562,9 @@ export function registerVkRoutes(app: Express): void {
         return res.status(400).json({ message: "Ongeldige ID" });
       }
 
-      const updateData = { ...req.body, updatedAt: new Date() };
+      // Explicitly exclude annualFeePaidUntil - payment status managed via fee cycle system only
+      const { annualFeePaidUntil, ...safeData } = req.body;
+      const updateData = { ...safeData, updatedAt: new Date() };
       const [updated] = await db
         .update(vkMembers)
         .set(updateData)
