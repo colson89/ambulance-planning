@@ -1717,6 +1717,54 @@ export function registerVkRoutes(app: Express): void {
     }
   });
 
+  // Get invitations for a specific cycle (separate endpoint for frontend)
+  app.get("/api/vk/membership-fee-cycles/:id/invitations", requireVkAdmin, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const cycleId = parseInt(id);
+
+      // Check if cycle exists
+      const [cycle] = await db
+        .select()
+        .from(vkMembershipFeeCycles)
+        .where(eq(vkMembershipFeeCycles.id, cycleId))
+        .limit(1);
+
+      if (!cycle) {
+        return res.status(404).json({ message: "Lidgeldronde niet gevonden" });
+      }
+
+      const invitations = await db
+        .select({
+          id: vkMembershipFeeInvitations.id,
+          cycleId: vkMembershipFeeInvitations.cycleId,
+          memberId: vkMembershipFeeInvitations.memberId,
+          memberFirstName: vkMembers.firstName,
+          memberLastName: vkMembers.lastName,
+          email: vkMembershipFeeInvitations.email,
+          status: vkMembershipFeeInvitations.status,
+          amountDueCents: vkMembershipFeeInvitations.amountDueCents,
+          amountPaidCents: vkMembershipFeeInvitations.amountPaidCents,
+          penaltyApplied: vkMembershipFeeInvitations.penaltyApplied,
+          invitationSentAt: vkMembershipFeeInvitations.invitationSentAt,
+          paidAt: vkMembershipFeeInvitations.paidAt,
+          reminderOneWeekSentAt: vkMembershipFeeInvitations.reminderOneWeekSentAt,
+          reminderThreeDaysSentAt: vkMembershipFeeInvitations.reminderThreeDaysSentAt,
+          reminderOneDaySentAt: vkMembershipFeeInvitations.reminderOneDaySentAt,
+          createdAt: vkMembershipFeeInvitations.createdAt,
+        })
+        .from(vkMembershipFeeInvitations)
+        .leftJoin(vkMembers, eq(vkMembershipFeeInvitations.memberId, vkMembers.id))
+        .where(eq(vkMembershipFeeInvitations.cycleId, cycleId))
+        .orderBy(asc(vkMembers.lastName), asc(vkMembers.firstName));
+
+      res.json(invitations);
+    } catch (error) {
+      console.error("VK membership fee cycle invitations GET error:", error);
+      res.status(500).json({ message: "Fout bij ophalen uitnodigingen" });
+    }
+  });
+
   // Create new membership fee cycle and send invitations
   app.post("/api/vk/membership-fee-cycles", requireVkAdmin, async (req: Request, res: Response) => {
     try {
