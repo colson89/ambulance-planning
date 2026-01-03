@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Loader2, LogOut, Users, Calendar, ClipboardList, Plus, Pencil, Trash2, 
   Euro, Settings, ChevronDown, ChevronRight, CheckCircle, XCircle, Mail, Send, Check,
-  Shield, Key, UserPlus, RotateCcw
+  Shield, Key, UserPlus, RotateCcw, CreditCard
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
@@ -124,6 +124,31 @@ interface VkInvitation {
   openCount: number;
 }
 
+interface VkMembershipFeeCycle {
+  id: number;
+  label: string;
+  year: number;
+  baseAmountCents: number;
+  penaltyAmountCents: number;
+  dueDate: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+interface VkMembershipFeeInvitation {
+  id: number;
+  cycleId: number;
+  memberId: number;
+  memberFirstName: string | null;
+  memberLastName: string | null;
+  memberEmail: string | null;
+  amountCents: number;
+  status: "pending" | "overdue" | "paid" | "cancelled";
+  sentAt: string | null;
+  paidAt: string | null;
+  createdAt: string;
+}
+
 export default function VriendenkringAdmin() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -156,6 +181,10 @@ export default function VriendenkringAdmin() {
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const [resetPasswordAdmin, setResetPasswordAdmin] = useState<VkAdmin | null>(null);
   const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(false);
+  const [selectedCycleId, setSelectedCycleId] = useState<number | null>(null);
+  const [cycleDialogOpen, setCycleDialogOpen] = useState(false);
+  const [sendInvitationsDialogOpen, setSendInvitationsDialogOpen] = useState(false);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
 
   const { data: admin, isLoading: adminLoading, error: adminError } = useQuery<VkAdmin>({
     queryKey: ["/api/vk/me"],
@@ -204,6 +233,22 @@ export default function VriendenkringAdmin() {
   const { data: vkAdmins = [], isLoading: adminsLoading } = useQuery<VkAdmin[]>({
     queryKey: ["/api/vk/admins"],
     enabled: !!admin,
+  });
+
+  const { data: feeCycles = [], isLoading: feeCyclesLoading } = useQuery<VkMembershipFeeCycle[]>({
+    queryKey: ["/api/vk/membership-fee-cycles"],
+    enabled: !!admin,
+  });
+
+  const { data: feeInvitations = [], isLoading: feeInvitationsLoading } = useQuery<VkMembershipFeeInvitation[]>({
+    queryKey: ["/api/vk/membership-fee-cycles", selectedCycleId, "invitations"],
+    queryFn: async () => {
+      if (!selectedCycleId) return [];
+      const res = await fetch(`/api/vk/membership-fee-cycles/${selectedCycleId}/invitations`, { credentials: "include" });
+      if (!res.ok) throw new Error("Fout bij ophalen uitnodigingen");
+      return res.json();
+    },
+    enabled: !!admin && !!selectedCycleId,
   });
 
   const logoutMutation = useMutation({
@@ -278,6 +323,16 @@ export default function VriendenkringAdmin() {
       currentPassword: "",
       newPassword: "",
       confirmPassword: "",
+    },
+  });
+
+  const cycleForm = useForm({
+    defaultValues: {
+      label: "",
+      year: new Date().getFullYear().toString(),
+      baseAmount: "",
+      penaltyAmount: "",
+      dueDate: "",
     },
   });
 
@@ -793,6 +848,104 @@ export default function VriendenkringAdmin() {
     },
   });
 
+  const createCycleMutation = useMutation({
+    mutationFn: async (data: { label: string; year: string; baseAmount: string; penaltyAmount: string; dueDate: string }) => {
+      const res = await fetch("/api/vk/membership-fee-cycles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: data.label,
+          year: parseInt(data.year),
+          baseAmountCents: Math.round(parseFloat(data.baseAmount) * 100),
+          penaltyAmountCents: Math.round(parseFloat(data.penaltyAmount || "0") * 100),
+          dueDate: data.dueDate,
+        }),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Fout bij aanmaken cyclus");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/membership-fee-cycles"] });
+      toast({ title: "Lidgeld cyclus aangemaakt" });
+      setCycleDialogOpen(false);
+      cycleForm.reset();
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const sendFeeInvitationsMutation = useMutation({
+    mutationFn: async ({ cycleId, memberIds }: { cycleId: number; memberIds: number[] }) => {
+      const res = await fetch(`/api/vk/membership-fee-cycles/${cycleId}/send-invitations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberIds }),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Fout bij verzenden uitnodigingen");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/membership-fee-cycles", selectedCycleId, "invitations"] });
+      toast({ title: "Uitnodigingen verzonden", description: data.message });
+      setSendInvitationsDialogOpen(false);
+      setSelectedMemberIds([]);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const markFeeAsPaidMutation = useMutation({
+    mutationFn: async (invitationId: number) => {
+      const res = await fetch(`/api/vk/membership-fee-invitations/${invitationId}/mark-paid`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Fout bij markeren als betaald");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/membership-fee-cycles", selectedCycleId, "invitations"] });
+      toast({ title: "Gemarkeerd als betaald" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const cancelFeeInvitationMutation = useMutation({
+    mutationFn: async (invitationId: number) => {
+      const res = await fetch(`/api/vk/membership-fee-invitations/${invitationId}/cancel`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Fout bij annuleren uitnodiging");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/vk/membership-fee-cycles", selectedCycleId, "invitations"] });
+      toast({ title: "Uitnodiging geannuleerd" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Fout", description: error.message, variant: "destructive" });
+    },
+  });
+
   const openActivityPricingDialog = () => {
     const prices: Record<number, string> = {};
     membershipTypes.forEach(mt => {
@@ -911,7 +1064,7 @@ export default function VriendenkringAdmin() {
         <Card>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <CardHeader>
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="members">
                   <Users className="h-4 w-4 mr-2" />
                   Leden
@@ -931,6 +1084,10 @@ export default function VriendenkringAdmin() {
                 <TabsTrigger value="administrators">
                   <Shield className="h-4 w-4 mr-2" />
                   Beheerders
+                </TabsTrigger>
+                <TabsTrigger value="lidgeld">
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Lidgeld
                 </TabsTrigger>
               </TabsList>
             </CardHeader>
@@ -1652,10 +1809,305 @@ Vriendenkring VZW Brandweer Mol`);
                   </Table>
                 )}
               </TabsContent>
+
+              <TabsContent value="lidgeld" className="mt-0">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex gap-2">
+                    <Button onClick={() => { cycleForm.reset(); setCycleDialogOpen(true); }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nieuwe cyclus
+                    </Button>
+                    {selectedCycleId && (
+                      <Button variant="outline" onClick={() => setSendInvitationsDialogOpen(true)}>
+                        <Send className="h-4 w-4 mr-2" />
+                        Uitnodigingen verzenden
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold mb-3">Lidgeld Cycli</h3>
+                    {feeCyclesLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                      </div>
+                    ) : feeCycles.length === 0 ? (
+                      <p className="text-muted-foreground text-center py-8">
+                        Nog geen lidgeld cycli
+                      </p>
+                    ) : (
+                      feeCycles.map((cycle) => (
+                        <div
+                          key={cycle.id}
+                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                            selectedCycleId === cycle.id
+                              ? "border-primary bg-primary/5"
+                              : "hover:bg-muted/50"
+                          }`}
+                          onClick={() => setSelectedCycleId(cycle.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium">{cycle.label}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Jaar: {cycle.year}
+                              </div>
+                            </div>
+                            {cycle.isActive ? (
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                Actief
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">Inactief</Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            Basisbedrag: €{(cycle.baseAmountCents / 100).toFixed(2)}
+                            {cycle.penaltyAmountCents > 0 && (
+                              <span> | Boete: €{(cycle.penaltyAmountCents / 100).toFixed(2)}</span>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Vervaldatum: {format(new Date(cycle.dueDate), "d MMM yyyy", { locale: nl })}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    {selectedCycleId ? (
+                      <div>
+                        <h3 className="font-semibold mb-3">Uitnodigingen</h3>
+                        {feeInvitationsLoading ? (
+                          <div className="flex justify-center py-8">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                          </div>
+                        ) : feeInvitations.length === 0 ? (
+                          <p className="text-muted-foreground text-center py-8">
+                            Nog geen uitnodigingen voor deze cyclus
+                          </p>
+                        ) : (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Lid</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Bedrag</TableHead>
+                                <TableHead className="text-right">Acties</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {feeInvitations.map((inv) => (
+                                <TableRow key={inv.id}>
+                                  <TableCell className="font-medium">
+                                    {inv.memberFirstName} {inv.memberLastName}
+                                    {inv.memberEmail && (
+                                      <div className="text-xs text-muted-foreground">{inv.memberEmail}</div>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {inv.status === "pending" && (
+                                      <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+                                        In afwachting
+                                      </Badge>
+                                    )}
+                                    {inv.status === "overdue" && (
+                                      <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
+                                        Achterstallig
+                                      </Badge>
+                                    )}
+                                    {inv.status === "paid" && (
+                                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                        Betaald
+                                      </Badge>
+                                    )}
+                                    {inv.status === "cancelled" && (
+                                      <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
+                                        Geannuleerd
+                                      </Badge>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    €{(inv.amountCents / 100).toFixed(2)}
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    {inv.status !== "paid" && inv.status !== "cancelled" && (
+                                      <div className="flex gap-1 justify-end">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => markFeeAsPaidMutation.mutate(inv.id)}
+                                          disabled={markFeeAsPaidMutation.isPending}
+                                        >
+                                          <CheckCircle className="h-4 w-4 mr-1" />
+                                          Betaald
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => {
+                                            if (confirm("Weet je zeker dat je deze uitnodiging wilt annuleren?")) {
+                                              cancelFeeInvitationMutation.mutate(inv.id);
+                                            }
+                                          }}
+                                          disabled={cancelFeeInvitationMutation.isPending}
+                                        >
+                                          <XCircle className="h-4 w-4 mr-1" />
+                                          Annuleren
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Selecteer een cyclus om de uitnodigingen te bekijken
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
             </CardContent>
           </Tabs>
         </Card>
       </main>
+
+      <Dialog open={cycleDialogOpen} onOpenChange={setCycleDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nieuwe lidgeld cyclus</DialogTitle>
+            <DialogDescription>
+              Maak een nieuwe cyclus aan voor het innen van lidgeld
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={cycleForm.handleSubmit((data) => createCycleMutation.mutate(data))} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Label</Label>
+              <Input {...cycleForm.register("label", { required: true })} placeholder="bv. Lidgeld 2026" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Jaar</Label>
+                <Input type="number" {...cycleForm.register("year", { required: true })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Vervaldatum</Label>
+                <Input type="date" {...cycleForm.register("dueDate", { required: true })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Basisbedrag (€)</Label>
+                <Input type="number" step="0.01" {...cycleForm.register("baseAmount", { required: true })} placeholder="25.00" />
+              </div>
+              <div className="space-y-2">
+                <Label>Boetebedrag (€) optioneel</Label>
+                <Input type="number" step="0.01" {...cycleForm.register("penaltyAmount")} placeholder="0.00" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={createCycleMutation.isPending}>
+                {createCycleMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Aanmaken
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={sendInvitationsDialogOpen} onOpenChange={setSendInvitationsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Lidgeld uitnodigingen verzenden</DialogTitle>
+            <DialogDescription>
+              Selecteer leden om uitnodigingen te versturen, of verzend naar alle leden
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="border rounded-lg max-h-64 overflow-y-auto">
+              {members.filter(m => m.isActive !== false).map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center gap-3 p-3 hover:bg-muted/50 border-b last:border-b-0"
+                >
+                  <Checkbox
+                    checked={selectedMemberIds.includes(member.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedMemberIds([...selectedMemberIds, member.id]);
+                      } else {
+                        setSelectedMemberIds(selectedMemberIds.filter((id) => id !== member.id));
+                      }
+                    }}
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">
+                      {member.firstName} {member.lastName}
+                    </div>
+                    <div className="text-sm text-muted-foreground">{member.email}</div>
+                  </div>
+                  <Badge variant="secondary">
+                    {getMembershipTypeName(member.membershipTypeId)}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 justify-between">
+              <div className="text-sm text-muted-foreground">
+                {selectedMemberIds.length > 0
+                  ? `${selectedMemberIds.length} leden geselecteerd`
+                  : "Geen leden geselecteerd - uitnodigingen worden naar alle leden verzonden"}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedMemberIds(members.filter(m => m.isActive !== false).map((m) => m.id))}
+                >
+                  Alles selecteren
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedMemberIds([])}
+                >
+                  Deselecteren
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendInvitationsDialogOpen(false)}>
+              Annuleren
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedCycleId) {
+                  sendFeeInvitationsMutation.mutate({
+                    cycleId: selectedCycleId,
+                    memberIds: selectedMemberIds,
+                  });
+                }
+              }}
+              disabled={sendFeeInvitationsMutation.isPending}
+            >
+              {sendFeeInvitationsMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Send className="h-4 w-4 mr-2" />
+              {selectedMemberIds.length > 0
+                ? `Verzend naar ${selectedMemberIds.length} leden`
+                : "Verzend naar alle leden"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen}>
         <DialogContent>
