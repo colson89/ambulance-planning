@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { db } from "./db";
+import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { 
   vkAdmins, 
   vkMembershipTypes, 
@@ -2132,6 +2133,173 @@ export function registerVkRoutes(app: Express): void {
     } catch (error) {
       console.error("VK membership fee payment info error:", error);
       res.status(500).json({ message: "Fout bij ophalen betalingsgegevens" });
+    }
+  });
+
+  // Public endpoint: Create Stripe PaymentIntent for membership fee
+  app.post("/api/vk/membership-fee-payment/:token/create-payment-intent", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+
+      if (!token || token.length !== 64) {
+        return res.status(400).json({ message: "Ongeldige betaallink" });
+      }
+
+      // Get invitation with cycle and member info
+      const [result] = await db
+        .select({
+          invitation: vkMembershipFeeInvitations,
+          cycle: vkMembershipFeeCycles,
+          member: vkMembers,
+        })
+        .from(vkMembershipFeeInvitations)
+        .leftJoin(vkMembershipFeeCycles, eq(vkMembershipFeeInvitations.cycleId, vkMembershipFeeCycles.id))
+        .leftJoin(vkMembers, eq(vkMembershipFeeInvitations.memberId, vkMembers.id))
+        .where(eq(vkMembershipFeeInvitations.token, token))
+        .limit(1);
+
+      if (!result || !result.cycle || !result.member) {
+        return res.status(404).json({ message: "Betaallink niet gevonden of verlopen" });
+      }
+
+      const { invitation, cycle, member } = result;
+
+      // Check if already paid
+      if (invitation.status === "paid") {
+        return res.status(400).json({ message: "Dit lidgeld is al betaald" });
+      }
+
+      // Check if cycle is still active
+      if (!cycle.isActive) {
+        return res.status(400).json({ message: "Deze lidgeldronde is niet meer actief" });
+      }
+
+      // Calculate amount (check for penalty)
+      const now = new Date();
+      const dueDate = new Date(cycle.dueDate);
+      const isOverdue = now > dueDate;
+      
+      let amountDue = invitation.amountDueCents;
+      if (isOverdue && !invitation.penaltyApplied) {
+        amountDue = cycle.baseAmountCents + cycle.penaltyAmountCents;
+        // Update invitation with penalty
+        await db
+          .update(vkMembershipFeeInvitations)
+          .set({ 
+            amountDueCents: amountDue, 
+            penaltyApplied: true,
+            status: "overdue",
+            updatedAt: new Date()
+          })
+          .where(eq(vkMembershipFeeInvitations.id, invitation.id));
+      }
+
+      // Get Stripe client
+      const stripe = await getUncachableStripeClient();
+      const publishableKey = await getStripePublishableKey();
+
+      // Create PaymentIntent
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amountDue,
+        currency: "eur",
+        metadata: {
+          token: token,
+          invitationId: invitation.id.toString(),
+          memberId: member.id.toString(),
+          cycleId: cycle.id.toString(),
+          type: "membership_fee",
+        },
+        description: `${cycle.label} - ${member.firstName} ${member.lastName}`,
+        payment_method_types: ["card", "bancontact", "ideal"],
+      });
+
+      // Store PaymentIntent ID in invitation
+      await db
+        .update(vkMembershipFeeInvitations)
+        .set({ 
+          stripePaymentIntentId: paymentIntent.id,
+          updatedAt: new Date()
+        })
+        .where(eq(vkMembershipFeeInvitations.id, invitation.id));
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        publishableKey,
+        amount: amountDue,
+      });
+    } catch (error) {
+      console.error("VK create payment intent error:", error);
+      res.status(500).json({ message: "Fout bij aanmaken betaling" });
+    }
+  });
+
+  // Stripe webhook for payment confirmation
+  app.post("/api/vk/stripe-webhook", async (req: Request, res: Response) => {
+    try {
+      const stripe = await getUncachableStripeClient();
+      const event = req.body;
+
+      // Handle payment_intent.succeeded event
+      if (event.type === "payment_intent.succeeded") {
+        const paymentIntent = event.data.object;
+        
+        // Check if this is a membership fee payment
+        if (paymentIntent.metadata?.type === "membership_fee" && paymentIntent.metadata?.token) {
+          const token = paymentIntent.metadata.token;
+          const invitationId = parseInt(paymentIntent.metadata.invitationId);
+
+          // Get invitation with cycle
+          const [result] = await db
+            .select({
+              invitation: vkMembershipFeeInvitations,
+              cycle: vkMembershipFeeCycles,
+            })
+            .from(vkMembershipFeeInvitations)
+            .leftJoin(vkMembershipFeeCycles, eq(vkMembershipFeeInvitations.cycleId, vkMembershipFeeCycles.id))
+            .where(eq(vkMembershipFeeInvitations.id, invitationId))
+            .limit(1);
+
+          if (result && result.cycle) {
+            // Update invitation as paid
+            await db
+              .update(vkMembershipFeeInvitations)
+              .set({ 
+                status: "paid",
+                paidAt: new Date(),
+                amountPaidCents: paymentIntent.amount,
+                updatedAt: new Date()
+              })
+              .where(eq(vkMembershipFeeInvitations.id, invitationId));
+
+            // Update member's annualFeePaidUntil
+            await db
+              .update(vkMembers)
+              .set({ 
+                annualFeePaidUntil: result.cycle.year,
+                updatedAt: new Date()
+              })
+              .where(eq(vkMembers.id, result.invitation.memberId));
+
+            console.log(`VK Membership fee paid: invitation ${invitationId}, amount ${paymentIntent.amount} cents`);
+          }
+        }
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error("VK Stripe webhook error:", error);
+      res.status(500).json({ message: "Webhook processing failed" });
+    }
+  });
+
+  // Get Stripe publishable key (public endpoint)
+  app.get("/api/vk/stripe-publishable-key", async (req: Request, res: Response) => {
+    try {
+      const publishableKey = await getStripePublishableKey();
+      res.json({ publishableKey });
+    } catch (error) {
+      console.error("VK get Stripe key error:", error);
+      res.status(500).json({ message: "Kon Stripe niet initialiseren" });
     }
   });
 
